@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лекция 7. Качество данных и ETL/ELT</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #ffffff; }
+
+        .student-view { width: 66.66%; height: 100vh; background: #ffffff; padding: 35px 40px; display: flex; flex-direction: column; justify-content: space-between; border-right: 2px solid #e2e8f0; overflow-y: auto; scroll-behavior: smooth; }
+        .speaker-notes { width: 33.34%; height: 100%; background: #1a202c; color: #edf2f7; padding: 30px; overflow-y: auto; }
+
+        .slide-header { font-size: 24px; color: #1a365d; font-weight: bold; line-height: 1.3; margin-bottom: 18px; border-bottom: 4px solid #3182ce; padding-bottom: 12px; }
+        .slide-body { flex-grow: 1; display: flex; flex-direction: column; gap: 18px; padding: 5px 0; }
+        .slide-footer { font-size: 13px; color: #a0aec0; text-align: right; margin-top: 12px; }
+
+        .chart-box { background: #f7fafc; border: 2.5px dashed #cbd5e0; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .chart-box strong { font-size: 16px; display: block; margin-bottom: 6px; }
+        .chart-box p { font-size: 13px; color: #4a5568; line-height: 1.45; }
+
+        .viz-card { background: #ffffff; border: 2px solid #e2e8f0; border-radius: 12px; padding: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.04); }
+        .viz-title { font-size: 14px; font-weight: bold; color: #1a365d; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .viz-caption { font-size: 11.5px; color: #4a5568; margin-top: 8px; line-height: 1.45; }
+        .viz-caption strong { color: #2d3748; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+
+        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .stat-box { border-radius: 10px; padding: 14px; text-align: center; border: 2px solid; }
+        .stat-box .stat-icon { font-size: 26px; }
+        .stat-box .stat-number { font-size: 13px; font-weight: 900; margin-top: 4px; }
+        .stat-box .stat-label { font-size: 10.5px; color: #4a5568; margin-top: 2px; line-height: 1.3; }
+        .stat-box.s1 { background: #ebf8ff; border-color: #90cdf4; }
+        .stat-box.s1 .stat-number { color: #2b6cb0; }
+        .stat-box.s2 { background: #fffaf0; border-color: #fbd38d; }
+        .stat-box.s2 .stat-number { color: #975a16; }
+        .stat-box.s3 { background: #f0fff4; border-color: #9ae6b4; }
+        .stat-box.s3 .stat-number { color: #276749; }
+        .stat-box.s4 { background: #faf5ff; border-color: #d6bcfa; }
+        .stat-box.s4 .stat-number { color: #553c9a; }
+        .stat-box.s5 { background: #fff5f5; border-color: #fc8181; }
+        .stat-box.s5 .stat-number { color: #9b2c2c; }
+
+        .formula-box { background: linear-gradient(135deg, #1a202c, #2d3748, #1a365d); background-size: 200% 200%; color: #edf2f7; padding: 16px 20px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .formula-main { font-family: 'Courier New', monospace; font-size: 13.5px; letter-spacing: 0.5px; color: #90cdf4; }
+        .formula-example { font-size: 11.5px; color: #cbd5e0; margin-top: 8px; line-height: 1.5; }
+
+        .tag { display: inline-block; background: #ebf8ff; color: #2b6cb0; padding: 2px 7px; border-radius: 4px; font-size: 11px; margin: 2px 2px 2px 0; font-weight: 500; }
+        .tag.green { background: #f0fff4; color: #276749; }
+        .tag.red { background: #fff5f5; color: #9b2c2c; }
+        .tag.orange { background: #fffaf0; color: #975a16; }
+        .tag.purple { background: #faf5ff; color: #553c9a; }
+
+        .callout { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 6px; }
+        .callout strong { color: #92400e; font-size: 13px; }
+        .callout p { font-size: 12px; color: #78350f; margin-top: 4px; line-height: 1.45; }
+        .callout.warn { background: #fff5f5; border-left-color: #e53e3e; }
+        .callout.warn strong { color: #9b2c2c; }
+        .callout.warn p { color: #742a2a; }
+        .callout.ok { background: #f0fff4; border-left-color: #38a169; }
+        .callout.ok strong { color: #276749; }
+        .callout.ok p { color: #22543d; }
+
+        .compare-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .compare-table th { background: #1a365d; color: white; padding: 9px 11px; text-align: left; font-weight: 600; }
+        .compare-table td { padding: 8px 11px; border-bottom: 1px solid #e2e8f0; color: #2d3748; vertical-align: top; }
+        .compare-table tr:nth-child(even) td { background: #f7fafc; }
+
+        .role-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+        .role-table th { background: #1a365d; color: white; padding: 8px 10px; text-align: left; font-weight: 600; }
+        .role-table td { padding: 7px 10px; border-bottom: 1px solid #e2e8f0; color: #2d3748; vertical-align: top; }
+        .role-table tr:nth-child(even) td { background: #f7fafc; }
+        .role-table .role-emoji { font-size: 16px; }
+
+        .axis { stroke: #4a5568; stroke-width: 1.5; }
+        .grid-line { stroke: #e2e8f0; stroke-width: 0.8; }
+        .label { font-family: 'Segoe UI', sans-serif; font-size: 11px; fill: #4a5568; }
+        .label-strong { font-family: 'Segoe UI', sans-serif; font-size: 12px; font-weight: 700; fill: #1a365d; }
+        .label-small { font-family: 'Segoe UI', sans-serif; font-size: 9.5px; fill: #718096; }
+        .label-tiny { font-family: 'Segoe UI', sans-serif; font-size: 8.5px; fill: #718096; }
+        .label-white { font-family: 'Segoe UI', sans-serif; font-size: 10.5px; fill: #ffffff; font-weight: 600; }
+        .label-white-sm { font-family: 'Segoe UI', sans-serif; font-size: 8.5px; fill: #ffffff; opacity: 0.9; }
+
+        .step-card { background: #ffffff; border: 2px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; }
+        .step-card .step-num { display: inline-block; width: 26px; height: 26px; border-radius: 50%; background: #3182ce; color: white; font-weight: bold; text-align: center; line-height: 26px; font-size: 13px; margin-bottom: 6px; }
+        .step-card h5 { font-size: 12.5px; color: #1a365d; margin-bottom: 4px; }
+        .step-card p { font-size: 11px; color: #4a5568; line-height: 1.4; }
+        .step-card code { font-family: 'Courier New', monospace; font-size: 10.5px; background: #edf2f7; padding: 1px 5px; border-radius: 3px; color: #1a365d; }
+
+        .video-section { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 5px; }
+        .video-container { width: 100%; max-width: 580px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: #000; aspect-ratio: 16 / 9; }
+        .links-hub { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .video-btn { text-decoration: none; padding: 9px 14px; border-radius: 6px; font-size: 12px; font-weight: bold; color: white; display: flex; align-items: center; gap: 6px; transition: transform 0.2s, background 0.2s; cursor: pointer; border: none; }
+        .video-btn:hover { transform: translateY(-2px); }
+        .rt-btn { background: #00a877; }
+        .rt-btn:hover { background: #008f65; }
+        .stop-btn { background: #dc143c; }
+        .stop-btn:hover { background: #b01030; }
+
+        .notes-header { font-size: 17px; color: #63b3ed; font-weight: bold; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a5568; padding-bottom: 10px; }
+        .lecture-text { font-size: 14.5px; line-height: 1.65; color: #e2e8f0; text-align: justify; }
+        .lecture-text p { margin-bottom: 14px; }
+        .lecture-text h3 { color: #63b3ed; font-size: 15px; margin: 18px 0 10px; border-bottom: 1px solid #2d3748; padding-bottom: 5px; }
+        .lecture-text h4 { color: #90cdf4; font-size: 13.5px; margin: 14px 0 8px; }
+        .lecture-text ul { margin: 8px 0 14px 18px; }
+        .lecture-text li { margin-bottom: 6px; }
+        .lecture-text code { font-family: 'Courier New', monospace; background: #2d3748; padding: 1px 5px; border-radius: 3px; color: #fbd38d; font-size: 12.5px; }
+
+        .dark-block { background: #2d3748; border: 1px solid #4a5568; border-radius: 10px; padding: 16px 18px; margin-top: 20px; }
+        .dark-block-title { font-size: 14px; font-weight: bold; color: #63b3ed; margin-bottom: 12px; border-bottom: 2px solid #4a5568; padding-bottom: 8px; }
+        .dark-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+        .dark-table th { background: #1a202c; color: #90cdf4; padding: 7px 9px; text-align: left; font-weight: 600; border-bottom: 1px solid #4a5568; }
+        .dark-table td { padding: 6px 9px; border-bottom: 1px solid #2d3748; color: #cbd5e0; vertical-align: top; line-height: 1.4; }
+        .dark-table tr:nth-child(even) td { background: #2a3242; }
+        .dark-table .term { font-weight: bold; color: #90cdf4; white-space: nowrap; }
+        .dark-table code { font-family: 'Courier New', monospace; background: #1a202c; padding: 1px 5px; border-radius: 3px; color: #fbd38d; font-size: 11px; }
+        .dark-block ol { margin: 0 0 12px 18px; padding: 0; font-size: 12px; color: #cbd5e0; line-height: 1.5; }
+        .dark-block ol li { margin-bottom: 5px; }
+
+        .lecture-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(12px); border-top: 2px solid rgba(255, 255, 255, 0.08); padding: 12px 20px; display: flex; align-items: center; justify-content: center; gap: 12px; z-index: 9999; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25); font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .lecture-nav .nav-progress { position: absolute; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899); border-radius: 0 3px 3px 0; }
+        .lecture-nav .nav-btn-arrow { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); border: 1.5px solid rgba(255, 255, 255, 0.15); color: #e2e8f0; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; font-family: inherit; }
+        .lecture-nav .nav-btn-arrow:hover:not(:disabled) { background: rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.6); color: white; transform: translateY(-2px); }
+        .lecture-nav .nav-btn-arrow:disabled { opacity: 0.35; cursor: not-allowed; }
+        .lecture-nav .nav-btn-arrow .arrow-icon { font-size: 16px; line-height: 1; }
+        .lecture-nav .nav-btn-arrow .arrow-label { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+        .lecture-nav .nav-btn-arrow .arrow-label small { font-size: 9.5px; font-weight: 400; opacity: 0.7; text-transform: uppercase; }
+        .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { font-size: 12px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lecture-nav .nav-center { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 20px; color: #94a3b8; font-size: 11px; border-left: 1px solid rgba(255, 255, 255, 0.1); border-right: 1px solid rgba(255, 255, 255, 0.1); }
+        .lecture-nav .nav-counter { font-size: 15px; font-weight: 900; color: #f1f5f9; }
+        .lecture-nav .nav-counter span { color: #64748b; font-size: 12px; font-weight: 600; }
+        .lecture-nav .nav-index-link { color: #60a5fa; text-decoration: none; font-size: 11px; font-weight: 600; }
+        .lecture-nav .nav-index-link:hover { color: #93c5fd; text-decoration: underline; }
+        body { padding-bottom: 80px !important; }
+        @media (max-width: 900px) {
+            .lecture-nav { padding: 10px 12px; gap: 8px; }
+            .lecture-nav .nav-btn-arrow { padding: 8px 12px; }
+            .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { max-width: 90px; font-size: 11px; }
+            .grid-2, .grid-3, .grid-4, .stat-grid { grid-template-columns: 1fr; }
+        }
+
+        @keyframes pulseDot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .pulse-dot { animation: pulseDot 2s ease-in-out infinite; }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(18px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+        @keyframes drawLine {
+            from { stroke-dashoffset: 420; }
+            to   { stroke-dashoffset: 0; }
+        }
+        @keyframes gradientMove {
+            0%   { background-position: 0% 50%; }
+            50%  { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        @keyframes softGlow {
+            0%, 100% { box-shadow: 0 0 0 rgba(49,130,206,0); }
+            50%      { box-shadow: 0 0 16px rgba(49,130,206,0.45); }
+        }
+
+        .slide-body > * { opacity: 0; animation: fadeInUp 0.7s ease forwards; }
+        .slide-body > *:nth-child(1)  { animation-delay: 0.03s; }
+        .slide-body > *:nth-child(2)  { animation-delay: 0.09s; }
+        .slide-body > *:nth-child(3)  { animation-delay: 0.15s; }
+        .slide-body > *:nth-child(4)  { animation-delay: 0.21s; }
+        .slide-body > *:nth-child(5)  { animation-delay: 0.27s; }
+        .slide-body > *:nth-child(6)  { animation-delay: 0.33s; }
+        .slide-body > *:nth-child(7)  { animation-delay: 0.39s; }
+        .slide-body > *:nth-child(8)  { animation-delay: 0.45s; }
+        .slide-body > *:nth-child(9)  { animation-delay: 0.51s; }
+        .slide-body > *:nth-child(10) { animation-delay: 0.57s; }
+        .slide-body > *:nth-child(11) { animation-delay: 0.63s; }
+        .slide-body > *:nth-child(12) { animation-delay: 0.69s; }
+
+        .stat-box { transition: transform 0.25s ease, box-shadow 0.25s ease; }
+        .stat-box:hover { transform: translateY(-4px); box-shadow: 0 10px 22px rgba(0,0,0,0.10); }
+        .viz-card, .step-card, .chart-box { transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease; }
+        .viz-card:hover { transform: translateY(-3px); box-shadow: 0 12px 26px rgba(0,0,0,0.09); }
+        .step-card:hover { transform: translateY(-3px); box-shadow: 0 8px 18px rgba(0,0,0,0.08); border-color: #90cdf4; }
+        .formula-box { animation: gradientMove 9s ease infinite, softGlow 4s ease-in-out infinite; }
+        .formula-main { animation: fadeIn 1.2s ease both 0.5s; }
+        .formula-example { animation: fadeIn 1.2s ease both 0.9s; }
+
+        .svg-draw { stroke-dasharray: 420; stroke-dashoffset: 420; animation: drawLine 1.8s ease forwards 0.4s; }
+        .svg-draw-slow { stroke-dasharray: 420; stroke-dashoffset: 420; animation: drawLine 2.4s ease forwards 0.6s; }
+        .svg-fade { opacity: 0; animation: fadeIn 1s ease forwards 1.1s; }
+        .svg-fade-2 { opacity: 0; animation: fadeIn 1s ease forwards 1.5s; }
+
+        .lecture-text h3, .lecture-text h4 { animation: fadeIn 0.6s ease both; }
+        .lecture-text p { animation: fadeIn 0.6s ease both; }
+        .role-table tbody tr, .compare-table tbody tr, .dark-table tbody tr { animation: fadeIn 0.5s ease both; }
+        .role-table tbody tr:nth-child(2), .compare-table tbody tr:nth-child(2) { animation-delay: 0.06s; }
+        .role-table tbody tr:nth-child(3), .compare-table tbody tr:nth-child(3) { animation-delay: 0.12s; }
+        .role-table tbody tr:nth-child(4), .compare-table tbody tr:nth-child(4) { animation-delay: 0.18s; }
+        .role-table tbody tr:nth-child(5), .compare-table tbody tr:nth-child(5) { animation-delay: 0.24s; }
+        .role-table tbody tr:nth-child(6) { animation-delay: 0.30s; }
+        .role-table tbody tr:nth-child(7) { animation-delay: 0.36s; }
+        .role-table tbody tr:nth-child(8) { animation-delay: 0.42s; }
+    </style>
+</head>
+<body>
+
+    <!-- ЛЕВАЯ ПАНЕЛЬ -->
+    <div class="student-view">
+        <div class="slide-header">
+            Лекция 7. Качество данных и ETL/ELT
+        </div>
+
+        <div class="slide-body">
+
+            <!-- HERO -->
+            <div class="chart-box" style="background: #faf5ff; border-color: #d6bcfa;">
+                <strong style="color: #553c9a;">🎯 Главная идея</strong>
+                <p>Грязные данные не падают с ошибкой. Они проходят через пайплайн молча. Они портят отчёты, ломают модели и подрывают доверие к аналитике. <strong>Валидация — это не накладные расходы, а страховка.</strong> На очистку уходит от 60 до 80% времени аналитика, и это время не потрачено зря.</p>
+            </div>
+
+            <!-- КЛЮЧЕВЫЕ ЦИФРЫ -->
+            <div class="stat-grid">
+                <div class="stat-box s1"><div class="stat-icon">⏱️</div><div class="stat-number">60–80%</div><div class="stat-label">времени уходит на очистку</div></div>
+                <div class="stat-box s2"><div class="stat-icon">⚠️</div><div class="stat-number">4 типа</div><div class="stat-label">проблем качества данных</div></div>
+                <div class="stat-box s3"><div class="stat-icon">🧩</div><div class="stat-number">3 стратегии</div><div class="stat-label">обработки пропусков</div></div>
+                <div class="stat-box s4"><div class="stat-icon">📐</div><div class="stat-number">2 метода</div><div class="stat-label">поиска выбросов</div></div>
+                <div class="stat-box s5"><div class="stat-icon">🔄</div><div class="stat-number">ETL vs ELT</div><div class="stat-label">два подхода к пайплайнам</div></div>
+                <div class="stat-box s1"><div class="stat-icon">🛠️</div><div class="stat-number">4 инструмента</div><div class="stat-label">в работе</div></div>
+            </div>
+
+            <!-- ФОРМУЛА -->
+            <div class="formula-box">
+                <div class="formula-main">Понять данные → проверить → задокументировать → автоматизировать</div>
+                <div class="formula-example">Порядок важнее инструмента: сначала вопрос, потом метод</div>
+            </div>
+
+            <!-- БЛОК 1: ТИПЫ ПРОБЛЕМ -->
+            <div class="viz-card">
+                <div class="viz-title">⚠️ Блок 1. Четыре типа проблем качества данных</div>
+                <div class="grid-2">
+                    <div class="step-card">
+                        <h5>🕳️ Пропуски (missing values)</h5>
+                        <p>Пустые поля, значения <code>NULL</code>, пустые строки. Бывают и замаскированные: число <code>-999</code> вместо возраста или строка «неизвестно» в числовом столбце.</p>
+                        <span class="tag red">искажают расчёты</span>
+                    </div>
+                    <div class="step-card">
+                        <h5>👥 Дубликаты (duplicates)</h5>
+                        <p>Повторные записи после слияния источников, повторной загрузки или ошибок ввода. Один клиент превращается в двух.</p>
+                        <span class="tag orange">завышают метрики</span>
+                    </div>
+                    <div class="step-card">
+                        <h5>📈 Выбросы (outliers)</h5>
+                        <p>Значения, резко отличающиеся от основной массы. Не всегда ошибка: крупная сделка среди мелких — реальный случай.</p>
+                        <span class="tag purple">искажают средние</span>
+                    </div>
+                    <div class="step-card">
+                        <h5>🔀 Несогласованные форматы</h5>
+                        <p>Даты в форматах <code>DD.MM.YYYY</code> и <code>MM/DD/YYYY</code> в одном столбце, телефоны с плюсом и без, разный регистр, лишние пробелы. Ломают JOIN и фильтры.</p>
+                        <span class="tag">ломают связи</span>
+                    </div>
+                </div>
+                <div class="viz-caption">Эти четыре проблемы редко существуют изолированно. Поэтому очистка данных — это не один шаг, а <strong>последовательность осознанных решений</strong>.</div>
+            </div>
+
+            <!-- БЛОК 2: ПРОПУСКИ -->
+            <div class="viz-card">
+                <div class="viz-title">🧩 Блок 2. Три стратегии обработки пропусков</div>
+                <div class="grid-3">
+                    <div class="step-card">
+                        <div class="step-num">1</div>
+                        <h5>Удаление</h5>
+                        <p>Анализ полных случаев (complete-case analysis). Просто, но есть цена: потеря информации и риск смещения выборки, если пропуски не случайны.</p>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-num">2</div>
+                        <h5>Простые статистики</h5>
+                        <p>Среднее (mean) для непрерывных величин, мода (mode) для категориальных. Быстро, но сжимает распределение и занижает корреляцию.</p>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-num">3</div>
+                        <h5>Модели</h5>
+                        <p>Регрессия (regression) или градиентный бустинг (gradient boosting) предсказывают пропуск по остальным признакам. Сложнее, но сохраняет связи.</p>
+                    </div>
+                </div>
+                <div class="callout warn" style="margin-top: 10px;">
+                    <strong>⚠️ Важно</strong>
+                    <p>Заполнение средним — это <strong>не нейтральное действие</strong>. Оно меняет распределение, занижает корреляцию и занижает оценку стандартного отклонения (standard deviation).</p>
+                </div>
+            </div>
+
+            <!-- БЛОК 3: ВЫБРОСЫ -->
+            <div class="viz-card">
+                <div class="viz-title">📐 Блок 3. Выбросы: два метода поиска</div>
+                <div class="grid-2">
+                    <div style="background: #f7fafc; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 10px;">
+                        <div style="font-size: 12px; font-weight: bold; color: #1a365d; margin-bottom: 4px;">Z-score: отклонение от среднего</div>
+                        <svg viewBox="0 0 260 180" width="100%" style="display: block;">
+                            <rect x="0" y="0" width="260" height="180" fill="#ffffff"/>
+                            <path d="M 10 145 C 30 144, 35 135, 40 128 L 40 145 Z" fill="#e53e3e" opacity="0.25"/>
+                            <path d="M 250 145 C 230 144, 225 135, 220 128 L 220 145 Z" fill="#e53e3e" opacity="0.25"/>
+                            <path d="M 10 145 C 55 143, 70 45, 130 45 C 190 45, 205 143, 250 145" fill="#ebf8ff" stroke="#3182ce" stroke-width="2" class="svg-draw"/>
+                            <line x1="40" y1="45" x2="40" y2="145" stroke="#e53e3e" stroke-width="1.5" stroke-dasharray="4 3" class="svg-fade"/>
+                            <line x1="220" y1="45" x2="220" y2="145" stroke="#e53e3e" stroke-width="1.5" stroke-dasharray="4 3" class="svg-fade"/>
+                            <line x1="10" y1="145" x2="250" y2="145" class="axis"/>
+                            <text x="130" y="162" text-anchor="middle" class="label">mean</text>
+                            <text x="40" y="162" text-anchor="middle" class="label-tiny" fill="#9b2c2c">−3σ</text>
+                            <text x="220" y="162" text-anchor="middle" class="label-tiny" fill="#9b2c2c">+3σ</text>
+                            <text x="130" y="30" text-anchor="middle" class="label-small">распределение значений</text>
+                        </svg>
+                    </div>
+                    <div style="background: #f7fafc; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 10px;">
+                        <div style="font-size: 12px; font-weight: bold; color: #1a365d; margin-bottom: 4px;">IQR: межквартильный размах</div>
+                        <svg viewBox="0 0 260 180" width="100%" style="display: block;">
+                            <rect x="0" y="0" width="260" height="180" fill="#ffffff"/>
+                            <line x1="40" y1="90" x2="220" y2="90" stroke="#4a5568" stroke-width="1.5"/>
+                            <line x1="40" y1="72" x2="40" y2="108" stroke="#4a5568" stroke-width="2"/>
+                            <line x1="220" y1="72" x2="220" y2="108" stroke="#4a5568" stroke-width="2"/>
+                            <rect x="95" y="60" width="70" height="60" rx="4" fill="#ebf8ff" stroke="#3182ce" stroke-width="2"/>
+                            <line x1="130" y1="60" x2="130" y2="120" stroke="#e53e3e" stroke-width="2.5"/>
+                            <circle cx="22" cy="90" r="4" fill="#e53e3e" class="svg-fade-2"/>
+                            <circle cx="238" cy="90" r="4" fill="#e53e3e" class="svg-fade-2"/>
+                            <text x="95"  y="136" text-anchor="middle" class="label-tiny">Q1</text>
+                            <text x="165" y="136" text-anchor="middle" class="label-tiny">Q3</text>
+                            <text x="130" y="48" text-anchor="middle" class="label-tiny" fill="#9b2c2c">median</text>
+                            <text x="40"  y="156" text-anchor="middle" class="label-tiny">нижняя граница</text>
+                            <text x="220" y="156" text-anchor="middle" class="label-tiny">верхняя граница</text>
+                            <text x="130" y="172" text-anchor="middle" class="label-small">Q1 − 1.5·IQR и Q3 + 1.5·IQR</text>
+                        </svg>
+                    </div>
+                </div>
+                <div class="grid-4" style="margin-top: 10px;">
+                    <div class="step-card"><h5>Оставить</h5><p>Если выброс реален и важен для бизнеса.</p></div>
+                    <div class="step-card"><h5>Удалить</h5><p>Если это ошибка ввода или сбой.</p></div>
+                    <div class="step-card"><h5>Ограничить</h5><p>Winsorize: заменить на граничное значение.</p></div>
+                    <div class="step-card"><h5>Трансформировать</h5><p>Логарифмирование сглаживает хвосты.</p></div>
+                </div>
+            </div>
+
+            <!-- БЛОК 4: ВАЛИДАЦИЯ -->
+            <div class="viz-card">
+                <div class="viz-title">🛡️ Блок 4. Валидация: четыре уровня защиты</div>
+                <div class="grid-4">
+                    <div class="step-card">
+                        <div class="step-num">1</div>
+                        <h5>Схема на входе</h5>
+                        <p><code>Pydantic</code> или <code>JSON Schema</code> описывают поля и типы. Несоответствие — отказ.</p>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-num">2</div>
+                        <h5>Тесты в dbt</h5>
+                        <p>Уникальность, отсутствие <code>NULL</code>, допустимые значения, ссылочная целостность.</p>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-num">3</div>
+                        <h5>Quality gates</h5>
+                        <p>Проверки блокируют продвижение данных в production, если ожидания не выполнены.</p>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-num">4</div>
+                        <h5>Алерты</h5>
+                        <p>Проверка не прошла — уведомление в <code>Slack</code>, <code>PagerDuty</code> или почту.</p>
+                    </div>
+                </div>
+                <div class="callout ok" style="margin-top: 10px;">
+                    <strong>✅ Принцип fail closed</strong>
+                    <p>Уровень <code>error</code> в тесте dbt останавливает сборку. Лучше остановить пайплайн, чем пропустить плохие данные дальше.</p>
+                </div>
+            </div>
+
+            <!-- БЛОК 5: ETL И ELT -->
+            <div class="viz-card">
+                <div class="viz-title">🔄 Блок 5. ETL и ELT: где происходит преобразование</div>
+                <svg viewBox="0 0 540 200" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="200" fill="#ffffff"/>
+
+                    <text x="270" y="16" text-anchor="middle" class="label-strong" fill="#2b6cb0">ETL: Extract → Transform → Load</text>
+
+                    <rect x="15"  y="28" width="130" height="44" rx="8" fill="#ebf8ff" stroke="#3182ce" stroke-width="2"/>
+                    <text x="80"  y="55" text-anchor="middle" class="label" style="font-weight: bold;">Extract</text>
+
+                    <line x1="150" y1="50" x2="198" y2="50" stroke="#e53e3e" stroke-width="2.5"/>
+                    <polygon points="200,50 193,46 193,54" fill="#e53e3e"/>
+
+                    <rect x="205" y="28" width="130" height="44" rx="8" fill="#fffaf0" stroke="#d69e2e" stroke-width="2"/>
+                    <text x="270" y="48" text-anchor="middle" class="label" style="font-weight: bold;">Transform</text>
+                    <text x="270" y="62" text-anchor="middle" class="label-tiny">отдельный сервер</text>
+
+                    <line x1="340" y1="50" x2="388" y2="50" stroke="#e53e3e" stroke-width="2.5"/>
+                    <polygon points="390,50 383,46 383,54" fill="#e53e3e"/>
+
+                    <rect x="395" y="28" width="130" height="44" rx="8" fill="#f0fff4" stroke="#38a169" stroke-width="2"/>
+                    <text x="460" y="55" text-anchor="middle" class="label" style="font-weight: bold;">Load</text>
+
+                    <line x1="15" y1="100" x2="525" y2="100" stroke="#e2e8f0" stroke-width="1.5" stroke-dasharray="6 4"/>
+
+                    <text x="270" y="118" text-anchor="middle" class="label-strong" fill="#276749">ELT: Extract → Load → Transform</text>
+
+                    <rect x="15"  y="130" width="130" height="44" rx="8" fill="#ebf8ff" stroke="#3182ce" stroke-width="2"/>
+                    <text x="80"  y="157" text-anchor="middle" class="label" style="font-weight: bold;">Extract</text>
+
+                    <line x1="150" y1="152" x2="198" y2="152" stroke="#e53e3e" stroke-width="2.5"/>
+                    <polygon points="200,152 193,148 193,156" fill="#e53e3e"/>
+
+                    <rect x="205" y="130" width="130" height="44" rx="8" fill="#f0fff4" stroke="#38a169" stroke-width="2"/>
+                    <text x="270" y="150" text-anchor="middle" class="label" style="font-weight: bold;">Load</text>
+                    <text x="270" y="164" text-anchor="middle" class="label-tiny">сырые данные</text>
+
+                    <line x1="340" y1="152" x2="388" y2="152" stroke="#e53e3e" stroke-width="2.5"/>
+                    <polygon points="390,152 383,148 383,156" fill="#e53e3e"/>
+
+                    <rect x="395" y="130" width="130" height="44" rx="8" fill="#faf5ff" stroke="#805ad5" stroke-width="2"/>
+                    <text x="460" y="150" text-anchor="middle" class="label" style="font-weight: bold;">Transform</text>
+                    <text x="460" y="164" text-anchor="middle" class="label-tiny">внутри хранилища</text>
+                </svg>
+
+                <table class="compare-table" style="margin-top: 12px;">
+                    <thead>
+                        <tr><th style="width: 24%;">Критерий</th><th style="width: 38%;">ETL</th><th>ELT</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>Порядок шагов</strong></td><td>Extract → Transform → Load</td><td>Extract → Load → Transform</td></tr>
+                        <tr><td><strong>Где преобразование</strong></td><td>Отдельный сервер или среда</td><td>Внутри хранилища, его вычислительными силами</td></tr>
+                        <tr><td><strong>Сильная сторона</strong></td><td>Контроль до загрузки, маскирование чувствительных данных</td><td>Гибкость и масштаб, эластичные облачные вычисления</td></tr>
+                        <tr><td><strong>Слабая сторона</strong></td><td>Фиксированная мощность сервера, риск узкого места</td><td>Сырые данные какое-то время лежат в хранилище</td></tr>
+                        <tr><td><strong>Когда выбирать</strong></td><td>Жёсткие требования compliance, конфиденциальность</td><td>Облачная аналитика, большие и растущие объёмы</td></tr>
+                    </tbody>
+                </table>
+                <div class="callout ok" style="margin-top: 10px;">
+                    <strong>💡 Практический вывод</strong>
+                    <p>В облачной среде доминирует <strong>ELT</strong>. <strong>ETL</strong> сохраняет ценность там, где данные нельзя загружать в хранилище без предварительной очистки. Гибридные схемы тоже распространены.</p>
+                </div>
+            </div>
+
+            <!-- БЛОК 6: ИНСТРУМЕНТЫ -->
+            <div class="viz-card">
+                <div class="viz-title">🛠️ Блок 6. Инструменты по слоям</div>
+                <div class="grid-2">
+                    <div class="step-card">
+                        <h5>dbt</h5>
+                        <p>Слой трансформации в ELT. Описывает SQL-модели, строит зависимости и встраивает тесты качества прямо в сборку.</p>
+                        <span class="tag green">трансформация и тесты</span>
+                    </div>
+                    <div class="step-card">
+                        <h5>Airflow</h5>
+                        <p>Оркестратор. Управляет порядком задач, расписанием и зависимостями. Запускает другие инструменты в нужной последовательности.</p>
+                        <span class="tag">оркестрация</span>
+                    </div>
+                    <div class="step-card">
+                        <h5>Pandas</h5>
+                        <p>Библиотека Python для обработки данных в памяти. Прототипы, exploratory analysis, небольшие и средние наборы.</p>
+                        <span class="tag purple">обработка в памяти</span>
+                    </div>
+                    <div class="step-card">
+                        <h5>SQL-трансформации</h5>
+                        <p>Оконные функции для дедупликации, <code>COALESCE</code> для пропусков, <code>CASE</code> для форматов, <code>PERCENTILE_CONT</code> для расчёта IQR.</p>
+                        <span class="tag orange">фундамент очистки</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ТАБЛИЦА ПО РОЛЯМ -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 8px;">👥 Для кого это критично: восемь ролей</div>
+                <table class="role-table">
+                    <thead>
+                        <tr><th style="width: 26%;">Роль</th><th style="width: 30%;">С кем работает</th><th>Главный навык</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="role-emoji">📈</span> <strong>Data Analyst</strong></td><td>Продуктовые и маркетинговые команды</td><td>Отличать случайный шум от системной проблемы</td></tr>
+                        <tr><td><span class="role-emoji">📊</span> <strong>BI Analyst</strong></td><td>Все подразделения</td><td>Строить витрины со встроенными тестами качества</td></tr>
+                        <tr><td><span class="role-emoji">🗄️</span> <strong>Big Data Analyst</strong></td><td>Инженеры и бизнес</td><td>Находить проблемы в больших объёмах до обучения моделей</td></tr>
+                        <tr><td><span class="role-emoji">⚙️</span> <strong>Data Engineer</strong></td><td>Аналитики и хранилище</td><td>Настраивать пайплайны и quality gates</td></tr>
+                        <tr><td><span class="role-emoji">🚀</span> <strong>Product Analyst</strong></td><td>Продуктовая команда</td><td>Проверять метрики на дубликаты и пропуски</td></tr>
+                        <tr><td><span class="role-emoji">💰</span> <strong>Financial Analyst</strong></td><td>Руководство и финансовый отдел</td><td>Сверять данные из разных систем</td></tr>
+                        <tr><td><span class="role-emoji">📣</span> <strong>Marketing Analyst</strong></td><td>Маркетинг и агентства</td><td>Отличать реальный рост от выбросов</td></tr>
+                        <tr><td><span class="role-emoji">💼</span> <strong>Business Analyst</strong></td><td>Заказчик и разработка</td><td>Формулировать требования к данным</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- CALL-OUT -->
+            <div class="callout ok">
+                <strong>💡 Главный вывод</strong>
+                <p>Качество данных — это не этап, который проходят один раз. Это <strong>непрерывная дисциплина</strong>. Понять данные, проверить их, задокументировать решения и автоматизировать проверки. Инструменты меняются, принципы остаются.</p>
+            </div>
+
+            <!-- ВИДЕОПЛЕЕР -->
+            <div class="video-section">
+                <div class="video-container">
+                    <iframe id="lecture-player" src="https://rutube.ru" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+                </div>
+                <div class="links-hub">
+                    <button onclick="changeVideo('https://rutube.ru/')" class="video-btn stop-btn">⏹ СТОП</button>
+                    <button onclick="changeVideo('https://rutube.ru/play/embed/')" class="video-btn rt-btn">📜 Лекция 7. Качество данных</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="slide-footer">
+            Направление «Менеджмент» | Курс: Аналитика данных | Лекция 7: «Качество данных и ETL/ELT»
+        </div>
+    </div>
+
+    <!-- ПРАВАЯ ПАНЕЛЬ -->
+    <div class="speaker-notes">
+        <!-- Фиксированная верхняя часть с плеером -->
+        <div style="position: sticky; top: 0; background: #1a202c; padding: 20px 20px 10px 20px; border-bottom: 1px solid #4a5568; width: 100%; z-index: 100;">
+                       <div class="notes-header" style="display: block; padding-bottom: 15px;">
+               <audio id="lecture-audio" preload="auto" controls
+                      src="https://archive.org/download/03_20261110_20261110/07.mp3"
+                      style="width: 100%; height: 32px; border-radius: 4px;"></audio>
+            </div>
+            <div style="width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+             <iframe id="right-lecture-player" src="https://archive.org/embed/20261020_20261020_0955?autoplay=true&loop=true&muted=true"  allow="clipboard-write; autoplay" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen style="border: none;"></iframe>
+
+                           </div>
+        </div>
+
+        <div class="lecture-text" style="margin-top: 20px;">
+
+            <h3>📌 Введение</h3>
+
+            <p>Добрый день, коллеги. Мы начинаем седьмую лекцию нашего курса. Это качество данных и подходы ETL и ELT.</p>
+
+            <p>В шестой лекции мы вскользь упомянули очистку данных. Пришло время разобраться в ней подробно. Причина проста. По оценкам McKinsey, средний специалист тратит от 60 до 80 процентов рабочего времени именно на подготовку и очистку данных. Это не ошибка в планировании. Это фундаментальное свойство работы с реальными данными.</p>
+
+            <p>Грязные данные не падают с ошибкой. Они проходят через пайплайн молча. Они портят отчёты, ломают модели машинного обучения и подрывают доверие к аналитике. Валидация данных — это не накладные расходы. Это страховка. И чем раньше вы обнаружите проблему, тем дешевле её исправить.</p>
+
+            <p>Сегодня мы разберём шесть блоков. Сначала типы проблем. Затем стратегии работы с пропусками. Потом выбросы. Далее валидацию и алерты. После этого архитектуры ETL и ELT. И в конце инструменты.</p>
+
+            <h3>📌 Блок 1. Типы проблем качества данных</h3>
+
+            <p>Проблемы качества данных редко приходят по одной. Обычно они образуют букет. Выделяют четыре основные категории.</p>
+
+            <p>Первая категория — пропуски (missing values). Это пустые поля, значения <code>NULL</code>, пустые строки. Но не только. Пропуском может быть и замаскированное значение. Например, число минус 999 вместо реального возраста или строка «неизвестно» в числовом столбце. Пропуски искажают расчёты и ломают модели.</p>
+
+            <p>Вторая категория — дубликаты (duplicates). Это повторяющиеся записи. Они возникают при слиянии источников, при повторной загрузке данных или из-за ошибок ввода. Дубликаты завышают метрики. Если клиент дважды попал в базу, отчёт покажет двух клиентов вместо одного.</p>
+
+            <p>Третья категория — выбросы (outliers). Это значения, которые резко отличаются от основной массы данных. Выброс — это не всегда ошибка. Иногда это реальный, но редкий случай. Например, крупная сделка среди множества мелких. Тем не менее выбросы искажают средние значения и могут сбить с толку алгоритмы.</p>
+
+            <p>Четвёртая категория — несогласованные форматы (inconsistent formats). Это разные написания одного и того же. Даты в форматах <code>DD.MM.YYYY</code> и <code>MM/DD/YYYY</code> в одном столбце. Телефоны с плюсом и без. Текст в разном регистре. Лишние пробелы. Такие мелочи ломают <code>JOIN</code> и фильтры.</p>
+
+            <p>Эти четыре проблемы редко существуют изолированно. Поэтому очистка данных — это не один шаг, а последовательность решений.</p>
+
+            <h3>📌 Блок 2. Стратегии обработки пропусков</h3>
+
+            <p>Пропуски — самая частая проблема. И здесь нет одного универсального рецепта. Выбор стратегии зависит от механизма пропуска и от доли пропущенных значений.</p>
+
+            <h4>Удаление</h4>
+
+            <p>Самый простой путь — удалить строки или столбцы с пропусками. Этот метод называется complete-case analysis. Если пропусков мало и они распределены случайно, удаление почти не исказит результаты.</p>
+
+            <p>Но у удаления есть цена. Вы теряете информацию. А если пропуски связаны с самой природой данных — например, люди с высоким доходом чаще не указывают доход, — удаление сместит выборку. Практическое правило: если в столбце пропущено больше определённого порога, скажем, более 50 процентов значений, столбец можно удалить. Если пропусков меньше, но они разбросаны по строкам, можно удалить строки.</p>
+
+            <h4>Заполнение простыми статистиками</h4>
+
+            <p>Второй путь — заполнить пропуски. Самые распространённые способы: среднее арифметическое (mean) для непрерывных величин и мода (mode) для категориальных.</p>
+
+            <p>Это быстро. Но у метода есть серьёзный недостаток. Заполнение средним сжимает распределение. Оно неестественно уплотняет значения вокруг центра, занижает корреляцию и занижает оценку стандартного отклонения (standard deviation). Если пропусков немного, этим можно пренебречь. Если пропусков много, такой подход исказит данные.</p>
+
+            <h4>Заполнение на основе моделей</h4>
+
+            <p>Третий, более аккуратный путь — использовать модели. Вы строите регрессию (regression) или другой алгоритм, который предсказывает пропущенное значение на основе остальных признаков. Это сложнее. Но такой подход сохраняет взаимосвязи между переменными.</p>
+
+            <p>Есть и промежуточный вариант. Некоторые алгоритмы, например градиентный бустинг (gradient boosting), умеют переваривать пропуски напрямую. Дерево решений (decision tree) может отправить объект с пропуском в отдельную ветку. В этом случае заполнение не требуется, но и сам алгоритм должен это поддерживать.</p>
+
+            <p>Ключевая мысль. Стратегию обработки пропусков нужно выбирать осознанно, а не по принципу «так быстрее». Заполнение средним — это не нейтральное действие. Оно меняет данные.</p>
+
+            <h3>📌 Блок 3. Выбросы: как найти и что делать</h3>
+
+            <p>Выбросы ищут двумя основными статистическими методами. И у каждого есть своя логика.</p>
+
+            <h4>Z-score</h4>
+
+            <p>Z-score измеряет, на сколько стандартных отклонений значение удалено от среднего. Если Z-score больше трёх или меньше минус трёх, значение обычно считают выбросом. Метод работает хорошо, когда данные распределены нормально. Но у него есть слабое место: само среднее и стандартное отклонение чувствительны к выбросам. Один экстремальный выброс может замаскировать другие. Поэтому существует модифицированный Z-score, который использует медиану (median) вместо среднего и устойчив к ненормальным распределениям.</p>
+
+            <h4>IQR</h4>
+
+            <p>IQR — interquartile range, или межквартильный размах. Это разница между третьим и первым квартилями, то есть диапазон, в котором лежат средние 50 процентов данных. Выбросами считаются значения, выходящие за пределы: нижняя граница — первый квартиль минус 1.5 IQR, верхняя — третий квартиль плюс 1.5 IQR. IQR устойчив к экстремальным значениям, потому что опирается на квартили, а не на среднее.</p>
+
+            <h4>Что делать с выбросами</h4>
+
+            <p>Найти выброс — половина дела. Главный вопрос: что с ним делать.</p>
+
+            <p>Вариант первый — оставить. Если выброс реален и важен для бизнеса, его нельзя удалять. Крупная сделка — это не ошибка. Её нужно анализировать отдельно.</p>
+
+            <p>Вариант второй — удалить. Если выброс — результат ошибки ввода или сбоя, его удаление оправдано.</p>
+
+            <p>Вариант третий — ограничить, или winsorize. Экстремальное значение заменяется на граничное. Например, все значения выше девятого дециля приравниваются к девятому децилю. Это сохраняет наблюдение, но убирает чрезмерное влияние на метрики.</p>
+
+            <p>Вариант четвёртый — трансформировать. Логарифмирование (log transform) или другие нелинейные преобразования сглаживают хвосты распределения.</p>
+
+            <h3>📌 Блок 4. Валидация данных: схемы, проверки, алерты</h3>
+
+            <p>Очистка — это реакция на уже возникшую проблему. Валидация — это предотвращение проблемы. Валидация должна быть встроена в пайплайн на нескольких уровнях.</p>
+
+            <h4>Схемная валидация на входе</h4>
+
+            <p>Первый рубеж — проверка схемы при загрузке. Входящие данные должны соответствовать ожидаемой структуре: набор полей, типы данных, обязательность полей. Инструменты вроде Pydantic или JSON Schema позволяют описать ожидаемую схему и отклонять записи, которые ей не соответствуют.</p>
+
+            <h4>Тесты в dbt</h4>
+
+            <p>В dbt валидация встроена в процесс трансформации. Вы описываете тесты прямо в конфигурации модели. Проверки могут быть разными: на уникальность (unique), на отсутствие NULL в обязательных полях (not_null), на допустимые значения (accepted_values), на ссылочную целостность (relationships).</p>
+
+            <p>Ключевая настройка — уровень серьёзности (severity). Тест может быть <code>warn</code> или <code>error</code>. Уровень <code>error</code> останавливает сборку. Если тест не прошёл, следующие модели не строятся. Это принцип fail closed: лучше остановить пайплайн, чем пропустить плохие данные дальше.</p>
+
+            <h4>Quality gates и алерты</h4>
+
+            <p>Современный подход — quality gates, то есть ворота качества. Это проверки, которые блокируют продвижение данных в production, если ожидания не выполнены. Для этого используются фреймворки вроде Great Expectations или dbt-тесты с сохранением результатов.</p>
+
+            <p>Алерты замыкают контур. Проверка не прошла — уходит уведомление в Slack, PagerDuty или почту. Без алертов валидация превращается в немой отчёт, который никто не читает.</p>
+
+            <h3>📌 Блок 5. ETL и ELT, пайплайны данных</h3>
+
+            <p>До сих пор мы говорили о том, что делать с данными. Теперь — о том, где это происходит.</p>
+
+            <h4>ETL</h4>
+
+            <p>ETL расшифровывается как Extract, Transform, Load — извлечь, преобразовать, загрузить. Данные извлекаются из источников, затем очищаются и преобразуются на отдельном сервере или в отдельной среде, и только после этого попадают в хранилище.</p>
+
+            <p>Сильная сторона ETL — контроль. Вы проверяете и очищаете данные до того, как они окажутся в хранилище. Это важно для чувствительных данных: конфиденциальная информация может быть замаскирована или удалена до загрузки. Слабая сторона — масштабируемость. ETL-сервер имеет фиксированную мощность. При росте объёмов он может стать узким местом.</p>
+
+            <h4>ELT</h4>
+
+            <p>ELT меняет порядок: Extract, Load, Transform — извлечь, загрузить, преобразовать. Сырые данные сначала загружаются в хранилище, а преобразование происходит уже внутри него, силами самого хранилища.</p>
+
+            <p>Сильная сторона ELT — гибкость и масштаб. Облачные хранилища вроде Snowflake, BigQuery или Redshift обеспечивают эластичные вычисления. Вы можете загрузить данные за минуты и трансформировать их по мере необходимости, не пересоздавая всю цепочку. Слабая сторона — данные какое-то время лежат в сыром виде. Для чувствительной информации это может быть неприемлемо.</p>
+
+            <p>Практический вывод. В современной облачной среде ELT стал доминирующим подходом для аналитических пайплайнов. ETL сохраняет ценность там, где есть жёсткие требования к compliance и где данные нельзя загружать в хранилище без предварительной очистки. Гибридные схемы тоже распространены: ETL для маскирования чувствительных данных, ELT для остальной аналитики.</p>
+
+            <h3>📌 Блок 6. Инструменты</h3>
+
+            <p>Инструменты делятся на три слоя: трансформация, оркестрация и обработка в памяти.</p>
+
+            <p>dbt — это слой трансформации в подходе ELT. Он позволяет описывать SQL-модели, строить между ними зависимости и встраивать тесты качества прямо в процесс сборки. dbt не загружает данные. Он превращает сырые таблицы в аналитические витрины.</p>
+
+            <p>Apache Airflow — это оркестратор. Он управляет порядком выполнения задач, расписанием и зависимостями. Airflow не трансформирует данные сам по себе. Он запускает другие инструменты в нужной последовательности. Валидация в Airflow может быть реализована через SQL-операторы проверки или через интеграцию с внешними фреймворками качества.</p>
+
+            <p>Pandas — библиотека Python для обработки данных в памяти. Она незаменима для exploratory analysis, прототипирования и небольших и средних наборов данных. В Pandas удобно реализовывать все шаги очистки: обработку пропусков, поиск дубликатов, приведение форматов, обнаружение выбросов. Для больших объёмов на смену Pandas приходят Polars или PySpark.</p>
+
+            <p>SQL-трансформации остаются фундаментом. Большая часть очистки в современных хранилищах выполняется именно на SQL: оконные функции (window functions) для дедупликации, <code>COALESCE</code> для обработки пропусков, <code>CASE</code> для нормализации форматов, <code>PERCENTILE_CONT</code> для расчёта IQR.</p>
+
+            <h3>📌 Заключение</h3>
+
+            <p>Мы подошли к завершению лекции. Давайте соберём всё вместе.</p>
+
+            <p>Качество данных — это не этап, который можно пройти один раз. Это непрерывная дисциплина.</p>
+
+            <p>Запомните три вещи.</p>
+
+            <p>Первое. Пропуски, дубликаты, выбросы и несогласованные форматы — это не исключения. Это норма работы с реальными данными. На очистку уходит большая часть времени, и это время не потрачено зря.</p>
+
+            <p>Второе. Валидация должна быть встроена в пайплайн, а не выполняться вручную после сбоя. Схемы на входе, тесты в dbt, quality gates и алерты превращают грязные данные из катастрофы в управляемый процесс.</p>
+
+            <p>Третье. Выбор между ETL и ELT — это выбор между контролем до загрузки и гибкостью после загрузки. В облачной среде побеждает ELT. Но для чувствительных данных ETL сохраняет свою роль.</p>
+
+            <p>Инструменты меняются. Принципы остаются: понять данные, проверить их, задокументировать решения и автоматизировать проверки.</p>
+
+            <p>А сейчас — спасибо за внимание. Я готов ответить на ваши вопросы.</p>
+
+            <!-- ЧЕК-ЛИСТ -->
+            <div class="dark-block">
+                <div class="dark-block-title">✅ Чек-лист валидации перед запуском пайплайна</div>
+                <ol>
+                    <li>Проверить схему входящих данных: поля, типы, обязательность.</li>
+                    <li>Проверить уникальность ключей и отсутствие дубликатов.</li>
+                    <li>Посчитать долю пропусков (<code>NULL</code>) по каждому столбцу.</li>
+                    <li>Проверить диапазоны и допустимые значения.</li>
+                    <li>Включить dbt-тесты с уровнем <code>error</code>, который останавливает сборку.</li>
+                    <li>Настроить алерты в Slack или PagerDuty.</li>
+                </ol>
+            </div>
+
+            <!-- СЛОВАРЬ -->
+            <div class="dark-block">
+                <div class="dark-block-title">📖 Словарь терминов</div>
+                <table class="dark-table">
+                    <thead><tr><th style="width:30%;">Термин</th><th>Пояснение</th></tr></thead>
+                    <tbody>
+                        <tr><td class="term">missing values</td><td>Пропуски: пустые поля, <code>NULL</code>, замаскированные значения</td></tr>
+                        <tr><td class="term">duplicates</td><td>Дубликаты: повторяющиеся записи, завышающие метрики</td></tr>
+                        <tr><td class="term">outliers</td><td>Выбросы: значения, резко отличающиеся от основной массы</td></tr>
+                        <tr><td class="term">z-score</td><td>Отклонение от среднего в единицах стандартного отклонения</td></tr>
+                        <tr><td class="term">IQR</td><td>Межквартильный размах, устойчивый к экстремальным значениям</td></tr>
+                        <tr><td class="term">winsorize</td><td>Ограничение экстремальных значений граничным уровнем</td></tr>
+                        <tr><td class="term">NULL</td><td>Специальное значение, обозначающее отсутствие данных</td></tr>
+                        <tr><td class="term">pipeline</td><td>Последовательность шагов обработки данных</td></tr>
+                        <tr><td class="term">ETL</td><td>Extract, Transform, Load — извлечь, преобразовать, загрузить</td></tr>
+                        <tr><td class="term">ELT</td><td>Extract, Load, Transform — извлечь, загрузить, преобразовать</td></tr>
+                        <tr><td class="term">dbt</td><td>Data Build Tool — трансформации и тесты в хранилище</td></tr>
+                        <tr><td class="term">Airflow</td><td>Apache Airflow — оркестратор задач и зависимостей</td></tr>
+                        <tr><td class="term">quality gates</td><td>Проверки, блокирующие продвижение данных в production</td></tr>
+                        <tr><td class="term">fail closed</td><td>Принцип: при ошибке пайплайн останавливается</td></tr>
+                        <tr><td class="term">compliance</td><td>Соответствие требованиям регуляторов и политикам</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function changeVideo(embedUrl) {
+            document.getElementById('lecture-player').src = embedUrl;
+        }
+    </script>
+
+    <!-- НАВИГАЦИЯ -->
+    <nav class="lecture-nav" id="lectureNav">
+    <div class="nav-progress" id="navProgress" style="width: 0%;"></div>
+    <a href="Лекция (N-1).html" class="nav-btn-arrow" id="prevBtn">
+        <span class="arrow-icon">←</span>
+        <span class="arrow-label">
+            <small>Назад</small>
+            <span class="arrow-title" id="prevTitle">Лекция (N-1)</span>
+        </span>
+    </a>
+    <div class="nav-center">
+        <div class="nav-counter">Лекция <span id="currentNum">N</span> <span>из 21</span></div>
+        <a href="index.html" class="nav-index-link">📚 К содержанию</a>
+    </div>
+    <a href="Лекция (N+1).html" class="nav-btn-arrow" id="nextBtn">
+        <span class="arrow-label" style="align-items: flex-end;">
+            <small>Вперёд</small>
+            <span class="arrow-title" id="nextTitle">Лекция (N+1)</span>
+        </span>
+        <span class="arrow-icon">→</span>
+    </a>
+</nav>
+
+    <div id="scroll-status-badge"
+   
+
+    <script>
+    (function () {
+        'use strict';
+        const TOTAL_LECTURES = 21;
+        const totalDurationMs = (21* 60) * 1000;
+        const autoNextDelayMs = 2000;
+        const AUTOSTART_PARAM = 'autostart';
+
+        const fileName = decodeURIComponent(location.pathname.split('/').pop() || '');
+        let currentLecture = 7;
+        const match = fileName.match(/Лекция\s*(\d+)\.html/i);
+        if (match) currentLecture = parseInt(match[1], 10);
+        else { const el = document.getElementById('currentNum'); if (el) currentLecture = parseInt(el.textContent, 10) || 7; }
+        if (isNaN(currentLecture) || currentLecture < 1) currentLecture = 1;
+        if (currentLecture > TOTAL_LECTURES) currentLecture = TOTAL_LECTURES;
+
+        const prev = currentLecture > 1 ? currentLecture - 1 : null;
+        const next = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+
+        const currentNumEl = document.getElementById('currentNum');
+        if (currentNumEl) currentNumEl.textContent = currentLecture;
+        const navProgress = document.getElementById('navProgress');
+        if (navProgress) navProgress.style.width = (currentLecture / TOTAL_LECTURES * 100) + '%';
+
+        const prevBtn = document.getElementById('prevBtn');
+        if (prevBtn) {
+            if (prev) { prevBtn.href = 'Лекция ' + prev + '.html'; document.getElementById('prevTitle').textContent = 'Лекция ' + prev; prevBtn.style.opacity = '1'; prevBtn.onclick = null; }
+            else { prevBtn.removeAttribute('href'); prevBtn.style.opacity = '0.35'; prevBtn.style.cursor = 'not-allowed'; prevBtn.onclick = (e) => e.preventDefault(); document.getElementById('prevTitle').textContent = 'Это первая лекция'; }
+        }
+        const nextBtn = document.getElementById('nextBtn');
+        if (nextBtn) {
+            if (next) { nextBtn.href = 'Лекция ' + next + '.html'; document.getElementById('nextTitle').textContent = 'Лекция ' + next; nextBtn.style.opacity = '1'; nextBtn.onclick = null; }
+            else { nextBtn.removeAttribute('href'); nextBtn.style.opacity = '0.35'; nextBtn.style.cursor = 'not-allowed'; nextBtn.onclick = (e) => e.preventDefault(); document.getElementById('nextTitle').textContent = 'Это последняя лекция'; }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+            if (e.key === 'ArrowLeft' && prev) window.location.href = 'Лекция ' + prev + '.html';
+            else if (e.key === 'ArrowRight' && next) window.location.href = 'Лекция ' + next + '.html';
+            else if (e.key === 'Home') window.location.href = 'index.html';
+        });
+
+        function initScroll() {
+            const studentBlock = document.querySelector('.student-view');
+            const speakerBlock = document.querySelector('.speaker-notes');
+            const badge = document.getElementById('scroll-status-badge');
+            const audio = document.getElementById('lecture-audio');
+            if (!studentBlock || !speakerBlock) return;
+
+            const studentBehavior = studentBlock.style.scrollBehavior;
+            const speakerBehavior = speakerBlock.style.scrollBehavior;
+            let isRunning = false, completed = false, pausedElapsed = 0, startedAt = 0, rafId = null;
+            let startS = 0, startP = 0, maxS = 0, maxP = 0;
+
+            function setBadge(text, color) { if (!badge) return; badge.style.display = 'block'; badge.textContent = text; badge.style.borderColor = color; }
+            function measure() { maxS = Math.max(studentBlock.scrollHeight - studentBlock.clientHeight, 0); maxP = Math.max(speakerBlock.scrollHeight - speakerBlock.clientHeight, 0); }
+            function fmt(ms) { const m = Math.floor(ms / 60000); const s = Math.floor((ms % 60000) / 1000); return m + ':' + String(s).padStart(2, '0'); }
+            function playAudio() { if (!audio) return; const p = audio.play(); if (p && typeof p.catch === 'function') { p.catch(err => { console.warn('[AutoAudio]', err.message); setBadge('▶ ИДЕТ ПРОКРУТКА (звук заблокирован)', '#eab308'); }); } }
+            function pauseAudio() { if (audio) try { audio.pause(); } catch (_) {} }
+            function resetAudio() { if (audio) try { audio.pause(); audio.currentTime = 0; } catch (_) {} }
+
+            function animate() {
+                if (!isRunning) return;
+                const elapsed = pausedElapsed + (performance.now() - startedAt);
+                const fraction = Math.min(elapsed / totalDurationMs, 1);
+                measure();
+                studentBlock.scrollTop = startS + (maxS - startS) * fraction;
+                speakerBlock.scrollTop = startP + (maxP - startP) * fraction;
+                if (badge) { badge.textContent = '▶ ' + fmt(elapsed) + ' / 32:00'; badge.style.borderColor = '#16a34a'; }
+                if (fraction >= 1) { finish(); return; }
+                rafId = requestAnimationFrame(animate);
+            }
+
+            function startOrResume() {
+                if (completed) { pausedElapsed = 0; completed = false; studentBlock.scrollTop = 0; speakerBlock.scrollTop = 0; resetAudio(); }
+                measure(); startS = studentBlock.scrollTop; startP = speakerBlock.scrollTop;
+                startedAt = performance.now(); isRunning = true;
+                studentBlock.style.scrollBehavior = 'auto'; speakerBlock.style.scrollBehavior = 'auto';
+                cancelAnimationFrame(rafId); rafId = requestAnimationFrame(animate);
+                playAudio();
+            }
+            function pause() {
+                if (isRunning) pausedElapsed += performance.now() - startedAt;
+                isRunning = false; cancelAnimationFrame(rafId);
+                setBadge('⏸ ПАУЗА ' + fmt(pausedElapsed), '#dc2626');
+                studentBlock.style.scrollBehavior = studentBehavior; speakerBlock.style.scrollBehavior = speakerBehavior;
+                pauseAudio();
+            }
+            function finish() {
+                isRunning = false; completed = true; cancelAnimationFrame(rafId);
+                measure(); studentBlock.scrollTop = maxS; speakerBlock.scrollTop = maxP;
+                studentBlock.style.scrollBehavior = studentBehavior; speakerBlock.style.scrollBehavior = speakerBehavior;
+                const nextLec = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+                if (nextLec) {
+                    setBadge('✅ ГОТОВО → Лекция ' + nextLec, '#16a34a');
+                    setTimeout(() => { location.href = 'Лекция ' + nextLec + '.html?' + AUTOSTART_PARAM + '=1'; }, autoNextDelayMs);
+                } else {
+                    setBadge('✅ КУРС ЗАВЕРШЕН', '#16a34a');
+                    pauseAudio();
+                }
+            }
+            function toggle() { isRunning ? pause() : startOrResume(); }
+
+            window.addEventListener('keydown', (e) => {
+                if (e.repeat) return;
+                const t = e.target; const tag = t && t.tagName;
+                if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+                if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); toggle(); }
+            }, true);
+
+            if (badge) badge.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+            [studentBlock, speakerBlock].forEach(el => {
+                el.addEventListener('click', (e) => {
+                    if (e.target.closest('a,button,iframe,input,textarea,select,video,audio')) return;
+                    if (window.getSelection().toString().length > 0) return;
+                    toggle();
+                });
+            });
+
+            const params = new URLSearchParams(location.search);
+            if (params.get(AUTOSTART_PARAM) === '1') {
+                params.delete(AUTOSTART_PARAM);
+                const clean = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
+                history.replaceState(null, '', clean);
+                setTimeout(startOrResume, 500);
+            } else { setBadge('▶ ПРОБЕЛ / КЛИК — старт', '#4a5568'); }
+        }
+
+        if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initScroll, { once: true }); }
+        else { initScroll(); }
+    })();
+    </script>
+
+</body>
+</html>

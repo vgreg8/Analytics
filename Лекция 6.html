@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лекция 6. Статистические методы анализа данных</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #ffffff; }
+
+        .student-view { width: 66.66%; height: 100vh; background: #ffffff; padding: 35px 40px; display: flex; flex-direction: column; justify-content: space-between; border-right: 2px solid #e2e8f0; overflow-y: auto; scroll-behavior: smooth; }
+        .speaker-notes { width: 33.34%; height: 100%; background: #1a202c; color: #edf2f7; padding: 30px; overflow-y: auto; }
+
+        .slide-header { font-size: 26px; color: #1a365d; font-weight: bold; line-height: 1.3; margin-bottom: 18px; border-bottom: 4px solid #3182ce; padding-bottom: 12px; }
+        .slide-body { flex-grow: 1; display: flex; flex-direction: column; gap: 18px; padding: 5px 0; }
+        .slide-footer { font-size: 13px; color: #a0aec0; text-align: right; margin-top: 12px; }
+
+        .chart-box { background: #f7fafc; border: 2.5px dashed #cbd5e0; padding: 20px; border-radius: 12px; }
+        .chart-box strong { font-size: 16px; display: block; margin-bottom: 6px; }
+        .chart-box p { font-size: 13px; color: #4a5568; line-height: 1.45; }
+
+        .viz-card { background: #ffffff; border: 2px solid #e2e8f0; border-radius: 12px; padding: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.04); }
+        .viz-title { font-size: 14px; font-weight: bold; color: #1a365d; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .viz-caption { font-size: 12px; color: #4a5568; margin-top: 10px; line-height: 1.5; }
+        .viz-caption strong { color: #2d3748; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+
+        .cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .cat-card { border-radius: 10px; padding: 14px 16px; border: 2px solid #e2e8f0; }
+        .cat-card.info { background: #ebf8ff; border-color: #90cdf4; }
+
+        .tag { display: inline-block; background: #ebf8ff; color: #2b6cb0; padding: 2px 7px; border-radius: 4px; font-size: 11px; margin: 2px 2px 2px 0; font-weight: 500; }
+        .tag.warn { background: #fed7d7; color: #9b2c2c; }
+        .tag.ok { background: #c6f6d5; color: #22543d; }
+
+        .compare-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .compare-table th { background: #1a365d; color: white; padding: 9px 11px; text-align: left; font-weight: 600; }
+        .compare-table td { padding: 8px 11px; border-bottom: 1px solid #e2e8f0; color: #2d3748; vertical-align: top; }
+        .compare-table tr:nth-child(even) td { background: #f7fafc; }
+
+        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .stat-box { background: #ebf8ff; border-radius: 10px; padding: 14px; text-align: center; border: 2px solid #90cdf4; }
+        .stat-box .stat-icon { font-size: 28px; }
+        .stat-box .stat-number { font-size: 16px; font-weight: 900; color: #2b6cb0; margin-top: 4px; }
+        .stat-box .stat-label { font-size: 11px; color: #4a5568; margin-top: 2px; }
+
+        .flow-diagram { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 14px; background: #f7fafc; border-radius: 12px; border: 2px dashed #cbd5e0; flex-wrap: wrap; }
+        .flow-step { flex: 1; min-width: 90px; text-align: center; padding: 8px 6px; background: white; border-radius: 8px; border: 2px solid #e2e8f0; }
+        .flow-step .flow-icon { font-size: 20px; }
+        .flow-step .flow-title { font-size: 11px; font-weight: bold; color: #1a365d; margin-top: 3px; }
+        .flow-step .flow-sub { font-size: 9.5px; color: #718096; }
+        .flow-arrow { font-size: 18px; color: #3182ce; font-weight: bold; }
+
+        .highlight-box { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 6px; }
+        .highlight-box strong { color: #92400e; font-size: 13px; }
+        .highlight-box p { font-size: 12px; color: #78350f; margin-top: 4px; line-height: 1.4; }
+
+        .callout { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 6px; }
+        .callout strong { color: #92400e; font-size: 13px; }
+        .callout p { font-size: 12px; color: #78350f; margin-top: 4px; line-height: 1.45; }
+        .callout.warn { background: #fff5f5; border-left-color: #e53e3e; }
+        .callout.warn strong { color: #9b2c2c; }
+        .callout.warn p { color: #742a2a; }
+        .callout.ok { background: #f0fff4; border-left-color: #38a169; }
+        .callout.ok strong { color: #276749; }
+        .callout.ok p { color: #22543d; }
+
+        .axis { stroke: #4a5568; stroke-width: 1.5; }
+        .grid-line { stroke: #e2e8f0; stroke-width: 0.8; }
+        .label { font-family: 'Segoe UI', sans-serif; font-size: 11px; fill: #4a5568; }
+        .label-strong { font-family: 'Segoe UI', sans-serif; font-size: 12px; font-weight: 700; fill: #1a365d; }
+        .label-small { font-family: 'Segoe UI', sans-serif; font-size: 9.5px; fill: #718096; }
+        .label-tiny { font-family: 'Segoe UI', sans-serif; font-size: 8.5px; fill: #718096; }
+        .label-white { font-family: 'Segoe UI', sans-serif; font-size: 10.5px; fill: #ffffff; font-weight: 600; }
+
+        .dark-block { background: #2d3748; border: 1px solid #4a5568; border-radius: 10px; padding: 16px 18px; margin-top: 20px; }
+        .dark-block-title { font-size: 14px; font-weight: bold; color: #63b3ed; margin-bottom: 12px; border-bottom: 2px solid #4a5568; padding-bottom: 8px; }
+        .dark-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+        .dark-table th { background: #1a202c; color: #90cdf4; padding: 7px 9px; text-align: left; font-weight: 600; border-bottom: 1px solid #4a5568; }
+        .dark-table td { padding: 6px 9px; border-bottom: 1px solid #2d3748; color: #cbd5e0; vertical-align: top; line-height: 1.4; }
+        .dark-table tr:nth-child(even) td { background: #2a3242; }
+        .dark-table .term { font-weight: bold; color: #90cdf4; white-space: nowrap; }
+        .dark-block ol { margin: 0 0 12px 18px; padding: 0; font-size: 12px; color: #cbd5e0; line-height: 1.5; }
+        .dark-block ol li { margin-bottom: 5px; }
+        .dark-block .src-group { font-weight: bold; color: #fbd38d; font-size: 12px; margin: 12px 0 6px; }
+
+        .video-section { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 5px; }
+        .video-container { width: 100%; max-width: 580px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: #000; aspect-ratio: 16 / 9; }
+        .links-hub { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .video-btn { text-decoration: none; padding: 9px 14px; border-radius: 6px; font-size: 12px; font-weight: bold; color: white; display: flex; align-items: center; gap: 6px; transition: transform 0.2s, background 0.2s; cursor: pointer; border: none; }
+        .video-btn:hover { transform: translateY(-2px); }
+        .rt-btn { background: #00a877; }
+        .rt-btn:hover { background: #008f65; }
+        .stop-btn { background: #dc143c; }
+        .stop-btn:hover { background: #b01030; }
+
+        .notes-header { font-size: 17px; color: #63b3ed; font-weight: bold; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a5568; padding-bottom: 10px; }
+        .lecture-text { font-size: 14.5px; line-height: 1.65; color: #e2e8f0; text-align: justify; }
+        .lecture-text p { margin-bottom: 14px; }
+        .lecture-text h3 { color: #63b3ed; font-size: 15px; margin: 18px 0 10px; border-bottom: 1px solid #2d3748; padding-bottom: 5px; }
+        .lecture-text ul { margin: 8px 0 14px 18px; }
+        .lecture-text li { margin-bottom: 6px; }
+
+        .lecture-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(12px); border-top: 2px solid rgba(255, 255, 255, 0.08); padding: 12px 20px; display: flex; align-items: center; justify-content: center; gap: 12px; z-index: 9999; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25); font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .lecture-nav .nav-progress { position: absolute; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899); border-radius: 0 3px 3px 0; }
+        .lecture-nav .nav-btn-arrow { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); border: 1.5px solid rgba(255, 255, 255, 0.15); color: #e2e8f0; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; font-family: inherit; }
+        .lecture-nav .nav-btn-arrow:hover:not(:disabled) { background: rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.6); color: white; transform: translateY(-2px); }
+        .lecture-nav .nav-btn-arrow .arrow-icon { font-size: 16px; line-height: 1; }
+        .lecture-nav .nav-btn-arrow .arrow-label { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+        .lecture-nav .nav-btn-arrow .arrow-label small { font-size: 9.5px; font-weight: 400; opacity: 0.7; text-transform: uppercase; }
+        .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { font-size: 12px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lecture-nav .nav-center { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 20px; color: #94a3b8; font-size: 11px; border-left: 1px solid rgba(255, 255, 255, 0.1); border-right: 1px solid rgba(255, 255, 255, 0.1); }
+        .lecture-nav .nav-counter { font-size: 15px; font-weight: 900; color: #f1f5f9; }
+        .lecture-nav .nav-counter span { color: #64748b; font-size: 12px; font-weight: 600; }
+        .lecture-nav .nav-index-link { color: #60a5fa; text-decoration: none; font-size: 11px; font-weight: 600; }
+        .lecture-nav .nav-index-link:hover { color: #93c5fd; text-decoration: underline; }
+        body { padding-bottom: 80px !important; }
+        @media (max-width: 900px) {
+            .lecture-nav { padding: 10px 12px; gap: 8px; }
+            .lecture-nav .nav-btn-arrow { padding: 8px 12px; }
+            .cat-grid, .stat-grid, .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .flow-diagram { flex-direction: column; }
+        }
+
+        @keyframes pulseDot {
+            0%, 100% { opacity: 1; r: 6; }
+            50% { opacity: 0.7; r: 8; }
+        }
+        .pulse-dot { animation: pulseDot 2s ease-in-out infinite; }
+    </style>
+</head>
+<body>
+
+    <!-- ЛЕВАЯ ПАНЕЛЬ (2/3): ЭКРАН ДЛЯ СТУДЕНТОВ -->
+    <div class="student-view">
+        <div class="slide-header">
+            Лекция 6. Статистические методы анализа данных
+        </div>
+
+        <div class="slide-body">
+
+            <!-- ВВЕДЕНИЕ -->
+            <div class="chart-box" style="background: #ebf8ff; border-color: #90cdf4;">
+                <strong style="color: #2b6cb0;">🎯 Зачем аналитику статистические методы?</strong>
+                <p>Метрика — это ещё не вывод. Число само по себе ничего не доказывает. Статистические методы превращают числа в обоснованные решения. Эта лекция — логическое продолжение: <strong>метрики (лекция 3) → инструменты (лекция 5) → методы анализа (лекция 6)</strong>.</p>
+            </div>
+
+            <!-- КЛЮЧЕВЫЕ ЦИФРЫ -->
+            <div class="stat-grid">
+                <div class="stat-box" style="background:#ebf8ff; border-color:#90cdf4;">
+                    <div class="stat-icon">📏</div>
+                    <div class="stat-number">3</div>
+                    <div class="stat-label">типа шкал</div>
+                </div>
+                <div class="stat-box" style="background:#f0fff4; border-color:#9ae6b4;">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-number">3</div>
+                    <div class="stat-label">группы проверки нормальности</div>
+                </div>
+                <div class="stat-box" style="background:#faf5ff; border-color:#d6bcfa;">
+                    <div class="stat-icon">⚖️</div>
+                    <div class="stat-number">3</div>
+                    <div class="stat-label">критерия сравнения групп</div>
+                </div>
+            </div>
+
+            <!-- 5 ШАГОВ АНАЛИТИКА -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 10px;">🪜 Пять шагов аналитика</div>
+                <div class="flow-diagram">
+                    <div class="flow-step"><div class="flow-icon">❓</div><div class="flow-title">1. Что за данные?</div><div class="flow-sub">Тип шкалы</div></div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step"><div class="flow-icon">📝</div><div class="flow-title">2. Как описать?</div><div class="flow-sub">Среднее / медиана</div></div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step"><div class="flow-icon">🔔</div><div class="flow-title">3. Можно доверять?</div><div class="flow-sub">Нормальность</div></div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step"><div class="flow-icon">📊</div><div class="flow-title">4. Как сравнить?</div><div class="flow-sub">Уровень значимости</div></div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step"><div class="flow-icon">✅</div><div class="flow-title">5. Какой критерий?</div><div class="flow-sub">Стьюдент / Манна–Уитни / ANOVA</div></div>
+                </div>
+            </div>
+
+            <!-- БЛОК 1: ТИПЫ ШКАЛ -->
+            <div class="viz-card">
+                <div class="viz-title">📏 Блок 1. Три типа шкал: что можно делать с данными</div>
+                <svg viewBox="0 0 540 280" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="280" fill="#ffffff"/>
+
+                    <!-- Nominal -->
+                    <rect x="15" y="10" width="165" height="255" rx="10" fill="#fefcbf" stroke="#f6e05e" stroke-width="2"/>
+                    <text x="97" y="35" text-anchor="middle" class="label-strong" style="font-size: 13px;">🏷️ Номинальная</text>
+                    <text x="97" y="55" text-anchor="middle" class="label-small">Значения — только метки</text>
+                    <text x="97" y="85" text-anchor="middle" class="label-small" style="font-weight: bold;">Примеры:</text>
+                    <text x="97" y="105" text-anchor="middle" class="label-small">Порода · Пол · Цвет</text>
+                    <text x="97" y="125" text-anchor="middle" class="label-small">Кличка · Район</text>
+                    <line x1="35" y1="140" x2="160" y2="140" stroke="#d69e2e" stroke-width="1" stroke-dasharray="3 2"/>
+                    <text x="97" y="160" text-anchor="middle" class="label-small" style="font-weight: bold;">Можно:</text>
+                    <text x="97" y="178" text-anchor="middle" class="label-small">✅ Считать частоты</text>
+                    <text x="97" y="196" text-anchor="middle" class="label-small">✅ Частотные таблицы</text>
+                    <text x="97" y="218" text-anchor="middle" class="label-small" style="font-weight: bold;">Нельзя:</text>
+                    <text x="97" y="236" text-anchor="middle" class="label-small" fill="#9b2c2c">❌ Среднее</text>
+                    <text x="97" y="254" text-anchor="middle" class="label-small" fill="#9b2c2c">❌ Порядок</text>
+
+                    <!-- Ordinal -->
+                    <rect x="187" y="10" width="165" height="255" rx="10" fill="#fed7d7" stroke="#fc8181" stroke-width="2"/>
+                    <text x="270" y="35" text-anchor="middle" class="label-strong" style="font-size: 13px;">↕️ Порядковая</text>
+                    <text x="270" y="55" text-anchor="middle" class="label-small">Можно упорядочить</text>
+                    <text x="270" y="85" text-anchor="middle" class="label-small" style="font-weight: bold;">Примеры:</text>
+                    <text x="270" y="105" text-anchor="middle" class="label-small">Пушистость</text>
+                    <text x="270" y="125" text-anchor="middle" class="label-small">Плохо–средне–хорошо</text>
+                    <line x1="207" y1="140" x2="332" y2="140" stroke="#e53e3e" stroke-width="1" stroke-dasharray="3 2"/>
+                    <text x="270" y="160" text-anchor="middle" class="label-small" style="font-weight: bold;">Правило:</text>
+                    <text x="270" y="178" text-anchor="middle" class="label-small">≤ 4 уровней →</text>
+                    <text x="270" y="194" text-anchor="middle" class="label-small">как номинальная</text>
+                    <text x="270" y="216" text-anchor="middle" class="label-small">&gt; 4 уровней →</text>
+                    <text x="270" y="232" text-anchor="middle" class="label-small">как ненормальная</text>
+                    <text x="270" y="248" text-anchor="middle" class="label-small">количественная</text>
+
+                    <!-- Quantitative -->
+                    <rect x="359" y="10" width="165" height="255" rx="10" fill="#c6f6d5" stroke="#68d391" stroke-width="2"/>
+                    <text x="442" y="35" text-anchor="middle" class="label-strong" style="font-size: 13px;">🔢 Количественная</text>
+                    <text x="442" y="55" text-anchor="middle" class="label-small">Числа в обычном смысле</text>
+                    <text x="442" y="85" text-anchor="middle" class="label-small" style="font-weight: bold;">Примеры:</text>
+                    <text x="442" y="105" text-anchor="middle" class="label-small">Возраст · Вес</text>
+                    <text x="442" y="125" text-anchor="middle" class="label-small">Сумма · Объём</text>
+                    <line x1="379" y1="140" x2="504" y2="140" stroke="#38a169" stroke-width="1" stroke-dasharray="3 2"/>
+                    <text x="442" y="160" text-anchor="middle" class="label-small" style="font-weight: bold;">Можно:</text>
+                    <text x="442" y="178" text-anchor="middle" class="label-small">✅ Складывать</text>
+                    <text x="442" y="194" text-anchor="middle" class="label-small">✅ Вычитать</text>
+                    <text x="442" y="210" text-anchor="middle" class="label-small">✅ Среднее</text>
+                    <text x="442" y="232" text-anchor="middle" class="label-small" style="font-weight: bold;">Правило:</text>
+                    <text x="442" y="250" text-anchor="middle" class="label-small">Можно огрубить,</text>
+                    <text x="442" y="264" text-anchor="middle" class="label-small">но не восстановить</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Ключевое правило:</strong> от типа шкалы зависит, какой метод анализа применим. Среднее для породы — бессмысленно. Критерий Стьюдента для фактора с тремя уровнями — неверно. <strong>Огрубить шкалу можно</strong> (количественную → порядковую → номинальную), но <strong>восстановить — нельзя</strong>: информация теряется безвозвратно.
+                </div>
+            </div>
+
+            <!-- БЛОК 2: СРЕДНЕЕ VS МЕДИАНА (ИСПРАВЛЕНО) -->
+            <div class="viz-card">
+                <div class="viz-title">📊 Блок 2. Среднее vs медиана: почему среднее может соврать</div>
+                <svg viewBox="0 0 540 340" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="340" fill="#ffffff"/>
+
+                    <!-- LEFT: Company 1 -->
+                    <text x="135" y="25" text-anchor="middle" class="label-strong" style="font-size: 13px;">Организация 1</text>
+                    <text x="135" y="42" text-anchor="middle" class="label-small">зарплаты 7 сотрудников, без выбросов</text>
+
+                    <!-- Ось Y: 0 внизу (y=270), 50 вверху (y=170), масштаб salary*2 -->
+                    <line x1="35" y1="270" x2="245" y2="270" class="axis"/>
+                    <line x1="35" y1="270" x2="35" y2="150" class="axis"/>
+                    <text x="30" y="274" text-anchor="end" class="label-tiny">0</text>
+                    <text x="30" y="234" text-anchor="end" class="label-tiny">20</text>
+                    <text x="30" y="194" text-anchor="end" class="label-tiny">40</text>
+
+                    <!-- Bars: 25, 28, 30, 32, 35, 40 (salary*2 height) -->
+                    <rect x="50"  y="220" width="22" height="50" fill="#4299e1" rx="2"/>
+                    <text x="61" y="215" text-anchor="middle" class="label-tiny">25</text>
+                    <rect x="77"  y="214" width="22" height="56" fill="#4299e1" rx="2"/>
+                    <text x="88" y="209" text-anchor="middle" class="label-tiny">28</text>
+                    <rect x="104" y="210" width="22" height="60" fill="#4299e1" rx="2"/>
+                    <text x="115" y="205" text-anchor="middle" class="label-tiny">30</text>
+                    <rect x="131" y="210" width="22" height="60" fill="#4299e1" rx="2"/>
+                    <text x="142" y="205" text-anchor="middle" class="label-tiny">30</text>
+                    <rect x="158" y="206" width="22" height="64" fill="#4299e1" rx="2"/>
+                    <text x="169" y="201" text-anchor="middle" class="label-tiny">32</text>
+                    <rect x="185" y="200" width="22" height="70" fill="#4299e1" rx="2"/>
+                    <text x="196" y="195" text-anchor="middle" class="label-tiny">35</text>
+                    <rect x="212" y="190" width="22" height="80" fill="#4299e1" rx="2"/>
+                    <text x="223" y="185" text-anchor="middle" class="label-tiny">40</text>
+
+                    <!-- Mean 31.4 → y=207 -->
+                    <line x1="40" y1="207" x2="240" y2="207" stroke="#38a169" stroke-width="2.5" stroke-dasharray="5 3"/>
+                    <text x="248" y="210" class="label-small" fill="#276749" style="font-weight: bold;">среднее ≈ 31</text>
+
+                    <!-- Median 30 → y=210 -->
+                    <line x1="40" y1="210" x2="240" y2="210" stroke="#d69e2e" stroke-width="2.5"/>
+                    <text x="248" y="224" class="label-small" fill="#975a16" style="font-weight: bold;">медиана = 30</text>
+
+                    <rect x="40" y="285" width="200" height="22" rx="4" fill="#c6f6d5"/>
+                    <text x="140" y="300" text-anchor="middle" class="label-small" fill="#22543d" style="font-weight: bold;">✅ Среднее ≈ медиане — оба честны</text>
+
+                    <!-- RIGHT: Company 2 -->
+                    <text x="405" y="25" text-anchor="middle" class="label-strong" style="font-size: 13px;">Организация 2</text>
+                    <text x="405" y="42" text-anchor="middle" class="label-small">6 сотрудников + директор (350)</text>
+
+                    <line x1="305" y1="270" x2="510" y2="270" class="axis"/>
+                    <line x1="305" y1="270" x2="305" y2="150" class="axis"/>
+                    <text x="300" y="274" text-anchor="end" class="label-tiny">0</text>
+                    <text x="300" y="234" text-anchor="end" class="label-tiny">20</text>
+                    <text x="300" y="194" text-anchor="end" class="label-tiny">40</text>
+
+                    <!-- Bars: 20, 25, 28, 30, 32, 35 (salary*2 height) -->
+                    <rect x="315" y="230" width="22" height="40" fill="#4299e1" rx="2"/>
+                    <text x="326" y="225" text-anchor="middle" class="label-tiny">20</text>
+                    <rect x="342" y="220" width="22" height="50" fill="#4299e1" rx="2"/>
+                    <text x="353" y="215" text-anchor="middle" class="label-tiny">25</text>
+                    <rect x="369" y="214" width="22" height="56" fill="#4299e1" rx="2"/>
+                    <text x="380" y="209" text-anchor="middle" class="label-tiny">28</text>
+                    <rect x="396" y="210" width="22" height="60" fill="#4299e1" rx="2"/>
+                    <text x="407" y="205" text-anchor="middle" class="label-tiny">30</text>
+                    <rect x="423" y="206" width="22" height="64" fill="#4299e1" rx="2"/>
+                    <text x="434" y="201" text-anchor="middle" class="label-tiny">32</text>
+                    <rect x="450" y="200" width="22" height="70" fill="#4299e1" rx="2"/>
+                    <text x="461" y="195" text-anchor="middle" class="label-tiny">35</text>
+
+                    <!-- Директор — bar with break -->
+                    <rect x="477" y="220" width="22" height="50" fill="#e53e3e" rx="2"/>
+                    <!-- Зигзаг разрыва -->
+                    <text x="488" y="205" text-anchor="middle" class="label-tiny" fill="#9b2c2c" style="font-weight: bold;">▼▼▼</text>
+                    <rect x="477" y="150" width="22" height="50" fill="#e53e3e" rx="2"/>
+                    <text x="488" y="145" text-anchor="middle" class="label-tiny" fill="#9b2c2c" style="font-weight: bold;">350</text>
+                    <text x="488" y="134" text-anchor="middle" class="label-tiny" fill="#9b2c2c">(выброс,</text>
+                    <text x="488" y="122" text-anchor="middle" class="label-tiny" fill="#9b2c2c">вне шкалы)</text>
+
+                    <!-- Среднее 74.3 → y=270-148.6=121 (не помещается, показываем стрелкой) -->
+                    <line x1="310" y1="115" x2="470" y2="115" stroke="#38a169" stroke-width="2" stroke-dasharray="5 3"/>
+                    <text x="510" y="118" class="label-tiny" fill="#276749" style="font-weight: bold;">среднее ≈ 74</text>
+                    <text x="510" y="130" class="label-tiny" fill="#276749">(сдвинуто</text>
+                    <text x="510" y="142" class="label-tiny" fill="#276749">выбросом)</text>
+
+                    <!-- Медиана 30 → y=210 -->
+                    <line x1="310" y1="210" x2="470" y2="210" stroke="#d69e2e" stroke-width="2.5"/>
+                    <text x="510" y="224" class="label-tiny" fill="#975a16" style="font-weight: bold;">медиана = 30</text>
+
+                    <rect x="305" y="285" width="205" height="22" rx="4" fill="#fed7d7"/>
+                    <text x="407" y="300" text-anchor="middle" class="label-small" fill="#742a2a" style="font-weight: bold;">⚠️ Среднее врёт! Медиана честна</text>
+
+                    <text x="270" y="325" text-anchor="middle" class="label-tiny" fill="#4a5568">Ось Y обрезана на уровне 50. Директор с зарплатой 350 показан как «бар с разрывом» (▼▼▼)</text>
+                    <text x="270" y="337" text-anchor="middle" class="label-tiny" fill="#4a5568">Масштаб единый: salary × 2 (высота в px)</text>
+
+                    <!-- vs -->
+                    <text x="270" y="175" text-anchor="middle" class="label-strong" fill="#e53e3e" style="font-size: 18px;">vs</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Главная проблема среднего — выбросы.</strong> В организации 2 зарплата директора (350) резко выше остальных. Среднее «уехало» вверх до 74 — но ни один сотрудник столько не получает. Медиана осталась на 30 — она <strong>устойчива к выбросам</strong>. <strong>Обратите внимание на масштаб:</strong> оба графика построены в едином масштабе salary × 2 (высота в px). Директор показан как «бар с разрывом» — так честнее, чем рисовать его в другом масштабе. <strong>Правило:</strong> есть выбросы — используйте медиану; нет выбросов — можно среднее.
+                </div>
+            </div>
+
+            <!-- АНАТОМИЯ ЯЩИЧНОЙ ДИАГРАММЫ -->
+            <div class="viz-card">
+                <div class="viz-title">📦 Блок 2.1. Ящичная диаграмма: анатомия и все элементы</div>
+                <svg viewBox="0 0 540 300" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="300" fill="#ffffff"/>
+
+                    <line x1="180" y1="30" x2="180" y2="230" class="axis"/>
+                    <line x1="180" y1="60"  x2="420" y2="60"  class="grid-line"/>
+                    <line x1="180" y1="100" x2="420" y2="100" class="grid-line"/>
+                    <line x1="180" y1="140" x2="420" y2="140" class="grid-line"/>
+                    <line x1="180" y1="180" x2="420" y2="180" class="grid-line"/>
+
+                    <text x="175" y="64"  text-anchor="end" class="label-small">макс (без выбросов)</text>
+                    <text x="175" y="104" text-anchor="end" class="label-small">Q3 (верхняя квартиль)</text>
+                    <text x="175" y="144" text-anchor="end" class="label-small">медиана</text>
+                    <text x="175" y="184" text-anchor="end" class="label-small">Q1 (нижняя квартиль)</text>
+                    <text x="175" y="230" text-anchor="end" class="label-small">мин (без выбросов)</text>
+
+                    <rect x="260" y="100" width="80" height="80" fill="#bee3f8" stroke="#2b6cb0" stroke-width="2"/>
+                    <line x1="260" y1="140" x2="340" y2="140" stroke="#2b6cb0" stroke-width="3"/>
+                    <line x1="300" y1="60" x2="300" y2="100" stroke="#2b6cb0" stroke-width="2"/>
+                    <line x1="300" y1="180" x2="300" y2="225" stroke="#2b6cb0" stroke-width="2"/>
+                    <line x1="275" y1="60" x2="325" y2="60" stroke="#2b6cb0" stroke-width="2"/>
+                    <line x1="275" y1="225" x2="325" y2="225" stroke="#2b6cb0" stroke-width="2"/>
+
+                    <circle cx="300" cy="42" r="5" fill="#ffffff" stroke="#e53e3e" stroke-width="2"/>
+                    <circle cx="300" cy="28" r="5" fill="#ffffff" stroke="#e53e3e" stroke-width="2"/>
+                    <text x="300" y="15" text-anchor="middle" fill="#9b2c2c" style="font-size: 16px;">★</text>
+
+                    <line x1="350" y1="140" x2="380" y2="140" stroke="#718096" stroke-width="1"/>
+                    <text x="385" y="144" class="label-small" style="font-weight: bold;">медиана</text>
+                    <line x1="350" y1="100" x2="380" y2="100" stroke="#718096" stroke-width="1"/>
+                    <text x="385" y="104" class="label-small" style="font-weight: bold;">верхняя квартиль</text>
+                    <line x1="350" y1="180" x2="380" y2="180" stroke="#718096" stroke-width="1"/>
+                    <text x="385" y="184" class="label-small" style="font-weight: bold;">нижняя квартиль</text>
+                    <line x1="350" y1="60" x2="380" y2="60" stroke="#718096" stroke-width="1"/>
+                    <text x="385" y="64" class="label-small" style="font-weight: bold;">усы = разброс</text>
+                    <line x1="350" y1="225" x2="380" y2="225" stroke="#718096" stroke-width="1"/>
+                    <text x="385" y="229" class="label-small" style="font-weight: bold;">без выбросов</text>
+
+                    <line x1="260" y1="140" x2="240" y2="260" stroke="#718096" stroke-width="1"/>
+                    <text x="230" y="275" text-anchor="middle" class="label-small" style="font-weight: bold;">тело ящика = IQR = Q3 − Q1</text>
+                    <text x="230" y="290" text-anchor="middle" class="label-tiny">= 50% центральных значений</text>
+
+                    <line x1="320" y1="35" x2="440" y2="35" stroke="#e53e3e" stroke-width="1"/>
+                    <text x="445" y="39" class="label-small" fill="#9b2c2c" style="font-weight: bold;">выбросы (кружки)</text>
+                    <line x1="320" y1="15" x2="440" y2="15" stroke="#9b2c2c" stroke-width="1"/>
+                    <text x="445" y="19" class="label-small" fill="#9b2c2c" style="font-weight: bold;">грубые ошибки (★)</text>
+
+                    <rect x="360" y="250" width="170" height="42" rx="4" fill="#fff5f5" stroke="#fc8181" stroke-width="1"/>
+                    <text x="445" y="266" text-anchor="middle" class="label-tiny" fill="#742a2a">Выброс: за пределами</text>
+                    <text x="445" y="280" text-anchor="middle" class="label-tiny" fill="#742a2a">1.5 × IQR от ящика</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Ящик</strong> = центральные 50% значений (от Q1 до Q3). <strong>Медиана</strong> = линия внутри ящика. <strong>Усы</strong> = разброс без выбросов. <strong>Кружки</strong> = выбросы (дальше 1.5 × IQR). <strong>Звёздочки</strong> = грубые ошибки (дальше 3 × IQR). По форме ящика сразу видно: симметрично ли распределение, есть ли скошенность, где выбросы.
+                </div>
+            </div>
+
+            <!-- БЛОК 3: НОРМАЛЬНОСТЬ -->
+            <div class="viz-card">
+                <div class="viz-title">🔔 Блок 3. Нормальное распределение и правило трёх сигм</div>
+                <svg viewBox="0 0 540 260" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="260" fill="#ffffff"/>
+
+                    <line x1="40" y1="220" x2="510" y2="220" class="axis"/>
+
+                    <path d="M 175 220 Q 175 110 220 65 Q 255 30 270 30 Q 285 30 320 65 Q 365 110 365 220 Z"
+                          fill="#bee3f8" fill-opacity="0.7"/>
+                    <path d="M 120 220 Q 130 190 175 110 L 175 220 Z" fill="#90cdf4" fill-opacity="0.5"/>
+                    <path d="M 365 220 L 365 110 Q 410 190 420 220 Z" fill="#90cdf4" fill-opacity="0.5"/>
+                    <path d="M 65 220 Q 80 210 120 190 L 120 220 Z" fill="#4299e1" fill-opacity="0.4"/>
+                    <path d="M 420 220 L 420 190 Q 460 210 475 220 Z" fill="#4299e1" fill-opacity="0.4"/>
+
+                    <path d="M 60 220 Q 120 220 175 110 Q 240 30 270 30 Q 300 30 365 110 Q 420 220 480 220"
+                          fill="none" stroke="#2b6cb0" stroke-width="3"/>
+
+                    <line x1="175" y1="30" x2="175" y2="220" stroke="#2b6cb0" stroke-width="1.5" stroke-dasharray="4 3"/>
+                    <line x1="365" y1="30" x2="365" y2="220" stroke="#2b6cb0" stroke-width="1.5" stroke-dasharray="4 3"/>
+                    <line x1="120" y1="50" x2="120" y2="220" stroke="#2b6cb0" stroke-width="1" stroke-dasharray="3 2"/>
+                    <line x1="420" y1="50" x2="420" y2="220" stroke="#2b6cb0" stroke-width="1" stroke-dasharray="3 2"/>
+                    <line x1="270" y1="20" x2="270" y2="220" stroke="#e53e3e" stroke-width="2"/>
+
+                    <text x="120" y="235" text-anchor="middle" class="label-small">−2σ</text>
+                    <text x="175" y="235" text-anchor="middle" class="label-small">−1σ</text>
+                    <text x="270" y="235" text-anchor="middle" class="label-strong" fill="#9b2c2c">μ</text>
+                    <text x="365" y="235" text-anchor="middle" class="label-small">+1σ</text>
+                    <text x="420" y="235" text-anchor="middle" class="label-small">+2σ</text>
+
+                    <text x="270" y="140" text-anchor="middle" class="label-strong" fill="#1a365d" style="font-size: 16px;">68%</text>
+                    <text x="270" y="156" text-anchor="middle" class="label-small" fill="#1a365d">значений</text>
+                    <text x="148" y="180" text-anchor="middle" class="label-small" fill="#2b6cb0" style="font-weight: bold;">27%</text>
+                    <text x="392" y="180" text-anchor="middle" class="label-small" fill="#2b6cb0" style="font-weight: bold;">27%</text>
+                    <text x="88" y="205" text-anchor="middle" class="label-tiny" fill="#1a365d">~4%</text>
+                    <text x="452" y="205" text-anchor="middle" class="label-tiny" fill="#1a365d">~4%</text>
+
+                    <text x="270" y="255" text-anchor="middle" class="label-small" fill="#4a5568">Правило: 68% внутри ±1σ · 95% внутри ±2σ · 99.7% внутри ±3σ</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Нормальное распределение</strong> — симметричная колоколообразная кривая. Ключевое свойство — <strong>правило трёх сигм</strong>: 68% значений лежат в пределах одного стандартного отклонения от среднего, 95% — в пределах двух, 99.7% — в пределах трёх. Если данные не укладываются в эту картину — они ненормальны.
+                </div>
+            </div>
+
+            <!-- БЛОК 3.1: АСИММЕТРИЯ И ЭКСЦЕСС -->
+            <div class="viz-card">
+                <div class="viz-title">📐 Блок 3.1. Асимметрия (skewness) и эксцесс (kurtosis)</div>
+                <div class="grid-2">
+                    <div>
+                        <div style="font-size: 12px; font-weight: bold; color: #2b6cb0; margin-bottom: 6px; text-align: center;">Асимметрия</div>
+                        <svg viewBox="0 0 260 220" width="100%">
+                            <rect x="0" y="0" width="260" height="220" fill="#ffffff"/>
+                            <path d="M 20 80 Q 60 80 90 50 Q 120 20 130 20 Q 140 20 170 50 Q 200 80 240 80"
+                                  fill="none" stroke="#38a169" stroke-width="2.5"/>
+                            <text x="130" y="55" text-anchor="middle" class="label-small" fill="#276749" style="font-weight: bold;">= 0</text>
+                            <text x="130" y="70" text-anchor="middle" class="label-tiny" fill="#276749">симметрия</text>
+                            <path d="M 20 170 Q 50 170 80 145 Q 110 120 140 120 Q 180 120 220 165 Q 245 185 250 185"
+                                  fill="none" stroke="#e53e3e" stroke-width="2.5"/>
+                            <text x="185" y="155" text-anchor="middle" class="label-small" fill="#9b2c2c" style="font-weight: bold;">&gt; 0</text>
+                            <text x="185" y="170" text-anchor="middle" class="label-tiny" fill="#9b2c2c">правый хвост</text>
+                            <line x1="20" y1="200" x2="240" y2="200" class="axis"/>
+                            <line x1="20" y1="200" x2="20" y2="15" class="axis"/>
+                            <text x="130" y="215" text-anchor="middle" class="label-tiny">значение</text>
+                        </svg>
+                    </div>
+                    <div>
+                        <div style="font-size: 12px; font-weight: bold; color: #975a16; margin-bottom: 6px; text-align: center;">Эксцесс</div>
+                        <svg viewBox="0 0 260 220" width="100%">
+                            <rect x="0" y="0" width="260" height="220" fill="#ffffff"/>
+                            <path d="M 20 90 Q 50 90 80 75 Q 110 60 130 60 Q 150 60 180 75 Q 210 90 240 90"
+                                  fill="none" stroke="#38a169" stroke-width="2.5"/>
+                            <text x="130" y="90" text-anchor="middle" class="label-tiny" fill="#276749" style="font-weight: bold;">&lt; 0 плоский</text>
+                            <path d="M 20 140 Q 50 140 80 115 Q 110 95 130 95 Q 150 95 180 115 Q 210 140 240 140"
+                                  fill="none" stroke="#d69e2e" stroke-width="2.5"/>
+                            <text x="130" y="125" text-anchor="middle" class="label-tiny" fill="#975a16" style="font-weight: bold;">= 0 норма</text>
+                            <path d="M 20 190 Q 50 190 80 165 Q 110 100 130 100 Q 150 100 180 165 Q 210 190 240 190"
+                                  fill="none" stroke="#e53e3e" stroke-width="2.5"/>
+                            <text x="130" y="155" text-anchor="middle" class="label-tiny" fill="#9b2c2c" style="font-weight: bold;">&gt; 0 острый</text>
+                            <line x1="20" y1="200" x2="240" y2="200" class="axis"/>
+                            <line x1="20" y1="200" x2="20" y2="15" class="axis"/>
+                            <text x="130" y="215" text-anchor="middle" class="label-tiny">значение</text>
+                        </svg>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    <strong>Асимметрия</strong> показывает, куда скошено распределение: 0 — симметрично, &gt;0 — длинный правый хвост, &lt;0 — длинный левый. <strong>Эксцесс</strong> показывает остроту вершины: 0 — как у нормального, &lt;0 — плоская вершина, &gt;0 — острая. <strong>Правило:</strong> если |асимметрия| или |эксцесс| меньше стандартной ошибки — распределение нормальное.
+                </div>
+            </div>
+
+            <!-- БЛОК 3.2: ГРАФИЧЕСКИЕ МЕТОДЫ -->
+            <div class="viz-card">
+                <div class="viz-title">📊 Блок 3.2. Три графических метода проверки нормальности</div>
+                <div class="grid-3">
+                    <div>
+                        <div style="font-size: 11.5px; font-weight: bold; color: #2b6cb0; margin-bottom: 4px; text-align: center;">Гистограмма</div>
+                        <svg viewBox="0 0 180 160" width="100%">
+                            <rect x="0" y="0" width="180" height="160" fill="#ffffff"/>
+                            <rect x="15" y="120" width="12" height="30" fill="#90cdf4" stroke="#2b6cb0" stroke-width="0.5"/>
+                            <rect x="30" y="100" width="12" height="50" fill="#90cdf4" stroke="#2b6cb0" stroke-width="0.5"/>
+                            <rect x="45" y="70"  width="12" height="80" fill="#90cdf4" stroke="#2b6cb0" stroke-width="0.5"/>
+                            <rect x="60" y="45"  width="12" height="105" fill="#90cdf4" stroke="#2b6cb0" stroke-width="0.5"/>
+                            <rect x="75" y="30"  width="12" height="120" fill="#90cdf4" stroke="#2b6cb0" stroke-width="0.5"/>
+                            <rect x="90" y="30"  width="12" height="120" fill="#90cdf4" stroke="#2b6cb0" stroke-width="0.5"/>
+                            <rect x="105" y="45" width="12" height="105" fill="#90cdf4" stroke="#2b6cb0" stroke-width="0.5"/>
+                            <rect x="120" y="70" width="12" height="80" fill="#90cdf4" stroke="#2b6cb0" stroke-width="0.5"/>
+                            <rect x="135" y="100" width="12" height="50" fill="#90cdf4" stroke="#2b6cb0" stroke-width="0.5"/>
+                            <rect x="150" y="120" width="12" height="30" fill="#90cdf4" stroke="#2b6cb0" stroke-width="0.5"/>
+                            <path d="M 15 150 Q 50 148 75 60 Q 90 15 105 60 Q 130 148 165 150"
+                                  fill="none" stroke="#e53e3e" stroke-width="2"/>
+                            <line x1="15" y1="150" x2="165" y2="150" class="axis"/>
+                            <text x="90" y="155" text-anchor="middle" class="label-tiny">нормальное</text>
+                        </svg>
+                        <div style="font-size: 9.5px; color: #4a5568; text-align: center; margin-top: 3px;">Столбики идут по нормальной кривой</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11.5px; font-weight: bold; color: #975a16; margin-bottom: 4px; text-align: center;">Ящичная диаграмма</div>
+                        <svg viewBox="0 0 180 160" width="100%">
+                            <rect x="0" y="0" width="180" height="160" fill="#ffffff"/>
+                            <rect x="70" y="50" width="40" height="60" fill="#fbd38d" stroke="#d69e2e" stroke-width="1.5"/>
+                            <line x1="70" y1="80" x2="110" y2="80" stroke="#d69e2e" stroke-width="2"/>
+                            <line x1="90" y1="20" x2="90" y2="50" stroke="#d69e2e" stroke-width="1.5"/>
+                            <line x1="90" y1="110" x2="90" y2="140" stroke="#d69e2e" stroke-width="1.5"/>
+                            <line x1="75" y1="20" x2="105" y2="20" stroke="#d69e2e" stroke-width="1.5"/>
+                            <line x1="75" y1="140" x2="105" y2="140" stroke="#d69e2e" stroke-width="1.5"/>
+                            <text x="90" y="158" text-anchor="middle" class="label-tiny">симметричный</text>
+                        </svg>
+                        <div style="font-size: 9.5px; color: #4a5568; text-align: center; margin-top: 3px;">Медиана по центру, усы равны</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11.5px; font-weight: bold; color: #276749; margin-bottom: 4px; text-align: center;">Нормальный Q-Q график</div>
+                        <svg viewBox="0 0 180 160" width="100%">
+                            <rect x="0" y="0" width="180" height="160" fill="#ffffff"/>
+                            <line x1="15" y1="145" x2="165" y2="145" class="axis"/>
+                            <line x1="15" y1="145" x2="15" y2="15" class="axis"/>
+                            <line x1="20" y1="140" x2="160" y2="20" stroke="#38a169" stroke-width="1.5" stroke-dasharray="4 3"/>
+                            <circle cx="35" cy="130" r="3" fill="#2b6cb0"/>
+                            <circle cx="55" cy="115" r="3" fill="#2b6cb0"/>
+                            <circle cx="75" cy="95" r="3" fill="#2b6cb0"/>
+                            <circle cx="95" cy="78" r="3" fill="#2b6cb0"/>
+                            <circle cx="115" cy="58" r="3" fill="#2b6cb0"/>
+                            <circle cx="135" cy="42" r="3" fill="#2b6cb0"/>
+                            <circle cx="150" cy="30" r="3" fill="#2b6cb0"/>
+                            <text x="90" y="158" text-anchor="middle" class="label-tiny">точки на прямой</text>
+                        </svg>
+                        <div style="font-size: 9.5px; color: #4a5568; text-align: center; margin-top: 3px;">Точки лежат на теоретической прямой</div>
+                    </div>
+                </div>
+                <div class="callout warn" style="margin-top: 10px;">
+                    <strong>⚠️ Ловушка: один график может обмануть</strong>
+                    <p>Бывает, что гистограмма показывает провал в середине — данные неоднородны (смешаны из двух групп). А ящичная диаграмма при этом выглядит симметричной и «не выдаёт» проблему. <strong>Поэтому графические методы нужно применять в комплексе.</strong></p>
+                </div>
+            </div>
+
+            <!-- БЛОК 3.3: РАСЧЁТНЫЕ ТЕСТЫ -->
+            <div class="viz-card">
+                <div class="viz-title">🧮 Блок 3.3. Расчётные тесты нормальности: как читать p-value</div>
+                <svg viewBox="0 0 540 200" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="200" fill="#ffffff"/>
+
+                    <rect x="20" y="15" width="245" height="170" rx="10" fill="#ebf8ff" stroke="#2b6cb0" stroke-width="1.5"/>
+                    <text x="142" y="40" text-anchor="middle" class="label-strong" style="font-size: 12px;">Шапиро–Уилк</text>
+                    <text x="142" y="60" text-anchor="middle" class="label-small">выборка &lt; 60</text>
+                    <text x="142" y="90" text-anchor="middle" class="label-small" style="font-weight: bold;">Порог:</text>
+                    <text x="142" y="110" text-anchor="middle" class="label-strong" fill="#9b2c2c" style="font-size: 14px;">p &lt; 0.05</text>
+                    <text x="142" y="130" text-anchor="middle" class="label-small">→ нормальность отклоняется</text>
+                    <rect x="35" y="145" width="215" height="30" rx="6" fill="#fed7d7"/>
+                    <text x="142" y="164" text-anchor="middle" class="label-small" fill="#742a2a" style="font-weight: bold;">данные ненормальны</text>
+
+                    <rect x="275" y="15" width="245" height="170" rx="10" fill="#f0fff4" stroke="#38a169" stroke-width="1.5"/>
+                    <text x="397" y="40" text-anchor="middle" class="label-strong" style="font-size: 12px;">Колмогоров–Смирнов</text>
+                    <text x="397" y="60" text-anchor="middle" class="label-small">выборка &gt; 60</text>
+                    <text x="397" y="90" text-anchor="middle" class="label-small" style="font-weight: bold;">Порог:</text>
+                    <text x="397" y="110" text-anchor="middle" class="label-strong" fill="#9b2c2c" style="font-size: 14px;">p &lt; 0.20</text>
+                    <text x="397" y="130" text-anchor="middle" class="label-small">→ нормальность отклоняется</text>
+                    <rect x="290" y="145" width="215" height="30" rx="6" fill="#fed7d7"/>
+                    <text x="397" y="164" text-anchor="middle" class="label-small" fill="#742a2a" style="font-weight: bold;">данные ненормальны</text>
+
+                    <text x="270" y="190" text-anchor="middle" class="label-small" fill="#9b2c2c" style="font-weight: bold;">Если хотя бы один тест отклоняет — данные ненормальны</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Шапиро–Уилк</strong> — для малых выборок (&lt;60). <strong>Колмогоров–Смирнов</strong> — для больших (&gt;60). Оба возвращают p-value: если оно <strong>меньше порога</strong> — гипотеза нормальности отклоняется. <strong>Правило:</strong> если хотя бы один расчётный тест или график показывает отклонение — данные считаются ненормальными, и методы, требующие нормальности, применять нельзя.
+                </div>
+            </div>
+
+            <!-- БЛОК 4: ОБЩАЯ СХЕМА ОПИСАТЕЛЬНОГО АНАЛИЗА (ДОБАВЛЕНО) -->
+            <div class="viz-card">
+                <div class="viz-title">🗺️ Блок 4. Общая схема описательного анализа: что делать с каждой шкалой</div>
+                <div class="grid-3">
+                    <div class="cat-card" style="background: #fefcbf; border-color: #f6e05e;">
+                        <div style="font-size: 13px; font-weight: bold; color: #744210; margin-bottom: 6px;">🏷️ Номинальная</div>
+                        <div style="font-size: 11px; color: #4a5568; line-height: 1.5;">
+                            <strong>Шаг 1.</strong> График: столбиковая или круговая диаграмма.<br>
+                            <strong>Шаг 2.</strong> Частотная таблица: абсолютные частоты и проценты.<br>
+                            <em style="color: #9b2c2c;">Среднее не считаем.</em>
+                        </div>
+                    </div>
+                    <div class="cat-card" style="background: #c6f6d5; border-color: #68d391;">
+                        <div style="font-size: 13px; font-weight: bold; color: #22543d; margin-bottom: 6px;">🔢 Количественная</div>
+                        <div style="font-size: 11px; color: #4a5568; line-height: 1.5;">
+                            <strong>Шаг 1.</strong> Проверка нормальности (все три группы методов).<br>
+                            <strong>Шаг 2а.</strong> Нормальные → среднее, стандартное отклонение, стандартная ошибка, размах.<br>
+                            <strong>Шаг 2б.</strong> Ненормальные → медиана, квартили, IQR, размах.<br>
+                            <strong>Шаг 3.</strong> Интерпретация: типичное значение и разброс.
+                        </div>
+                    </div>
+                    <div class="cat-card" style="background: #fed7d7; border-color: #fc8181;">
+                        <div style="font-size: 13px; font-weight: bold; color: #742a2a; margin-bottom: 6px;">↕️ Порядковая</div>
+                        <div style="font-size: 11px; color: #4a5568; line-height: 1.5;">
+                            <strong>≤ 4 уровней:</strong> как номинальная (частоты, диаграммы).<br>
+                            <strong>&gt; 4 уровней:</strong> как количественная, но <em>сразу</em> ненормальная. Медиана, квартили, IQR, размах.<br>
+                            <em style="color: #9b2c2c;">Среднее не считаем.</em>
+                        </div>
+                    </div>
+                </div>
+                <div class="callout" style="margin-top: 10px;">
+                    <strong>💡 Зачем эта схема</strong>
+                    <p>Она не даёт забыть шаг. И объясняет, почему нельзя «просто посчитать среднее» для любой метрики. <strong>Тип шкалы → проверка нормальности → выбор статистик.</strong></p>
+                </div>
+            </div>
+
+            <!-- БЛОК 5: ФАКТОР И ОТКЛИК -->
+            <div class="viz-card">
+                <div class="viz-title">⚖️ Блок 5. Фактор и отклик: главный вопрос аналитика</div>
+                <svg viewBox="0 0 540 200" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="200" fill="#ffffff"/>
+
+                    <rect x="30" y="40" width="180" height="120" rx="10" fill="#ebf8ff" stroke="#2b6cb0" stroke-width="2"/>
+                    <text x="120" y="65" text-anchor="middle" class="label-strong" style="font-size: 13px;">ФАКТОР</text>
+                    <text x="120" y="85" text-anchor="middle" class="label-small">независимая переменная</text>
+                    <text x="120" y="105" text-anchor="middle" class="label-small">то, что считаем причиной</text>
+                    <text x="120" y="125" text-anchor="middle" class="label-small" style="font-weight: bold;">Примеры:</text>
+                    <text x="120" y="145" text-anchor="middle" class="label-tiny">акция · пол · район · год</text>
+
+                    <line x1="220" y1="100" x2="310" y2="100" stroke="#e53e3e" stroke-width="3"/>
+                    <polygon points="310,100 298,94 298,106" fill="#e53e3e"/>
+                    <text x="265" y="90" text-anchor="middle" class="label-small" fill="#9b2c2c" style="font-weight: bold;">влияет?</text>
+                    <text x="265" y="120" text-anchor="middle" class="label-tiny" fill="#9b2c2c">p-value</text>
+
+                    <rect x="330" y="40" width="180" height="120" rx="10" fill="#f0fff4" stroke="#38a169" stroke-width="2"/>
+                    <text x="420" y="65" text-anchor="middle" class="label-strong" style="font-size: 13px;">ОТКЛИК</text>
+                    <text x="420" y="85" text-anchor="middle" class="label-small">зависимая переменная</text>
+                    <text x="420" y="105" text-anchor="middle" class="label-small">то, что считаем следствием</text>
+                    <text x="420" y="125" text-anchor="middle" class="label-small" style="font-weight: bold;">Примеры:</text>
+                    <text x="420" y="145" text-anchor="middle" class="label-tiny">продажи · сумма · жалобы</text>
+
+                    <rect x="150" y="175" width="240" height="20" rx="4" fill="#fffaf0" stroke="#d69e2e" stroke-width="1"/>
+                    <text x="270" y="189" text-anchor="middle" class="label-small" fill="#975a16" style="font-weight: bold;">p &lt; 0.05 → влияние есть · p ≥ 0.05 → нет</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Фактор</strong> — то, что считаем причиной. <strong>Отклик</strong> — то, что считаем следствием. Не имеет значения, какую переменную назвали фактором, а какую откликом — математика от этого не меняется. Важно только, в каких шкалах они измерены. <strong>Ключевой показатель — p-value</strong>: если p &lt; 0.05, фактор существенно влияет на отклик.
+                </div>
+            </div>
+
+            <!-- БЛОК 6: КРИТЕРИЙ СТЬЮДЕНТА (ВИЗУАЛИЗАЦИЯ) -->
+            <div class="viz-card">
+                <div class="viz-title">🎓 Блок 6. Критерий Стьюдента: две кривые и три условия применимости</div>
+                <svg viewBox="0 0 540 260" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="260" fill="#ffffff"/>
+                    <line x1="40" y1="210" x2="500" y2="210" class="axis"/>
+                    <text x="270" y="235" text-anchor="middle" class="label-strong">Значение отклика (например, число упоминаний)</text>
+
+                    <!-- Group A curve -->
+                    <path d="M 60 210 Q 100 205 130 170 Q 160 100 190 100 Q 220 100 250 170 Q 280 205 320 210"
+                          fill="#bee3f8" fill-opacity="0.6" stroke="#2b6cb0" stroke-width="2.5"/>
+                    <line x1="190" y1="100" x2="190" y2="210" stroke="#2b6cb0" stroke-width="1.5" stroke-dasharray="4 3"/>
+                    <text x="190" y="90" text-anchor="middle" class="label-small" fill="#2b6cb0">μ_A = 312</text>
+
+                    <!-- Group B curve shifted -->
+                    <path d="M 110 210 Q 150 205 180 170 Q 210 100 240 100 Q 270 100 300 170 Q 330 205 370 210"
+                          fill="#fefcbf" fill-opacity="0.6" stroke="#d69e2e" stroke-width="2.5"/>
+                    <line x1="240" y1="100" x2="240" y2="210" stroke="#d69e2e" stroke-width="1.5" stroke-dasharray="4 3"/>
+                    <text x="240" y="90" text-anchor="middle" class="label-small" fill="#975a16">μ_B = 329</text>
+
+                    <!-- Difference arrow -->
+                    <line x1="190" y1="155" x2="240" y2="155" stroke="#e53e3e" stroke-width="2"/>
+                    <polygon points="240,155 234,152 234,158" fill="#e53e3e"/>
+                    <text x="215" y="175" text-anchor="middle" class="label-tiny" fill="#9b2c2c" style="font-weight: bold;">Δ = 17</text>
+
+                    <!-- Legend -->
+                    <rect x="60" y="245" width="14" height="8" fill="#bee3f8" stroke="#2b6cb0" rx="2"/>
+                    <text x="80" y="253" class="label-tiny">Губернатор (A)</text>
+                    <rect x="200" y="245" width="14" height="8" fill="#fefcbf" stroke="#d69e2e" rx="2"/>
+                    <text x="220" y="253" class="label-tiny">Мэр (B)</text>
+
+                    <!-- p-value badge -->
+                    <rect x="370" y="20" width="150" height="40" rx="6" fill="#ffffff" stroke="#38a169" stroke-width="2"/>
+                    <text x="445" y="37" text-anchor="middle" class="label-strong" fill="#276749">p = 0.007</text>
+                    <text x="445" y="52" text-anchor="middle" class="label-tiny" fill="#276749">&lt; 0.05 → значимо</text>
+
+                    <text x="60" y="20" class="label-strong" style="font-size: 13px;">Три условия применимости:</text>
+                    <text x="60" y="40" class="label-tiny">1. Ровно 2 группы</text>
+                    <text x="60" y="55" class="label-tiny">2. Нормальность в каждой подгруппе</text>
+                    <text x="60" y="70" class="label-tiny">3. Однородность дисперсий (тест Ливиня)</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Критерий Стьюдента</strong> сравнивает средние двух нормальных распределений. Если различие средних больше, чем можно объяснить случайностью — p-value маленькое, эффект значим. <strong>Три условия применимости:</strong> ровно две группы; нормальность в каждой подгруппе отдельно; однородность дисперсий (тест Ливиня, p &gt; 0.05). <strong>Частая ошибка:</strong> проверять нормальность на всех данных целиком — нужно <strong>отдельно для каждой подгруппы</strong>.
+                </div>
+            </div>
+
+            <!-- БЛОК 7: КРИТЕРИЙ МАННА-УИТНИ (ВИЗУАЛИЗАЦИЯ) -->
+            <div class="viz-card">
+                <div class="viz-title">🎓 Блок 7. Критерий Манна–Уитни: ранжирование вместо средних</div>
+                <svg viewBox="0 0 540 240" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="240" fill="#ffffff"/>
+
+                    <text x="270" y="20" text-anchor="middle" class="label-strong">Совместное ранжирование всех значений</text>
+
+                    <!-- Ranks line -->
+                    <line x1="60" y1="120" x2="480" y2="120" class="axis"/>
+
+                    <!-- Group A ranks (blue) -->
+                    <circle cx="70"  cy="100" r="6" fill="#2b6cb0"/>
+                    <circle cx="98"  cy="140" r="6" fill="#2b6cb0"/>
+                    <circle cx="135" cy="100" r="6" fill="#2b6cb0"/>
+                    <circle cx="175" cy="140" r="6" fill="#2b6cb0"/>
+                    <circle cx="215" cy="100" r="6" fill="#2b6cb0"/>
+                    <circle cx="265" cy="140" r="6" fill="#2b6cb0"/>
+                    <circle cx="315" cy="100" r="6" fill="#2b6cb0"/>
+
+                    <!-- Group B ranks (red) -->
+                    <circle cx="330" cy="140" r="6" fill="#e53e3e"/>
+                    <circle cx="365" cy="100" r="6" fill="#e53e3e"/>
+                    <circle cx="400" cy="140" r="6" fill="#e53e3e"/>
+                    <circle cx="430" cy="100" r="6" fill="#e53e3e"/>
+                    <circle cx="460" cy="140" r="6" fill="#e53e3e"/>
+
+                    <!-- Rank numbers -->
+                    <text x="70"  y="88" text-anchor="middle" class="label-tiny">1</text>
+                    <text x="98"  y="158" text-anchor="middle" class="label-tiny">2</text>
+                    <text x="135" y="88" text-anchor="middle" class="label-tiny">3</text>
+                    <text x="175" y="158" text-anchor="middle" class="label-tiny">4</text>
+                    <text x="215" y="88" text-anchor="middle" class="label-tiny">5</text>
+                    <text x="265" y="158" text-anchor="middle" class="label-tiny">6</text>
+                    <text x="315" y="88" text-anchor="middle" class="label-tiny">7</text>
+                    <text x="330" y="158" text-anchor="middle" class="label-tiny">8</text>
+                    <text x="365" y="88" text-anchor="middle" class="label-tiny">9</text>
+                    <text x="400" y="158" text-anchor="middle" class="label-tiny">10</text>
+                    <text x="430" y="88" text-anchor="middle" class="label-tiny">11</text>
+                    <text x="460" y="158" text-anchor="middle" class="label-tiny">12</text>
+
+                    <text x="270" y="185" text-anchor="middle" class="label-small">Пересечение рангов → нет чёткого сдвига</text>
+
+                    <!-- p-value -->
+                    <rect x="370" y="195" width="150" height="35" rx="6" fill="#fff5f5" stroke="#e53e3e" stroke-width="2"/>
+                    <text x="445" y="212" text-anchor="middle" class="label-strong" fill="#9b2c2c">p = 0.09</text>
+                    <text x="445" y="225" text-anchor="middle" class="label-tiny" fill="#9b2c2c">≥ 0.05 → не значимо</text>
+
+                    <!-- Legend -->
+                    <circle cx="70" cy="35" r="5" fill="#2b6cb0"/>
+                    <text x="85" y="39" class="label-small">Группа A (Кировский район)</text>
+                    <circle cx="70" cy="55" r="5" fill="#e53e3e"/>
+                    <text x="85" y="59" class="label-small">Группа B (Советский район)</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Критерий Манна–Уитни</strong> не требует нормальности. Он ранжирует все значения вместе и смотрит, насколько сильно перекрываются ранги двух групп. <strong>Требование одно:</strong> ровно две группы. <strong>Что проверяет:</strong> равенство медиан. В примере p = 0.09 ≥ 0.05 — различие незначимо, нельзя утверждать, что в одном районе жалуются меньше. <strong>Когда применять:</strong> ненормальные данные (счётчики, выбросы, скошенные распределения).
+                </div>
+            </div>
+
+            <!-- БЛОК 8: ANOVA — ВИЗУАЛИЗАЦИЯ И ТРЕБОВАНИЯ -->
+            <div class="viz-card">
+                <div class="viz-title">🎓 Блок 8. Дисперсионный анализ (ANOVA): три кривые, требования и три шага</div>
+                <svg viewBox="0 0 540 300" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="300" fill="#ffffff"/>
+                    <line x1="40" y1="190" x2="500" y2="190" class="axis"/>
+                    <text x="270" y="215" text-anchor="middle" class="label-strong">Значение отклика (например, годовая зарплата)</text>
+
+                    <!-- Group 1 -->
+                    <path d="M 60 190 Q 100 185 130 150 Q 160 80 190 80 Q 220 80 250 150 Q 280 185 320 190"
+                          fill="#bee3f8" fill-opacity="0.6" stroke="#2b6cb0" stroke-width="2"/>
+                    <line x1="190" y1="80" x2="190" y2="190" stroke="#2b6cb0" stroke-width="1.5" stroke-dasharray="4 3"/>
+                    <text x="190" y="70" text-anchor="middle" class="label-small" fill="#2b6cb0">гр. 1 (студенты)</text>
+
+                    <!-- Group 2 -->
+                    <path d="M 110 190 Q 150 185 180 150 Q 210 80 240 80 Q 270 80 300 150 Q 330 185 370 190"
+                          fill="#fefcbf" fill-opacity="0.6" stroke="#d69e2e" stroke-width="2"/>
+                    <line x1="240" y1="80" x2="240" y2="190" stroke="#d69e2e" stroke-width="1.5" stroke-dasharray="4 3"/>
+                    <text x="240" y="70" text-anchor="middle" class="label-small" fill="#975a16">гр. 2 (младший)</text>
+
+                    <!-- Group 3 -->
+                    <path d="M 160 190 Q 200 185 230 150 Q 260 80 290 80 Q 320 80 350 150 Q 380 185 420 190"
+                          fill="#c6f6d5" fill-opacity="0.6" stroke="#38a169" stroke-width="2"/>
+                    <line x1="290" y1="80" x2="290" y2="190" stroke="#38a169" stroke-width="1.5" stroke-dasharray="4 3"/>
+                    <text x="290" y="70" text-anchor="middle" class="label-small" fill="#276749">гр. 3 (старший)</text>
+
+                    <!-- p-value badge -->
+                    <rect x="390" y="20" width="130" height="40" rx="6" fill="#ffffff" stroke="#38a169" stroke-width="2"/>
+                    <text x="455" y="37" text-anchor="middle" class="label-strong" fill="#276749">p &lt; 0.001</text>
+                    <text x="455" y="52" text-anchor="middle" class="label-tiny" fill="#276749">различия есть</text>
+
+                    <!-- Requirements -->
+                    <text x="60" y="20" class="label-strong" style="font-size: 13px;">Требования применимости:</text>
+                    <text x="60" y="40" class="label-tiny">1. Фактор: 3+ уровня</text>
+                    <text x="60" y="55" class="label-tiny">2. Нормальность в каждой подгруппе</text>
+                    <text x="60" y="70" class="label-tiny">3. Однородность дисперсий (Ливинь)</text>
+                    <text x="60" y="85" class="label-tiny">4. Желательно ≥ 30 наблюдений на уровень</text>
+
+                    <!-- Three steps -->
+                    <rect x="20" y="230" width="160" height="60" rx="8" fill="#ebf8ff" stroke="#2b6cb0" stroke-width="1.5"/>
+                    <text x="100" y="250" text-anchor="middle" class="label-strong" style="font-size: 11px;">Шаг 1</text>
+                    <text x="100" y="268" text-anchor="middle" class="label-small">Есть ли различия?</text>
+                    <text x="100" y="283" text-anchor="middle" class="label-tiny">p &lt; 0.05 → шаг 2</text>
+
+                    <text x="185" y="265" text-anchor="middle" class="label-strong" fill="#e53e3e">→</text>
+
+                    <rect x="195" y="230" width="160" height="60" rx="8" fill="#f0fff4" stroke="#38a169" stroke-width="1.5"/>
+                    <text x="275" y="250" text-anchor="middle" class="label-strong" style="font-size: 11px;">Шаг 2</text>
+                    <text x="275" y="268" text-anchor="middle" class="label-small">Какие пары различаются?</text>
+                    <text x="275" y="283" text-anchor="middle" class="label-tiny">пост-хок: Тьюки / скорр.</text>
+
+                    <text x="360" y="265" text-anchor="middle" class="label-strong" fill="#e53e3e">→</text>
+
+                    <rect x="370" y="230" width="150" height="60" rx="8" fill="#fffaf0" stroke="#d69e2e" stroke-width="1.5"/>
+                    <text x="445" y="250" text-anchor="middle" class="label-strong" style="font-size: 11px;">Шаг 3</text>
+                    <text x="445" y="268" text-anchor="middle" class="label-small">Насколько велико?</text>
+                    <text x="445" y="283" text-anchor="middle" class="label-tiny">сравнить средние</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>ANOVA</strong> сравнивает средние трёх и более групп. <strong>Требования:</strong> фактор имеет 3+ уровня; нормальность в каждой подгруппе отдельно; однородность дисперсий (тест Ливиня); желательно ≥ 30 наблюдений на уровень. <strong>Три шага:</strong> 1) есть ли различия (p &lt; 0.05); 2) какие пары различаются (пост-хок: Тьюки для равных выборок, скорректированный — для неравных); 3) насколько велико (сравнить средние). <strong>Если данные ненормальные</strong> — вместо ANOVA используется критерий Краскела–Уоллиса.
+                </div>
+            </div>
+
+            <!-- ИТОГОВАЯ ТАБЛИЦА -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 8px;">📋 Сводная таблица: какой критерий выбрать</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr><th>Число групп</th><th>Нормальность</th><th>Дисперсии</th><th>Критерий</th><th>Что проверяет</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>2</strong></td><td>Нормальны</td><td>Однородны</td><td><span class="tag ok">Стьюдента</span></td><td>Средние</td></tr>
+                        <tr><td><strong>2</strong></td><td>Ненормальны или дисперсии неоднородны</td><td>Любые</td><td><span class="tag warn">Манна–Уитни</span></td><td>Медианы</td></tr>
+                        <tr><td><strong>3+</strong></td><td>Нормальны</td><td>Однородны</td><td><span class="tag ok">ANOVA + пост-хок</span></td><td>Средние + пары</td></tr>
+                        <tr><td><strong>3+</strong></td><td>Ненормальны</td><td>Любые</td><td><span class="tag">Краскела–Уоллиса</span></td><td>Медианы</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ПРИВЯЗКА К ИНСТРУМЕНТАМ -->
+            <div class="chart-box" style="background: #faf5ff; border-color: #d6bcfa;">
+                <strong style="color: #553c9a;">🛠️ Где реализованы методы (из лекции 5)</strong>
+                <table class="compare-table" style="margin-top:8px; font-size:11.5px;">
+                    <thead>
+                        <tr><th>Метод</th><th>Эксель</th><th>Колаб</th><th>Логином</th><th>ДетаЛенс / Пауэр Би Ай</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Описательные статистики</td><td>✅ Функции</td><td>✅ Библиотеки</td><td>✅ Узлы</td><td>✅ Визуализация</td></tr>
+                        <tr><td>Гистограмма / ящичная диаграмма</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+                        <tr><td>Тесты нормальности</td><td>✅ Пакет анализа</td><td>✅</td><td>✅</td><td>❌</td></tr>
+                        <tr><td>Критерий Стьюдента</td><td>✅ Пакет анализа</td><td>✅</td><td>✅</td><td>❌</td></tr>
+                        <tr><td>Критерий Манна–Уитни</td><td>⚠️ Частично</td><td>✅</td><td>✅</td><td>❌</td></tr>
+                        <tr><td>Дисперсионный анализ</td><td>✅ Пакет анализа</td><td>✅</td><td>✅</td><td>❌</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- КЛЮЧЕВЫЕ ВЫВОДЫ -->
+            <div class="highlight-box">
+                <strong>💡 Главные выводы лекции</strong>
+                <p>1. Статистический анализ — не набор формул, а последовательность решений.<br>
+                2. Тип шкалы определяет допустимые методы.<br>
+                3. Среднее может соврать из-за выбросов — проверяйте медиану и нормальность.<br>
+                4. p-value — главный показатель: p &lt; 0.05 означает существенное влияние.<br>
+                5. Критерий выбирается по числу групп и нормальности данных.<br>
+                6. Вся цепочка реализуется в инструментах из лекции 5: Эксель, Колаб, Логином.</p>
+            </div>
+
+            <!-- СЛОВАРЬ -->
+            <div style="font-size: 13px; color: #4a5568; line-height: 1.6;">
+                <strong style="color:#1a365d;">Ключевые термины:</strong>
+                <span class="tag">Номинальная шкала</span>
+                <span class="tag">Порядковая шкала</span>
+                <span class="tag">Количественная шкала</span>
+                <span class="tag">Среднее</span>
+                <span class="tag">Медиана</span>
+                <span class="tag">Квартили</span>
+                <span class="tag">Ящичная диаграмма</span>
+                <span class="tag">IQR</span>
+                <span class="tag">Нормальное распределение</span>
+                <span class="tag">Асимметрия</span>
+                <span class="tag">Эксцесс</span>
+                <span class="tag">Шапиро–Уилк</span>
+                <span class="tag">Колмогоров–Смирнов</span>
+                <span class="tag">p-value</span>
+                <span class="tag">Критерий Стьюдента</span>
+                <span class="tag">Критерий Манна–Уитни</span>
+                <span class="tag">Дисперсионный анализ</span>
+                <span class="tag">Тест Ливиня</span>
+                <span class="tag">Тест Тьюки</span>
+            </div>
+
+            <!-- ВИДЕОПЛЕЕР -->
+            <div class="video-section">
+                <div class="video-container">
+                    <iframe id="lecture-player" src="https://rutube.ru" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+                </div>
+                <div class="links-hub">
+                    <button onclick="changeVideo('https://rutube.ru/')" class="video-btn stop-btn">⏹ СТОП</button>
+                    <button onclick="changeVideo('https://rutube.ru/play/embed/')" class="video-btn rt-btn">📜 Лекция 6. Статистические методы анализа данных</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="slide-footer">
+            Направление «Менеджмент» | Курс: Аналитика данных | Лекция 6: «Статистические методы анализа данных»
+        </div>
+    </div>
+
+    <!-- ПРАВАЯ ПАНЕЛЬ -->
+    <div class="speaker-notes">
+        <div style="position: sticky; top: 0; background: #1a202c; padding: 20px 20px 10px 20px; border-bottom: 1px solid #4a5568; width: 100%; z-index: 100;">
+            <div class="notes-header" style="display: block; padding-bottom: 15px;">
+                <audio id="lecture-audio" preload="auto" controls
+                       src="https://archive.org/download/03_20261110_20261110/06.mp3"
+                       style="width: 100%; height: 32px; border-radius: 4px;"></audio>
+            </div>
+            <div style="width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                <iframe id="right-lecture-player" src="https://archive.org/embed/20261020_20261020_0955?autoplay=true&loop=true&muted=true" allow="clipboard-write; autoplay" width="100%" height="100%" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="border: none;"></iframe>
+            </div>
+        </div>
+
+        <div class="lecture-text" style="margin-top: 20px;">
+
+            <h3>📌 Введение</h3>
+
+            <p>Добрый день, коллеги. Мы начинаем шестую лекцию нашего курса. Она называется «Статистические методы анализа данных». И прежде чем перейти к методам, давайте вспомним, что мы уже прошли.</p>
+
+            <p>В третьей лекции мы разобрали метрики. Мы узнали, что такое среднее, медиана, конверсия, удержание, стоимость привлечения. Мы увидели, что у каждой роли аналитика свой набор показателей. В пятой лекции мы разобрали инструменты. Мы увидели, где происходит подготовка данных, где анализ, где визуализация.</p>
+
+            <p>Но остался главный вопрос. Как именно аналитик превращает числа в вывод? Как понять, что различие между двумя группами — это реальный эффект, а не случайность? Именно этому посвящена наша лекция.</p>
+
+            <p>Представьте себе рабочую ситуацию. Руководитель приходит к аналитику и говорит: «Нам кажется, что после рекламной акции продажи выросли. Проверь, это правда или нам только кажется?» Или другая формулировка: «Говорят, в одном районе жалуются меньше, чем в другом. Это так?»</p>
+
+            <p>Аналитик не может ответить на глаз. Он видит две группы чисел. Это могут быть продажи до акции и после. Или количество жалоб по двум районам. И он должен сказать: различие реальное или случайное?</p>
+
+            <p>Чтобы ответить, нужно пройти пять шагов. Каждый шаг — это вопрос, на который нужно ответить, прежде чем двигаться дальше. Давайте назовём эти шаги.</p>
+
+            <p>Первый вопрос. Что за данные у меня в руках? От ответа зависит, какие действия вообще допустимы. Это тема шкал.</p>
+
+            <p>Второй вопрос. Как описать эти данные коротко? Средним или медианой? Это тема описательных статистик.</p>
+
+            <p>Третий вопрос. Можно ли доверять выбранной статистике? Среднее может соврать. Почему это происходит и как проверить? Это тема нормальности распределения.</p>
+
+            <p>Четвёртый вопрос. Как перейти от описания к сравнению групп? Это тема анализа влияния факторов и уровня значимости.</p>
+
+            <p>Пятый вопрос. Какой именно критерий применить? Их три основных. Для двух групп с нормальными данными. Для двух групп с ненормальными данными. И для трёх и более групп.</p>
+
+            <p>Мы пройдём эти пять шагов на конкретных примерах. На каждом шаге мы покажем, в каком инструменте из пятой лекции этот шаг выполняется. Это поможет связать методы с реальной работой.</p>
+
+            <p>Обратите внимание на важную мысль. Статистический анализ — это не набор разрозненных формул. Это последовательность решений. Каждое решение обосновано проверкой. Пропустить проверку — значит получить неверный вывод.</p>
+
+            <p>И ещё одна мысль. Методы из этой лекции работают с теми же метриками, которые мы определили в третьей лекции. Удержание, отток, стоимость привлечения, время выполнения задачи, количество жалоб. Все они требуют статистической проверки, прежде чем делать вывод.</p>
+
+            <p>В этой лекции мы разберём восемь блоков. Блок первый — типы шкал. Блок второй — описательные статистики. Блок третий — проверка нормальности. Блок четвёртый — общая схема. Блок пятый — фактор и отклик. Блок шестой — критерий Стьюдента. Блок седьмой — критерий Манна–Уитни. Блок восьмой — дисперсионный анализ. А в конце соберём всё в единую цепочку решений.</p>
+
+            <p>А сейчас давайте перейдём к первому вопросу. И начнём с типов шкал. Это будет наш первый шаг в цепочке решений.</p>
+
+            <h3>📌 Блок 1. Типы шкал</h3>
+
+            <p>Вернёмся к нашей задаче. У нас есть таблица наблюдений. Давайте представим её на конкретном примере. Это таблица котов из приюта. Столбцы этой таблицы — это свойства животного. Кличка, порода, пол, возраст, цвет, вес, пушистость. Строки — это конкретные коты и кошки. Василий, Глафира, Марта, Пушок.</p>
+
+            <p>Теперь давайте зададим простой вопрос. Можно ли посчитать среднюю породу? Или средний цвет? Ответ очевиден. Нет, нельзя. А средний возраст посчитать можно. Почему так происходит? Потому что порода и цвет — это метки. А возраст — это число в обычном смысле.</p>
+
+            <p>Отсюда мы делаем первый важный вывод. Все столбцы в таблице делятся на три типа. И тип столбца определяет, какие действия с ним допустимы.</p>
+
+            <p>Первый тип — это номинальная шкала. Её ещё называют шкалой наименований. Значения здесь используются только как метки. Они нужны, чтобы отличить один объект от другого. В нашей таблице это кличка, порода, пол и цвет. Единственное, что можно делать с такими данными — считать частоты. Сколько котов каждой породы. Сколько мальчиков и сколько девочек.</p>
+
+            <p>Второй тип — это порядковая шкала. Значения здесь можно упорядочить. В нашей таблице это пушистость. Она бывает низкая, средняя и высокая. Мы можем сказать, что один кот пушистее другого. Но мы не можем сказать, насколько именно пушистее. Расстояние между уровнями не определено.</p>
+
+            <p>Третий тип — это количественная шкала. Здесь значения — это числа в обычном смысле. Возраст и вес в нашей таблице относятся к этой шкале. С такими числами можно складывать, вычитать, считать среднее.</p>
+
+            <p>Теперь давайте объясним, почему это различие критично, а не является формальностью. От типа шкалы зависит, какой метод анализа применим дальше. Среднее нельзя посчитать для породы. Это бессмысленно. Критерий Стьюдента нельзя применить, если фактор имеет три уровня. Об этом мы поговорим позже. Но правило остаётся тем же. Если аналитик перепутал шкалу, весь дальнейший анализ окажется ошибочным.</p>
+
+            <p>Есть ещё одно важное правило. Оно касается преобразования шкал. Количественную шкалу можно огрубить. Её можно перевести в порядковую. И затем в номинальную. Давайте посмотрим на примере. Возраст кота — четырнадцать лет. Это количественная шкала. Мы можем перевести его в порядковую и сказать «подростковый возраст». Затем можем перевести в номинальную и отнести к категории «молодёжь».</p>
+
+            <p>Но обратное преобразование невозможно. Из категории «молодёжь» мы не можем восстановить точный возраст. Было ли коту четырнадцать лет или двадцать пять. Информация теряется безвозвратно. Поэтому количественная шкала — самая подробная. Порядковая — менее подробная. А номинальная — минимально подробная.</p>
+
+            <p>Теперь давайте свяжем это с инструментами из пятой лекции. Где именно аналитик определяет тип шкалы? Это происходит на этапе подготовки данных. В Пауэр Кверри это делается при загрузке и приведении типов. В Логином — на узле описания полей. В Биг Кверри и в Кликхаус — в структуре таблицы. Ошибка на этом шаге переносится во все последующие. Поэтому так важно проверить тип каждого столбца в самом начале.</p>
+
+            <p>Давайте подведём итог первого блока. Мы ответили на первый вопрос аналитика. Что за данные у меня в руках? Мы увидели, что все столбцы делятся на три типа. Номинальный, порядковый и количественный. Мы поняли, что от типа шкалы зависит выбор метода. И мы увидели, что количественную шкалу можно огрубить, но нельзя восстановить обратно.</p>
+
+            <h3>📌 Блок 2. Описательные статистики</h3>
+
+            <p>Теперь перейдём ко второму вопросу. Как описать данные коротко? Допустим, у нас есть две организации. В каждой по семь сотрудников. Нам известны зарплаты каждого сотрудника. И нужно охарактеризовать каждую организацию одним числом. Чтобы руководитель мог быстро понять, какая там ситуация.</p>
+
+            <p>Первая попытка — это среднее арифметическое. Мы складываем все зарплаты и делим на количество сотрудников. Давайте посмотрим, что получится. В первой организации среднее значение получается нормальным. Оно похоже на типичную зарплату. Во второй организации среднее значение получается сильно выше большинства зарплат. Почему так произошло?</p>
+
+            <p>Причина в одном сотруднике. Это директор. Он получает в разы больше остальных. И одно это значение перетянуло среднее на себя. Вот в чём проблема. Среднее арифметическое чувствительно к выбросам. Одно нетипичное значение — и среднее перестаёт описывать типичную ситуацию.</p>
+
+            <p>Представьте, что аналитик доложит руководителю только среднее по второй организации. Руководитель решит, что там все получают много. А на самом деле только директор. Это классическая ошибка. И она приводит к неверным управленческим решениям.</p>
+
+            <p>Что делать? Есть вторая попытка — медиана. Давайте упорядочим зарплаты по возрастанию. И возьмём серединное значение. В обеих организациях медиана показывает тридцать. И это действительно описывает большинство сотрудников. Медиана не сдвинулась от одного директора. Она устойчива к выбросам.</p>
+
+            <p>Отсюда мы формулируем правило. Если в данных есть выбросы, медиана честнее среднего. Если выбросов нет и данные симметричны, среднее и медиана близки. И тогда можно пользоваться средним. Это простое правило, но оно спасает от многих ошибок.</p>
+
+            <p>Теперь давайте посмотрим, как это увидеть глазами. Для этого есть ящичная диаграмма. Её ещё называют ящиком с усами. Давайте разберём, как она устроена. Тело ящика — это центральные пятьдесят процентов значений. Линия внутри ящика — это медиана. Усы, которые выходят из ящика, показывают разброс без выбросов. Кружки за усами — это выбросы. А звёздочки дальше — это грубые ошибки.</p>
+
+            <p>По этой диаграмме сразу видно, что происходит. В первой организации ящик симметричный. Медиана по центру. Усы одинаковой длины. Во второй организации медиана смещена. А сверху торчит выброс. Это и есть директор с большой зарплатой.</p>
+
+            <p>Что ещё нужно для полного описания? Кроме медианы считают квартили. Нижняя квартиль — это значение, ниже которого находится четверть данных. Верхняя квартиль — это значение, выше которого находится четверть данных. Расстояние между ними называется квартильным размахом. Это и есть тело ящика. И ещё считают общий размах. Это разница между максимумом и минимумом.</p>
+
+            <p>А как быть с номинальными данными? Для них набор описательных статистик другой. Здесь используют частотную таблицу. В ней показывают, сколько наблюдений в каждой категории. В абсолютных числах и в процентах. И строят диаграммы. Столбиковую диаграмму — для абсолютных значений. Круговую диаграмму — для процентного соотношения.</p>
+
+            <p>Теперь давайте свяжем это с инструментами из пятой лекции. В Эксель медиана, квартили и размах считаются стандартными функциями. Ящичная диаграмма строится встроенными средствами. В Колаб то же самое делается через библиотеки. В Логином есть готовые узлы описательных статистик и визуализации. В ДетаЛенс и в Пауэр Би Ай строятся ящичная диаграмма и гистограмма. А в Биг Кверри и в Кликхаус медиана и процентили считаются функциями языка запросов.</p>
+
+            <p>Давайте подведём итог второго блока. Мы ответили на второй вопрос аналитика. Как описать данные коротко? Мы увидели, что среднее может соврать из-за выбросов. Мы познакомились с медианой, которая устойчива к выбросам. Мы разобрали квартили и ящичную диаграмму. И мы увидели, что для номинальных данных используется другой набор — частотные таблицы и диаграммы.</p>
+
+            <p>Но у нас остался важный вопрос. Почему среднее соврало во второй организации? Мы сказали, что из-за выброса. Но это лишь часть ответа. На самом деле причина глубже. Распределение зарплат в этой организации несимметрично. Оно скошено. И чтобы это проверить, нужен специальный метод. Этим мы займёмся в следующем блоке.</p>
+
+            <h3>📌 Блок 3. Проверка нормальности</h3>
+
+            <p>В предыдущем блоке мы обнаружили проблему. Среднее арифметическое во второй организации соврало. Оно показало высокую зарплату. Хотя большинство сотрудников получают скромно. Давайте теперь разберёмся, почему это произошло.</p>
+
+            <p>Причина не в том, что данные плохие. Данные правильные. Причина в том, что распределение зарплат в этой организации несимметрично. Оно скошено. Большинство значений низкие. А одно значение очень высокое. Именно поэтому среднее уехало вверх.</p>
+
+            <p>В первой организации распределение симметричное. Значения расположены вокруг среднего примерно одинаково. Поэтому среднее там работает хорошо. И медиана показывает почти то же самое.</p>
+
+            <p>Отсюда возникает задача. Прежде чем доверять среднему, нужно проверить распределение. Симметрично ли оно? Похоже ли оно на нормальную кривую? Или оно скошено?</p>
+
+            <p>Сразу уточним, что такое нормальное распределение. Это симметричная колоколообразная кривая. Большинство значений группируется около среднего. Чем дальше от среднего, тем реже встречаются значения. Кривая плавно спускается в обе стороны.</p>
+
+            <p>У нормального распределения есть важное свойство. Оно называется правилом трёх сигм. Около семидесяти процентов значений лежат в пределах одного стандартного отклонения от среднего. Около девяноста пяти процентов — в пределах двух. И почти все значения — в пределах трёх.</p>
+
+            <p>Теперь перейдём к методам проверки. Их делят на три группы. Косвенные показатели. Графические методы. И расчётные тесты.</p>
+
+            <p>Начнём с первой группы. Это косвенные показатели. Их два. Первый — асимметрия. Она показывает, насколько распределение скошено. Если асимметрия равна нулю, распределение симметрично. Если она положительна, правый хвост длиннее левого. Если отрицательна, левый хвост длиннее правого.</p>
+
+            <p>Второй показатель — эксцесс. Он показывает, насколько вершина распределения острая или плоская. У нормального распределения эксцесс равен нулю. Если эксцесс отрицательный, вершина более плоская. Если положительный, вершина более острая.</p>
+
+            <p>Как интерпретировать эти показатели? Мы сравниваем их абсолютные значения со стандартными ошибками. Стандартные ошибки рассчитываются по формулам. Их легко получить в любом статистическом пакете. Если абсолютное значение асимметрии или эксцесса меньше стандартной ошибки, распределение считают нормальным.</p>
+
+            <p>Перейдём ко второй группе. Это графические методы. Их три.</p>
+
+            <p>Первый метод — частотная гистограмма. Мы строим столбики фактических частот. И накладываем сверху теоретическую нормальную кривую. Если столбики идут по этой кривой, распределение нормальное. Если гистограмма асимметрична, распределение ненормальное. Это самый наглядный способ.</p>
+
+            <p>Второй метод — ящичная диаграмма. Мы уже знаем, как она устроена. Смотрим на медиану. Она должна быть по центру ящика. Смотрим на усы. Они должны быть одинаковой длины. Смотрим на выбросы. Они должны быть симметричны с обеих сторон. Если всё так, распределение считают нормальным. Если медиана смещена, а один ус длиннее, распределение скошено.</p>
+
+            <p>Третий метод — нормальный вероятностный график. На нём точки фактических данных должны лежать на теоретической прямой. Если точки уходят от прямой систематически, распределение ненормальное. Если точки лежат близко к прямой, распределение нормальное. Это очень чувствительный метод.</p>
+
+            <p>Теперь важное предупреждение. Графические методы нужно использовать вместе. Нельзя смотреть только на один график. Вот пример из практики. Гистограмма показывает провал в середине. Это признак неоднородности данных. Скорее всего, данные смешаны из двух разных групп, и их нужно разделить. А ящичная диаграмма при этом выглядит симметричной. Она не выдаёт проблемы. Если аналитик посмотрит только на ящичную диаграмму, он сделает ошибочный вывод о нормальности. Поэтому графические методы применяют в комплексе.</p>
+
+            <p>Перейдём к третьей группе. Это расчётные тесты. Их два основных. Первый — критерий Шапиро–Уилка. Второй — критерий Колмогорова–Смирнова. Оба проверяют гипотезу о нормальности. Результат каждого теста — это уровень значимости. Его ещё называют «пэ» значением.</p>
+
+            <p>Как интерпретировать уровень значимости? Для критерия Шапиро–Уилка порог — пять сотых. Если уровень значимости меньше пяти сотых, гипотеза нормальности отклоняется. Для критерия Колмогорова–Смирнова порог — двадцать сотых. Если уровень значимости меньше двадцати сотых, гипотеза нормальности тоже отклоняется.</p>
+
+            <p>Есть рекомендация по выбору теста. Она нестрогая, но полезная. Если выборка меньше шестидесяти наблюдений, лучше использовать критерий Шапиро–Уилка. Если выборка больше шестидесяти, используют критерий Колмогорова–Смирнова.</p>
+
+            <p>Теперь сформулируем главное правило. Если гипотеза нормальности отклоняется хотя бы по одному расчётному тесту или по графику, данные считаются ненормально распределёнными. И тогда мы не имеем права применять методы, которые требуют нормальности. Например, критерий Стьюдента.</p>
+
+            <p>Давайте свяжем это с инструментами из пятой лекции. В Эксель гистограмма и ящичная диаграмма строятся встроенными средствами. Расчётные тесты есть в пакете анализа. В Колаб доступен полный набор, включая оба теста. В Логином есть готовые узлы проверки нормальности. В ДетаЛенс строятся гистограмма и ящичная диаграмма. Но расчётные тесты там нужно считать отдельно. В Биг Кверри и в Кликхаус можно посчитать асимметрию и эксцесс средствами языка запросов.</p>
+
+            <p>Давайте подведём итог третьего блока. Мы ответили на третий вопрос аналитика. Можно ли доверять выбранной статистике? Мы увидели, что среднее может соврать из-за скошенности распределения. Мы разобрали три группы методов проверки нормальности. Это косвенные показатели, графические методы и расчётные тесты. И мы сформулировали правило. Если нормальность отклоняется хотя бы по одному тесту, данные считаем ненормальными.</p>
+
+            <h3>📌 Блок 4. Общая схема описательного анализа</h3>
+
+            <p>Мы прошли три шага. Мы определили тип шкалы. Мы научились описывать данные. Мы научились проверять нормальность. Теперь давайте свяжем всё это в единую схему. Чтобы аналитик не забыл ни одного шага. И чтобы последовательность действий была понятной.</p>
+
+            <p>Начнём с номинальной шкалы. Здесь схема простая. Два шага. Первый шаг — графическое представление. Столбиковая диаграмма для абсолютных значений. Или круговая диаграмма для процентного соотношения. Второй шаг — частотная таблица. В ней показывают абсолютные частоты и проценты. И на этом описание номинальных данных заканчивается.</p>
+
+            <p>Теперь перейдём к количественной шкале. Здесь схема сложнее. Три шага.</p>
+
+            <p>Первый шаг — проверка нормальности. Мы делаем её всеми доступными методами. Косвенные показатели. Графические методы. Расчётные тесты. Это нужно, чтобы понять, каким путём идти дальше.</p>
+
+            <p>Второй шаг — ветвление. Если данные нормально распределены, мы считаем среднее, стандартное отклонение, стандартную ошибку и размах. Если данные ненормально распределены, мы считаем медиану, квартили, квартильный размах и размах.</p>
+
+            <p>Третий шаг — интерпретация. Мы объясняем, что означают полученные числа. И делаем вывод о типичном значении и разбросе.</p>
+
+            <p>Теперь перейдём к порядковой шкале. Здесь есть важное правило. Оно часто вызывает вопросы, поэтому разберём его подробно.</p>
+
+            <p>Если в порядковой шкале четыре уровня или меньше, её трактуют как номинальную. Почему? Потому что четыре уровня — это слишком мало, чтобы говорить о каком-то порядке. Например, оценка «плохо, средне, хорошо, отлично». Это скорее категории, чем упорядоченная шкала. Поэтому для такой шкалы используют частотные таблицы и диаграммы, как для номинальных данных.</p>
+
+            <p>Если в порядковой шкале больше четырёх уровней, её трактуют как количественную. Причём сразу считают ненормально распределённой. Почему так? Потому что порядковые данные не могут быть нормально распределены. У них нет точных числовых значений. Есть только ранги. Поэтому мы сразу считаем медиану, квартили, квартильный размах и размах. Среднее для таких данных не считают.</p>
+
+            <p>Зачем нужна эта схема? Она не даёт забыть шаг. И она объясняет, почему нельзя «просто посчитать среднее» для любой метрики.</p>
+
+            <p>Свяжем это с инструментами. В Эксель и в Колаб можно построить частотные таблицы для номинальных данных. И можно проверить нормальность для количественных. В Логином есть готовые узлы для всех трёх вариантов. В ДетаЛенс и в Пауэр Би Ай строятся диаграммы, но расчёты делаются отдельно.</p>
+
+            <p>Давайте подведём итог четвёртого блока. Мы связали все предыдущие шаги в единую схему. Для каждой шкалы определён свой набор действий. И теперь у нас есть полная картина описательного анализа.</p>
+
+            <h3>📌 Блок 5. Анализ влияния факторов</h3>
+
+            <p>Теперь вернёмся к задаче из введения. Руководитель спрашивает: «Продажи после акции выросли — это реально?» Или другая формулировка: «В одном районе жалуются меньше, чем в другом — это правда?» Это и есть главный вопрос аналитика. Влияет ли фактор на отклик?</p>
+
+            <p>Давайте определимся с терминами. Фактор — это то, что мы считаем причиной. Отклик — это то, что мы считаем следствием. В задаче про акцию фактор — это наличие акции. До акции или после. А отклик — это объём продаж. В задаче про районы фактор — это район. Кировский или Советский. А отклик — это количество жалоб.</p>
+
+            <p>Есть важное правило. Не имеет значения, какую переменную мы назвали фактором, а какую откликом. Математика от этого не меняется. Важно только, в каких шкалах измерены эти переменные. От этого зависит выбор метода.</p>
+
+            <p>Давайте разберём четыре примера постановок задач. Они помогут увидеть, как это работает на практике.</p>
+
+            <p>Первый пример. Повлияла ли акция на объём продаж? Фактор — акция. Отклик — продажи.</p>
+
+            <p>Второй пример. Различается ли средняя сумма покупки для мужчин и женщин? Фактор — пол. Отклик — сумма покупки.</p>
+
+            <p>Третий пример. Одинаково ли относятся сотрудники разных отделов к руководству? Фактор — отдел. Отклик — отношение к руководству.</p>
+
+            <p>Четвёртый пример. Изменился ли уровень квалификации за год? Фактор — год. Отклик — уровень квалификации.</p>
+
+            <p>Теперь перейдём к ключевому показателю. У каждого метода этой группы есть один общий выход. Это уровень значимости. Его обозначают буквой «пэ». По смыслу это вероятность допустить ошибку. Если мы скажем «фактор влияет», а на самом деле он не влияет.</p>
+
+            <p>Как интерпретировать уровень значимости? Для большинства социальных и маркетинговых исследований порог — пять сотых. Если уровень значимости меньше пяти сотых, фактор влияет на отклик. Если больше, влияние не обнаружено. Для отдельных медицинских или технических исследований порог может быть строже. Одна сотая. Две сотых. Даже одна тысячная.</p>
+
+            <p>Теперь давайте посмотрим, как выбрать метод из трёх. Здесь два условия. Первое — сколько уровней у фактора. Второе — нормальны ли данные.</p>
+
+            <p>Если у фактора две группы и данные нормальны, применяют критерий Стьюдента. Если у фактора две группы и данные ненормальны, применяют критерий Манна–Уитни. Если у фактора три и более групп, применяют дисперсионный анализ.</p>
+
+            <p>Свяжем это с инструментами. Все три критерия реализованы в пакете анализа Эксель. В Колаб они доступны через библиотеки. В Логином есть готовые узлы для всех трёх. А в ДетаЛенс и в Пауэр Би Ай этих критериев нет. Результаты нужно считать снаружи и подавать в визуализацию как готовые таблицы.</p>
+
+            <h3>📌 Блок 6. Критерий Стьюдента</h3>
+
+            <p>Теперь перейдём к первому критерию. Он называется критерий Стьюдента для независимых выборок. Давайте сразу разберём задачу. У нас есть две группы. И количественный показатель. Нужно понять, различаются ли эти группы по данному показателю.</p>
+
+            <p>Конкретный пример. Подсчитано количество упоминаний губернатора и мэра в средствах массовой информации за несколько недель. Вопрос такой. Мэра упоминают существенно чаще? Или различие случайно?</p>
+
+            <p>Что делает критерий Стьюдента? Он проверяет равенство средних значений в двух группах. Если средние различаются сильнее, чем можно объяснить случайностью, мы говорим, что различие существенно.</p>
+
+            <p>Но у этого критерия есть требования. И прежде чем его применять, нужно проверить три условия. Давайте разберём каждое.</p>
+
+            <p>Первое требование. Фактор должен иметь ровно два уровня. В нашем примере фактор — это персона. Губернатор или мэр. Два уровня. Значит, требование выполнено. Если бы уровней было три, критерий Стьюдента не подошёл бы. Для трёх уровней нужен дисперсионный анализ.</p>
+
+            <p>Второе требование. Данные внутри каждой подгруппы должны быть нормально распределены. Это ключевой момент. Нельзя проверить нормальность всей количественной шкалы целиком. Нужно проверить её отдельно для губернатора и отдельно для мэра. То есть две проверки, а не одна. Если хотя бы в одной подгруппе нормальность нарушена, критерий Стьюдента применять нельзя.</p>
+
+            <p>Третье требование. Дисперсии подгрупп должны быть однородными. Что такое дисперсия? Это разброс значений вокруг среднего. Если у одной группы разброс маленький, а у другой огромный, критерий Стьюдента даст неверный результат. Для проверки однородности используют тест Ливиня. Если его уровень значимости больше пяти сотых, дисперсии однородны. Критерий применим. Если меньше, нужен другой метод.</p>
+
+            <p>Есть ещё одно требование. Оно нестрогое, но полезное. Желательно, чтобы в каждой группе было не менее тридцати наблюдений. Если наблюдений меньше, сами данные подозрительны на ненормальность. И критерий Стьюдента может ошибиться.</p>
+
+            <p>Теперь давайте разберём пример по шагам. Сначала строим ящичные диаграммы для обеих групп. Видим, что медианы различаются. Есть ощущение, что мэра упоминают чаще. Но ощущение — это не вывод. Нужна проверка.</p>
+
+            <p>Проверяем нормальность в каждой подгруппе. В нашем примере нормальность выполнена в обеих группах. Проверяем однородность дисперсий тестом Ливиня. Уровень значимости близок к единице. Значит, дисперсии однородны. Критерий Стьюдента применим.</p>
+
+            <p>Смотрим уровень значимости критерия. Он около семи тысячных. Это меньше пяти сотых. Значит, различие существенно. Фактор влияет на отклик.</p>
+
+            <p>Но это ещё не всё. Мало сказать, что различие есть. Нужно сказать, насколько оно велико. Для этого сравниваем средние значения. Среднее по губернатору — около трёхсот двенадцати. Среднее по мэру — около трёхсот двадцати девяти. Разница — около семнадцати упоминаний. Вот это и есть содержательный вывод. Мэра упоминают в среднем примерно на семнадцать раз чаще.</p>
+
+            <p>А что было бы, если бы тест Ливиня дал уровень значимости меньше пяти сотых? Тогда дисперсии неоднородны. Критерий Стьюдента неприменим. Нужно переходить к критерию Манна–Уитни.</p>
+
+            <p>Теперь свяжем это с инструментами. В Эксель есть пакет анализа. В нём есть пункт «двухвыборочный критерий Стьюдента». В Колаб есть функция из статистической библиотеки. В Логином есть готовый узел критерия Стьюдента. А в ДетаЛенс и в Пауэр Би Ай этого критерия нет. Результаты нужно считать снаружи.</p>
+
+            <h3>📌 Блок 7. Критерий Манна–Уитни</h3>
+
+            <p>Теперь перейдём ко второму критерию. Он называется критерий Манна–Уитни для независимых выборок. Давайте сразу разберём задачу. У нас есть две группы. И количественный показатель. Но данные в этих группах распределены ненормально.</p>
+
+            <p>Конкретный пример. Сравниваем количество жалоб на коммунальные службы в двух районах города. В Кировском и в Советском. Вопрос такой. В Кировском районе жалуются меньше? Или различие случайно?</p>
+
+            <p>Почему здесь не подходит критерий Стьюдента? Количество жалоб — это типичный счётчик. Распределение таких данных почти всегда ненормально. Большинство месяцев — мало жалоб. Изредка — всплеск. Проверка нормальности отклоняет гипотезу. Значит, критерий Стьюдента неприменим. Нужен другой метод.</p>
+
+            <p>Что делает критерий Манна–Уитни? Он проверяет равенство медиан в двух группах. Нормальность не требуется. Требование только одно. Фактор должен иметь ровно два уровня. В нашем примере фактор — это район. Кировский или Советский. Два уровня. Требование выполнено.</p>
+
+            <p>Теперь разберём пример по шагам. Строим ящичные диаграммы для обоих районов. Видим, что медианы различаются. Есть ощущение, что в Кировском районе жалуются меньше. Но насколько это существенно? Нужна проверка.</p>
+
+            <p>Считаем критерий Манна–Уитни. Смотрим уровень значимости. Он равен девяти сотым. Это больше пяти сотых. Значит, различие статистически незначимо. Фактор не влияет на отклик. Нельзя утверждать, что в Кировском районе жалуются меньше. Различие в данных есть, но оно в пределах случайных колебаний.</p>
+
+            <p>А что было бы, если бы уровень значимости оказался меньше пяти сотых? Тогда мы бы сказали, что различие существенно. И перешли бы ко второму шагу. Сравнили бы медианы и посчитали разницу между ними. Но в нашем примере этот шаг не нужен. Различия нет.</p>
+
+            <p>Теперь свяжем это с инструментами. В Эксель критерий Манна–Уитни есть в пакете анализа, но иногда требуется дополнительная надстройка. В Колаб есть функция из статистической библиотеки. В Логином есть готовый узел критерия Манна–Уитни.</p>
+
+            <h3>📌 Блок 8. Дисперсионный анализ</h3>
+
+            <p>Теперь перейдём к третьему критерию. Он называется однофакторный дисперсионный анализ. Давайте сразу разберём задачу. У нас есть фактор с тремя уровнями и более. И количественный показатель. Нужно понять, различаются ли эти группы.</p>
+
+            <p>Конкретный пример. Есть три категории медработников. Это студенты-медики. Младший медицинский персонал. И старший медицинский персонал. Известна годовая зарплата каждой категории. Вопрос такой. Различаются ли эти три категории по зарплате?</p>
+
+            <p>Почему здесь не подходит критерий Стьюдента? Потому что фактор имеет три уровня, а не два. Критерий Стьюдента сравнивает только две группы. Можно было бы сравнить три пары по отдельности. Но тогда вырастет вероятность случайно найти различие там, где его нет. Поэтому нужен единый метод. И этот метод — дисперсионный анализ.</p>
+
+            <p>Что делает дисперсионный анализ? Он проверяет равенство средних значений сразу во всех группах. И отвечает на первый вопрос. Есть ли различие хотя бы между какими-то группами? Если да, то переходят ко второму шагу. Это попарные сравнения. Нужно понять, какие именно группы различаются.</p>
+
+            <p>Теперь разберём требования. Их четыре. Первое. Фактор должен иметь три уровня и более. В нашем примере три категории персонала. Требование выполнено.</p>
+
+            <p>Второе. Данные внутри каждой подгруппы должны быть нормально распределены. Как и в критерии Стьюдента, проверяем отдельно для каждой группы.</p>
+
+            <p>Третье. Однородность дисперсий. Проверяется тестом Ливиня. Если его уровень значимости больше пяти сотых, дисперсии однородны. Метод применим.</p>
+
+            <p>Четвёртое. Желательно не менее тридцати наблюдений на каждый уровень. Это требование нестрогое. Но оно повышает надёжность результата.</p>
+
+            <p>Теперь разберём пример по шагам. Сначала строим ящичные диаграммы для трёх групп. Видим, что медианы различаются. Но вывод делать рано. Нужна проверка.</p>
+
+            <p>Проверяем нормальность в каждой из трёх подгрупп. Проверяем однородность дисперсий. Если условия выполнены, считаем дисперсионный анализ.</p>
+
+            <p>Смотрим уровень значимости. В нашем примере он меньше одной тысячной. То есть p меньше ноль целых одной тысячной. Это меньше пяти сотых. Значит, различия между категориями существенны. Фактор влияет на отклик.</p>
+
+            <p>Но это только первый шаг. Теперь нужны попарные сравнения. Сначала смотрим объёмы выборок в подгруппах. Если они равны, используется тест Тьюки. Если неравны, используется скорректированный тест для неравных выборок. В нашем примере выборки неравны. Поэтому используется скорректированный тест.</p>
+
+            <p>Результат — таблица попарных сравнений. В ней видно, какие пары различаются, а какие нет. В нашем примере различаются все три пары.</p>
+
+            <p>Теперь третий шаг. Содержательный вывод. Сравниваем средние значения. Средняя зарплата студентов-медиков — около ста тысяч рублей в год. Младшего персонала — около трёхсот тысяч. Старшего персонала — около четырёхсот двадцати тысяч. Формулируем вывод. Младший персонал зарабатывает в среднем на двести тысяч больше студентов. А старший персонал — на сто двадцать тысяч больше младшего.</p>
+
+            <p>Теперь свяжем это с инструментами. В Эксель есть пакет анализа. В нём есть пункт «однофакторный дисперсионный анализ». В Колаб есть функция из статистической библиотеки. Плюс отдельная функция для пост-хок тестов. В Логином есть готовые узлы дисперсионного анализа и попарных сравнений.</p>
+
+            <h3>📌 Заключение</h3>
+
+            <p>Мы подошли к завершению лекции. Давайте соберём всё в одну цепочку. И пройдём её насквозь. От задачи до вывода.</p>
+
+            <p>Вернёмся к задаче из введения. Руководитель спросил: различаются ли две группы? Это может быть вопрос про акцию и продажи. Или про два района и жалобы. Или про три категории сотрудников и зарплаты.</p>
+
+            <p>Аналитик начал с первого шага. Определил тип шкал. Фактор — номинальный. Отклик — количественный. От этого зависит дальнейший путь.</p>
+
+            <p>Затем второй шаг. Описал данные. Посмотрел медиану и квартили. Построил ящичную диаграмму. Увидел, есть ли выбросы.</p>
+
+            <p>Затем третий шаг. Проверил нормальность. По каждой подгруппе отдельно. Графическими методами. И расчётными тестами. Если нормальность нарушена хотя бы в одной подгруппе, данные считаются ненормальными.</p>
+
+            <p>Затем четвёртый шаг. Проверил однородность дисперсий. Тестом Ливиня. Это нужно для выбора между критерием Стьюдента и критерием Манна–Уитни.</p>
+
+            <p>Затем пятый шаг. Выбрал критерий. Две группы и нормальность — критерий Стьюдента. Две группы и ненормальность — критерий Манна–Уитни. Три и более групп — дисперсионный анализ с попарными сравнениями.</p>
+
+            <p>Затем шестой шаг. Посмотрел уровень значимости. Если он меньше пяти сотых, влияние есть. Если больше, влияния нет.</p>
+
+            <p>Затем седьмой шаг. Если влияние обнаружено, сравнил средние или медианы. И сформулировал содержательный вывод. Насколько именно различаются группы.</p>
+
+            <p>Вот и вся цепочка. От шкал до вывода. Каждый шаг обоснован проверкой. Пропустить проверку — значит получить неверный вывод.</p>
+
+            <p>Теперь свяжем это с инструментами из пятой лекции. Всю эту цепочку можно пройти в Эксель с пакетом анализа. Или в Колаб на языке программирования. Или в Логином как сценарий. А визуализировать результат — в Пауэр Би Ай или в ДетаЛенс. Выбор инструмента зависит от объёма данных. От требований к совместной работе. И от требований регулятора.</p>
+
+            <p>Теперь свяжем это с метриками из третьей лекции. Каждый шаг этой цепочки работает с метриками, которые мы определили в начале курса. Удержание. Отток. Стоимость привлечения. Время выполнения задачи. Количество жалоб. Все эти метрики требуют статистической проверки. Прежде чем делать вывод.</p>
+
+            <p>В следующих лекциях мы рассмотрим ещё три группы методов. Корреляционный анализ. Регрессионный анализ. И анализ временных рядов. Логика останется той же. Сначала проверить условия. Затем выбрать метод. Затем интерпретировать результат.</p>
+
+            <p>Давайте вспомним, что вы уносите с этой лекции. Вы уносите понимание того, что статистический анализ — это последовательность шагов. Вы уносите знание о трёх типах шкал. Вы уносите умение описывать данные и проверять их на нормальность. Вы уносите знание о трёх критериях сравнения групп. И вы уносите главное. Вывод должен быть обоснован проверкой. Иначе это не вывод, а догадка.</p>
+
+            <p>На этом наша лекция завершена. Спасибо за внимание. Я готов ответить на ваши вопросы.</p>
+
+            <!-- СЛОВАРЬ ТЕРМИНОВ -->
+            <div class="dark-block">
+                <div class="dark-block-title">📖 Словарь терминов и аббревиатур</div>
+                <table class="dark-table">
+                    <thead>
+                        <tr><th style="width:20%;">Термин</th><th style="width:30%;">Расшифровка</th><th>Пояснение</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="term">Номинальная шкала</td><td>Nominal scale</td><td>Значения — только метки для различения объектов</td></tr>
+                        <tr><td class="term">Порядковая шкала</td><td>Ordinal scale</td><td>Значения можно упорядочить, но расстояние не определено</td></tr>
+                        <tr><td class="term">Количественная шкала</td><td>Interval / ratio scale</td><td>Числа в обычном смысле; можно складывать и вычитать</td></tr>
+                        <tr><td class="term">Среднее (mean)</td><td>Mean</td><td>Сумма значений, делённая на количество; чувствительно к выбросам</td></tr>
+                        <tr><td class="term">Медиана (median)</td><td>Median</td><td>Серединное значение упорядоченной выборки; устойчиво к выбросам</td></tr>
+                        <tr><td class="term">Квартили</td><td>Quartiles</td><td>Нижняя (25%) и верхняя (75%) точки распределения</td></tr>
+                        <tr><td class="term">IQR</td><td>Interquartile Range</td><td>Квартильный размах = Q3 − Q1 (тело ящика)</td></tr>
+                        <tr><td class="term">Ящичная диаграмма</td><td>Box plot</td><td>Визуализация медианы, квартилей, усов и выбросов</td></tr>
+                        <tr><td class="term">Дисперсия (variance)</td><td>Variance</td><td>Среднее квадратов отклонений от среднего</td></tr>
+                        <tr><td class="term">Стандартное отклонение</td><td>Standard deviation</td><td>Корень из дисперсии; та же размерность, что и данные</td></tr>
+                        <tr><td class="term">Нормальное распределение</td><td>Normal distribution</td><td>Симметричная колоколообразная кривая (Гаусса)</td></tr>
+                        <tr><td class="term">Правило трёх сигм</td><td>Three-sigma rule</td><td>68% / 95% / 99.7% внутри ±1σ / ±2σ / ±3σ</td></tr>
+                        <tr><td class="term">Асимметрия</td><td>Skewness</td><td>Показывает скошенность распределения</td></tr>
+                        <tr><td class="term">Эксцесс</td><td>Kurtosis</td><td>Показывает остроту вершины распределения</td></tr>
+                        <tr><td class="term">Шапиро–Уилк</td><td>Shapiro–Wilk test</td><td>Тест нормальности для выборок &lt; 60</td></tr>
+                        <tr><td class="term">Колмогоров–Смирнов</td><td>Kolmogorov–Smirnov test</td><td>Тест нормальности для выборок &gt; 60</td></tr>
+                        <tr><td class="term">p-value</td><td>Уровень значимости</td><td>Вероятность допустить ошибку, утверждая влияние</td></tr>
+                        <tr><td class="term">Критерий Стьюдента</td><td>Student's t-test</td><td>Сравнение средних двух групп при нормальных данных</td></tr>
+                        <tr><td class="term">Критерий Манна–Уитни</td><td>Mann–Whitney U test</td><td>Сравнение медиан двух групп при ненормальных данных</td></tr>
+                        <tr><td class="term">Дисперсионный анализ</td><td>ANOVA</td><td>Сравнение средних трёх и более групп</td></tr>
+                        <tr><td class="term">Тест Ливиня</td><td>Levene's test</td><td>Проверка однородности дисперсий подгрупп</td></tr>
+                        <tr><td class="term">Тест Тьюки</td><td>Tukey HSD</td><td>Пост-хок сравнение пар групп при равных выборках</td></tr>
+                        <tr><td class="term">Краскела–Уоллиса</td><td>Kruskal–Wallis test</td><td>Сравнение медиан 3+ групп при ненормальных данных</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ИСТОЧНИКИ -->
+            <div class="dark-block">
+                <div class="dark-block-title">📚 Источники и литература</div>
+                <div class="src-group">📊 Учебная литература</div>
+                <ol>
+                    <li>Учебники по математической статистике для гуманитарных и социальных наук.</li>
+                    <li>Руководства по анализу данных в STATISTICA, SPSS, R, Python.</li>
+                    <li>Документация Microsoft: пакет анализа в Excel.</li>
+                    <li>Документация Google: Colab, статистические библиотеки Python.</li>
+                    <li>Документация Логином: узлы описательных статистик и критериев.</li>
+                </ol>
+                <div class="src-group">📖 Стандарты и методология</div>
+                <ol start="6">
+                    <li>ISO/IEC 5259 — качество данных для аналитики.</li>
+                    <li>BABOK — свод знаний по бизнес-анализу (раздел статистических методов).</li>
+                </ol>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function changeVideo(embedUrl) {
+            document.getElementById('lecture-player').src = embedUrl;
+        }
+    </script>
+
+    <!-- НАВИГАЦИЯ -->
+   <nav class="lecture-nav" id="lectureNav">
+    <div class="nav-progress" id="navProgress" style="width: 0%;"></div>
+    <a href="Лекция (N-1).html" class="nav-btn-arrow" id="prevBtn">
+        <span class="arrow-icon">←</span>
+        <span class="arrow-label">
+            <small>Назад</small>
+            <span class="arrow-title" id="prevTitle">Лекция (N-1)</span>
+        </span>
+    </a>
+    <div class="nav-center">
+        <div class="nav-counter">Лекция <span id="currentNum">N</span> <span>из 21</span></div>
+        <a href="index.html" class="nav-index-link">📚 К содержанию</a>
+    </div>
+    <a href="Лекция (N+1).html" class="nav-btn-arrow" id="nextBtn">
+        <span class="arrow-label" style="align-items: flex-end;">
+            <small>Вперёд</small>
+            <span class="arrow-title" id="nextTitle">Лекция (N+1)</span>
+        </span>
+        <span class="arrow-icon">→</span>
+    </a>
+</nav>
+
+  
+
+    <script>
+    (function () {
+        'use strict';
+        const TOTAL_LECTURES = 21;
+        const totalDurationMs = (32 * 60 + 30) * 1000;
+        const autoNextDelayMs = 2000;
+        const AUTOSTART_PARAM = 'autostart';
+
+        const fileName = decodeURIComponent(location.pathname.split('/').pop() || '');
+        let currentLecture = 6;
+        const match = fileName.match(/Лекция\s*(\d+)\.html/i);
+        if (match) currentLecture = parseInt(match[1], 10);
+        else { const el = document.getElementById('currentNum'); if (el) currentLecture = parseInt(el.textContent, 10) || 6; }
+
+        if (isNaN(currentLecture) || currentLecture < 1) currentLecture = 1;
+        if (currentLecture > TOTAL_LECTURES) currentLecture = TOTAL_LECTURES;
+
+        const prev = currentLecture > 1 ? currentLecture - 1 : null;
+        const next = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+
+        const currentNumEl = document.getElementById('currentNum');
+        if (currentNumEl) currentNumEl.textContent = currentLecture;
+        const navProgress = document.getElementById('navProgress');
+        if (navProgress) navProgress.style.width = (currentLecture / TOTAL_LECTURES * 100) + '%';
+
+        const prevBtn = document.getElementById('prevBtn');
+        if (prevBtn) {
+            if (prev) { prevBtn.href = 'Лекция ' + prev + '.html'; document.getElementById('prevTitle').textContent = 'Лекция ' + prev; }
+            else { prevBtn.removeAttribute('href'); prevBtn.style.opacity = '0.35'; prevBtn.style.cursor = 'not-allowed'; prevBtn.onclick = (e) => e.preventDefault(); document.getElementById('prevTitle').textContent = 'Это первая лекция'; }
+        }
+        const nextBtn = document.getElementById('nextBtn');
+        if (nextBtn) {
+            if (next) { nextBtn.href = 'Лекция ' + next + '.html'; document.getElementById('nextTitle').textContent = 'Лекция ' + next; }
+            else { nextBtn.removeAttribute('href'); nextBtn.style.opacity = '0.35'; nextBtn.style.cursor = 'not-allowed'; nextBtn.onclick = (e) => e.preventDefault(); document.getElementById('nextTitle').textContent = 'Это последняя лекция'; }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            if (e.key === 'ArrowLeft' && prev) window.location.href = 'Лекция ' + prev + '.html';
+            else if (e.key === 'ArrowRight' && next) window.location.href = 'Лекция ' + next + '.html';
+            else if (e.key === 'Home') window.location.href = 'index.html';
+        });
+
+        function initScroll() {
+            const studentBlock = document.querySelector('.student-view');
+            const speakerBlock = document.querySelector('.speaker-notes');
+            const badge = document.getElementById('scroll-status-badge');
+            const audio = document.getElementById('lecture-audio');
+            if (!studentBlock || !speakerBlock) return;
+
+            const studentBehavior = studentBlock.style.scrollBehavior;
+            const speakerBehavior = speakerBlock.style.scrollBehavior;
+            let isRunning = false, completed = false, pausedElapsed = 0, startedAt = 0, rafId = null;
+            let startS = 0, startP = 0, maxS = 0, maxP = 0;
+
+            function setBadge(text, color) { if (!badge) return; badge.style.display = 'block'; badge.textContent = text; badge.style.borderColor = color; }
+            function measure() { maxS = Math.max(studentBlock.scrollHeight - studentBlock.clientHeight, 0); maxP = Math.max(speakerBlock.scrollHeight - speakerBlock.clientHeight, 0); }
+            function fmt(ms) { const m = Math.floor(ms / 60000); const s = Math.floor((ms % 60000) / 1000); return m + ':' + String(s).padStart(2, '0'); }
+            function playAudio() { if (!audio) return; const p = audio.play(); if (p && typeof p.catch === 'function') { p.catch(err => { console.warn('[AutoAudio]', err.message); setBadge('▶ ИДЕТ ПРОКРУТКА (звук заблокирован)', '#eab308'); }); } }
+            function pauseAudio() { if (audio) try { audio.pause(); } catch (_) {} }
+            function resetAudio() { if (audio) try { audio.pause(); audio.currentTime = 0; } catch (_) {} }
+
+            function animate() {
+                if (!isRunning) return;
+                const elapsed = pausedElapsed + (performance.now() - startedAt);
+                const fraction = Math.min(elapsed / totalDurationMs, 1);
+                measure();
+                studentBlock.scrollTop = startS + (maxS - startS) * fraction;
+                speakerBlock.scrollTop = startP + (maxP - startP) * fraction;
+                if (badge) { badge.textContent = '▶ ' + fmt(elapsed) + ' / 25:00'; badge.style.borderColor = '#16a34a'; }
+                if (fraction >= 1) { finish(); return; }
+                rafId = requestAnimationFrame(animate);
+            }
+
+            function startOrResume() {
+                if (completed) { pausedElapsed = 0; completed = false; studentBlock.scrollTop = 0; speakerBlock.scrollTop = 0; resetAudio(); }
+                measure(); startS = studentBlock.scrollTop; startP = speakerBlock.scrollTop;
+                startedAt = performance.now(); isRunning = true;
+                studentBlock.style.scrollBehavior = 'auto'; speakerBlock.style.scrollBehavior = 'auto';
+                cancelAnimationFrame(rafId); rafId = requestAnimationFrame(animate);
+                playAudio();
+            }
+            function pause() {
+                if (isRunning) pausedElapsed += performance.now() - startedAt;
+                isRunning = false; cancelAnimationFrame(rafId);
+                setBadge('⏸ ПАУЗА ' + fmt(pausedElapsed), '#dc2626');
+                studentBlock.style.scrollBehavior = studentBehavior; speakerBlock.style.scrollBehavior = speakerBehavior;
+                pauseAudio();
+            }
+            function finish() {
+                isRunning = false; completed = true; cancelAnimationFrame(rafId);
+                measure(); studentBlock.scrollTop = maxS; speakerBlock.scrollTop = maxP;
+                studentBlock.style.scrollBehavior = studentBehavior; speakerBlock.style.scrollBehavior = speakerBehavior;
+                const nextLec = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+                if (nextLec) {
+                    setBadge('✅ ГОТОВО → Лекция ' + nextLec, '#16a34a');
+                    setTimeout(() => { location.href = 'Лекция ' + nextLec + '.html?' + AUTOSTART_PARAM + '=1'; }, autoNextDelayMs);
+                } else {
+                    setBadge('✅ КУРС ЗАВЕРШЕН', '#16a34a');
+                    pauseAudio();
+                }
+            }
+            function toggle() { isRunning ? pause() : startOrResume(); }
+
+            window.addEventListener('keydown', (e) => {
+                if (e.repeat) return;
+                const t = e.target; const tag = t && t.tagName;
+                if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+                if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); toggle(); }
+            }, true);
+
+            if (badge) badge.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+            [studentBlock, speakerBlock].forEach(el => {
+                el.addEventListener('click', (e) => {
+                    if (e.target.closest('a,button,iframe,input,textarea,select,video,audio')) return;
+                    if (window.getSelection().toString().length > 0) return;
+                    toggle();
+                });
+            });
+
+            const params = new URLSearchParams(location.search);
+            if (params.get(AUTOSTART_PARAM) === '1') {
+                params.delete(AUTOSTART_PARAM);
+                const clean = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
+                history.replaceState(null, '', clean);
+                setTimeout(startOrResume, 500);
+            } else { setBadge('▶ ПРОБЕЛ / КЛИК — старт', '#4a5568'); }
+        }
+
+        if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initScroll, { once: true }); }
+        else { initScroll(); }
+    })();
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лекция 1. Аналитика данных. Кто такие аналитики</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #ffffff; }
+
+        .student-view { width: 66.66%; height: 100vh; background: #ffffff; padding: 35px 40px; display: flex; flex-direction: column; justify-content: space-between; border-right: 2px solid #e2e8f0; overflow-y: auto; scroll-behavior: smooth; }
+        .speaker-notes { width: 33.34%; height: 100%; background: #1a202c; color: #edf2f7; padding: 30px; overflow-y: auto; }
+
+        .slide-header { font-size: 26px; color: #1a365d; font-weight: bold; line-height: 1.3; margin-bottom: 18px; border-bottom: 4px solid #3182ce; padding-bottom: 12px; }
+        .slide-body { flex-grow: 1; display: flex; flex-direction: column; gap: 18px; padding: 5px 0; }
+        .slide-footer { font-size: 13px; color: #a0aec0; text-align: right; margin-top: 12px; }
+
+        .visual-row { display: flex; gap: 20px; align-items: stretch; }
+        .visual-col { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+
+        .chart-box { background: #f7fafc; border: 2.5px dashed #cbd5e0; padding: 20px; border-radius: 12px; flex: 1; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .chart-box strong { font-size: 16px; display: block; margin-bottom: 6px; }
+        .chart-box p { font-size: 13px; color: #4a5568; line-height: 1.45; }
+
+        .ecosystem { display: flex; flex-direction: column; gap: 10px; }
+        .eco-layer { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 8px; font-size: 13px; }
+        .eco-layer.core { background: #ebf8ff; border-left: 5px solid #3182ce; }
+        .eco-layer.channels { background: #f0fff4; border-left: 5px solid #38a169; }
+        .eco-layer.analytics { background: #fffaf0; border-left: 5px solid #dd6b20; }
+        .eco-layer.infra { background: #faf5ff; border-left: 5px solid #805ad5; }
+        .eco-icon { font-size: 20px; min-width: 28px; text-align: center; }
+        .eco-text { flex: 1; }
+        .eco-text strong { display: block; font-size: 13px; margin-bottom: 2px; }
+        .eco-text span { font-size: 12px; color: #4a5568; }
+
+        .timeline { display: flex; justify-content: space-between; margin: 15px 0; position: relative; padding: 0 5px; }
+        .timeline::before { content: ''; position: absolute; top: 18px; left: 0; width: 100%; height: 5px; background: #e2e8f0; z-index: 1; }
+        .timeline-item { position: relative; z-index: 2; background: white; padding: 0 6px; text-align: center; width: 19%; }
+        .timeline-dot { width: 38px; height: 38px; background: #3182ce; border-radius: 50%; margin: 0 auto 8px; border: 4px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; color: white; font-size: 15px; font-weight: bold; }
+        .timeline-item.active .timeline-dot { background: #e53e3e; transform: scale(1.15); box-shadow: 0 6px 12px rgba(229,62,62,0.3); }
+        .timeline-year { font-weight: bold; color: #1a202c; font-size: 14px; margin-bottom: 3px; }
+        .timeline-text { font-size: 11px; color: #4a5568; line-height: 1.3; font-weight: 500; }
+
+        .metrics-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .metrics-table th { background: #1a365d; color: white; padding: 10px 12px; text-align: left; font-weight: 600; }
+        .metrics-table td { padding: 9px 12px; border-bottom: 1px solid #e2e8f0; color: #2d3748; }
+        .metrics-table tr:nth-child(even) td { background: #f7fafc; }
+        .metrics-table .highlight { color: #e53e3e; font-weight: bold; }
+
+        .video-section { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 5px; }
+        .video-container { width: 100%; max-width: 580px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: #000; aspect-ratio: 16 / 9; }
+        .links-hub { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .video-btn { text-decoration: none; padding: 9px 14px; border-radius: 6px; font-size: 12px; font-weight: bold; color: white; display: flex; align-items: center; gap: 6px; transition: transform 0.2s, background 0.2s; cursor: pointer; border: none; }
+        .video-btn:hover { transform: translateY(-2px); }
+        .rt-btn { background: #00a877; }
+        .rt-btn:hover { background: #008f65; }
+        .stop-btn { background: #dc143c; }
+        .stop-btn:hover { background: #b01030; }
+
+        .notes-header { font-size: 17px; color: #63b3ed; font-weight: bold; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a5568; padding-bottom: 10px; }
+        .timer-badge { background: #e53e3e; color: white; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-family: monospace; }
+        .lecture-text { font-size: 14.5px; line-height: 1.65; color: #e2e8f0; text-align: justify; }
+        .lecture-text p { margin-bottom: 14px; }
+        .lecture-text h3 { color: #63b3ed; font-size: 15px; margin: 18px 0 10px; border-bottom: 1px solid #2d3748; padding-bottom: 5px; }
+        .lecture-text ul { margin: 8px 0 14px 18px; }
+        .lecture-text li { margin-bottom: 6px; }
+        .lecture-text .source { color: #a0aec0; font-size: 12px; font-style: italic; }
+        .action-hint { color: #fbd38d; font-style: italic; background: #2d3748; padding: 10px 14px; border-radius: 6px; border-left: 4px solid #fbd38d; margin: 16px 0; font-size: 13px; line-height: 1.4; }
+
+        /* Сетка аналитиков */
+        .analyst-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .analyst-card { background: #f7fafc; border: 2px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; }
+        .analyst-card h4 { color: #1a365d; font-size: 14px; margin-bottom: 8px; border-bottom: 2px solid #3182ce; padding-bottom: 5px; display: flex; align-items: center; gap: 8px; }
+        .analyst-card .label { font-size: 11px; font-weight: bold; color: #4a5568; margin-top: 8px; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.3px; }
+        .analyst-card .tag { display: inline-block; background: #ebf8ff; color: #2b6cb0; padding: 2px 7px; border-radius: 4px; font-size: 11px; margin: 2px 2px 2px 0; font-weight: 500; }
+        .analyst-card .tag.green { background: #f0fff4; color: #276749; }
+        .analyst-card .tag.orange { background: #fffaf0; color: #975a16; }
+        .analyst-card .tag.purple { background: #faf5ff; color: #553c9a; }
+        .analyst-card .reg { font-size: 11px; color: #4a5568; line-height: 1.4; margin-top: 6px; background: #edf2f7; padding: 6px 8px; border-radius: 4px; }
+
+        /* Сводная таблица */
+        .summary-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+        .summary-table th { background: #1a365d; color: white; padding: 8px 10px; text-align: left; font-weight: 600; }
+        .summary-table td { padding: 7px 10px; border-bottom: 1px solid #e2e8f0; color: #2d3748; vertical-align: top; }
+        .summary-table tr:nth-child(even) td { background: #f7fafc; }
+        .summary-table .group-row td { background: #ebf8ff; font-weight: bold; color: #1a365d; font-size: 12px; }
+
+        /* Блок двух групп */
+        .group-compare { display: flex; gap: 18px; align-items: stretch; }
+        .group-box { flex: 1; border-radius: 12px; padding: 18px 20px; }
+        .group-box.data { background: linear-gradient(135deg, #ebf8ff, #f7fafc); border: 2px solid #90cdf4; }
+        .group-box.req { background: linear-gradient(135deg, #f0fff4, #f7fafc); border: 2px solid #9ae6b4; }
+        .group-box h4 { font-size: 15px; margin-bottom: 10px; padding-bottom: 8px; }
+        .group-box.data h4 { color: #2b6cb0; border-bottom: 2px solid #3182ce; }
+        .group-box.req h4 { color: #276749; border-bottom: 2px solid #38a169; }
+        .group-box ul { margin: 0; padding-left: 18px; font-size: 12.5px; color: #2d3748; line-height: 1.5; }
+        .group-box li { margin-bottom: 5px; }
+
+        /* Стили для словаря и источников в тёмной панели */
+        .dark-block { background: #2d3748; border: 1px solid #4a5568; border-radius: 10px; padding: 16px 18px; margin-top: 20px; }
+        .dark-block-title { font-size: 14px; font-weight: bold; color: #63b3ed; margin-bottom: 12px; border-bottom: 2px solid #4a5568; padding-bottom: 8px; }
+        .dark-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+        .dark-table th { background: #1a202c; color: #90cdf4; padding: 7px 9px; text-align: left; font-weight: 600; border-bottom: 1px solid #4a5568; }
+        .dark-table td { padding: 6px 9px; border-bottom: 1px solid #2d3748; color: #cbd5e0; vertical-align: top; line-height: 1.4; }
+        .dark-table tr:nth-child(even) td { background: #2a3242; }
+        .dark-table .term { font-weight: bold; color: #90cdf4; white-space: nowrap; }
+        .dark-block ol { margin: 0 0 12px 18px; padding: 0; font-size: 12px; color: #cbd5e0; line-height: 1.5; }
+        .dark-block ol li { margin-bottom: 5px; }
+        .dark-block .src-group { font-weight: bold; color: #fbd38d; font-size: 12px; margin: 12px 0 6px; }
+        .dark-block a { color: #63b3ed; text-decoration: none; }
+        .dark-block a:hover { text-decoration: underline; }
+
+        .lecture-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(12px); border-top: 2px solid rgba(255, 255, 255, 0.08); padding: 12px 20px; display: flex; align-items: center; justify-content: center; gap: 12px; z-index: 9999; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25); transition: transform 0.3s ease; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .lecture-nav:hover { transform: translateY(0); }
+        .lecture-nav .nav-progress { position: absolute; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899); transition: width 0.3s ease; border-radius: 0 3px 3px 0; }
+        .lecture-nav .nav-btn-arrow { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); border: 1.5px solid rgba(255, 255, 255, 0.15); color: #e2e8f0; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; transition: all 0.2s ease; font-family: inherit; }
+        .lecture-nav .nav-btn-arrow:hover:not(:disabled) { background: rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.6); color: white; transform: translateY(-2px); }
+        .lecture-nav .nav-btn-arrow:disabled { opacity: 0.35; cursor: not-allowed; }
+        .lecture-nav .nav-btn-arrow .arrow-icon { font-size: 16px; line-height: 1; }
+        .lecture-nav .nav-btn-arrow .arrow-label { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+        .lecture-nav .nav-btn-arrow .arrow-label small { font-size: 9.5px; font-weight: 400; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.5px; }
+        .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { font-size: 12px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lecture-nav .nav-center { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 20px; color: #94a3b8; font-size: 11px; border-left: 1px solid rgba(255, 255, 255, 0.1); border-right: 1px solid rgba(255, 255, 255, 0.1); }
+        .lecture-nav .nav-counter { font-size: 15px; font-weight: 900; color: #f1f5f9; letter-spacing: -0.3px; }
+        .lecture-nav .nav-counter span { color: #64748b; font-size: 12px; font-weight: 600; }
+        .lecture-nav .nav-index-link { color: #60a5fa; text-decoration: none; font-size: 11px; font-weight: 600; transition: color 0.2s; }
+        .lecture-nav .nav-index-link:hover { color: #93c5fd; text-decoration: underline; }
+        .lecture-nav .nav-jump { display: flex; gap: 4px; margin-left: 8px; padding-left: 12px; border-left: 1px solid rgba(255, 255, 255, 0.1); }
+        .lecture-nav .nav-jump-btn { padding: 6px 10px; border-radius: 6px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.1); color: #94a3b8; font-size: 10px; font-weight: bold; cursor: pointer; text-decoration: none; transition: all 0.2s; font-family: inherit; }
+        .lecture-nav .nav-jump-btn:hover { background: rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.5); color: white; }
+        .lecture-nav .nav-jump-btn.active { background: linear-gradient(135deg, #3b82f6, #8b5cf6); border-color: transparent; color: white; }
+        body { padding-bottom: 80px !important; }
+        @media (max-width: 900px) {
+            .lecture-nav { padding: 10px 12px; gap: 8px; }
+            .lecture-nav .nav-btn-arrow { padding: 8px 12px; }
+            .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { max-width: 90px; font-size: 11px; }
+            .lecture-nav .nav-center { padding: 0 10px; }
+            .lecture-nav .nav-jump { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ЛЕВАЯ ЧАСТЬ (2/3): ЭКРАН ДЛЯ СТУДЕНТОВ -->
+    <div class="student-view">
+        <div class="slide-header">
+            Лекция 1. Аналитика данных. Кто такие аналитики
+        </div>
+
+        <div class="slide-body">
+
+            <!-- ОПРЕДЕЛЕНИЕ АНАЛИТИКА -->
+            <div class="chart-box" style="background: #ebf8ff; border-color: #90cdf4;">
+                <strong style="color: #2b6cb0;">🎯 Кто такой аналитик?</strong>
+                <p>Аналитик — специалист, который собирает, обрабатывает и анализирует данные, извлекает информацию для принятия обоснованных решений, моделирует информационные системы и разрабатывает требования к ним, исследует рынок и визуализирует данные в виде графиков и дашбордов.<br><span class="source">На основе: Practicum.yandex.ru; ISO/IEC 5259-1:2024</span></p>
+            </div>
+
+            <!-- ДВЕ ГРУППЫ -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 10px;">📐 Классификация: две крупные группы</div>
+                <div class="group-compare">
+                    <div class="group-box data">
+                        <h4>📊 Аналитика данных</h4>
+                        <ul>
+                            <li>Работа с количественными данными, таблицами, дашбордами</li>
+                            <li>Сбор из CRM, интернета, отчётов, баз данных</li>
+                            <li>Решение задач бизнеса на основе данных</li>
+                            <li><strong>Роли:</strong> аналитик данных, финансовый, продуктовый, веб-, BI-, big data</li>
+                        </ul>
+                    </div>
+                    <div class="group-box req">
+                        <h4>📋 Аналитика требований</h4>
+                        <ul>
+                            <li>Работа с требованиями заказчиков и пользователей</li>
+                            <li>Интервью, описание бизнес-процессов, ТЗ</li>
+                            <li>Моделирование систем и документации</li>
+                            <li><strong>Роли:</strong> бизнес-аналитик, системный, 1С, UX-аналитик</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ГРУППА 1: АНАЛИТИКА ДАННЫХ -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 10px;">📊 Группа 1. Аналитика данных (6 ролей)</div>
+                <div class="analyst-grid">
+
+                    <!-- Аналитик данных -->
+                    <div class="analyst-card">
+                        <h4>📈 Аналитик данных (DA)</h4>
+                        <div class="label">Компетенции</div>
+                        <span class="tag">SQL</span><span class="tag">Python (основы)</span><span class="tag">Статистика</span><span class="tag">A/B-тесты</span><span class="tag">Визуализация</span>
+                        <div class="label">Программные продукты</div>
+                        <span class="tag green">Tableau</span><span class="tag green">Power BI</span><span class="tag green">DataLens</span><span class="tag green">Excel</span>
+                        <div class="reg">📜 ПРОФСТАНДАРТ 06.042 «Специалист по большим данным» · ГОСТ Р 71484.1-2024 · ISO/IEC 5259 · DAMA-DMBOK</div>
+                    </div>
+
+                    <!-- Финансовый аналитик -->
+                    <div class="analyst-card">
+                        <h4>💰 Финансовый аналитик</h4>
+                        <div class="label">Компетенции</div>
+                        <span class="tag">Финансовый анализ</span><span class="tag">Бухучёт</span><span class="tag">Финансовое моделирование</span><span class="tag">Оценка рисков</span>
+                        <div class="label">Программные продукты</div>
+                        <span class="tag green">Excel</span><span class="tag green">1С</span><span class="tag green">Python</span><span class="tag green">SQL</span>
+                        <div class="reg">📜 ПРОФСТАНДАРТ финансового аналитика · МСФО · ГОСТ в области финансового анализа</div>
+                    </div>
+
+                    <!-- Продуктовый аналитик -->
+                    <div class="analyst-card">
+                        <h4>🚀 Продуктовый аналитик</h4>
+                        <div class="label">Компетенции</div>
+                        <span class="tag">ARPU</span><span class="tag">LTV</span><span class="tag">Retention</span><span class="tag">Когортный анализ</span><span class="tag">A/B-тесты</span>
+                        <div class="label">Программные продукты</div>
+                        <span class="tag green">Amplitude</span><span class="tag green">SQL</span><span class="tag green">Power BI</span>
+                        <div class="reg">📜 ПРОФСТАНДАРТ 08.037 «Бизнес-аналитик» · ISO/IEC 25010 · BABOK</div>
+                    </div>
+
+                    <!-- Веб-аналитик -->
+                    <div class="analyst-card">
+                        <h4>🌐 Веб-аналитик</h4>
+                        <div class="label">Компетенции</div>
+                        <span class="tag">Сквозная аналитика</span><span class="tag">Поведение пользователей</span><span class="tag">Рекламные кампании</span><span class="tag">Python</span><span class="tag">SQL</span>
+                        <div class="label">Программные продукты</div>
+                        <span class="tag green">Google Analytics</span><span class="tag green">Яндекс.Метрика</span><span class="tag green">Google Tag Manager</span><span class="tag green">DataLens</span>
+                        <div class="reg">📜 ПРОФСТАНДАРТ 06.042 · 08.037 · ISO/IEC 25010 · BABOK</div>
+                    </div>
+
+                    <!-- BI-аналитик -->
+                    <div class="analyst-card">
+                        <h4>📊 BI-аналитик</h4>
+                        <div class="label">Компетенции</div>
+                        <span class="tag">SQL</span><span class="tag">Python</span><span class="tag">Визуализация</span><span class="tag">Дашборды</span><span class="tag">Отчётность</span>
+                        <div class="label">Программные продукты</div>
+                        <span class="tag green">Power BI</span><span class="tag green">Tableau</span><span class="tag green">QlikView</span>
+                        <div class="reg">📜 ПРОФСТАНДАРТ 06.042 · 08.037 · BABOK · ГОСТ Р 71484 · DAMA-DMBOK</div>
+                    </div>
+
+                    <!-- Аналитик больших данных -->
+                    <div class="analyst-card">
+                        <h4>🗄️ Аналитик больших данных</h4>
+                        <div class="label">Компетенции</div>
+                        <span class="tag">Data Mining</span><span class="tag">Машинное обучение</span><span class="tag">Нейросети</span><span class="tag">Data Lakes</span><span class="tag">Статистика</span>
+                        <div class="label">Программные продукты</div>
+                        <span class="tag green">R</span><span class="tag green">Python</span><span class="tag green">Data Lakes</span>
+                        <div class="reg">📜 ПРОФСТАНДАРТ 06.042 · ГОСТ Р ИСО/МЭК 24668-2022 · ГОСТ Р ИСО/МЭК 20546-2021 · ISO/IEC 5259</div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ГРУППА 2: АНАЛИТИКА ТРЕБОВАНИЙ -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 10px;">📋 Группа 2. Аналитика требований (4 роли)</div>
+                <div class="analyst-grid">
+
+                    <!-- Бизнес-аналитик -->
+                    <div class="analyst-card">
+                        <h4>💼 Бизнес-аналитик (БА)</h4>
+                        <div class="label">Компетенции</div>
+                        <span class="tag">BPMN</span><span class="tag">UML</span><span class="tag">IDEF0</span><span class="tag">EPC</span><span class="tag">SQL (базово)</span><span class="tag">Excel</span><span class="tag">Agile/Scrum</span>
+                        <div class="label">Программные продукты</div>
+                        <span class="tag green">BPMN-редакторы</span><span class="tag green">UML-средства</span><span class="tag green">Excel</span><span class="tag green">BI-системы</span>
+                        <div class="reg">📜 ПРОФСТАНДАРТ 08.037 «Бизнес-аналитик» · 06.022 «Системный аналитик» · BABOK · ISO/IEC/IEEE 29148:2018</div>
+                    </div>
+
+                    <!-- Системный аналитик -->
+                    <div class="analyst-card">
+                        <h4>⚙️ Системный аналитик (SA)</h4>
+                        <div class="label">Компетенции</div>
+                        <span class="tag">BPMN</span><span class="tag">UML (все виды)</span><span class="tag">SQL</span><span class="tag">REST</span><span class="tag">SOAP</span><span class="tag">gRPC</span><span class="tag">GraphQL</span><span class="tag">ERD/DFD</span>
+                        <div class="label">Программные продукты</div>
+                        <span class="tag green">BPMN/UML-средства</span><span class="tag green">SQL-клиенты</span><span class="tag green">Прототипирование</span>
+                        <div class="reg">📜 ПРОФСТАНДАРТ 06.022 · 08.037 · BABOK · ISO/IEC/IEEE 29148:2018 · ISO/IEC/IEEE 42010 · ISO/IEC 25010</div>
+                    </div>
+
+                    <!-- Аналитик 1С -->
+                    <div class="analyst-card">
+                        <h4>🗃️ Аналитик 1С</h4>
+                        <div class="label">Компетенции</div>
+                        <span class="tag">1С</span><span class="tag">BPMN</span><span class="tag">IDEF0</span><span class="tag">Документооборот</span><span class="tag">Расчёт зарплаты</span><span class="tag">Управленческий учёт</span>
+                        <div class="label">Программные продукты</div>
+                        <span class="tag green">1С:Предприятие</span><span class="tag green">BPMN-редакторы</span>
+                        <div class="reg">📜 ПРОФСТАНДАРТ 08.037 · 06.022 · Методические материалы производителя 1С</div>
+                    </div>
+
+                    <!-- UX-аналитик -->
+                    <div class="analyst-card">
+                        <h4>🎨 UX-аналитик</h4>
+                        <div class="label">Компетенции</div>
+                        <span class="tag">CJM</span><span class="tag">Карта эмпатии</span><span class="tag">A/B-тесты</span><span class="tag">Портрет ЦА</span><span class="tag">Веб-аналитика</span>
+                        <div class="label">Программные продукты</div>
+                        <span class="tag green">Google Analytics</span><span class="tag green">Яндекс.Метрика</span><span class="tag green">Инструменты прототипирования</span>
+                        <div class="reg">📜 ПРОФСТАНДАРТ 08.037 · 06.022 · ISO/IEC 25010 · BABOK</div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ПОГРАНИЧНЫЕ РОЛИ -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 10px;">🔀 Пограничные роли (2 роли)</div>
+                <div class="analyst-grid">
+
+                    <!-- Маркетинговый аналитик -->
+                    <div class="analyst-card">
+                        <h4>📣 Маркетинговый аналитик</h4>
+                        <div class="label">Компетенции</div>
+                        <span class="tag">Бизнес-метрики</span><span class="tag">Маркетинговые метрики</span><span class="tag">A/B-тесты</span><span class="tag">SQL</span><span class="tag">Веб-аналитика</span>
+                        <div class="label">Программные продукты</div>
+                        <span class="tag green">Яндекс.Директ</span><span class="tag green">Google Analytics</span><span class="tag green">Яндекс.Метрика</span><span class="tag green">Power BI</span><span class="tag green">Tableau</span><span class="tag green">SQL</span>
+                        <div class="reg">📜 ПРОФСТАНДАРТ 08.037 · 06.042 · ISO/IEC 25010 · BABOK</div>
+                    </div>
+
+                    <!-- Финансовый аналитик (пограничная) -->
+                    <div class="analyst-card">
+                        <h4>💵 Финансовый аналитик (пограничная)</h4>
+                        <div class="label">Компетенции</div>
+                        <span class="tag">Экономика</span><span class="tag">Финансовый учёт</span><span class="tag">Бухучёт</span><span class="tag">Оценка стоимости</span><span class="tag">Финансовые модели</span>
+                        <div class="label">Программные продукты</div>
+                        <span class="tag green">Excel</span><span class="tag green">1С</span><span class="tag green">Python</span><span class="tag green">SQL</span>
+                        <div class="reg">📜 ПРОФСТАНДАРТ финансового аналитика · МСФО · ГОСТ в области финансового анализа</div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- СВОДНАЯ ТАБЛИЦА -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 8px;">📋 Сводная таблица: 11 типов аналитиков</div>
+                <table class="summary-table">
+                    <thead>
+                        <tr>
+                            <th>Роль</th>
+                            <th>Группа</th>
+                            <th>Ключевые компетенции</th>
+                            <th>Ключевые инструменты</th>
+                            <th>Ключевые регламенты</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="group-row"><td colspan="5">📊 Аналитика данных</td></tr>
+                        <tr><td><strong>Аналитик данных (DA)</strong></td><td>Данные</td><td>SQL, Python, статистика, A/B-тесты</td><td>Tableau, Power BI, DataLens</td><td>06.042, ГОСТ Р 71484, ISO/IEC 5259, DAMA-DMBOK</td></tr>
+                        <tr><td><strong>Финансовый аналитик</strong></td><td>Данные</td><td>Финанализ, бухучёт, моделирование</td><td>Excel, 1С, Python, SQL</td><td>Профстандарт, МСФО, ГОСТ</td></tr>
+                        <tr><td><strong>Продуктовый аналитик</strong></td><td>Данные</td><td>ARPU, LTV, Retention, когорты</td><td>Amplitude, SQL, Power BI</td><td>08.037, ISO/IEC 25010, BABOK</td></tr>
+                        <tr><td><strong>Веб-аналитик</strong></td><td>Данные</td><td>Сквозная аналитика, поведение</td><td>GA, Метрика, GTM, DataLens</td><td>06.042, 08.037, ISO/IEC 25010</td></tr>
+                        <tr><td><strong>BI-аналитик</strong></td><td>Данные</td><td>SQL, Python, визуализация</td><td>Power BI, Tableau, QlikView</td><td>06.042, 08.037, BABOK, ГОСТ Р 71484</td></tr>
+                        <tr><td><strong>Аналитик больших данных</strong></td><td>Данные</td><td>Data Mining, ML, нейросети</td><td>R, Python, Data Lakes</td><td>06.042, ГОСТ Р ИСО/МЭК 24668, 20546, ISO/IEC 5259</td></tr>
+                        <tr class="group-row"><td colspan="5">📋 Аналитика требований</td></tr>
+                        <tr><td><strong>Бизнес-аналитик (БА)</strong></td><td>Требования</td><td>BPMN, UML, IDEF0, EPC</td><td>BPMN/UML-средства, Excel</td><td>08.037, 06.022, BABOK, ISO/IEC/IEEE 29148</td></tr>
+                        <tr><td><strong>Системный аналитик (SA)</strong></td><td>Требования</td><td>BPMN, UML, SQL, REST, SOAP</td><td>BPMN/UML, SQL-клиенты</td><td>06.022, 08.037, BABOK, ISO/IEC/IEEE 29148, 42010, 25010</td></tr>
+                        <tr><td><strong>Аналитик 1С</strong></td><td>Требования</td><td>1С, BPMN, IDEF0, учёт</td><td>1С:Предприятие</td><td>08.037, 06.022, методические материалы 1С</td></tr>
+                        <tr><td><strong>UX-аналитик</strong></td><td>Требования</td><td>CJM, карта эмпатии, A/B</td><td>GA, Метрика, прототипирование</td><td>08.037, 06.022, ISO/IEC 25010, BABOK</td></tr>
+                        <tr class="group-row"><td colspan="5">🔀 Пограничные роли</td></tr>
+                        <tr><td><strong>Маркетинговый аналитик</strong></td><td>Пограничная</td><td>Метрики, A/B, SQL</td><td>Яндекс.Директ, GA, Метрика, Power BI</td><td>08.037, 06.042, ISO/IEC 25010, BABOK</td></tr>
+                        <tr><td><strong>Финансовый аналитик</strong></td><td>Пограничная</td><td>Экономика, финучёт, модели</td><td>Excel, 1С, Python, SQL</td><td>Профстандарт, МСФО, ГОСТ</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ВИДЕОПЛЕЕР -->
+            <div class="video-section">
+                <div class="video-container">
+                    <iframe id="lecture-player" src="https://rutube.ru" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+                </div>
+                <div class="links-hub">
+                    <button onclick="changeVideo('https://rutube.ru/')" class="video-btn stop-btn">⏹ СТОП</button>
+                    <button onclick="changeVideo('https://rutube.ru/play/embed/9bff4d74e2d2c6234a9e746a0bf1aa57/')" class="video-btn rt-btn">📜 Лекция. Аналитика данных</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="slide-footer">
+            Направление «Менеджмент» | Курс: Аналитика данных | Лекция: «Аналитика данных. Кто такие аналитики»
+        </div>
+    </div>
+
+    <!-- ПРАВАЯ ЧАСТЬ (1/3): СКРИПТ ПРЕПОДАВАТЕЛЯ -->
+     <div class="speaker-notes">
+        <!-- Фиксированная верхняя часть с плеером -->
+        <div style="position: sticky; top: 0; background: #1a202c; padding: 20px 20px 10px 20px; border-bottom: 1px solid #4a5568; width: 100%; z-index: 100;">
+                       <div class="notes-header" style="display: block; padding-bottom: 15px;">
+               <audio id="lecture-audio" preload="auto" controls
+                      src="https://archive.org/download/03_20261110_20261110/01.mp3"
+                      style="width: 100%; height: 32px; border-radius: 4px;"></audio>
+            </div>
+            <div style="width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+             <iframe id="right-lecture-player" src="https://archive.org/embed/20261020_20261020_0955?autoplay=true&loop=true&muted=true"  allow="clipboard-write; autoplay" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen style="border: none;"></iframe>
+
+                           </div>
+        </div>
+
+        <div class="lecture-text" style="margin-top: 20px;">
+
+            <p>Добрый день, уважаемые слушатели. Сегодня мы начинаем цикл лекций, посвящённых аналитике данных и профессиям аналитиков. Тема нашей первой встречи звучит так: аналитика данных и кто такие аналитики. На первый взгляд может показаться, что речь пойдёт об одной специальности. Однако в действительности под словом аналитик объединено целое семейство профессиональных ролей. Эти роли различаются по объекту анализа, по методам работы и по требованиям к компетенциям специалиста.</p>
+
+            <h3>📌 Кто такой аналитик: базовое определение</h3>
+
+            <p>Начнём с базового определения. В научной литературе по анализу данных эта дисциплина определяется как совокупность статистических методов и вычислительных алгоритмов. Её цель состоит в получении знаний из результатов наблюдений. Аналитик, соответственно, это специалист, который собирает, обрабатывает и анализирует данные. Он извлекает из них информацию, пригодную для принятия обоснованных решений. Кроме того, аналитик может моделировать информационную систему и разрабатывать требования к ней. Он также может заниматься исследованием рынка и визуализацией данных в виде графиков, отчётов и дашбордов.</p>
+
+            <p>Такое определение намеренно широкое. Оно охватывает разные виды деятельности. В реальной практике аналитик работает как с числовыми данными и метриками, так и с требованиями заказчиков, бизнес-процессами и пользовательским опытом. Именно поэтому возникает закономерный вопрос. Почему аналитиков так много и почему границы между ними часто размыты?</p>
+
+            <h3>📌 Причины многообразия аналитических ролей</h3>
+
+            <p>Причин несколько. Во-первых, различаются объекты анализа. Одни специалисты работают с данными и метриками. Другие работают с требованиями и бизнес-процессами. Третьи изучают пользовательское поведение и интерфейсы. Во-вторых, различаются цели анализа. Анализ может быть направлен на повышение прибыли, на проектирование информационной системы, на оптимизацию процессов или на улучшение продукта. В-третьих, в разных отраслях и компаниях одни и те же задачи могут называться по-разному. Наконец, один специалист нередко совмещает функции нескольких ролей.</p>
+
+            <p>Следует отметить, что даже в профессиональном сообществе существуют дискуссии о разграничении ролей. Например, вопрос о различии между бизнес-анализом и системным анализом остаётся дискуссионным. Это отражает живой и развивающийся характер данной области. Поэтому наша задача показать логику выделения ролей, а не разграничить их окончательно.</p>
+
+            <h3>📌 Две крупные группы аналитиков</h3>
+
+            <p>Для того чтобы не потеряться в многообразии ролей, введём две крупные группы. Первая группа это аналитика данных. Это деятельность, связанная с работой со всеми данными, которые можно подсчитать, представить в виде таблиц, отчётов или дашбордов. Аналитик данных собирает информацию из систем управления взаимоотношениями с клиентами, из интернета, из отчётов и из баз данных. Затем он использует эту информацию для решения задач бизнеса. В научной литературе анализ данных рассматривается как дисциплина, основанная на статистических методах и вычислительных алгоритмах, позволяющих извлекать знания из результатов наблюдений. К этой группе относятся аналитик данных, финансовый аналитик, продуктовый аналитик, веб-аналитик, специалист по аналитике бизнес-данных и аналитик больших данных.</p>
+
+            <p>Вторая группа это аналитика требований. Это деятельность, связанная с работой с требованиями заказчиков и пользователей. Специалист проводит интервью, чтобы выявить, какие задачи должен решать продукт. Он описывает бизнес-процессы или поведение приложения и формирует техническое задание. Согласно своду знаний по бизнес-анализу, эта практика определяется как обеспечение изменений в организации посредством определения потребностей и рекомендации решений, представляющих ценность для заинтересованных сторон. Учебная литература по системному и бизнес-анализу подчёркивает, что грамотное описание предметной области и техническое задание это одна из составляющих обеспечения качества программного обеспечения. К этой группе относятся бизнес-аналитик, системный аналитик, аналитик учётных систем и специалист по анализу пользовательского опыта.</p>
+
+            <p>Отдельно следует оговориться о двух ролях. Маркетинговый аналитик занимает пограничное положение. Он ближе к аналитике данных, но тесно связан с маркетингом и рекламой. Финансовый аналитик также относится к аналитике данных, хотя часто работает вне сферы информационных технологий.</p>
+
+            <h3>📌 Аналитик данных (DA)</h3>
+
+            <p>Перейдём к подробному рассмотрению первой роли. Это аналитик данных. В профессиональной литературе его также называют специалистом по анализу данных. Аналитик данных собирает, обрабатывает, изучает и интерпретирует данные. Полученные выводы помогают принимать решения в бизнесе, в научных исследованиях и в менеджменте. В профессиональной литературе подчёркивается, что такой специалист работает в компаниях, которые практикуют подход, основанный на данных. Это означает, что данные используются как основа для управленческих решений.</p>
+
+            <p>Рассмотрим типовые задачи аналитика данных. Первая задача это сбор данных из различных источников. Вторая задача это очистка данных и приведение их к пригодному для анализа виду. Третья задача это исследовательский анализ данных. Четвёртая задача это проведение контролируемых экспериментов, которые также называют сплит-тестами. Пятая задача это выявление закономерностей и трендов. Шестая задача это визуализация результатов в виде отчётов и дашбордов. Согласно учебной литературе по анализу данных, ключевой целью этой деятельности является извлечение и порождение знаний в той предметной области, к которой относятся данные.</p>
+
+            <p>Для выполнения этих задач аналитик данных должен владеть рядом инструментов. Ему необходимо знать язык структурированных запросов, который также называют языком запросов к базам данных. Ему нужно владеть основами программирования на языке Питон. Ему необходимо знать статистические методы обработки данных. Ему нужно уметь пользоваться инструментами визуализации, такими как Табло, Пауэр Би Ай, ДетаЛенс и другими. Аналитический склад ума является универсальным требованием для всех представителей рассматриваемой группы. Однако для аналитика данных он дополняется готовностью работать с большими объёмами числовой информации.</p>
+
+            <p>Приведём пример. Оператор сотовой связи хочет увеличить прибыль с уже имеющихся пользователей. Аналитик данных может составить список абонентов с перерасходом интернет-трафика. Затем он может рассчитать выручку компании, если она переведёт этих пользователей на более дорогой тариф с большим объёмом интернета. Чтобы с информацией было удобно работать, аналитик соберёт номера абонентов и все суммы в таблице Эксель или в виде дашборда в инструменте визуализации. Результат своей работы аналитик презентует в виде дашборда с данными. На его основе можно прогнозировать, например, какие типы товаров будут чаще покупать разные клиенты.</p>
+
+            <p>Карьерные траектории из этой роли ведут в нескольких направлениях. Можно перейти в инженерию данных. Можно вырасти до руководителя отдела анализа данных. Можно перейти в науку о данных, подкачав некоторые навыки. Эта специальность подходит тем, кто любит считать и работает с большим количеством информации.</p>
+
+            <p>Теперь рассмотрим нормативно-методическую базу. Деятельность аналитика данных регламентируется не только внутренними документами организации, но и рядом отечественных и международных стандартов. На российском рынке труда требования к квалификации формализованы в профессиональных стандартах. Ключевым документом является профессиональный стандарт специалист по большим данным. В нём выделена обобщённая трудовая функция управление жизненным циклом данных и информационного обеспечения. В рамках этой функции предусмотрены должности аналитик данных и специалист по работе с данными. Стандарт описывает трудовые действия, необходимые умения и знания. Смежными профессиональными стандартами являются стандарты бизнес-аналитик и системный аналитик. Хотя эти стандарты ориентированы прежде всего на аналитику требований, на практике аналитик данных нередко взаимодействует с представителями данных ролей.</p>
+
+            <p>С недавнего времени в Российской Федерации введена серия национальных стандартов, гармонизированных с международной серией ИСО МЭК пять тысяч двести пятьдесят девять. Эта серия непосредственно посвящена качеству данных для аналитики и машинного обучения. Первая часть этой серии устанавливает базовую терминологию. В ней, в частности, даётся определение самой аналитики данных как составной концепции. Эта концепция охватывает комплектование данных, сбор данных, проверку данных, обработку данных, включая количественную оценку данных, визуализацию данных, документирование данных и интерпретацию данных. Вторая часть этой серии определяет показатели качества данных и модель качества данных. Третья часть устанавливает требования и рекомендации по управлению качеством данных. Ещё одним значимым документом является национальный стандарт, аутентичный международному стандарту ИСО МЭК двадцать четыре тысячи шестьсот шестьдесят восемь. Он описывает рамочную структуру для разработки процессов, обеспечивающих эффективное использование возможностей аналитики больших данных в масштабах всей организации. Терминологическую основу для работы с большими данными задаёт также национальный стандарт, аутентичный международному стандарту ИСО МЭК двадцать тысяч пятьсот сорок шесть. Он содержит обзор и словарь в данной предметной области.</p>
+
+            <p>На международном уровне ключевое значение имеет серия ИСО МЭК пять тысяч двести пятьдесят девять. Она называется качество данных для аналитики и машинного обучения. Пятая часть этой серии обеспечивает стратегическую основу для управления качеством данных на протяжении всего жизненного цикла. Для оценки качества программных продуктов, с которыми взаимодействует аналитик данных, применим международный стандарт ИСО МЭК двадцать пять тысяч десять. Он определяет восемь основных характеристик качества программного обеспечения. Наконец, свод знаний по управлению данными, разработанный международной ассоциацией, де-факто признаётся международным методологическим ориентиром в области управления данными и аналитики. В нём, в частности, описывается роль аналитика данных в контексте управления данными и определения требований к данным.</p>
+
+            <h3>📌 Финансовый аналитик</h3>
+
+            <p>Перейдём к следующей роли первой группы. Это финансовый аналитик. Финансовый аналитик изучает положение дел на рынке и внутри компании. Он рассчитывает риски и формирует рекомендации относительно вложения средств. В отличие от большинства представителей рассматриваемой группы, эта роль не обязательно связана со сферой информационных технологий. Специалисты востребованы прежде всего в финансовых организациях, в банках, в страховых и консалтинговых компаниях.</p>
+
+            <p>Содержание деятельности финансового аналитика раскрывается в учебной литературе по финансовому анализу. Целью освоения соответствующих дисциплин является освоение теоретических базовых методов и методик и приобретение практических навыков проведения анализа финансового состояния организации. К задачам относятся построение финансовых моделей компании и отдельных проектов. Сюда же относится работа с финансовой и бухгалтерской отчётностью. Финансовый аналитик оценивает стоимость компании и участвует в тендерах. Он анализирует ликвидность, платёжеспособность и финансовую устойчивость. Методологическую базу составляют стандартные методы финансового анализа. К ним относятся коэффициентный анализ, маржинальный анализ и методы прогнозирования вероятности банкротства.</p>
+
+            <p>Для этой роли необходимы глубокие знания по экономике, по финансовому и бухгалтерскому учёту. Также нужна отраслевая насмотренность. Из инструментальных навыков на российском рынке чаще всего требуются уверенное владение табличным редактором и учётной системой. В современных условиях требуются также язык программирования Питон и язык структурированных запросов для автоматизации расчётов и работы с данными.</p>
+
+            <p>Приведём пример. Финансовый аналитик может построить модель нового инвестиционного проекта. Он рассчитывает срок окупаемости, чистую приведённую стоимость и внутреннюю норму доходности. На основе этих расчётов руководство принимает решение о запуске проекта. Другой пример. Финансовый аналитик анализирует отчётность компании и выявляет рост дебиторской задолженности. Он предлагает меры по улучшению платёжной дисциплины. Эти меры помогают избежать кассовых разрывов.</p>
+
+            <p>Деятельность финансового аналитика регламентируется профессиональными стандартами в области финансов. Ключевым документом является профессиональный стандарт, описывающий деятельность финансового аналитика. В нём определены трудовые функции, связанные с финансовым анализом, с бюджетированием и с оценкой эффективности инвестиций. Кроме того, применяются международные стандарты финансовой отчётности. На российском рынке также используются государственные стандарты в области финансового анализа и оценки стоимости. Указанные документы задают терминологическую и методическую рамку профессиональной деятельности финансового аналитика.</p>
+
+            <p>Эта специальность подходит тем, кого не пугает большая ответственность и монотонная работа с цифрами. Карьерные траектории ведут к позиции финансового директора, к роли руководителя инвестиционного отдела или к работе в консалтинге.</p>
+
+            <h3>📌 Продуктовый аналитик</h3>
+
+            <p>Перейдём к следующей роли первой группы. Это продуктовый аналитик. Продуктовый аналитик исследует рынок и аналогичные системы для развития собственного продукта. Он также исследует метрики продукта и строит гипотезы, которые помогут эти метрики повысить. В результате сервисы становятся удобнее и приносят больше прибыли. Специалисты этого направления востребованы во всех областях, где создаются и развиваются продукты. Это информационные технологии, медицина, финансовые технологии и образование.</p>
+
+            <p>Рассмотрим задачи продуктового аналитика. Он проводит анализ рынка и исследует поведение пользователей. Он проводит эксперименты и оценивает их эффективность с помощью сплит-тестов. Он также строит стратегию развития продукта. Методологически эта роль опирается на систему продуктовых метрик. К ключевым метрикам относятся средний доход на пользователя, прогнозируемый доход от одного пользователя за всё время взаимодействия с продуктом и доля возвращающихся пользователей. Понимание взаимосвязи этих метрик составляет основу продуктовой аналитики. Например, прогнозируемый доход может быть выражен через средний доход и средний срок жизни пользователя. Это соотношение описано в учебной литературе по продуктовому менеджменту.</p>
+
+            <p>Приведём пример. Предположим, нам нужно увеличить время, которое игроки проводят в игре. Аналитик проверяет, будут ли пользователи чаще возвращаться к игре, если показывать им уведомления в приложении. Например, уведомление может предлагать начать играть в течение двадцати минут и получить подарок. Если тактика работает, её внедряют в приложение. Если нет, аналитик формулирует новую гипотезу.</p>
+
+            <p>Для работы продуктовому аналитику требуются навыки сегментации пользователей и когортного анализа. Ему необходимо владеть инструментами продуктовой аналитики, например, системой Амплитуда. Ему нужно знать язык структурированных запросов и уметь пользоваться инструментами визуализации, такими как Пауэр Би Ай. Эта специальность подходит тем, кто заинтересован в глубоком погружении в один продукт и в его последовательном развитии. Карьерные переходы возможны в маркетинг или в менеджмент продуктов.</p>
+
+            <p>Деятельность продуктового аналитика регламентируется профессиональными стандартами. Ключевым документом является профессиональный стандарт бизнес-аналитик. В нём описаны трудовые функции, связанные с выявлением потребностей заинтересованных сторон и с разработкой требований. Продуктовый аналитик взаимодействует с бизнес-аналитиком при формулировании требований к продукту. Кроме того, применяется международный стандарт ИСО МЭК двадцать пять тысяч десять. Он определяет характеристики качества программного обеспечения, включая функциональную пригодность и удобство использования. Эти характеристики напрямую связаны с метриками продукта. Также используется свод знаний по бизнес-анализу. В нём описаны области знаний, включая анализ требований и проектирование, а также оценку решений.</p>
+
+            <h3>📌 Веб-аналитик</h3>
+
+            <p>Перейдём к следующей роли первой группы. Это веб-аналитик. Веб-аналитик собирает и анализирует информацию о посетителях сайта и об их поведении. Он формулирует гипотезы о том, как доработать рекламные кампании или посадочные страницы. Цель этой работы состоит в том, чтобы пользователи совершали целевые действия чаще. В учебном пособии по веб-аналитике эта дисциплина определяется как система измерения, сбора, анализа, представления и интерпретации информации о посетителях веб-сайтов. Цель этой системы состоит в улучшении и оптимизации ресурсов. Основная задача веб-аналитики это мониторинг посещаемости сайтов. На основании этого мониторинга определяется аудитория ресурса и изучается поведение посетителей. Полученные данные используются для принятия решений по развитию веб-ресурса.</p>
+
+            <p>Рассмотрим задачи веб-аналитика. Он настраивает системы сквозной аналитики. Он отслеживает результаты рекламных кампаний и поведение пользователей на сайте. Он выгружает и изучает данные. Он составляет отчёты и дашборды. В число типовых рабочих задач входят оценка эффективности рекламы, повышение эффективности сайта, поиск технических ошибок и развитие функциональности. Для реализации этих задач используются счётчики и системы веб-аналитики. К ним относятся Гугл Аналитика и Яндекс Метрика. Применяются инструменты разметки, например, Гугл Таг Менеджер. При значительных объёмах данных используются языки программирования, в частности Питон, и язык структурированных запросов. Также применяются средства визуализации, такие как Пауэр Би Ай и ДетаЛенс.</p>
+
+            <p>Приведём пример. Интернет-магазин спортивных товаров запустил контекстную рекламу в социальных сетях. Он потратил внушительный бюджет, но продажи выросли незначительно. Веб-аналитик выяснил, что страница каталога, на которую вела реклама, долго загружается. Поэтому часть пользователей уходила с сайта. Страницу оптимизировали. Затем провели повторный анализ. Показатель изменился в лучшую сторону. Этот пример показывает, как веб-аналитик связывает технические характеристики сайта с бизнес-результатами.</p>
+
+            <p>Эта роль подходит людям с аналитическим складом ума и со склонностью к экспериментальной работе. Освоение профессии существенно облегчается для специалистов, уже имеющих опыт настройки рекламных кампаний. К таким специалистам относятся таргетологи и контекстологи.</p>
+
+            <p>Деятельность веб-аналитика регламентируется рядом документов. На российском рынке труда применяется профессиональный стандарт специалист по большим данным. В нём выделена трудовая функция, связанная с управлением жизненным циклом данных. Веб-аналитик работает с данными о поведении пользователей, поэтому положения этого стандарта применимы к его деятельности. Кроме того, используется профессиональный стандарт бизнес-аналитик. Он описывает трудовые функции, связанные с выявлением потребностей заинтересованных сторон и с разработкой требований. Веб-аналитик взаимодействует с бизнес-аналитиком при формулировании требований к сайту и к рекламным кампаниям. На международном уровне применяется стандарт ИСО МЭК двадцать пять тысяч десять. Он определяет характеристики качества программного обеспечения. К ним относятся удобство использования, производительность и функциональная пригодность. Эти характеристики напрямую связаны с показателями, которые анализирует веб-аналитик. Также используется свод знаний по бизнес-анализу. В нём описаны области знаний, включая анализ требований, проектирование и оценку решений.</p>
+
+            <h3>📌 Специалист по аналитике бизнес-данных (BI-аналитик)</h3>
+
+            <p>Перейдём к следующей роли первой группы. Это специалист по аналитике бизнес-данных. В профессиональной литературе его также называют специалистом по бизнес-аналитике. Такой специалист поддерживает бизнес в принятии обоснованных решений. Он объединяет информацию из разных систем, приводит её к единому виду и превращает в наглядные отчёты и визуализации для руководителей и команд. Главная цель этой роли состоит в том, чтобы превратить набор чисел, таблиц и баз данных в понятные отчёты и визуализации. В учебной литературе по бизнес-аналитике подчёркивается, что это современное направление раскрывает концепции и теоретические основы использования данных для принятия управленческих решений.</p>
+
+            <p>Рассмотрим деятельность специалиста по аналитике бизнес-данных. Он собирает и обрабатывает информацию из различных источников. Он анализирует большие массивы данных. Он оценивает эффективность работы компании. Он визуализирует результаты в виде интерактивных дашбордов. Для этого используются инструменты класса бизнес-аналитики. К ним относятся Пауэр Би Ай, Табло, КликВью и другие. Существенно, что в своде знаний по бизнес-анализу специалист по аналитике бизнес-данных рассматривается как разновидность бизнес-аналитика. Он фокусируется на выполнении конкретного типа задач, связанных с данными и отчётностью. Таким образом, эта роль занимает пограничное положение между аналитикой данных и аналитикой требований. При этом она сохраняет выраженную ориентацию на количественные данные.</p>
+
+            <p>Для специалиста по аналитике бизнес-данных обязательны навыки обработки данных с помощью языка структурированных запросов и языка программирования Питон. Также требуется уверенное владение инструментами бизнес-аналитики для визуализации. Эта специальность подходит тем, кому нравится наглядно и полезно представлять информацию. В профессиональной среде такого специалиста нередко характеризуют как дизайнера в анализе данных.</p>
+
+            <p>Приведём пример. Для сервиса такси аналитик может сделать дашборд. Этот дашборд показывает, как количество заказов зависит от погоды, от дня недели и от других показателей. На основе этого дашборда планируют нагрузку водителей. Другой пример. Для торговой сети аналитик строит отчёт по продажам в разрезе регионов и категорий товаров. Этот отчёт помогает выявить регионы с падающим спросом и принять меры.</p>
+
+            <p>Деятельность специалиста по аналитике бизнес-данных регламентируется рядом документов. На российском рынке труда применяется профессиональный стандарт бизнес-аналитик. В нём описаны трудовые функции, связанные с выявлением потребностей заинтересованных сторон, с разработкой требований и с управлением ими. Специалист по аналитике бизнес-данных взаимодействует с бизнес-аналитиком при формулировании требований к отчётности. Кроме того, используется профессиональный стандарт специалист по большим данным. В нём выделена трудовая функция, связанная с управлением жизненным циклом данных и информационного обеспечения. Специалист по аналитике бизнес-данных работает с данными, поэтому положения этого стандарта применимы к его деятельности.</p>
+
+            <p>На международном уровне ключевое значение имеет свод знаний по бизнес-анализу. Он определяет бизнес-анализ как практику обеспечения изменений в организации посредством определения потребностей и рекомендации решений, представляющих ценность для заинтересованных сторон. В этом своде описаны области знаний, включая планирование бизнес-анализа, выявление и сотрудничество, управление жизненным циклом требований, анализ стратегии, анализ требований и проектирование, а также оценку решений. Специалист по аналитике бизнес-данных опирается на эти области знаний при построении отчётности. Также применяется международный стандарт ИСО МЭК двадцать пять тысяч десять. Он определяет восемь основных характеристик качества программного обеспечения. К ним относятся функциональная пригодность, производительность, совместимость, удобство использования, надёжность, безопасность, сопровождаемость и переносимость. Эти характеристики напрямую связаны с качеством аналитических систем и отчётов. Кроме того, используется национальный стандарт, аутентичный международному стандарту ИСО МЭК двадцать четыре тысячи шестьсот шестьдесят восемь. Он описывает рамочную структуру для разработки процессов, обеспечивающих эффективное использование возможностей аналитики больших данных в масштабах всей организации.</p>
+
+            <h3>📌 Аналитик больших данных (Big Data Analyst)</h3>
+
+            <p>Перейдём к следующей роли первой группы. Это аналитик больших данных. Такой специалист работает с огромными массивами информации. Эти массивы могут быть как структурированными, так и неструктурированными. В банковской сфере это транзакции. У операторов связи это звонки и трафик. В розничной торговле это данные о посещениях и покупках. На основе анализа этих массивов специалист помогает строить гипотезы, запускать и улучшать продукты.</p>
+
+            <p>В учебной литературе большие данные определяются как совокупность подходов, инструментов и методов обработки структурированных и неструктурированных данных огромных объёмов и значительного многообразия. Цель такой обработки состоит в получении практически значимых результатов в условиях непрерывного прироста данных. К определяющим характеристикам больших данных относят три ключевых признака. Это объём, скорость и многообразие. Методологический аппарат этой области включает методы интеллектуального анализа данных. К ним относятся обучение ассоциативным правилам, классификация, кластерный анализ и регрессионный анализ. Сюда же относятся машинное обучение, искусственные нейронные сети и статистический анализ. Статистический анализ включает контролируемые эксперименты и анализ временных рядов. Также применяется визуализация аналитических данных.</p>
+
+            <p>Рассмотрим задачи аналитика больших данных. Он создаёт хранилища данных совместно с инженерами данных. Он анализирует большие данные. Он строит рекомендательные и предсказательные модели. Эта роль ближе к разработке, чем другие рассмотренные позиции. Для работы требуются языки программирования, такие как Эр и Питон. Требуется работа с озёрами данных. Требуется работа с нейросетями. Также необходимо знание методов статистического анализа и математического моделирования.</p>
+
+            <p>Приведём пример. Для службы такси аналитик больших данных может рассчитать время ожидания. Это время нельзя превышать, чтобы заказ не отменили. Другой пример. С помощью наборов данных с реальными диалогами операторов и клиентов аналитик обучит голосовых ботов. Эти боты заменяют сотрудников колл-центра. Третий пример. В розничной сети аналитик строит модель прогнозирования спроса по каждому магазину. Модель учитывает историю продаж, погоду и праздники. На основе прогноза формируются заказы на поставку товаров.</p>
+
+            <p>Эта специальность подходит тем, кто интересуется наукой, не боится цифр и любит решать сложные задачи. Карьерные траектории ведут в науку о данных, в инженерию данных или к руководству аналитическим отделом.</p>
+
+            <p>Деятельность аналитика больших данных регламентируется рядом документов. На российском рынке труда применяется профессиональный стандарт специалист по большим данным. В нём выделена обобщённая трудовая функция управление жизненным циклом данных и информационного обеспечения. В рамках этой функции предусмотрены должности аналитик данных и специалист по работе с данными. Стандарт описывает трудовые действия, необходимые умения и знания. К ним относятся определение источников больших данных для анализа, методы интерпретации данных и методы визуализации данных. Также стандарт описывает методы извлечения информации из гетерогенных источников.</p>
+
+            <p>На международном уровне ключевое значение имеет национальный стандарт, аутентичный международному стандарту ИСО МЭК двадцать четыре тысячи шестьсот шестьдесят восемь. Он описывает рамочную структуру для разработки процессов, обеспечивающих эффективное использование возможностей аналитики больших данных в масштабах всей организации. Этот стандарт применим независимо от отраслевой принадлежности организации. Терминологическую основу для работы с большими данными задаёт национальный стандарт, аутентичный международному стандарту ИСО МЭК двадцать тысяч пятьсот сорок шесть. Он содержит обзор и словарь в данной предметной области. Кроме того, применяется серия национальных стандартов, гармонизированных с международной серией ИСО МЭК пять тысяч двести пятьдесят девять. Эта серия посвящена качеству данных для аналитики и машинного обучения. Первая часть серии устанавливает базовую терминологию. Вторая часть определяет показатели качества данных и модель качества данных. Третья часть устанавливает требования и рекомендации по управлению качеством данных. Также используется международный стандарт ИСО МЭК двадцать пять тысяч десять. Он определяет восемь основных характеристик качества программного обеспечения. Для аналитика больших данных особенно важны производительность, надёжность и безопасность аналитических систем.</p>
+
+            <h3>📌 Бизнес-аналитик (БА)</h3>
+
+            <p>Перейдём ко второй крупной группе. Это аналитика требований. Начнём с роли бизнес-аналитика. Бизнес-аналитик анализирует бизнес-процессы компании. Он выявляет в них слабые места. Он формулирует гипотезы по их улучшению и оптимизации. Следует подчеркнуть, что в профессиональной среде под этой ролью понимаются два различных, хотя и пересекающихся типа деятельности. Первый тип связан с анализом и оптимизацией бизнес-процессов как таковых. Причём информационная система в этих процессах присутствует не всегда. Второй тип это бизнес-аналитик в сфере информационных технологий. Он собирает требования на разработку информационной системы с бизнес-заказчика. Затем он формализует эти требования и передаёт разработчику в виде технического задания. При этом он не углубляется в технические подробности так, как это делает системный аналитик. На российском рынке труда чаще встречается именно второй вариант. Наконец, возможен и третий случай. Бизнес-аналитик совмещает обе функции, поскольку для корректной передачи бизнес-требований в разработку необходимо понимать бизнес-процессы компании.</p>
+
+            <p>Рассмотрим задачи бизнес-аналитика первого типа. Он выявляет требования бизнеса и пользователей продукта. Он описывает текущий бизнес-процесс в виде документов и схем. Он анализирует процесс и ищет проблемные места и точки для улучшения. Он описывает новый процесс с улучшениями. Он моделирует процесс с нуля при его отсутствии. Он прогнозирует прибыль от внедрения и анализирует результаты после запуска.</p>
+
+            <p>Приведём пример. В компании есть процессы бухгалтерии, которые работают неоптимально. Слишком долгий процесс, бухгалтерам неудобно выполнять отдельные операции, слишком много бумажной работы там, где можно ввести электронный документооборот. Бизнес-аналитик выясняет у руководителей бухгалтерии, что именно работает неоптимально. Он описывает текущий процесс. Он предлагает новый процесс с электронным документооборотом и с более удобными отчётами. Затем он добивается, чтобы цели заказчика были достигнуты. В результате процесс ускоряется, а отчёты становятся более наглядными.</p>
+
+            <p>Второй пример. Бизнес-аналитик может предложить добавить в банковское приложение услугу по получению кредитных карт. Он подсчитает, как новая функция уменьшит нагрузку на офис и позволит сэкономить на зарплате сотрудников. Затем он проведёт опрос пользователей и разработает требования. Он опишет, какую информацию должен будет вводить клиент, сроки доставки карты и порядок проверки паспортных данных. Когда функцию внедрят, бизнес-аналитик оценит результаты и сравнит их с предполагаемыми.</p>
+
+            <p>Бизнес-аналитик в сфере информационных технологий, помимо перечисленного, выявляет истинные потребности заказчика. Эти потребности не всегда совпадают с тем, что заказчик формулирует напрямую. Он моделирует новый процесс работы с системой или с функцией. Он описывает требования к изменениям в системе для разработчиков в виде документов и схем. Одна из главных его задач состоит в том, чтобы проконтролировать, что новая система или функция действительно помогла бизнесу. Она должна решить его проблему и достичь целей. А не превратиться в функционал, на который потратили время, но которым никто не пользуется.</p>
+
+            <p>Для данной роли необходимы следующие качества и навыки. Во-первых, коммуникабельность и умение доносить свою точку зрения до клиентов и до команды. Во-вторых, знание предметной области компании. Например, при оптимизации процессов бухгалтерии нужно понимать типичные процессы в финансах. В-третьих, владение нотациями описания и моделирования бизнес-процессов. Прежде всего это нотация моделирования бизнес-процессов. Также применяются блок-схемы, реже нотации описания процессов и событийно-ориентированные цепочки процессов. Может потребоваться диаграмма прецедентов и диаграмма состояний в унифицированном языке моделирования. Часто приветствуется знание языка структурированных запросов, табличного редактора и иногда систем бизнес-аналитики. В проектах в сфере информационных технологий также необходимо разбираться в методологиях управления проектами, таких как гибкие методологии и Скрам.</p>
+
+            <p>Специальность подходит людям, сочетающим аналитический склад ума и творческий подход к решению проблем. Она подходит тем, кто склонен структурировать работу и раскладывать всё по полочкам. Карьерные переходы возможны в менеджмент продукта, в управление проектами, в роль владельца продукта или в системный анализ.</p>
+
+            <p>Деятельность бизнес-аналитика регламентируется рядом документов. На российском рынке труда требования к квалификации формализованы в профессиональном стандарте бизнес-аналитик. В нём описаны обобщённые трудовые функции, трудовые действия, необходимые умения и знания. К ним относятся выявление потребностей заинтересованных сторон, разработка требований и управление ими. Смежным является профессиональный стандарт системный аналитик. В нём выделены трудовые функции, связанные с анализом предметной области, с разработкой требований к информационным системам и с сопровождением их жизненного цикла.</p>
+
+            <p>На международном уровне основополагающим методологическим документом является свод знаний по бизнес-анализу. Этот свод разработан международным институтом бизнес-анализа. Он определяет бизнес-анализ как практику обеспечения изменений в организации посредством определения потребностей и рекомендации решений, представляющих ценность для заинтересованных сторон. В своде описаны области знаний. К ним относятся планирование бизнес-анализа, выявление и сотрудничество, управление жизненным циклом требований, анализ стратегии, анализ требований и проектирование, а также оценка решений. Для системного анализа значимым международным ориентиром является стандарт в области инженерии требований. Он устанавливает процессы и требования к инженерии требований на протяжении жизненного цикла систем и программного обеспечения. В области моделирования бизнес-процессов ключевым международным стандартом является нотация моделирования бизнес-процессов. Эта спецификация поддерживается международной организацией по стандартизации в области объектного управления. Для унифицированного моделирования применяется унифицированный язык моделирования. Он также стандартизован этой организацией. Методологии управления проектами, такие как гибкие методологии и Скрам, не являются стандартами в юридическом смысле. Однако их положения де-факто признаются профессиональным сообществом и часто упоминаются в требованиях к аналитикам, работающим в проектах в сфере информационных технологий.</p>
+
+            <h3>📌 Системный аналитик (SA)</h3>
+
+            <p>Перейдём к следующей роли второй группы. Это системный аналитик. Системный аналитик помогает пользователям, заказчикам и разработчикам понять друг друга. Он уточняет у заказчика проблемные моменты. Он изучает требования пользователей к системе и проектирует, как будет работать это решение. Затем он составляет техническое задание для разработчиков или спецификацию требований к программному обеспечению. Конкретный документ зависит от процессов компании. В документе он описывает логику работы, всевозможные сценарии использования и конечный результат. Чем точнее системный аналитик опишет требования к системе, тем меньше будет доработок и исправлений после выпуска приложения. Также важно, чтобы он продумал, как система должна вести себя в разных ситуациях, и понял, как новый функционал впишется в текущую систему и её процессы.</p>
+
+            <p>Рассмотрим задачи системного аналитика. Он разрабатывает требования к программному обеспечению. Он составляет документацию о том, как работает система сейчас и как она должна работать. Он описывает точки интеграции. Он делает постановки на разработку и на дизайн. Он сопровождает разработку, дизайн и тестирование системы. Он описывает структуру и модель базы данных при наличии изменений. Он презентует результат работы заказчику и обучает новых пользователей системы.</p>
+
+            <p>Необходимо отметить, что задачи системного аналитика во многом пересекаются с задачами бизнес-аналитика. Разграничение этих ролей является дискуссионным вопросом даже в профессиональном сообществе. В России существуют профессиональные стандарты, в которых обе роли описаны достаточно чётко. Однако на практике конфигурация ролей зависит от компании. В одних организациях есть только бизнес-аналитик. Он собирает требования к системе и передаёт их разработчикам без большой технической детализации. В других организациях есть только системный аналитик. Он и выявляет требования у заказчика, и передаёт их в разработку на понятном разработчикам языке с техническим описанием процесса. Такого специалиста иногда называют универсальным аналитиком. В третьих организациях в команде присутствуют обе роли. Бизнес-аналитик общается с заказчиком и готовит верхнеуровневую постановку. Системный аналитик проектирует систему с технической стороны вместе с архитектором или руководителем разработки.</p>
+
+            <p>В целом в российских компаниях различия понимаются так. Бизнес-аналитик больше ориентирован на бизнес-составляющую и на бизнес-процессы. Он не обязан погружаться в технические подробности, в интеграции, в протоколы и строить диаграммы последовательности в унифицированном языке моделирования. При этом он должен иметь представление о языке структурированных запросов и о структуре баз данных. От системного аналитика ожидается более глубокое техническое понимание. Он должен знать технические нюансы разработки системы. При этом он ни в коем случае не должен забывать про бизнес-составляющую. В некоторых компаниях системный аналитик выполняет функции мини-архитектора. Он полностью проектирует решение.</p>
+
+            <p>Приведём пример. В онлайн-магазин нужно добавить оплату заказа. Системный аналитик продумывает путь пользователя при оплате. Он думает, на каких устройствах как это будет работать. Он определяет варианты оплаты. Он продумывает, как будет построена интеграция с платёжным шлюзом при оплате картой. Он решает, какие данные и в каком виде нужно будет хранить на стороне системы.</p>
+
+            <p>Для системного аналитика необходимы следующие качества и навыки. Во-первых, коммуникабельность и умение докопаться до сути. Во-вторых, знание нотаций моделирования. Это нотация моделирования бизнес-процессов и унифицированный язык моделирования, желательно все его виды. Также не лишними будут нотации описания процессов и событийно-ориентированные цепочки процессов. В-третьих, умение писать запросы на языке структурированных запросов и создавать прототипы интерфейсов. Системный аналитик хорошо понимает, что и в каком формате документировать. Он знает, как и когда применять прецеденты и пользовательские истории. Он умеет строить диаграммы сущность-связь и диаграммы потоков данных. Он также знает различные способы интеграции систем. Передача состояния представления является обязательным навыком. Также требуются знания брокеров сообщений. Далее возможна специфика конкретного проекта. Это протокол обмена структурированными сообщениями, удалённый вызов процедур и иногда язык запросов к графам.</p>
+
+            <p>Специальность подходит людям с хорошими коммуникативными навыками, с системным мышлением и с отсутствием боязни углубиться в технику. Карьерный рост ведёт к архитектору. Обычно это продуктовый архитектор или архитектор решения. Некоторые переходят в менеджмент. Иногда переходят в разработку, но это уже реже.</p>
+
+            <p>Деятельность системного аналитика регламентируется рядом документов. На российском рынке труда требования к квалификации формализованы в профессиональном стандарте системный аналитик. В нём выделены трудовые функции, связанные с анализом предметной области, с разработкой требований к информационным системам и с сопровождением их жизненного цикла. Смежным является профессиональный стандарт бизнес-аналитик. Он описывает трудовые функции, связанные с выявлением потребностей заинтересованных сторон и с разработкой требований. Системный аналитик взаимодействует с бизнес-аналитиком при формулировании требований к системе.</p>
+
+            <p>На международном уровне значимым ориентиром является стандарт в области инженерии требований. Он устанавливает процессы и требования к инженерии требований на протяжении жизненного цикла систем и программного обеспечения. Также применяются стандарты серии, посвящённой архитектурному описанию. Они определяют подходы к описанию архитектуры систем. Для оценки качества программного продукта используется международный стандарт, определяющий восемь основных характеристик качества. К ним относятся функциональная пригодность, производительность, совместимость, удобство использования, надёжность, безопасность, сопровождаемость и переносимость. В области моделирования бизнес-процессов ключевым международным стандартом является нотация моделирования бизнес-процессов. Для унифицированного моделирования применяется унифицированный язык моделирования. Обе спецификации поддерживаются международной организацией по стандартизации в области объектного управления. Методологии управления проектами, такие как гибкие методологии и Скрам, де-факто признаются профессиональным сообществом и часто упоминаются в требованиях к системным аналитикам.</p>
+
+            <h3>📌 Аналитик учётных систем (1С)</h3>
+
+            <p>Перейдём к следующей роли второй группы. Это аналитик учётных систем. В профессиональной среде его также называют аналитиком платформы одного известного российского производителя учётного программного обеспечения. Такой специалист изучает работу компании и находит трудоёмкие и рутинные процессы. Эти процессы можно автоматизировать с помощью одного из модулей учётной системы. Эта роль востребована как в государственных учреждениях, так и в частных компаниях различных отраслей, где используется данная учётная система.</p>
+
+            <p>Рассмотрим задачи аналитика учётных систем. Он выявляет потребности клиента и предлагает решение на платформе учётной системы. Он описывает бизнес-процессы с помощью нотации моделирования бизнес-процессов или нотации описания процессов. Он общается с бизнес-заказчиками. Как правило, это бухгалтеры и экономисты. Он составляет сценарий работы. Он пишет техническое задание для разработчиков учётной системы и проверяет готовый продукт. Затем он может обучить пользователей. По сути, аналитик учётных систем это бизнес-системный аналитик в экосистеме учётной системы.</p>
+
+            <p>Приведём пример. В компании есть процесс расчёта заработной платы, который выполняется вручную. Аналитик учётных систем изучает этот процесс. Он выявляет, какие операции можно автоматизировать в модуле расчёта заработной платы. Он описывает новый процесс. Он пишет техническое задание для разработчиков. После внедрения он проверяет, что расчёт выполняется корректно и что время на его выполнение сократилось.</p>
+
+            <p>Другой пример. В государственном учреждении есть процесс формирования отчётности. Аналитик учётных систем предлагает автоматизировать сбор данных и формирование отчётов в учётной системе. Он описывает требования. Он контролирует разработку. В результате отчётность формируется быстрее и с меньшим числом ошибок.</p>
+
+            <p>Для данной роли необходимо знание ключевых продуктов учётной системы. В зависимости от модуля требуется понимание основ документооборота, расчёта заработной платы или управленческого учёта. Это позволяет легче понять нужды клиента и представить, как адаптировать их для системы. Профессию проще освоить тем, кто уже работал с учётной системой. К таким специалистам относятся финансовые менеджеры, бухгалтеры и ключевые пользователи, тесно взаимодействовавшие с системой.</p>
+
+            <p>Деятельность аналитика учётных систем регламентируется профессиональными стандартами. Ключевым документом является профессиональный стандарт бизнес-аналитик. В нём описаны трудовые функции, связанные с выявлением потребностей заинтересованных сторон и с разработкой требований. Аналитик учётных систем выполняет эти функции в предметной области учёта. Кроме того, применяется профессиональный стандарт системный аналитик. Он описывает трудовые функции, связанные с анализом предметной области и с разработкой требований к информационным системам. Также используются методические материалы производителя учётной системы. Эти материалы описывают типовые сценарии автоматизации и требования к разработке модулей.</p>
+
+            <h3>📌 UX-аналитик</h3>
+
+            <p>Перейдём к следующей роли второй группы. Это специалист по анализу пользовательского опыта. Такой специалист собирает данные для разработки продукта. Он также анализирует, как пользователи взаимодействуют с сайтом, и предлагает способы его улучшения.</p>
+
+            <p>Рассмотрим задачи специалиста по анализу пользовательского опыта. Он проводит исследование пользовательского пути. Он составляет портрет целевой аудитории. Он проверяет гипотезы и проводит контролируемые эксперименты. Он участвует в создании макетов, прототипов и документации.</p>
+
+            <p>Приведём пример. Клиенты редко оплачивают билеты в кино в приложении. Специалист по анализу пользовательского опыта связывается с пользователями, которые вводили данные, но не завершили покупку. Он также может разослать опросную анкету. Выясняется, что пользователи не знали о том, что при неоплате заказа в течение определённого времени его придётся оформлять заново. В интерфейс добавляется напоминание. Количество покупок возрастает. Следует отметить, что часто в компаниях роль такого специалиста выполняет дизайнер пользовательских интерфейсов.</p>
+
+            <p>Для этой роли необходимо понимать основы дизайна пользовательских интерфейсов. Нужно владеть инструментами веб-аналитики. Нужно уметь работать с картой пути клиента и составлять карту эмпатии. Специальность подходит тем, кому интересно изучать сайты и поведение людей. Проще войти в сферу дизайнерам и исследователям пользовательского опыта.</p>
+
+            <p>Деятельность специалиста по анализу пользовательского опыта регламентируется рядом документов. На российском рынке труда применяется профессиональный стандарт бизнес-аналитик. В нём описаны трудовые функции, связанные с выявлением потребностей заинтересованных сторон и с разработкой требований. Специалист по анализу пользовательского опыта взаимодействует с бизнес-аналитиком при формулировании требований к интерфейсу. Кроме того, используется профессиональный стандарт системный аналитик. Он описывает трудовые функции, связанные с анализом предметной области и с разработкой требований к информационным системам. Также применяется международный стандарт, определяющий характеристики качества программного обеспечения. К ним относятся удобство использования, функциональная пригодность и другие. Эти характеристики напрямую связаны с пользовательским опытом. Кроме того, используется свод знаний по бизнес-анализу. В нём описаны области знаний, включая анализ требований, проектирование и оценку решений.</p>
+
+            <h3>📌 Маркетинговый аналитик</h3>
+
+            <p>Перейдём к рассмотрению пограничной роли. Это маркетинговый аналитик. Маркетинговый аналитик помогает привлечь клиентов. Он оценивает потенциал различных площадок и их аудиторию. Он распределяет бюджет на рекламу. Он оценивает средний чек с каждого канала. Он отслеживает количество заявок и то, сколько из них переходит в продажу.</p>
+
+            <p>Рассмотрим задачи маркетингового аналитика. Он проводит контролируемые эксперименты маркетинговых кампаний. Он исследует эффективность рекламных кампаний. Он собирает данные в отчёты и дашборды. Одной из задач маркетингового аналитика может быть создание дашборда. В этом дашборде он сводит данные по рекламе мобильного приложения оператора из рекламной системы и из рекламного кабинета социальной сети. Затем маркетолог сравнивает основные метрики и выбирает эффективный канал для продвижения.</p>
+
+            <p>Приведём пример. Маркетинговый аналитик строит дашборд с данными по рекламе мобильного приложения. Слева показан процент регистрации по клику на приложение. Справа показано сравнение кампаний по количеству кликов и по стоимости за установку приложения. Также показана динамика регистрации за год. На основе этого дашборда принимаются решения о перераспределении бюджета.</p>
+
+            <p>Для этой роли понадобятся следующие навыки. Нужно разбираться в основных показателях бизнеса и маркетинга. Нужно работать с программами веб-аналитики, такими как Гугл Аналитика и Яндекс Метрика. Нужно уметь пользоваться сервисами для размещения рекламы, например, Яндекс Директ и другие. Нужно владеть инструментами обработки и визуализации данных, такими как Пауэр Би Ай и Табло. Нужно уметь пользоваться языком структурированных запросов.</p>
+
+            <p>Такая специальность подойдёт больше людям, которые совмещают логическое мышление и способность к творчеству. Чаще профессию осваивают те, кто работает в смежных сферах. Это маркетологи и аналитики данных.</p>
+
+            <p>Деятельность маркетингового аналитика регламентируется рядом документов. На российском рынке труда применяется профессиональный стандарт бизнес-аналитик. В нём описаны трудовые функции, связанные с выявлением потребностей заинтересованных сторон и с разработкой требований. Маркетинговый аналитик взаимодействует с бизнес-аналитиком при формулировании требований к рекламным кампаниям. Кроме того, используется профессиональный стандарт специалист по большим данным. В нём выделена трудовая функция, связанная с управлением жизненным циклом данных. Маркетинговый аналитик работает с данными о поведении пользователей и с данными рекламных систем. Поэтому положения этого стандарта применимы к его деятельности.</p>
+
+            <p>На международном уровне применяется стандарт, определяющий характеристики качества программного обеспечения. К ним относятся удобство использования, производительность и функциональная пригодность. Эти характеристики связаны с показателями, которые анализирует маркетинговый аналитик. Также используется свод знаний по бизнес-анализу. В нём описаны области знаний, включая анализ требований, проектирование и оценку решений.</p>
+
+            <h3>📌 Заключение</h3>
+
+            <p>Мы рассмотрели одиннадцать типов аналитиков. Все они были разделены на две крупные группы. Первая группа это аналитика данных. Вторая группа это аналитика требований. В первую группу вошли аналитик данных, финансовый аналитик, продуктовый аналитик, веб-аналитик, специалист по аналитике бизнес-данных и аналитик больших данных. Во вторую группу вошли бизнес-аналитик, системный аналитик, аналитик учётных систем и специалист по анализу пользовательского опыта. Отдельно были рассмотрены маркетинговый аналитик и финансовый аналитик как роли, занимающие пограничное положение.</p>
+
+            <p>Теперь подведём итоги. Аналитика данных и аналитика требований различаются по объекту работы. Аналитик данных имеет дело с количественными показателями, с таблицами, с отчётами и с дашбордами. Аналитик требований работает с описаниями, со схемами, со спецификациями и с документацией. При этом на практике границы между ролями часто размыты. Один специалист нередко совмещает функции нескольких аналитиков. Это связано с размерами организации, с отраслевой спецификой и со зрелостью процессов.</p>
+
+            <p>Какие навыки являются универсальными для всех аналитиков? Во-первых, это аналитический склад ума. Во-вторых, это коммуникабельность. В-третьих, это владение языком структурированных запросов. В-четвёртых, это знание основ статистики. В-пятых, это умение визуализировать данные. Эти навыки полезны в любой из рассмотренных ролей.</p>
+
+            <p>Как выбрать направление? Ответ зависит от ваших интересов и склонностей. Если вам нравится работать с числами, с таблицами и с графиками, обратите внимание на аналитику данных. Если вам нравится общаться с людьми, выявлять потребности и описывать процессы, обратите внимание на аналитику требований. Если вас привлекает и то, и другое, вы можете стать универсальным аналитиком. Такие специалисты особенно ценятся в небольших компаниях.</p>
+
+            <p>Отдельно следует сказать о нормативно-методической базе. Мы рассмотрели профессиональные стандарты, национальные стандарты, международные стандарты и методологические своды. Эти документы задают терминологическую, методологическую и квалификационную рамку. Знание этих документов повышает профессиональную ценность аналитика. Оно помогает правильно формулировать требования, корректно описывать данные и выстраивать процессы в соответствии с признанными практиками.</p>
+
+            <p>В завершение хочу подчеркнуть главную мысль. Аналитик это не одна профессия, а целое семейство ролей. Каждая роль имеет свои задачи, свои инструменты и свою нормативную базу. Выбор конкретного направления зависит от ваших интересов и от задач, которые вы хотите решать. Главное помнить, что аналитика это область, которая постоянно развивается. Поэтому аналитику необходимо постоянно учиться, осваивать новые инструменты и следить за изменениями в стандартах.</p>
+
+            <p>На этом наша лекция завершена. Спасибо за внимание. Я готов ответить на ваши вопросы.</p>
+
+            <!-- СЛОВАРЬ ТЕРМИНОВ И АББРЕВИАТУР (в правой панели) -->
+            <div class="dark-block">
+                <div class="dark-block-title">📖 Словарь терминов и аббревиатур</div>
+                <table class="dark-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 16%;">Термин</th>
+                            <th style="width: 34%;">Расшифровка</th>
+                            <th>Пояснение</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="term">A/B-тест</td><td>A/B Testing (Split Testing)</td><td>Сравнительный тест двух версий продукта или гипотезы для определения более эффективной</td></tr>
+                        <tr><td class="term">ARPU</td><td>Average Revenue Per User</td><td>Средний доход на пользователя за период</td></tr>
+                        <tr><td class="term">BABOK</td><td>Business Analysis Body of Knowledge</td><td>Свод знаний по бизнес-анализу, разработанный IIBA</td></tr>
+                        <tr><td class="term">BI</td><td>Business Intelligence</td><td>Бизнес-аналитика — инструменты и методы анализа данных для принятия решений</td></tr>
+                        <tr><td class="term">BPMN</td><td>Business Process Model and Notation</td><td>Нотация моделирования бизнес-процессов, стандарт OMG</td></tr>
+                        <tr><td class="term">CJM</td><td>Customer Journey Map</td><td>Карта пути клиента — визуализация опыта взаимодействия с продуктом</td></tr>
+                        <tr><td class="term">CRM</td><td>Customer Relationship Management</td><td>Система управления взаимоотношениями с клиентами</td></tr>
+                        <tr><td class="term">DA</td><td>Data Analyst</td><td>Аналитик данных</td></tr>
+                        <tr><td class="term">DAMA-DMBOK</td><td>Data Management Body of Knowledge</td><td>Свод знаний по управлению данными, международный методологический ориентир</td></tr>
+                        <tr><td class="term">Data Lakes</td><td>Озёра данных</td><td>Хранилища неструктурированных данных в исходном формате</td></tr>
+                        <tr><td class="term">DFD</td><td>Data Flow Diagram</td><td>Диаграмма потоков данных</td></tr>
+                        <tr><td class="term">EPC</td><td>Event-driven Process Chain</td><td>Событийно-ориентированная цепочка процессов</td></tr>
+                        <tr><td class="term">ERD</td><td>Entity-Relationship Diagram</td><td>Диаграмма сущность-связь</td></tr>
+                        <tr><td class="term">GA4</td><td>Google Analytics 4</td><td>Платформа веб-аналитики от Google</td></tr>
+                        <tr><td class="term">GTM</td><td>Google Tag Manager</td><td>Инструмент управления тегами и разметкой сайта</td></tr>
+                        <tr><td class="term">IDEF0</td><td>ICAM Definition</td><td>Нотация функционального моделирования</td></tr>
+                        <tr><td class="term">ISO/IEC 5259</td><td>Data quality for analytics and ML</td><td>Серия международных стандартов качества данных для аналитики и машинного обучения</td></tr>
+                        <tr><td class="term">KPI</td><td>Key Performance Indicator</td><td>Ключевой показатель эффективности</td></tr>
+                        <tr><td class="term">LTV</td><td>Lifetime Value</td><td>Прогнозируемый доход от пользователя за всё время взаимодействия</td></tr>
+                        <tr><td class="term">ML</td><td>Machine Learning</td><td>Машинное обучение</td></tr>
+                        <tr><td class="term">PPC</td><td>Pay-Per-Click</td><td>Модель оплаты рекламы за клик</td></tr>
+                        <tr><td class="term">REST</td><td>Representational State Transfer</td><td>Архитектурный стиль взаимодействия компонентов в сети</td></tr>
+                        <tr><td class="term">Retention</td><td>Удержание</td><td>Доля пользователей, возвращающихся в продукт спустя время</td></tr>
+                        <tr><td class="term">SA</td><td>System Analyst</td><td>Системный аналитик</td></tr>
+                        <tr><td class="term">SOAP</td><td>Simple Object Access Protocol</td><td>Протокол обмена структурированными сообщениями</td></tr>
+                        <tr><td class="term">SQL</td><td>Structured Query Language</td><td>Язык структурированных запросов к базам данных</td></tr>
+                        <tr><td class="term">UML</td><td>Unified Modeling Language</td><td>Унифицированный язык моделирования, стандарт OMG</td></tr>
+                        <tr><td class="term">UX/UI</td><td>User Experience / User Interface</td><td>Пользовательский опыт / Пользовательский интерфейс</td></tr>
+                        <tr><td class="term">ТЗ</td><td>Техническое задание</td><td>Документ, описывающий требования к разработке</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ИСТОЧНИКИ (в правой панели) -->
+            <div class="dark-block">
+                <div class="dark-block-title">📚 Источники и литература</div>
+
+                <div class="src-group">📊 Профессиональные стандарты</div>
+                <ol>
+                    <li>Профессиональный стандарт «Специалист по большим данным» (06.042), утв. приказом Минтруда России от 06.07.2020 № 405н.</li>
+                    <li>Профессиональный стандарт «Бизнес-аналитик» (08.037), утв. приказом Минтруда России от 22.11.2023 № 821н.</li>
+                    <li>Профессиональный стандарт «Системный аналитик» (06.022).</li>
+                </ol>
+
+                <div class="src-group">📐 Национальные стандарты (ГОСТ Р)</div>
+                <ol start="4">
+                    <li>ГОСТ Р 71484.1-2024 (ИСО/МЭК 5259-1:2024) «Искусственный интеллект. Качество данных для аналитики и машинного обучения. Часть 1. Обзор, терминология и примеры».</li>
+                    <li>ГОСТ Р 71484.2-2024 — показатели и модель качества данных.</li>
+                    <li>ГОСТ Р 71484.3-2024 — требования и рекомендации по управлению качеством данных.</li>
+                    <li>ГОСТ Р ИСО/МЭК 24668-2022 «Информационные технологии. Искусственный интеллект. Структура управления процессами аналитики больших данных».</li>
+                    <li>ГОСТ Р ИСО/МЭК 20546-2021 «Информационные технологии. Большие данные. Обзор и словарь».</li>
+                </ol>
+
+                <div class="src-group">🌍 Международные стандарты и своды знаний</div>
+                <ol start="9">
+                    <li>ISO/IEC 5259 «Artificial intelligence — Data quality for analytics and machine learning (ML)», включая ISO/IEC 5259-5:2025.</li>
+                    <li>ISO/IEC 25010 — характеристики качества программного обеспечения.</li>
+                    <li>ISO/IEC/IEEE 29148:2018 «Systems and software engineering — Life cycle processes — Requirements engineering».</li>
+                    <li>ISO/IEC/IEEE 42010 — архитектурное описание.</li>
+                    <li>BABOK (Business Analysis Body of Knowledge), IIBA.</li>
+                    <li>DAMA-DMBOK (Data Management Body of Knowledge), DAMA International.</li>
+                    <li>BPMN (Business Process Model and Notation), OMG.</li>
+                    <li>UML (Unified Modeling Language), OMG.</li>
+                </ol>
+
+                <div class="src-group">📖 Учебная литература и статьи</div>
+                <ol start="17">
+                    <li>Исакин А., Макаров А., Дмитриева Т., Павлова А. «Обучать роботов или писать ТЗ для разработчиков. Какое направление в аналитике выбрать?» — <a href="https://practicum.yandex.ru" target="_blank">Practicum.yandex.ru</a>.</li>
+                    <li>Учебная литература по анализу данных, финансовому анализу, веб-аналитике, бизнес-анализу, продуктовому менеджменту.</li>
+                </ol>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- СКРИПТ -->
+    <script>
+        function changeVideo(embedUrl) {
+            document.getElementById('lecture-player').src = embedUrl;
+        }
+    </script>
+
+   <!-- НАВИГАЦИЯ МЕЖДУ ЛЕКЦИЯМИ -->
+<nav class="lecture-nav" id="lectureNav">
+    <div class="nav-progress" id="navProgress" style="width: 0%;"></div>
+    <a href="Лекция (N-1).html" class="nav-btn-arrow" id="prevBtn">
+        <span class="arrow-icon">←</span>
+        <span class="arrow-label">
+            <small>Назад</small>
+            <span class="arrow-title" id="prevTitle">Лекция (N-1)</span>
+        </span>
+    </a>
+    <div class="nav-center">
+        <div class="nav-counter">Лекция <span id="currentNum">N</span> <span>из 21</span></div>
+        <a href="index.html" class="nav-index-link">📚 К содержанию</a>
+    </div>
+    <a href="Лекция (N+1).html" class="nav-btn-arrow" id="nextBtn">
+        <span class="arrow-label" style="align-items: flex-end;">
+            <small>Вперёд</small>
+            <span class="arrow-title" id="nextTitle">Лекция (N+1)</span>
+        </span>
+        <span class="arrow-icon">→</span>
+    </a>
+</nav>
+
+
+<script>
+(function () {
+    'use strict';
+
+    // =========================================================
+    // НАСТРОЙКИ
+    // =========================================================
+    const TOTAL_LECTURES = 21;                         // всего лекций в курсе
+    const totalDurationMs = (82 * 60 + 30) * 1000;     // длительность автопрокрутки
+    const autoNextDelayMs = 2000;                      // задержка автоперехода
+    const AUTOSTART_PARAM = 'autostart';
+
+    // =========================================================
+    // ОПРЕДЕЛЕНИЕ НОМЕРА ТЕКУЩЕЙ ЛЕКЦИИ
+    // =========================================================
+    const fileName = decodeURIComponent(location.pathname.split('/').pop() || '');
+    let currentLecture = 1;
+
+    // 1) Пытаемся извлечь номер из имени файла "Лекция 7.html"
+    const match = fileName.match(/Лекция\s*(\d+)\.html/i);
+    if (match) {
+        currentLecture = parseInt(match[1], 10);
+    } else {
+        // 2) Fallback: берём из HTML-счётчика
+        const el = document.getElementById('currentNum');
+        if (el) currentLecture = parseInt(el.textContent, 10) || 1;
+    }
+
+    // Ограничиваем допустимым диапазоном
+    if (isNaN(currentLecture) || currentLecture < 1) currentLecture = 1;
+    if (currentLecture > TOTAL_LECTURES) currentLecture = TOTAL_LECTURES;
+
+    // =========================================================
+    // ОПРЕДЕЛЕНИЕ СОСЕДНИХ ЛЕКЦИЙ
+    // =========================================================
+    const prev = currentLecture > 1 ? currentLecture - 1 : null;
+    const next = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+
+    // =========================================================
+    // ОБНОВЛЕНИЕ СЧЁТЧИКА И ПРОГРЕСС-БАРА
+    // =========================================================
+    const currentNumEl = document.getElementById('currentNum');
+    if (currentNumEl) currentNumEl.textContent = currentLecture;
+
+    const navProgress = document.getElementById('navProgress');
+    if (navProgress) {
+        navProgress.style.width = (currentLecture / TOTAL_LECTURES * 100) + '%';
+    }
+
+    // =========================================================
+    // НАСТРОЙКА КНОПКИ "НАЗАД"
+    // =========================================================
+    const prevBtn = document.getElementById('prevBtn');
+    if (prevBtn) {
+        if (prev) {
+            prevBtn.href = 'Лекция ' + prev + '.html';
+            const t = document.getElementById('prevTitle');
+            if (t) t.textContent = 'Лекция ' + prev;
+            prevBtn.style.opacity = '1';
+            prevBtn.style.cursor = 'pointer';
+            prevBtn.onclick = null;
+        } else {
+            prevBtn.removeAttribute('href');
+            prevBtn.style.opacity = '0.35';
+            prevBtn.style.cursor = 'not-allowed';
+            prevBtn.onclick = (e) => e.preventDefault();
+            const t = document.getElementById('prevTitle');
+            if (t) t.textContent = 'Это первая лекция';
+        }
+    }
+
+    // =========================================================
+    // НАСТРОЙКА КНОПКИ "ВПЕРЁД"
+    // =========================================================
+    const nextBtn = document.getElementById('nextBtn');
+    if (nextBtn) {
+        if (next) {
+            nextBtn.href = 'Лекция ' + next + '.html';
+            const t = document.getElementById('nextTitle');
+            if (t) t.textContent = 'Лекция ' + next;
+            nextBtn.style.opacity = '1';
+            nextBtn.style.cursor = 'pointer';
+            nextBtn.onclick = null;
+        } else {
+            nextBtn.removeAttribute('href');
+            nextBtn.style.opacity = '0.35';
+            nextBtn.style.cursor = 'not-allowed';
+            nextBtn.onclick = (e) => e.preventDefault();
+            const t = document.getElementById('nextTitle');
+            if (t) t.textContent = 'Это последняя лекция';
+        }
+    }
+
+    // =========================================================
+    // КЛАВИАТУРНАЯ НАВИГАЦИЯ
+    // =========================================================
+    document.addEventListener('keydown', (e) => {
+        const tag = e.target && e.target.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+        if (e.key === 'ArrowLeft' && prev) {
+            window.location.href = 'Лекция ' + prev + '.html';
+        } else if (e.key === 'ArrowRight' && next) {
+            window.location.href = 'Лекция ' + next + '.html';
+        } else if (e.key === 'Home') {
+            window.location.href = 'index.html';
+        }
+    });
+
+    // =========================================================
+    // АВТОПРОКРУТКА И СИНХРОНИЗАЦИЯ ПАНЕЛЕЙ
+    // =========================================================
+    function initScroll() {
+        const studentBlock = document.querySelector('.student-view');
+        const speakerBlock = document.querySelector('.speaker-notes');
+        const badge = document.getElementById('scroll-status-badge');
+        const audio = document.getElementById('lecture-audio');
+        if (!studentBlock || !speakerBlock) return;
+
+        const studentBehavior = studentBlock.style.scrollBehavior;
+        const speakerBehavior = speakerBlock.style.scrollBehavior;
+        let isRunning = false, completed = false, pausedElapsed = 0, startedAt = 0, rafId = null;
+        let startS = 0, startP = 0, maxS = 0, maxP = 0;
+
+        function setBadge(text, color) {
+            if (!badge) return;
+            badge.style.display = 'block';
+            badge.textContent = text;
+            badge.style.borderColor = color;
+        }
+        function measure() {
+            maxS = Math.max(studentBlock.scrollHeight - studentBlock.clientHeight, 0);
+            maxP = Math.max(speakerBlock.scrollHeight - speakerBlock.clientHeight, 0);
+        }
+        function fmt(ms) {
+            const m = Math.floor(ms / 60000);
+            const s = Math.floor((ms % 60000) / 1000);
+            return m + ':' + String(s).padStart(2, '0');
+        }
+        function playAudio() {
+            if (!audio) return;
+            const p = audio.play();
+            if (p && typeof p.catch === 'function') {
+                p.catch(err => {
+                    console.warn('[AutoAudio]', err.message);
+                    setBadge('▶ ИДЕТ ПРОКРУТКА (звук заблокирован)', '#eab308');
+                });
+            }
+        }
+        function pauseAudio() { if (audio) try { audio.pause(); } catch (_) {} }
+        function resetAudio() { if (audio) try { audio.pause(); audio.currentTime = 0; } catch (_) {} }
+
+        function animate() {
+            if (!isRunning) return;
+            const elapsed = pausedElapsed + (performance.now() - startedAt);
+            const fraction = Math.min(elapsed / totalDurationMs, 1);
+            measure();
+            studentBlock.scrollTop = startS + (maxS - startS) * fraction;
+            speakerBlock.scrollTop = startP + (maxP - startP) * fraction;
+            if (badge) {
+                badge.textContent = '▶ ' + fmt(elapsed) + ' / 25:00';
+                badge.style.borderColor = '#16a34a';
+            }
+            if (fraction >= 1) { finish(); return; }
+            rafId = requestAnimationFrame(animate);
+        }
+
+        function startOrResume() {
+            if (completed) {
+                pausedElapsed = 0; completed = false;
+                studentBlock.scrollTop = 0; speakerBlock.scrollTop = 0;
+                resetAudio();
+            }
+            measure();
+            startS = studentBlock.scrollTop;
+            startP = speakerBlock.scrollTop;
+            startedAt = performance.now();
+            isRunning = true;
+            studentBlock.style.scrollBehavior = 'auto';
+            speakerBlock.style.scrollBehavior = 'auto';
+            cancelAnimationFrame(rafId);
+            rafId = requestAnimationFrame(animate);
+            playAudio();
+        }
+        function pause() {
+            if (isRunning) pausedElapsed += performance.now() - startedAt;
+            isRunning = false;
+            cancelAnimationFrame(rafId);
+            setBadge('⏸ ПАУЗА ' + fmt(pausedElapsed), '#dc2626');
+            studentBlock.style.scrollBehavior = studentBehavior;
+            speakerBlock.style.scrollBehavior = speakerBehavior;
+            pauseAudio();
+        }
+        function finish() {
+            isRunning = false; completed = true;
+            cancelAnimationFrame(rafId);
+            measure();
+            studentBlock.scrollTop = maxS;
+            speakerBlock.scrollTop = maxP;
+            studentBlock.style.scrollBehavior = studentBehavior;
+            speakerBlock.style.scrollBehavior = speakerBehavior;
+
+            const nextLec = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+            if (nextLec) {
+                setBadge('✅ ГОТОВО → Лекция ' + nextLec, '#16a34a');
+                setTimeout(() => {
+                    location.href = 'Лекция ' + nextLec + '.html?' + AUTOSTART_PARAM + '=1';
+                }, autoNextDelayMs);
+            } else {
+                setBadge('✅ КУРС ЗАВЕРШЕН', '#16a34a');
+                pauseAudio();
+            }
+        }
+        function toggle() { isRunning ? pause() : startOrResume(); }
+
+        // Пробел — старт/пауза
+        window.addEventListener('keydown', (e) => {
+            if (e.repeat) return;
+            const t = e.target; const tag = t && t.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+            if (e.code === 'Space' || e.key === ' ') {
+                e.preventDefault();
+                toggle();
+            }
+        }, true);
+
+        if (badge) badge.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+        [studentBlock, speakerBlock].forEach(el => {
+            el.addEventListener('click', (e) => {
+                if (e.target.closest('a,button,iframe,input,textarea,select,video,audio')) return;
+                if (window.getSelection().toString().length > 0) return;
+                toggle();
+            });
+        });
+
+        // Автостарт при переходе с предыдущей лекции
+        const params = new URLSearchParams(location.search);
+        if (params.get(AUTOSTART_PARAM) === '1') {
+            params.delete(AUTOSTART_PARAM);
+            const clean = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
+            history.replaceState(null, '', clean);
+            setTimeout(startOrResume, 500);
+        } else {
+            setBadge('▶ ПРОБЕЛ / КЛИК — старт', '#4a5568');
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initScroll, { once: true });
+    } else {
+        initScroll();
+    }
+})();
+</script>
+</body>
+</html>

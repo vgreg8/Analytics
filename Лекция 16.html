@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лекция 16. Деревья решений: алгоритм, который объясняет сам себя</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #ffffff; }
+
+        .student-view { width: 66.66%; height: 100vh; background: #ffffff; padding: 35px 40px; display: flex; flex-direction: column; justify-content: space-between; border-right: 2px solid #e2e8f0; overflow-y: auto; scroll-behavior: smooth; }
+        .speaker-notes { width: 33.34%; height: 100%; background: #1a202c; color: #edf2f7; padding: 30px; overflow-y: auto; }
+
+        .slide-header { font-size: 24px; color: #1a365d; font-weight: bold; line-height: 1.3; margin-bottom: 18px; border-bottom: 4px solid #3182ce; padding-bottom: 12px; }
+        .slide-body { flex-grow: 1; display: flex; flex-direction: column; gap: 18px; padding: 5px 0; }
+        .slide-footer { font-size: 13px; color: #a0aec0; text-align: right; margin-top: 12px; }
+
+        .chart-box { background: #f7fafc; border: 2.5px dashed #cbd5e0; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .chart-box strong { font-size: 16px; display: block; margin-bottom: 6px; }
+        .chart-box p { font-size: 13px; color: #4a5568; line-height: 1.45; }
+
+        .viz-card { background: #ffffff; border: 2px solid #e2e8f0; border-radius: 12px; padding: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.04); }
+        .viz-title { font-size: 14px; font-weight: bold; color: #1a365d; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .viz-caption { font-size: 11.5px; color: #4a5568; margin-top: 8px; line-height: 1.45; }
+        .viz-caption strong { color: #2d3748; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+
+        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .stat-box { border-radius: 10px; padding: 14px; text-align: center; border: 2px solid; }
+        .stat-box .stat-icon { font-size: 26px; }
+        .stat-box .stat-number { font-size: 13px; font-weight: 900; margin-top: 4px; }
+        .stat-box .stat-label { font-size: 10.5px; color: #4a5568; margin-top: 2px; line-height: 1.3; }
+        .stat-box.entropy { background: #ebf8ff; border-color: #90cdf4; }
+        .stat-box.entropy .stat-number { color: #2b6cb0; }
+        .stat-box.gini { background: #fffaf0; border-color: #fbd38d; }
+        .stat-box.gini .stat-number { color: #975a16; }
+        .stat-box.variance { background: #f0fff4; border-color: #9ae6b4; }
+        .stat-box.variance .stat-number { color: #276749; }
+
+        .formula-box { background: linear-gradient(135deg, #1a202c, #2d3748); color: #edf2f7; padding: 16px 20px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .formula-main { font-family: 'Courier New', monospace; font-size: 14px; letter-spacing: 0.5px; color: #90cdf4; }
+        .formula-example { font-size: 11.5px; color: #cbd5e0; margin-top: 8px; line-height: 1.5; }
+
+        .tag { display: inline-block; background: #ebf8ff; color: #2b6cb0; padding: 2px 7px; border-radius: 4px; font-size: 11px; margin: 2px 2px 2px 0; font-weight: 500; }
+        .tag.green { background: #f0fff4; color: #276749; }
+        .tag.red { background: #fff5f5; color: #9b2c2c; }
+        .tag.orange { background: #fffaf0; color: #975a16; }
+        .tag.purple { background: #faf5ff; color: #553c9a; }
+
+        .callout { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 6px; }
+        .callout strong { color: #92400e; font-size: 13px; }
+        .callout p { font-size: 12px; color: #78350f; margin-top: 4px; line-height: 1.45; }
+
+        .callout.warn { background: #fff5f5; border-left-color: #e53e3e; }
+        .callout.warn strong { color: #9b2c2c; }
+        .callout.warn p { color: #742a2a; }
+
+        .callout.ok { background: #f0fff4; border-left-color: #38a169; }
+        .callout.ok strong { color: #276749; }
+        .callout.ok p { color: #22543d; }
+
+        .role-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+        .role-table th { background: #1a365d; color: white; padding: 8px 10px; text-align: left; font-weight: 600; }
+        .role-table td { padding: 7px 10px; border-bottom: 1px solid #e2e8f0; color: #2d3748; vertical-align: top; }
+        .role-table tr:nth-child(even) td { background: #f7fafc; }
+        .role-table .role-emoji { font-size: 16px; }
+
+        .compare-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .compare-table th { background: #1a365d; color: white; padding: 9px 11px; text-align: left; font-weight: 600; }
+        .compare-table td { padding: 8px 11px; border-bottom: 1px solid #e2e8f0; color: #2d3748; vertical-align: top; }
+        .compare-table tr:nth-child(even) td { background: #f7fafc; }
+
+        /* SVG styles */
+        .axis { stroke: #4a5568; stroke-width: 1.5; }
+        .grid-line { stroke: #e2e8f0; stroke-width: 0.8; }
+        .label { font-family: 'Segoe UI', sans-serif; font-size: 11px; fill: #4a5568; }
+        .label-strong { font-family: 'Segoe UI', sans-serif; font-size: 12px; font-weight: 700; fill: #1a365d; }
+        .label-small { font-family: 'Segoe UI', sans-serif; font-size: 9.5px; fill: #718096; }
+        .label-white { font-family: 'Segoe UI', sans-serif; font-size: 11px; fill: #ffffff; font-weight: 600; }
+
+        .video-section { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 5px; }
+        .video-container { width: 100%; max-width: 580px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: #000; aspect-ratio: 16 / 9; }
+        .links-hub { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .video-btn { text-decoration: none; padding: 9px 14px; border-radius: 6px; font-size: 12px; font-weight: bold; color: white; display: flex; align-items: center; gap: 6px; transition: transform 0.2s, background 0.2s; cursor: pointer; border: none; }
+        .video-btn:hover { transform: translateY(-2px); }
+        .rt-btn { background: #00a877; }
+        .rt-btn:hover { background: #008f65; }
+        .stop-btn { background: #dc143c; }
+        .stop-btn:hover { background: #b01030; }
+
+        .notes-header { font-size: 17px; color: #63b3ed; font-weight: bold; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a5568; padding-bottom: 10px; }
+        .lecture-text { font-size: 14.5px; line-height: 1.65; color: #e2e8f0; text-align: justify; }
+        .lecture-text p { margin-bottom: 14px; }
+        .lecture-text h3 { color: #63b3ed; font-size: 15px; margin: 18px 0 10px; border-bottom: 1px solid #2d3748; padding-bottom: 5px; }
+        .lecture-text h4 { color: #90cdf4; font-size: 13.5px; margin: 14px 0 8px; }
+        .lecture-text ul { margin: 8px 0 14px 18px; }
+        .lecture-text li { margin-bottom: 6px; }
+
+        .dark-block { background: #2d3748; border: 1px solid #4a5568; border-radius: 10px; padding: 16px 18px; margin-top: 20px; }
+        .dark-block-title { font-size: 14px; font-weight: bold; color: #63b3ed; margin-bottom: 12px; border-bottom: 2px solid #4a5568; padding-bottom: 8px; }
+        .dark-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+        .dark-table th { background: #1a202c; color: #90cdf4; padding: 7px 9px; text-align: left; font-weight: 600; border-bottom: 1px solid #4a5568; }
+        .dark-table td { padding: 6px 9px; border-bottom: 1px solid #2d3748; color: #cbd5e0; vertical-align: top; line-height: 1.4; }
+        .dark-table tr:nth-child(even) td { background: #2a3242; }
+        .dark-table .term { font-weight: bold; color: #90cdf4; white-space: nowrap; }
+
+        .lecture-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(12px); border-top: 2px solid rgba(255, 255, 255, 0.08); padding: 12px 20px; display: flex; align-items: center; justify-content: center; gap: 12px; z-index: 9999; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25); font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .lecture-nav .nav-progress { position: absolute; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899); border-radius: 0 3px 3px 0; }
+        .lecture-nav .nav-btn-arrow { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); border: 1.5px solid rgba(255, 255, 255, 0.15); color: #e2e8f0; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; font-family: inherit; }
+        .lecture-nav .nav-btn-arrow:hover:not(:disabled) { background: rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.6); color: white; transform: translateY(-2px); }
+        .lecture-nav .nav-btn-arrow:disabled { opacity: 0.35; cursor: not-allowed; }
+        .lecture-nav .nav-btn-arrow .arrow-icon { font-size: 16px; line-height: 1; }
+        .lecture-nav .nav-btn-arrow .arrow-label { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+        .lecture-nav .nav-btn-arrow .arrow-label small { font-size: 9.5px; font-weight: 400; opacity: 0.7; text-transform: uppercase; }
+        .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { font-size: 12px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lecture-nav .nav-center { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 20px; color: #94a3b8; font-size: 11px; border-left: 1px solid rgba(255, 255, 255, 0.1); border-right: 1px solid rgba(255, 255, 255, 0.1); }
+        .lecture-nav .nav-counter { font-size: 15px; font-weight: 900; color: #f1f5f9; }
+        .lecture-nav .nav-counter span { color: #64748b; font-size: 12px; font-weight: 600; }
+        .lecture-nav .nav-index-link { color: #60a5fa; text-decoration: none; font-size: 11px; font-weight: 600; }
+        .lecture-nav .nav-index-link:hover { color: #93c5fd; text-decoration: underline; }
+        body { padding-bottom: 80px !important; }
+        @media (max-width: 900px) {
+            .lecture-nav { padding: 10px 12px; gap: 8px; }
+            .lecture-nav .nav-btn-arrow { padding: 8px 12px; }
+            .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { max-width: 90px; font-size: 11px; }
+            .grid-2, .grid-3, .stat-grid { grid-template-columns: 1fr; }
+        }
+
+        @keyframes pulseNode {
+            0%, 100% { fill-opacity: 1; stroke-width: 3; }
+            50% { fill-opacity: 0.85; stroke-width: 5; }
+        }
+        .pulse-node { animation: pulseNode 2.5s ease-in-out infinite; }
+    </style>
+</head>
+<body>
+
+    <!-- ЛЕВАЯ ПАНЕЛЬ (2/3): ЭКРАН ДЛЯ СТУДЕНТОВ -->
+    <div class="student-view">
+        <div class="slide-header">
+            Лекция 16. Деревья решений: алгоритм, который объясняет сам себя
+        </div>
+
+        <div class="slide-body">
+
+            <!-- HERO -->
+            <div class="chart-box" style="background: #ebf8ff; border-color: #90cdf4;">
+                <strong style="color: #2b6cb0;">🌳 Главная идея</strong>
+                <p>Дерево решений — это <strong>последовательность вопросов о признаках</strong>. Каждый вопрос делит объекты на две группы. Путь от корня до листа — это правило классификации. Главное преимущество — <strong>интерпретируемость</strong>: дерево можно нарисовать и объяснить заказчику простыми словами. Это фундамент для ансамблей.</p>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 1: ДЕРЕВО РЕШЕНИЙ -->
+            <div class="viz-card">
+                <div class="viz-title">🌲 Как выглядит дерево решений: предсказание возврата кредита</div>
+                <svg viewBox="0 0 560 360" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="560" height="360" fill="#ffffff"/>
+
+                    <!-- Edges (drawn first, behind nodes) -->
+                    <!-- Root to level 2 -->
+                    <line x1="280" y1="70" x2="140" y2="160" stroke="#a0aec0" stroke-width="2"/>
+                    <line x1="280" y1="70" x2="420" y2="160" stroke="#a0aec0" stroke-width="2"/>
+
+                    <!-- Level 2 to level 3 -->
+                    <line x1="140" y1="200" x2="70"  y2="290" stroke="#a0aec0" stroke-width="2"/>
+                    <line x1="140" y1="200" x2="210" y2="290" stroke="#a0aec0" stroke-width="2"/>
+                    <line x1="420" y1="200" x2="350" y2="290" stroke="#a0aec0" stroke-width="2"/>
+                    <line x1="420" y1="200" x2="490" y2="290" stroke="#a0aec0" stroke-width="2"/>
+
+                    <!-- Edge labels -->
+                    <text x="190" y="115" text-anchor="middle" class="label-small" fill="#276749">Да</text>
+                    <text x="370" y="115" text-anchor="middle" class="label-small" fill="#9b2c2c">Нет</text>
+                    <text x="90"  y="250" text-anchor="middle" class="label-small" fill="#276749">Да</text>
+                    <text x="190" y="250" text-anchor="middle" class="label-small" fill="#9b2c2c">Нет</text>
+                    <text x="370" y="250" text-anchor="middle" class="label-small" fill="#276749">Да</text>
+                    <text x="470" y="250" text-anchor="middle" class="label-small" fill="#9b2c2c">Нет</text>
+
+                    <!-- Root node -->
+                    <rect x="180" y="40" width="200" height="52" rx="10" fill="#2b6cb0" stroke="#1a365d" stroke-width="3"/>
+                    <text x="280" y="62" text-anchor="middle" class="label-white" style="font-size: 12px;">Доход &gt; 50 000 ?</text>
+                    <text x="280" y="80" text-anchor="middle" class="label-white" style="font-size: 9px; font-weight: 400; opacity: 0.85;">корень (root)</text>
+
+                    <!-- Level 2 nodes -->
+                    <rect x="60" y="160" width="160" height="52" rx="10" fill="#3182ce" stroke="#2b6cb0" stroke-width="2"/>
+                    <text x="140" y="182" text-anchor="middle" class="label-white" style="font-size: 11px;">Стаж &gt; 2 года ?</text>
+                    <text x="140" y="198" text-anchor="middle" class="label-white" style="font-size: 9px; font-weight: 400; opacity: 0.85;">внутренний узел</text>
+
+                    <rect x="340" y="160" width="160" height="52" rx="10" fill="#3182ce" stroke="#2b6cb0" stroke-width="2"/>
+                    <text x="420" y="182" text-anchor="middle" class="label-white" style="font-size: 11px;">Есть залоги ?</text>
+                    <text x="420" y="198" text-anchor="middle" class="label-white" style="font-size: 9px; font-weight: 400; opacity: 0.85;">внутренний узел</text>
+
+                    <!-- Level 3 (leaves) -->
+                    <rect x="30" y="290" width="80" height="52" rx="10" fill="#38a169" stroke="#276749" stroke-width="2"/>
+                    <text x="70" y="312" text-anchor="middle" class="label-white" style="font-size: 11px;">Вернёт</text>
+                    <text x="70" y="328" text-anchor="middle" class="label-white" style="font-size: 9px; font-weight: 400; opacity: 0.85;">лист</text>
+
+                    <rect x="170" y="290" width="80" height="52" rx="10" fill="#e53e3e" stroke="#9b2c2c" stroke-width="2"/>
+                    <text x="210" y="312" text-anchor="middle" class="label-white" style="font-size: 11px;">Не вернёт</text>
+                    <text x="210" y="328" text-anchor="middle" class="label-white" style="font-size: 9px; font-weight: 400; opacity: 0.85;">лист</text>
+
+                    <rect x="310" y="290" width="80" height="52" rx="10" fill="#38a169" stroke="#276749" stroke-width="2"/>
+                    <text x="350" y="312" text-anchor="middle" class="label-white" style="font-size: 11px;">Вернёт</text>
+                    <text x="350" y="328" text-anchor="middle" class="label-white" style="font-size: 9px; font-weight: 400; opacity: 0.85;">лист</text>
+
+                    <rect x="450" y="290" width="80" height="52" rx="10" fill="#e53e3e" stroke="#9b2c2c" stroke-width="2"/>
+                    <text x="490" y="312" text-anchor="middle" class="label-white" style="font-size: 11px;">Не вернёт</text>
+                    <text x="490" y="328" text-anchor="middle" class="label-white" style="font-size: 9px; font-weight: 400; opacity: 0.85;">лист</text>
+
+                    <!-- Legend -->
+                    <rect x="30" y="20" width="12" height="12" rx="2" fill="#2b6cb0"/>
+                    <text x="48" y="30" class="label-small">Корень</text>
+                    <rect x="110" y="20" width="12" height="12" rx="2" fill="#3182ce"/>
+                    <text x="128" y="30" class="label-small">Внутренний</text>
+                    <rect x="210" y="20" width="12" height="12" rx="2" fill="#38a169"/>
+                    <text x="228" y="30" class="label-small">Лист «да»</text>
+                    <rect x="310" y="20" width="12" height="12" rx="2" fill="#e53e3e"/>
+                    <text x="328" y="30" class="label-small">Лист «нет»</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Корень</strong> — первый вопрос, который делит все объекты на две части. <strong>Внутренние узлы</strong> задают следующие вопросы. <strong>Листья</strong> — это итоговое предсказание. Путь «Доход &gt; 50 000 → Да → Стаж &gt; 2 года → Да → Вернёт» — это и есть правило, понятное любому человеку.
+                </div>
+            </div>
+
+            <!-- ФОРМУЛЫ -->
+            <div class="formula-box">
+                <div class="formula-main">Прирост информации = H(до разделения) − H(после разделения)</div>
+                <div class="formula-example">Энтропия: H = −Σ pᵢ·log₂(pᵢ) · Индекс Джини: G = 1 − Σ pᵢ² · Дисперсия для регрессии</div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 2: ЭНТРОПИЯ И ДЖИНИ -->
+            <div class="viz-card">
+                <div class="viz-title">📊 Критерии разделения: энтропия и индекс Джини</div>
+                <div class="grid-2">
+                    <!-- Entropy -->
+                    <div>
+                        <div style="font-size: 12px; font-weight: bold; color: #2b6cb0; margin-bottom: 6px; text-align: center;">Энтропия</div>
+                        <svg viewBox="0 0 260 200" width="100%">
+                            <rect x="0" y="0" width="260" height="200" fill="#ffffff"/>
+                            <!-- Axes -->
+                            <line x1="35" y1="165" x2="240" y2="165" class="axis"/>
+                            <line x1="35" y1="15"  x2="35"  y2="165" class="axis"/>
+                            <!-- Grid -->
+                            <line x1="35" y1="40" x2="240" y2="40" class="grid-line"/>
+                            <line x1="35" y1="102" x2="240" y2="102" class="grid-line"/>
+                            <!-- Curve: entropy inverted-U max at p=0.5, value 1 -->
+                            <path d="M 35 165 Q 70 130 90 80 Q 105 45 137 40 Q 170 45 185 80 Q 205 130 240 165"
+                                  fill="none" stroke="#3182ce" stroke-width="3"/>
+                            <!-- Max marker -->
+                            <circle cx="137" cy="40" r="5" fill="#e53e3e"/>
+                            <line x1="137" y1="40" x2="137" y2="165" stroke="#e53e3e" stroke-width="1" stroke-dasharray="3 2"/>
+                            <text x="137" y="185" text-anchor="middle" class="label-small" fill="#9b2c2c">p = 0.5</text>
+                            <text x="150" y="35" class="label-small" fill="#9b2c2c">H = 1</text>
+                            <!-- Axis labels -->
+                            <text x="137" y="195" text-anchor="middle" class="label-strong">Доля класса</text>
+                            <text x="18" y="95" text-anchor="middle" class="label-strong" transform="rotate(-90 18 95)">Энтропия</text>
+                        </svg>
+                        <div class="formula-main" style="font-size: 10.5px; color: #2b6cb0; background: #ebf8ff; padding: 6px; border-radius: 4px; margin-top: 4px; text-align: center;">H = −Σ pᵢ·log₂(pᵢ)</div>
+                        <div style="font-size: 10px; color: #4a5568; margin-top: 4px; text-align: center;">Максимум при равном распределении классов</div>
+                    </div>
+                    <!-- Gini -->
+                    <div>
+                        <div style="font-size: 12px; font-weight: bold; color: #975a16; margin-bottom: 6px; text-align: center;">Индекс Джини</div>
+                        <svg viewBox="0 0 260 200" width="100%">
+                            <rect x="0" y="0" width="260" height="200" fill="#ffffff"/>
+                            <line x1="35" y1="165" x2="240" y2="165" class="axis"/>
+                            <line x1="35" y1="15"  x2="35"  y2="165" class="axis"/>
+                            <line x1="35" y1="65" x2="240" y2="65" class="grid-line"/>
+                            <line x1="35" y1="115" x2="240" y2="115" class="grid-line"/>
+                            <!-- Gini curve: 2p(1-p), max at p=0.5, value 0.5 -->
+                            <path d="M 35 165 Q 85 155 110 100 Q 125 70 137 65 Q 150 70 165 100 Q 190 155 240 165"
+                                  fill="none" stroke="#d69e2e" stroke-width="3"/>
+                            <circle cx="137" cy="65" r="5" fill="#e53e3e"/>
+                            <line x1="137" y1="65" x2="137" y2="165" stroke="#e53e3e" stroke-width="1" stroke-dasharray="3 2"/>
+                            <text x="137" y="185" text-anchor="middle" class="label-small" fill="#9b2c2c">p = 0.5</text>
+                            <text x="150" y="60" class="label-small" fill="#9b2c2c">G = 0.5</text>
+                            <text x="137" y="195" text-anchor="middle" class="label-strong">Доля класса</text>
+                            <text x="18" y="95" text-anchor="middle" class="label-strong" transform="rotate(-90 18 95)">Индекс Джини</text>
+                        </svg>
+                        <div class="formula-main" style="font-size: 10.5px; color: #975a16; background: #fffaf0; padding: 6px; border-radius: 4px; margin-top: 4px; text-align: center;">G = 1 − Σ pᵢ²</div>
+                        <div style="font-size: 10px; color: #4a5568; margin-top: 4px; text-align: center;">Считается быстрее энтропии</div>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    Оба критерия измеряют <strong>неопределённость</strong>. Когда все объекты в узле принадлежат одному классу — оба критерия равны нулю (полная определённость). Когда классы распределены поровну — критерии максимальны. Дерево строит разделения, которые <strong>максимально снижают</strong> энтропию или Джини.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 3: ПРИРОСТ ИНФОРМАЦИИ -->
+            <div class="viz-card">
+                <div class="viz-title">📈 Прирост информации: как выбирается лучший признак для разделения</div>
+                <svg viewBox="0 0 560 280" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="560" height="280" fill="#ffffff"/>
+
+                    <!-- Bars -->
+                    <!-- Возраст -->
+                    <text x="120" y="35" text-anchor="end" class="label-strong">Возраст</text>
+                    <rect x="130" y="20" width="120" height="28" rx="4" fill="#a0aec0"/>
+                    <text x="255" y="40" class="label-small">0.05</text>
+
+                    <!-- Доход -->
+                    <text x="120" y="80" text-anchor="end" class="label-strong">Доход</text>
+                    <rect x="130" y="65" width="380" height="28" rx="4" fill="#38a169"/>
+                    <text x="515" y="85" class="label-small" fill="#276749" style="font-weight: bold;">0.42 ← лучший</text>
+
+                    <!-- Стаж -->
+                    <text x="120" y="125" text-anchor="end" class="label-strong">Стаж</text>
+                    <rect x="130" y="110" width="260" height="28" rx="4" fill="#3182ce"/>
+                    <text x="395" y="130" class="label-small">0.28</text>
+
+                    <!-- Кредитная история -->
+                    <text x="120" y="170" text-anchor="end" class="label-strong">История</text>
+                    <rect x="130" y="155" width="200" height="28" rx="4" fill="#d69e2e"/>
+                    <text x="335" y="175" class="label-small">0.21</text>
+
+                    <!-- Регион -->
+                    <text x="120" y="215" text-anchor="end" class="label-strong">Регион</text>
+                    <rect x="130" y="200" width="60" height="28" rx="4" fill="#a0aec0"/>
+                    <text x="195" y="220" class="label-small">0.02</text>
+
+                    <!-- Axis label -->
+                    <line x1="130" y1="245" x2="510" y2="245" class="axis"/>
+                    <text x="320" y="270" text-anchor="middle" class="label-strong">Прирост информации</text>
+                </svg>
+                <div class="viz-caption">
+                    На каждом шаге алгоритм вычисляет <strong>прирост информации</strong> для всех признаков и порогов. Признак «Доход» даёт наибольший прирост — он и становится корнем дерева. Затем процедура повторяется для каждой ветви. Это и есть <strong>жадный алгоритм</strong>: локально оптимальный выбор на каждом шаге.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 4: ЖАДНЫЙ АЛГОРИТМ -->
+            <div class="viz-card">
+                <div class="viz-title">🔄 Как строится дерево: жадный алгоритм шаг за шагом</div>
+                <svg viewBox="0 0 540 240" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="240" fill="#ffffff"/>
+
+                    <!-- Step 1 -->
+                    <rect x="15" y="30" width="110" height="150" rx="8" fill="#ebf8ff" stroke="#90cdf4" stroke-width="2"/>
+                    <text x="70" y="55" text-anchor="middle" class="label-strong">Шаг 1</text>
+                    <text x="70" y="80" text-anchor="middle" class="label-small">Все данные</text>
+                    <text x="70" y="100" text-anchor="middle" class="label-small">(100%)</text>
+                    <text x="70" y="130" text-anchor="middle" class="label-small">Перебираем</text>
+                    <text x="70" y="145" text-anchor="middle" class="label-small">все признаки</text>
+                    <text x="70" y="160" text-anchor="middle" class="label-small">и пороги</text>
+
+                    <!-- Arrow -->
+                    <text x="140" y="105" text-anchor="middle" class="label-strong" fill="#e53e3e">→</text>
+
+                    <!-- Step 2 -->
+                    <rect x="155" y="30" width="110" height="150" rx="8" fill="#faf5ff" stroke="#d6bcfa" stroke-width="2"/>
+                    <text x="210" y="55" text-anchor="middle" class="label-strong">Шаг 2</text>
+                    <text x="210" y="80" text-anchor="middle" class="label-small">Выбираем</text>
+                    <text x="210" y="95" text-anchor="middle" class="label-small">лучший</text>
+                    <text x="210" y="110" text-anchor="middle" class="label-small">признак</text>
+                    <text x="210" y="135" text-anchor="middle" class="label-small">(макс.</text>
+                    <text x="210" y="150" text-anchor="middle" class="label-small">прирост)</text>
+
+                    <!-- Arrow -->
+                    <text x="280" y="105" text-anchor="middle" class="label-strong" fill="#e53e3e">→</text>
+
+                    <!-- Step 3 -->
+                    <rect x="295" y="30" width="110" height="150" rx="8" fill="#f0fff4" stroke="#9ae6b4" stroke-width="2"/>
+                    <text x="350" y="55" text-anchor="middle" class="label-strong">Шаг 3</text>
+                    <text x="350" y="80" text-anchor="middle" class="label-small">Разбиваем</text>
+                    <text x="350" y="95" text-anchor="middle" class="label-small">на две</text>
+                    <text x="350" y="110" text-anchor="middle" class="label-small">группы</text>
+                    <text x="350" y="135" text-anchor="middle" class="label-small">(узел</text>
+                    <text x="350" y="150" text-anchor="middle" class="label-small">создан)</text>
+
+                    <!-- Arrow -->
+                    <text x="420" y="105" text-anchor="middle" class="label-strong" fill="#e53e3e">→</text>
+
+                    <!-- Step 4 -->
+                    <rect x="435" y="30" width="90" height="150" rx="8" fill="#fffaf0" stroke="#fbd38d" stroke-width="2"/>
+                    <text x="480" y="55" text-anchor="middle" class="label-strong">Шаг 4</text>
+                    <text x="480" y="80" text-anchor="middle" class="label-small">Повторяем</text>
+                    <text x="480" y="95" text-anchor="middle" class="label-small">для каждой</text>
+                    <text x="480" y="110" text-anchor="middle" class="label-small">группы</text>
+                    <text x="480" y="135" text-anchor="middle" class="label-small">рекурсивно</text>
+
+                    <!-- Bottom annotation -->
+                    <text x="270" y="215" text-anchor="middle" class="label-strong" fill="#1a365d">Останавливаемся при достижении max_depth, min_samples_leaf или чистоты листа</text>
+                </svg>
+                <div class="viz-caption">
+                    Жадный алгоритм не ищет глобально оптимальное дерево (это слишком дорого). Он на каждом шаге выбирает <strong>локально лучшее разделение</strong> и двигается дальше. Это быстро, но не гарантирует идеальный результат. Зато даёт работающее дерево за разумное время.
+                </div>
+            </div>
+
+            <!-- ГИПЕРПАРАМЕТРЫ -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 10px;">⚙️ Три главных гиперпараметра дерева</div>
+                <div class="grid-3">
+                    <div class="viz-card" style="padding: 12px;">
+                        <div style="font-size: 12px; font-weight: bold; color: #2b6cb0; margin-bottom: 4px;">Максимальная глубина</div>
+                        <div style="font-size: 10.5px; color: #4a5568; line-height: 1.35;">Максимальное число уровней от корня до листа. Ограничивает сложность дерева.</div>
+                        <div style="font-size: 10px; color: #2b6cb0; margin-top: 4px; font-weight: bold;">max_depth</div>
+                    </div>
+                    <div class="viz-card" style="padding: 12px;">
+                        <div style="font-size: 12px; font-weight: bold; color: #975a16; margin-bottom: 4px;">Мин. объектов в листе</div>
+                        <div style="font-size: 10.5px; color: #4a5568; line-height: 1.35;">Если после разделения в листе меньше объектов — разделение не выполняется.</div>
+                        <div style="font-size: 10px; color: #975a16; margin-top: 4px; font-weight: bold;">min_samples_leaf</div>
+                    </div>
+                    <div class="viz-card" style="padding: 12px;">
+                        <div style="font-size: 12px; font-weight: bold; color: #276749; margin-bottom: 4px;">Мин. объектов для разделения</div>
+                        <div style="font-size: 10.5px; color: #4a5568; line-height: 1.35;">Если в узле меньше объектов — он превращается в лист, а не делится.</div>
+                        <div style="font-size: 10px; color: #276749; margin-top: 4px; font-weight: bold;">min_samples_split</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 5: ПЕРЕОБУЧЕНИЕ -->
+            <div class="viz-card">
+                <div class="viz-title">⚠️ Переобучение: глубокое дерево vs обрезанное</div>
+                <div class="grid-2">
+                    <!-- Overfitted tree -->
+                    <div>
+                        <div style="font-size: 12px; font-weight: bold; color: #9b2c2c; margin-bottom: 6px; text-align: center;">❌ Глубокое дерево (переобучение)</div>
+                        <svg viewBox="0 0 260 220" width="100%">
+                            <rect x="0" y="0" width="260" height="220" fill="#ffffff"/>
+                            <!-- Very deep, bushy tree -->
+                            <g stroke="#e53e3e" stroke-width="1.5" fill="none">
+                                <line x1="130" y1="30" x2="80" y2="60"/>
+                                <line x1="130" y1="30" x2="180" y2="60"/>
+                                <line x1="80" y1="60" x2="50" y2="90"/>
+                                <line x1="80" y1="60" x2="110" y2="90"/>
+                                <line x1="180" y1="60" x2="150" y2="90"/>
+                                <line x1="180" y1="60" x2="210" y2="90"/>
+                                <line x1="50" y1="90" x2="30" y2="115"/>
+                                <line x1="50" y1="90" x2="70" y2="115"/>
+                                <line x1="110" y1="90" x2="95" y2="115"/>
+                                <line x1="110" y1="90" x2="125" y2="115"/>
+                                <line x1="150" y1="90" x2="135" y2="115"/>
+                                <line x1="150" y1="90" x2="165" y2="115"/>
+                                <line x1="210" y1="90" x2="195" y2="115"/>
+                                <line x1="210" y1="90" x2="225" y2="115"/>
+                                <line x1="30" y1="115" x2="20" y2="140"/>
+                                <line x1="30" y1="115" x2="40" y2="140"/>
+                                <line x1="70" y1="115" x2="60" y2="140"/>
+                                <line x1="70" y1="115" x2="80" y2="140"/>
+                                <line x1="95" y1="115" x2="90" y2="140"/>
+                                <line x1="125" y1="115" x2="120" y2="140"/>
+                                <line x1="135" y1="115" x2="130" y2="140"/>
+                                <line x1="165" y1="115" x2="160" y2="140"/>
+                                <line x1="195" y1="115" x2="190" y2="140"/>
+                                <line x1="225" y1="115" x2="220" y2="140"/>
+                            </g>
+                            <!-- Nodes -->
+                            <circle cx="130" cy="30" r="6" fill="#2b6cb0"/>
+                            <circle cx="80" cy="60" r="5" fill="#3182ce"/><circle cx="180" cy="60" r="5" fill="#3182ce"/>
+                            <circle cx="50" cy="90" r="4" fill="#3182ce"/><circle cx="110" cy="90" r="4" fill="#3182ce"/>
+                            <circle cx="150" cy="90" r="4" fill="#3182ce"/><circle cx="210" cy="90" r="4" fill="#3182ce"/>
+                            <!-- Leaves -->
+                            <circle cx="20" cy="140" r="4" fill="#38a169"/><circle cx="40" cy="140" r="4" fill="#e53e3e"/>
+                            <circle cx="60" cy="140" r="4" fill="#38a169"/><circle cx="80" cy="140" r="4" fill="#38a169"/>
+                            <circle cx="90" cy="140" r="4" fill="#e53e3e"/><circle cx="120" cy="140" r="4" fill="#38a169"/>
+                            <circle cx="130" cy="140" r="4" fill="#e53e3e"/><circle cx="160" cy="140" r="4" fill="#38a169"/>
+                            <circle cx="190" cy="140" r="4" fill="#e53e3e"/><circle cx="220" cy="140" r="4" fill="#38a169"/>
+                            <text x="130" y="185" text-anchor="middle" class="label-small" fill="#9b2c2c">Запоминает шумы, много листьев</text>
+                        </svg>
+                    </div>
+                    <!-- Pruned tree -->
+                    <div>
+                        <div style="font-size: 12px; font-weight: bold; color: #276749; margin-bottom: 6px; text-align: center;">✅ Обрезанное дерево (обобщает)</div>
+                        <svg viewBox="0 0 260 220" width="100%">
+                            <rect x="0" y="0" width="260" height="220" fill="#ffffff"/>
+                            <g stroke="#38a169" stroke-width="2" fill="none">
+                                <line x1="130" y1="30" x2="80" y2="75"/>
+                                <line x1="130" y1="30" x2="180" y2="75"/>
+                                <line x1="80" y1="75" x2="50" y2="120"/>
+                                <line x1="80" y1="75" x2="110" y2="120"/>
+                                <line x1="180" y1="75" x2="150" y2="120"/>
+                                <line x1="180" y1="75" x2="210" y2="120"/>
+                            </g>
+                            <circle cx="130" cy="30" r="7" fill="#2b6cb0"/>
+                            <circle cx="80" cy="75" r="6" fill="#3182ce"/>
+                            <circle cx="180" cy="75" r="6" fill="#3182ce"/>
+                            <circle cx="50" cy="120" r="6" fill="#38a169"/>
+                            <circle cx="110" cy="120" r="6" fill="#e53e3e"/>
+                            <circle cx="150" cy="120" r="6" fill="#38a169"/>
+                            <circle cx="210" cy="120" r="6" fill="#e53e3e"/>
+                            <text x="130" y="185" text-anchor="middle" class="label-small" fill="#276749">Простое, устойчивое, обобщает</text>
+                        </svg>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    <strong>Глубокое дерево</strong> создаёт отдельный лист почти для каждого обучающего объекта. Оно идеально работает на обучении, но плохо — на новых данных. <strong>Обрезанное дерево</strong> (ограниченная глубина, минимум объектов в листе) улавливает общие закономерности и обобщает.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 6: ГЛУБИНА vs КАЧЕСТВО -->
+            <div class="viz-card">
+                <div class="viz-title">📉 Компромисс: как глубина влияет на качество</div>
+                <svg viewBox="0 0 540 280" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="280" fill="#ffffff"/>
+
+                    <!-- Axes -->
+                    <line x1="60" y1="230" x2="500" y2="230" class="axis"/>
+                    <line x1="60" y1="20"  x2="60"  y2="230" class="axis"/>
+
+                    <!-- Grid -->
+                    <line x1="60" y1="177" x2="500" y2="177" class="grid-line"/>
+                    <line x1="60" y1="125" x2="500" y2="125" class="grid-line"/>
+                    <line x1="60" y1="72"  x2="500" y2="72"  class="grid-line"/>
+                    <line x1="170" y1="20" x2="170" y2="230" class="grid-line"/>
+                    <line x1="280" y1="20" x2="280" y2="230" class="grid-line"/>
+                    <line x1="390" y1="20" x2="390" y2="230" class="grid-line"/>
+
+                    <!-- Training error curve (monotonically decreasing) -->
+                    <path d="M 70 60 Q 170 75 280 140 Q 390 200 490 225"
+                          fill="none" stroke="#3182ce" stroke-width="2.5"/>
+                    <text x="495" y="225" class="label-small" fill="#2b6cb0">Ошибка на обучении</text>
+
+                    <!-- Validation error curve (U-shaped) -->
+                    <path d="M 70 200 Q 170 130 280 100 Q 390 130 490 210"
+                          fill="none" stroke="#e53e3e" stroke-width="3"/>
+                    <text x="495" y="215" class="label-small" fill="#9b2c2c">Ошибка на валидации</text>
+
+                    <!-- Optimum -->
+                    <circle cx="280" cy="100" r="8" fill="#38a169" stroke="#ffffff" stroke-width="2"/>
+                    <line x1="280" y1="100" x2="280" y2="230" stroke="#38a169" stroke-width="1.5" stroke-dasharray="4 3"/>
+                    <text x="280" y="248" text-anchor="middle" class="label-strong" fill="#276749">оптимум</text>
+
+                    <!-- Zone labels -->
+                    <text x="130" y="40" text-anchor="middle" class="label-small" fill="#9b2c2c">← недообучение</text>
+                    <text x="400" y="40" text-anchor="middle" class="label-small" fill="#9b2c2c">переобучение →</text>
+
+                    <!-- Axis labels -->
+                    <text x="280" y="270" text-anchor="middle" class="label-strong">Глубина дерева →</text>
+                    <text x="25" y="125" text-anchor="middle" class="label-strong" transform="rotate(-90 25 125)">Ошибка</text>
+
+                    <!-- X ticks -->
+                    <text x="70"  y="225" text-anchor="middle" class="label-small">1</text>
+                    <text x="170" y="225" text-anchor="middle" class="label-small">3</text>
+                    <text x="280" y="225" text-anchor="middle" class="label-small">5</text>
+                    <text x="390" y="225" text-anchor="middle" class="label-small">7</text>
+                    <text x="490" y="225" text-anchor="middle" class="label-small">10+</text>
+                </svg>
+                <div class="viz-caption">
+                    С ростом глубины <strong>ошибка на обучении падает</strong> (синяя кривая) — дерево всё лучше запоминает данные. Но <strong>ошибка на валидации</strong> (красная кривая) сначала падает, а затем растёт — это переобучение. Оптимум — там, где валидационная ошибка минимальна. Здесь и останавливаем рост дерева.
+                </div>
+            </div>
+
+            <!-- СРАВНЕНИЕ -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 8px;">⚖️ Дерево решений vs другие алгоритмы</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr><th>Критерий</th><th>Дерево решений</th><th>Логистическая регрессия</th><th>k-NN</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>Интерпретируемость</strong></td><td>✅ Очень высокая (можно нарисовать)</td><td>✅ Высокая (веса)</td><td>⚠️ Средняя (через соседей)</td></tr>
+                        <tr><td><strong>Масштабирование</strong></td><td>❌ Не требуется</td><td>❌ Требуется стандартизация</td><td>❌ Обязательно требуется</td></tr>
+                        <tr><td><strong>Работа с категориями</strong></td><td>✅ Без кодирования</td><td>⚠️ Требуется кодирование</td><td>⚠️ Требуется кодирование</td></tr>
+                        <tr><td><strong>Нелинейность</strong></td><td>✅ Ловит автоматически</td><td>❌ Нужны полиномы</td><td>✅ Ловит локально</td></tr>
+                        <tr><td><strong>Стабильность</strong></td><td>⚠️ Нестабильно</td><td>✅ Стабильно</td><td>✅ Стабильно</td></tr>
+                        <tr><td><strong>Переобучение</strong></td><td>⚠️ Сильное без обрезки</td><td>⚠️ При мультиколлинеарности</td><td>⚠️ При малом k</td></tr>
+                        <tr><td><strong>Скорость обучения</strong></td><td>✅ Быстро</td><td>✅ Быстро</td><td>✅ Мгновенно</td></tr>
+                        <tr><td><strong>Скорость предсказания</strong></td><td>✅ Быстро</td><td>✅ Очень быстро</td><td>❌ Медленно</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ПРИМЕНЕНИЕ ПО РОЛЯМ -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 8px;">👥 Кто и для каких задач использует деревья решений</div>
+                <table class="role-table">
+                    <thead>
+                        <tr><th style="width: 32%;">Роль аналитика</th><th>Типичные задачи</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="role-emoji">📈</span> <strong>Аналитик данных</strong></td><td>Сегментация клиентов по правилам, скоринг, интерпретируемые прогнозы оттока</td></tr>
+                        <tr><td><span class="role-emoji">💰</span> <strong>Финансовый аналитик</strong></td><td>Кредитный скоринг с объяснением, выявление мошенничества по правилам</td></tr>
+                        <tr><td><span class="role-emoji">🚀</span> <strong>Продуктовый аналитик</strong></td><td>Анализ пользовательских сегментов, поиск правил удержания, приоритизация функций</td></tr>
+                        <tr><td><span class="role-emoji">🌐</span> <strong>Веб-аналитик</strong></td><td>Правила конверсии, поиск проблемных страниц и устройств, анализ источников трафика</td></tr>
+                        <tr><td><span class="role-emoji">📊</span> <strong>BI-аналитик</strong></td><td>Правила для дашбордов («критично, если…»), поиск аномалий, автоматические флаги</td></tr>
+                        <tr><td><span class="role-emoji">🗄️</span> <strong>Аналитик больших данных</strong></td><td>Базовая линия, отбор признаков, основа для ансамблей (случайный лес, бустинг)</td></tr>
+                        <tr><td><span class="role-emoji">📣</span> <strong>Маркетинговый аналитик</strong></td><td>Правила таргетинга («показывать рекламу, если…»), сегментация аудитории</td></tr>
+                        <tr><td><span class="role-emoji">💼</span> <strong>Бизнес-аналитик</strong></td><td>Правила успеха/провала процессов, оценка рисков проекта по правилам</td></tr>
+                        <tr><td><span class="role-emoji">⚙️</span> <strong>Системный аналитик</strong></td><td>Правила возникновения ошибок, классификация инцидентов, диагностика сбоев</td></tr>
+                        <tr><td><span class="role-emoji">🎨</span> <strong>UX-аналитик</strong></td><td>Правила удержания/ухода пользователей, приоритизация улучшений интерфейса</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- CALL-OUT -->
+            <div class="callout ok">
+                <strong>💡 Главный вывод</strong>
+                <p>Дерево решений — это <strong>понятный и интерпретируемый инструмент</strong>. Его можно нарисовать и объяснить заказчику. Но одно дерево часто переобучается и нестабильно. Это фундамент для <strong>ансамблей</strong> — случайного леса и градиентного бустинга, где множество деревьев даёт гораздо лучшее качество. Об этом — в следующей лекции.</p>
+            </div>
+
+            <!-- ВИДЕОПЛЕЕР -->
+            <div class="video-section">
+                <div class="video-container">
+                    <iframe id="lecture-player" src="https://rutube.ru" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+                </div>
+                <div class="links-hub">
+                    <button onclick="changeVideo('https://rutube.ru/')" class="video-btn stop-btn">⏹ СТОП</button>
+                    <button onclick="changeVideo('https://rutube.ru/play/embed/')" class="video-btn rt-btn">📜 Лекция 13. Деревья решений</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="slide-footer">
+            Направление «Менеджмент» | Курс: Аналитика данных | Лекция 13: «Деревья решений: алгоритм, который объясняет сам себя»
+        </div>
+    </div>
+
+    <!-- ПРАВАЯ ПАНЕЛЬ (1/3): СКРИПТ ПРЕПОДАВАТЕЛЯ -->
+    <div class="speaker-notes">
+        <!-- Фиксированная верхняя часть с плеером -->
+        <div style="position: sticky; top: 0; background: #1a202c; padding: 20px 20px 10px 20px; border-bottom: 1px solid #4a5568; width: 100%; z-index: 100;">
+                       <div class="notes-header" style="display: block; padding-bottom: 15px;">
+               <audio id="lecture-audio" preload="auto" controls
+                      src="https://archive.org/download/03_20261110_20261110/16.mp3"
+                      style="width: 100%; height: 32px; border-radius: 4px;"></audio>
+            </div>
+            <div style="width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+             <iframe id="right-lecture-player" src="https://archive.org/embed/20261020_20261020_0955?autoplay=true&loop=true&muted=true"  allow="clipboard-write; autoplay" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen style="border: none;"></iframe>
+
+                           </div>
+        </div>
+        <div class="lecture-text" style="margin-top: 20px;">
+
+            <h3>📌 Деревья решений: алгоритм, который объясняет сам себя</h3>
+
+            <p>Теперь разберём четвёртый алгоритм. Он называется дерево решений. Это один из самых интуитивных и самых интерпретируемых алгоритмов машинного обучения. И одновременно это фундамент для самых мощных современных методов. Без понимания дерева решений невозможно понять случайный лес и градиентный бустинг. Поэтому разберём его подробно. Как в учебнике.</p>
+
+            <h4>Определение и основная идея</h4>
+
+            <p>Начнём с определения. Дерево решений — это алгоритм машинного обучения с учителем. Он работает и для задач классификации, и для задач регрессии. Его идея очень проста и очень наглядна. Дерево задаёт последовательность вопросов о признаках объекта. И на основе ответов на эти вопросы принимает решение.</p>
+
+            <p>Поясним на примере. Представьте, что мы хотим предсказать, вернёт ли клиент кредит. Дерево решений может работать так. Первый вопрос: доход клиента больше определённого порога? Если да — идём в одну ветку. Если нет — в другую. Затем следующий вопрос. Например, есть ли у клиента другие кредиты? И так далее. Каждый вопрос делит объекты на две группы. И постепенно мы доходим до листа дерева. А в листе уже записан ответ. Вернёт клиент кредит или нет.</p>
+
+            <p>Теперь дадим более строгое определение. Дерево решений — это иерархическая структура. Она состоит из узлов и рёбер. Каждый внутренний узел — это проверка одного условия. Например, признак больше порога или меньше. Каждое ребро — это результат проверки. Условие выполнено или не выполнено. Каждый лист — это итоговое предсказание. Класс или число. Путь от корня до листа — это правило классификации.</p>
+
+            <p>Обратите внимание на важную мысль. Дерево решений — это не «чёрный ящик». Его можно нарисовать. Его можно объяснить заказчику простыми словами. Например, сказать: «Модель предсказывает уход клиента, если он обратился в поддержку больше пяти раз и его стаж меньше года». Это понятное правило. Бизнес может с ним работать. Это главное преимущество дерева решений перед нейронными сетями и ансамблями.</p>
+
+            <h4>Как строится дерево: жадный алгоритм</h4>
+
+            <p>Теперь перейдём к вопросу обучения. Как алгоритм строит дерево. Ведь вариантов деревьев может быть огромное количество. Перебрать их все невозможно. Поэтому используется специальный подход. Он называется жадный алгоритм.</p>
+
+            <p>Дадим определение. Жадный алгоритм — это стратегия построения дерева. При которой на каждом шаге выбирается локально оптимальное решение. То есть на каждом шаге мы выбираем такой признак и такой порог, которые лучше всего разделяют данные. И не задумываемся о том, как это отразится на дальних уровнях дерева.</p>
+
+            <p>Поясним на примере. Представьте, что у нас есть данные о клиентах. И мы хотим построить дерево для предсказания ухода. На первом шаге алгоритм перебирает все признаки. И для каждого признака перебирает все возможные пороги. Затем вычисляет, насколько хорошо каждый вариант разделяет классы. И выбирает лучший. Это становится корнем дерева. Затем алгоритм повторяет процедуру для каждой из двух получившихся групп. И так далее.</p>
+
+            <h4>Критерии разделения: как понять, что разделение хорошее</h4>
+
+            <p>Теперь разберём ключевой вопрос. Как алгоритм понимает, что одно разделение лучше другого. Для этого используются специальные критерии. Их называют критериями разделения. Есть три основных критерия. Разберём каждый.</p>
+
+            <p><strong>Энтропия и прирост информации.</strong> Первый критерий используется для задач классификации. Он основан на понятии энтропии. Дадим определение. Энтропия — это мера неопределённости или беспорядка в наборе данных. Если все объекты в наборе относятся к одному классу — энтропия равна нулю. Если объекты поровну распределены между классами — энтропия максимальна.</p>
+
+            <p>Поясним на примере. Представьте две корзины с шарами. В первой корзине все шары красные. Во второй — половина красных, половина синих. В первой корзине нет неопределённости. Мы точно знаем, что достанем красный шар. Во второй корзине неопределённость максимальна. Мы не знаем, какой шар достанем. Значит, энтропия первой корзины равна нулю. А энтропия второй корзины максимальна.</p>
+
+            <p>Теперь перейдём к приросту информации. Дадим определение. Прирост информации — это разница между энтропией до разделения и энтропией после разделения. Чем больше прирост — тем лучше разделение. Потому что разделение уменьшает неопределённость.</p>
+
+            <p>Поясним на примере. До разделения у нас была одна группа с максимальной энтропией. После разделения получились две группы. В первой энтропия низкая. Во второй тоже низкая. Значит, разделение было хорошим. Прирост информации большой. Если же после разделения энтропия в группах осталась высокой — разделение было плохим. Прирост информации маленький.</p>
+
+            <p>Жадный алгоритм на каждом шаге выбирает то разделение, у которого прирост информации максимален. Это и есть критерий разделения для классификации.</p>
+
+            <p><strong>Дисперсия.</strong> Второй критерий используется для задач регрессии. Он основан на понятии дисперсии. Дадим определение. Дисперсия — это мера разброса значений вокруг среднего. Если все значения одинаковые — дисперсия равна нулю. Если значения сильно различаются — дисперсия большая.</p>
+
+            <p>Поясним на примере. Представьте, что мы предсказываем цену квартиры. В одной группе все квартиры стоят примерно одинаково. В другой — цены сильно различаются. В первой группе дисперсия низкая. Во второй — высокая. Значит, первая группа более однородна.</p>
+
+            <p>Критерий разделения для регрессии устроен так. Нужно найти такое разделение, которое максимально уменьшает дисперсию внутри групп. То есть после разделения каждая группа должна стать более однородной по целевой переменной.</p>
+
+            <p><strong>Джини.</strong> Третий критерий используется для классификации. Он называется критерий Джини. Или индекс Джини. Дадим определение. Индекс Джини — это мера того, как часто случайно выбранный объект был бы неправильно классифицирован. Если все объекты одного класса — индекс Джини равен нулю. Если объекты равномерно распределены между классами — индекс максимален.</p>
+
+            <p>Критерий Джини похож на энтропию по смыслу. Он тоже измеряет неопределённость. Но вычисляется проще и быстрее. Поэтому часто используется по умолчанию в библиотеках машинного обучения.</p>
+
+            <h4>Гиперпараметры дерева решений</h4>
+
+            <p>Теперь разберём ключевые гиперпараметры. Они задаются человеком. И от них сильно зависит поведение дерева. Есть три основных гиперпараметра. Разберём каждый.</p>
+
+            <p><strong>Максимальная глубина.</strong> Первый гиперпараметр называется максимальная глубина дерева. Дадим определение. Максимальная глубина — это максимальное число уровней от корня до самого дальнего листа. Чем больше глубина — тем сложнее дерево. И тем больше оно запоминает обучающие данные.</p>
+
+            <p>Поясним на примере. Если глубина равна трём — у дерева не больше трёх уровней вопросов. Если глубина равна десяти — у дерева может быть до десяти уровней. Ограничение глубины — это способ борьбы с переобучением.</p>
+
+            <p><strong>Минимальное число объектов в листе.</strong> Второй гиперпараметр называется минимальное число объектов в листе. Дадим определение. Это минимальное количество объектов обучающей выборки, которое должно попасть в лист. Если после разделения в листе оказалось меньше объектов — разделение не выполняется.</p>
+
+            <p>Поясним на примере. Если минимальное число объектов равно пяти — алгоритм не будет создавать лист, в котором меньше пяти объектов. Это защищает от появления листьев, которые описывают единичные случайные случаи. Такие листья — это типичный признак переобучения.</p>
+
+            <p><strong>Минимальное число объектов для разделения.</strong> Третий гиперпараметр называется минимальное число объектов для разделения. Дадим определение. Это минимальное количество объектов в узле, при котором алгоритм может выполнить разделение. Если в узле меньше объектов — узел становится листом.</p>
+
+            <p>Поясним на примере. Если минимальное число объектов для разделения равно десяти — алгоритм не будет разделять узел, в котором меньше десяти объектов. Такой узел превращается в лист. И в нём записывается наиболее частый класс или среднее значение.</p>
+
+            <h4>Проблема переобучения и обрезка дерева</h4>
+
+            <p>Теперь разберём главную проблему дерева решений. Она называется переобучение. И способы её решения.</p>
+
+            <p>Дадим определение. Переобучение дерева решений — это ситуация, при которой дерево становится слишком глубоким. И запоминает обучающие данные наизусть. Включая случайные шумы и единичные выбросы. Такое дерево хорошо работает на обучающих данных. Но плохо работает на новых данных. Потому что оно не уловило общие закономерности. А запомнило конкретные примеры.</p>
+
+            <p>Приведём пример. Представьте, что в обучающей выборке есть клиент, который ушёл. И у него есть уникальное сочетание признаков. Дерево без ограничений создаст отдельный лист именно для этого клиента. И будет предсказывать уход для любого клиента с таким же сочетанием. Хотя это случайность. И в новых данных такое сочетание может никогда не встретиться. Или встретиться, но клиент останется.</p>
+
+            <p>Как решить эту проблему. Есть несколько способов. Первый способ — ограничить глубину дерева. Это самый простой и самый частый способ.</p>
+
+            <p>Второй способ называется обрезка. Дадим определение. Обрезка — это удаление части ветвей дерева после его построения. Идея в том, чтобы сначала построить полное дерево. А затем удалить ветви, которые не дают существенного прироста качества на валидационной выборке.</p>
+
+            <p>Обрезка бывает двух видов. Первый вид называется предварительная обрезка. Она выполняется в процессе построения. Мы просто останавливаем рост дерева при достижении определённых условий. Например, при достижении максимальной глубины. Второй вид называется последующая обрезка. Она выполняется после построения. Мы удаляем ветви, которые слабо влияют на качество.</p>
+
+            <h4>Преимущества дерева решений</h4>
+
+            <p>Первое преимущество — это интерпретируемость. Дерево можно нарисовать. Его можно объяснить заказчику простыми словами. Это очень важно в бизнесе. Особенно в задачах, где нужно обосновать решение.</p>
+
+            <p>Второе преимущество — это отсутствие необходимости в масштабировании признаков. Дерево не использует расстояния. Оно использует пороги. Поэтому масштаб признаков не важен. Это отличает дерево от метода к-ближайших соседей и от линейных моделей с регуляризацией.</p>
+
+            <p>Третье преимущество — это работа с категориальными признаками без кодирования. Дерево может напрямую работать с признаками, которые принимают значения из ограниченного списка. Например, регион, категория товара, тип клиента. Не нужно преобразовывать их в числа.</p>
+
+            <p>Четвёртое преимущество — это устойчивость к выбросам. Дерево не чувствительно к отдельным экстремальным значениям. Потому что оно использует пороги. А порог можно сдвинуть, и ничего не изменится. В отличие от линейной регрессии, где выбросы могут сильно повлиять на веса.</p>
+
+            <p>Пятое преимущество — это универсальность. Дерево работает и для классификации, и для регрессии. Одна и та же идея лежит в основе обоих типов задач.</p>
+
+            <h4>Ограничения дерева решений</h4>
+
+            <p>Первое ограничение — это нестабильность. Небольшое изменение в данных может привести к совершенно другому дереву. Особенно на верхних уровнях. Если изменился признак, выбранный для корня — вся структура дерева меняется. Это проблема для интерпретации. И для воспроизводимости.</p>
+
+            <p>Второе ограничение — это склонность к переобучению. Без ограничений глубины дерево почти всегда переобучается. Это требует аккуратной настройки гиперпараметров.</p>
+
+            <p>Третье ограничение — это плохая работа с линейными зависимостями. Дерево строит прямоугольные границы. И чтобы приблизить прямую линию, нужно много мелких шагов. Это делает дерево неэффективным для задач, где связь между признаками и целью линейна. В таких случаях линейная регрессия работает лучше.</p>
+
+            <p>Четвёртое ограничение — это несбалансированные деревья. Если данные распределены неравномерно, дерево может «уйти в одну сторону». И не использовать часть признаков.</p>
+
+            <h4>Когда дерево решений работает хорошо</h4>
+
+            <p>Первое условие — нужна интерпретируемость. Если заказчику важно объяснить решение — дерево даёт такую возможность. Это его главное преимущество.</p>
+
+            <p>Второе условие — задача сложная и нелинейная. Если связь между признаками и целью нелинейна — дерево справится лучше линейных моделей. Оно строит нелинейные границы. И может уловить сложные взаимодействия между признаками.</p>
+
+            <p>Третье условие — нужно быстрое обучение. Дерево обучается быстро. Это его преимущество перед нейронными сетями и ансамблями.</p>
+
+            <p>Четвёртое условие — данных не слишком много. На больших данных одно дерево часто переобучается. И лучше использовать ансамбли деревьев. Об этом мы поговорим в следующем блоке.</p>
+
+            <h4>Примеры применения по ролям аналитиков</h4>
+
+            <p><strong>Аналитик данных</strong> использует дерево решений для задач, где нужна интерпретируемость. Типичная задача — сегментация клиентов. Дерево делит клиентов на группы по правилам. Например, клиенты с высоким доходом и без жалоб — это одна группа. Клиенты с низким доходом и с жалобами — другая. Такие правила легко объяснить бизнесу. Ещё одна задача — скоринг. Дерево оценивает клиента по набору признаков. И выдаёт решение. В кредитном скоринге. В маркетинге. В оценке риска оттока.</p>
+
+            <p><strong>Финансовый аналитик</strong> использует дерево решений для оценки кредитного риска. Дерево строит правила: если доход больше порога и есть имущество — выдать кредит. Если доход меньше порога — отказать. Такие правила легко проверить. И легко объяснить регулятору. Поэтому в банковской сфере дерево решений остаётся популярным. Ещё одна задача — выявление мошенничества. Дерево строит правила: если транзакция совершена в необычное время и в необычном месте — это подозрительно.</p>
+
+            <p><strong>Продуктовый аналитик</strong> использует дерево решений для анализа пользовательских сегментов. Дерево делит пользователей по признакам. Например, по частоте использования, по платежам, по глубине просмотра. Затем аналитик изучает, какие сегменты наиболее ценны. Ещё одна задача — предсказание удержания. Дерево строит правила: если пользователь совершил первую покупку в первую неделю и использовал определённые функции — он с высокой вероятностью останется.</p>
+
+            <p><strong>Веб-аналитик</strong> использует дерево решений для анализа поведения на сайте. Дерево делит пользователей по источникам трафика, по устройствам, по времени захода. И показывает, какие сегменты чаще совершают целевое действие. Ещё одна задача — поиск проблемных мест. Дерево может показать, что пользователи с определённого устройства и с определённой страницы почти не конвертируются.</p>
+
+            <p><strong>Специалист по аналитике бизнес-данных</strong> использует дерево решений для поиска аномалий. Дерево строит правила «нормального» поведения. И если объект сильно отклоняется от этих правил — это аномалия. Ещё одна задача — построение правил для дашбордов. Например, дерево даёт правило: «Показатель считать критическим, если он ниже такого-то значения».</p>
+
+            <p><strong>Аналитик больших данных</strong> использует дерево решений как базовую линию. И как основу для ансамблей. Одно дерево редко даёт лучшее качество. Но оно даёт понимание структуры данных. И подсказывает, какие признаки важны. Кроме того, аналитик больших данных применяет деревья решений для отбора признаков. Дерево показывает, какие признаки использовались в правилах. А какие остались неиспользованными.</p>
+
+            <p><strong>Маркетинговый аналитик</strong> использует дерево решений для таргетинга рекламы. Дерево строит правила: «Показывать рекламу пользователям из такой-то группы». Такие правила легко применить в рекламных системах. Ещё одна задача — сегментация аудитории. Дерево делит пользователей по поведению.</p>
+
+            <p><strong>Бизнес-аналитик</strong> использует дерево решений для анализа бизнес-процессов. Дерево строит правила: при каких условиях процесс завершается успешно. А при каких — с ошибкой. Это помогает выявить узкие места. Ещё одна задача — оценка рисков. Дерево строит правила для оценки вероятности срыва проекта.</p>
+
+            <p><strong>Системный аналитик</strong> использует дерево решений в задачах анализа логов. Дерево строит правила: при каких условиях возникает ошибка. Это помогает быстро найти причину сбоя. Ещё одна задача — классификация инцидентов. Дерево строит правила: какой тип инцидента соответствует какому набору признаков.</p>
+
+            <p><strong>Специалист по анализу пользовательского опыта</strong> использует дерево решений для анализа поведения пользователей. Дерево строит правила: при каких условиях пользователь уходит с сайта. Или при каких условиях он совершает покупку. Это помогает улучшить интерфейс. Ещё одна задача — приоритизация улучшений. Дерево показывает, какие признаки наиболее важны для удовлетворённости.</p>
+
+            <h4>Подведём итог блока</h4>
+
+            <p>Давайте соберём всё вместе. Мы разобрали дерево решений. Мы увидели его идею. Это последовательность вопросов о признаках. И ответы приводят к предсказанию. Мы разобрали, как строится дерево с помощью жадного алгоритма. Мы познакомились с критериями разделения. Это энтропия и прирост информации. Это дисперсия для регрессии. Это индекс Джини. Мы разобрали гиперпараметры дерева. Максимальную глубину. Минимальное число объектов в листе. Минимальное число объектов для разделения. Мы узнали о проблеме переобучения. И о способах её решения — обрезке и ограничении глубины. Мы увидели преимущества дерева. Это интерпретируемость, отсутствие необходимости в масштабировании, работа с категориальными признаками, устойчивость к выбросам и универсальность. И увидели ограничения. Это нестабильность, склонность к переобучению, плохая работа с линейными зависимостями и несбалансированность. И наконец, увидели конкретные примеры применения в работе разных аналитиков.</p>
+
+            <p>Запомните главное. Дерево решений — это не «слабый» алгоритм. Это понятный и интерпретируемый инструмент. Его главное преимущество — это прозрачность. Мы можем нарисовать дерево и объяснить его заказчику. Мы можем показать, какие признаки и какие пороги привели к решению. Это очень ценно в бизнесе. Особенно в задачах, где нужно обосновать решение.</p>
+
+            <p>Но у дерева есть слабость. Одно дерево часто переобучается. Одно дерево нестабильно. Одно дерево редко даёт лучшее качество. И вот здесь на помощь приходят ансамбли. Об этом мы поговорим в следующем блоке. Мы увидим, как множество деревьев может дать гораздо лучшее качество. И как это работает.</p>
+
+            <!-- СЛОВАРЬ ТЕРМИНОВ -->
+            <div class="dark-block">
+                <div class="dark-block-title">📖 Словарь терминов и аббревиатур</div>
+                <table class="dark-table">
+                    <thead>
+                        <tr><th style="width:22%;">Термин</th><th style="width:30%;">Расшифровка</th><th>Пояснение</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="term">Дерево решений</td><td>Decision Tree</td><td>Алгоритм, строящий последовательность правил</td></tr>
+                        <tr><td class="term">Корень</td><td>Root</td><td>Первый (верхний) узел дерева</td></tr>
+                        <tr><td class="term">Внутренний узел</td><td>Internal Node</td><td>Узел с проверкой условия</td></tr>
+                        <tr><td class="term">Лист</td><td>Leaf</td><td>Узел с итоговым предсказанием</td></tr>
+                        <tr><td class="term">Жадный алгоритм</td><td>Greedy Algorithm</td><td>Локально оптимальный выбор на каждом шаге</td></tr>
+                        <tr><td class="term">Энтропия</td><td>Entropy</td><td>Мера неопределённости в наборе данных</td></tr>
+                        <tr><td class="term">Прирост информации</td><td>Information Gain</td><td>Уменьшение энтропии после разделения</td></tr>
+                        <tr><td class="term">Индекс Джини</td><td>Gini Index</td><td>Альтернативная мера неопределённости</td></tr>
+                        <tr><td class="term">Дисперсия</td><td>Variance</td><td>Мера разброса для задач регрессии</td></tr>
+                        <tr><td class="term">Максимальная глубина</td><td>Max Depth</td><td>Ограничение числа уровней дерева</td></tr>
+                        <tr><td class="term">Мин. объектов в листе</td><td>Min Samples Leaf</td><td>Минимум объектов для создания листа</td></tr>
+                        <tr><td class="term">Мин. объектов для разделения</td><td>Min Samples Split</td><td>Минимум объектов для разделения узла</td></tr>
+                        <tr><td class="term">Обрезка</td><td>Pruning</td><td>Удаление слабых ветвей после построения</td></tr>
+                        <tr><td class="term">Переобучение</td><td>Overfitting</td><td>Слишком глубокое дерево, запоминает шумы</td></tr>
+                        <tr><td class="term">Ансамбль</td><td>Ensemble</td><td>Комбинация нескольких моделей</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function changeVideo(embedUrl) {
+            document.getElementById('lecture-player').src = embedUrl;
+        }
+    </script>
+
+    <!-- НАВИГАЦИЯ МЕЖДУ ЛЕКЦИЯМИ -->
+<nav class="lecture-nav" id="lectureNav">
+    <div class="nav-progress" id="navProgress" style="width: 0%;"></div>
+    <a href="Лекция (N-1).html" class="nav-btn-arrow" id="prevBtn">
+        <span class="arrow-icon">←</span>
+        <span class="arrow-label">
+            <small>Назад</small>
+            <span class="arrow-title" id="prevTitle">Лекция (N-1)</span>
+        </span>
+    </a>
+    <div class="nav-center">
+        <div class="nav-counter">Лекция <span id="currentNum">N</span> <span>из 21</span></div>
+        <a href="index.html" class="nav-index-link">📚 К содержанию</a>
+    </div>
+    <a href="Лекция (N+1).html" class="nav-btn-arrow" id="nextBtn">
+        <span class="arrow-label" style="align-items: flex-end;">
+            <small>Вперёд</small>
+            <span class="arrow-title" id="nextTitle">Лекция (N+1)</span>
+        </span>
+        <span class="arrow-icon">→</span>
+    </a>
+</nav>
+
+
+
+<script>
+(function () {
+    'use strict';
+
+    // =========================================================
+    // НАСТРОЙКИ
+    // =========================================================
+    const TOTAL_LECTURES = 21;                         // всего лекций в курсе
+    const totalDurationMs = (25 * 60 + 30) * 1000;     // длительность автопрокрутки
+    const autoNextDelayMs = 2000;                      // задержка автоперехода
+    const AUTOSTART_PARAM = 'autostart';
+
+    // =========================================================
+    // ОПРЕДЕЛЕНИЕ НОМЕРА ТЕКУЩЕЙ ЛЕКЦИИ
+    // =========================================================
+    const fileName = decodeURIComponent(location.pathname.split('/').pop() || '');
+    let currentLecture = 1;
+
+    // 1) Пытаемся извлечь номер из имени файла "Лекция 7.html"
+    const match = fileName.match(/Лекция\s*(\d+)\.html/i);
+    if (match) {
+        currentLecture = parseInt(match[1], 10);
+    } else {
+        // 2) Fallback: берём из HTML-счётчика
+        const el = document.getElementById('currentNum');
+        if (el) currentLecture = parseInt(el.textContent, 10) || 1;
+    }
+
+    // Ограничиваем допустимым диапазоном
+    if (isNaN(currentLecture) || currentLecture < 1) currentLecture = 1;
+    if (currentLecture > TOTAL_LECTURES) currentLecture = TOTAL_LECTURES;
+
+    // =========================================================
+    // ОПРЕДЕЛЕНИЕ СОСЕДНИХ ЛЕКЦИЙ
+    // =========================================================
+    const prev = currentLecture > 1 ? currentLecture - 1 : null;
+    const next = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+
+    // =========================================================
+    // ОБНОВЛЕНИЕ СЧЁТЧИКА И ПРОГРЕСС-БАРА
+    // =========================================================
+    const currentNumEl = document.getElementById('currentNum');
+    if (currentNumEl) currentNumEl.textContent = currentLecture;
+
+    const navProgress = document.getElementById('navProgress');
+    if (navProgress) {
+        navProgress.style.width = (currentLecture / TOTAL_LECTURES * 100) + '%';
+    }
+
+    // =========================================================
+    // НАСТРОЙКА КНОПКИ "НАЗАД"
+    // =========================================================
+    const prevBtn = document.getElementById('prevBtn');
+    if (prevBtn) {
+        if (prev) {
+            prevBtn.href = 'Лекция ' + prev + '.html';
+            const t = document.getElementById('prevTitle');
+            if (t) t.textContent = 'Лекция ' + prev;
+            prevBtn.style.opacity = '1';
+            prevBtn.style.cursor = 'pointer';
+            prevBtn.onclick = null;
+        } else {
+            prevBtn.removeAttribute('href');
+            prevBtn.style.opacity = '0.35';
+            prevBtn.style.cursor = 'not-allowed';
+            prevBtn.onclick = (e) => e.preventDefault();
+            const t = document.getElementById('prevTitle');
+            if (t) t.textContent = 'Это первая лекция';
+        }
+    }
+
+    // =========================================================
+    // НАСТРОЙКА КНОПКИ "ВПЕРЁД"
+    // =========================================================
+    const nextBtn = document.getElementById('nextBtn');
+    if (nextBtn) {
+        if (next) {
+            nextBtn.href = 'Лекция ' + next + '.html';
+            const t = document.getElementById('nextTitle');
+            if (t) t.textContent = 'Лекция ' + next;
+            nextBtn.style.opacity = '1';
+            nextBtn.style.cursor = 'pointer';
+            nextBtn.onclick = null;
+        } else {
+            nextBtn.removeAttribute('href');
+            nextBtn.style.opacity = '0.35';
+            nextBtn.style.cursor = 'not-allowed';
+            nextBtn.onclick = (e) => e.preventDefault();
+            const t = document.getElementById('nextTitle');
+            if (t) t.textContent = 'Это последняя лекция';
+        }
+    }
+
+    // =========================================================
+    // КЛАВИАТУРНАЯ НАВИГАЦИЯ
+    // =========================================================
+    document.addEventListener('keydown', (e) => {
+        const tag = e.target && e.target.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+        if (e.key === 'ArrowLeft' && prev) {
+            window.location.href = 'Лекция ' + prev + '.html';
+        } else if (e.key === 'ArrowRight' && next) {
+            window.location.href = 'Лекция ' + next + '.html';
+        } else if (e.key === 'Home') {
+            window.location.href = 'index.html';
+        }
+    });
+
+    // =========================================================
+    // АВТОПРОКРУТКА И СИНХРОНИЗАЦИЯ ПАНЕЛЕЙ
+    // =========================================================
+    function initScroll() {
+        const studentBlock = document.querySelector('.student-view');
+        const speakerBlock = document.querySelector('.speaker-notes');
+        const badge = document.getElementById('scroll-status-badge');
+        const audio = document.getElementById('lecture-audio');
+        if (!studentBlock || !speakerBlock) return;
+
+        const studentBehavior = studentBlock.style.scrollBehavior;
+        const speakerBehavior = speakerBlock.style.scrollBehavior;
+        let isRunning = false, completed = false, pausedElapsed = 0, startedAt = 0, rafId = null;
+        let startS = 0, startP = 0, maxS = 0, maxP = 0;
+
+        function setBadge(text, color) {
+            if (!badge) return;
+            badge.style.display = 'block';
+            badge.textContent = text;
+            badge.style.borderColor = color;
+        }
+        function measure() {
+            maxS = Math.max(studentBlock.scrollHeight - studentBlock.clientHeight, 0);
+            maxP = Math.max(speakerBlock.scrollHeight - speakerBlock.clientHeight, 0);
+        }
+        function fmt(ms) {
+            const m = Math.floor(ms / 60000);
+            const s = Math.floor((ms % 60000) / 1000);
+            return m + ':' + String(s).padStart(2, '0');
+        }
+        function playAudio() {
+            if (!audio) return;
+            const p = audio.play();
+            if (p && typeof p.catch === 'function') {
+                p.catch(err => {
+                    console.warn('[AutoAudio]', err.message);
+                    setBadge('▶ ИДЕТ ПРОКРУТКА (звук заблокирован)', '#eab308');
+                });
+            }
+        }
+        function pauseAudio() { if (audio) try { audio.pause(); } catch (_) {} }
+        function resetAudio() { if (audio) try { audio.pause(); audio.currentTime = 0; } catch (_) {} }
+
+        function animate() {
+            if (!isRunning) return;
+            const elapsed = pausedElapsed + (performance.now() - startedAt);
+            const fraction = Math.min(elapsed / totalDurationMs, 1);
+            measure();
+            studentBlock.scrollTop = startS + (maxS - startS) * fraction;
+            speakerBlock.scrollTop = startP + (maxP - startP) * fraction;
+            if (badge) {
+                badge.textContent = '▶ ' + fmt(elapsed) + ' / 25:00';
+                badge.style.borderColor = '#16a34a';
+            }
+            if (fraction >= 1) { finish(); return; }
+            rafId = requestAnimationFrame(animate);
+        }
+
+        function startOrResume() {
+            if (completed) {
+                pausedElapsed = 0; completed = false;
+                studentBlock.scrollTop = 0; speakerBlock.scrollTop = 0;
+                resetAudio();
+            }
+            measure();
+            startS = studentBlock.scrollTop;
+            startP = speakerBlock.scrollTop;
+            startedAt = performance.now();
+            isRunning = true;
+            studentBlock.style.scrollBehavior = 'auto';
+            speakerBlock.style.scrollBehavior = 'auto';
+            cancelAnimationFrame(rafId);
+            rafId = requestAnimationFrame(animate);
+            playAudio();
+        }
+        function pause() {
+            if (isRunning) pausedElapsed += performance.now() - startedAt;
+            isRunning = false;
+            cancelAnimationFrame(rafId);
+            setBadge('⏸ ПАУЗА ' + fmt(pausedElapsed), '#dc2626');
+            studentBlock.style.scrollBehavior = studentBehavior;
+            speakerBlock.style.scrollBehavior = speakerBehavior;
+            pauseAudio();
+        }
+        function finish() {
+            isRunning = false; completed = true;
+            cancelAnimationFrame(rafId);
+            measure();
+            studentBlock.scrollTop = maxS;
+            speakerBlock.scrollTop = maxP;
+            studentBlock.style.scrollBehavior = studentBehavior;
+            speakerBlock.style.scrollBehavior = speakerBehavior;
+
+            const nextLec = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+            if (nextLec) {
+                setBadge('✅ ГОТОВО → Лекция ' + nextLec, '#16a34a');
+                setTimeout(() => {
+                    location.href = 'Лекция ' + nextLec + '.html?' + AUTOSTART_PARAM + '=1';
+                }, autoNextDelayMs);
+            } else {
+                setBadge('✅ КУРС ЗАВЕРШЕН', '#16a34a');
+                pauseAudio();
+            }
+        }
+        function toggle() { isRunning ? pause() : startOrResume(); }
+
+        // Пробел — старт/пауза
+        window.addEventListener('keydown', (e) => {
+            if (e.repeat) return;
+            const t = e.target; const tag = t && t.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+            if (e.code === 'Space' || e.key === ' ') {
+                e.preventDefault();
+                toggle();
+            }
+        }, true);
+
+        if (badge) badge.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+        [studentBlock, speakerBlock].forEach(el => {
+            el.addEventListener('click', (e) => {
+                if (e.target.closest('a,button,iframe,input,textarea,select,video,audio')) return;
+                if (window.getSelection().toString().length > 0) return;
+                toggle();
+            });
+        });
+
+        // Автостарт при переходе с предыдущей лекции
+        const params = new URLSearchParams(location.search);
+        if (params.get(AUTOSTART_PARAM) === '1') {
+            params.delete(AUTOSTART_PARAM);
+            const clean = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
+            history.replaceState(null, '', clean);
+            setTimeout(startOrResume, 500);
+        } else {
+            setBadge('▶ ПРОБЕЛ / КЛИК — старт', '#4a5568');
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initScroll, { once: true });
+    } else {
+        initScroll();
+    }
+})();
+</script>
+
+</body>
+</html>

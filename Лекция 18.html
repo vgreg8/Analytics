@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лекция 18. Ансамбли: случайный лес и градиентный бустинг</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #ffffff; }
+
+        .student-view { width: 66.66%; height: 100vh; background: #ffffff; padding: 35px 40px; display: flex; flex-direction: column; justify-content: space-between; border-right: 2px solid #e2e8f0; overflow-y: auto; scroll-behavior: smooth; }
+        .speaker-notes { width: 33.34%; height: 100%; background: #1a202c; color: #edf2f7; padding: 30px; overflow-y: auto; }
+
+        .slide-header { font-size: 26px; color: #0f172a; font-weight: bold; line-height: 1.3; margin-bottom: 18px; border-bottom: 4px solid #2563eb; padding-bottom: 12px; }
+        .slide-body { flex-grow: 1; display: flex; flex-direction: column; gap: 18px; padding: 5px 0; }
+        .slide-footer { font-size: 13px; color: #64748b; text-align: right; margin-top: 12px; }
+
+        .chart-box { background: #f8fafc; border: 2.5px dashed #94a3b8; padding: 20px; border-radius: 12px; }
+        .chart-box strong { font-size: 17px; display: block; margin-bottom: 8px; color: #0f172a; }
+        .chart-box p { font-size: 14px; color: #1e293b; line-height: 1.5; }
+
+        .viz-card { background: #ffffff; border: 2px solid #cbd5e0; border-radius: 12px; padding: 18px; box-shadow: 0 4px 10px rgba(15,23,42,0.06); }
+        .viz-title { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .viz-caption { font-size: 13px; color: #1e293b; margin-top: 10px; line-height: 1.6; }
+        .viz-caption strong { color: #0f172a; font-weight: 700; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+
+        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .stat-box { border-radius: 10px; padding: 14px; text-align: center; border: 2px solid; }
+        .stat-box .stat-icon { font-size: 26px; }
+        .stat-box .stat-number { font-size: 15px; font-weight: 900; margin-top: 4px; }
+        .stat-box .stat-label { font-size: 11.5px; color: #334155; margin-top: 4px; line-height: 1.35; font-weight: 600; }
+        .stat-box.bag { background: #eff6ff; border-color: #93c5fd; }
+        .stat-box.bag .stat-number { color: #1e40af; }
+        .stat-box.boost { background: #fffbeb; border-color: #fcd34d; }
+        .stat-box.boost .stat-number { color: #92400e; }
+        .stat-box.combo { background: #f0fdf4; border-color: #86efac; }
+        .stat-box.combo .stat-number { color: #166534; }
+
+        .formula-box { background: linear-gradient(135deg, #0f172a, #1e293b); color: #f1f5f9; padding: 18px 20px; border-radius: 10px; text-align: center; box-shadow: 0 4px 14px rgba(15,23,42,0.3); }
+        .formula-main { font-family: 'Courier New', monospace; font-size: 16px; letter-spacing: 0.5px; color: #93c5fd; font-weight: 700; }
+        .formula-example { font-size: 13px; color: #e2e8f0; margin-top: 8px; line-height: 1.5; }
+
+        .tag { display: inline-block; background: #eff6ff; color: #1e40af; padding: 3px 8px; border-radius: 4px; font-size: 12px; margin: 2px 2px 2px 0; font-weight: 600; }
+        .tag.green { background: #f0fdf4; color: #166534; }
+        .tag.red { background: #fef2f2; color: #991b1b; }
+        .tag.orange { background: #fffbeb; color: #92400e; }
+        .tag.purple { background: #faf5ff; color: #6b21a8; }
+
+        .callout { background: #fffbeb; border-left: 5px solid #d97706; padding: 14px 18px; border-radius: 6px; }
+        .callout strong { color: #78350f; font-size: 14px; }
+        .callout p { font-size: 13px; color: #451a03; margin-top: 4px; line-height: 1.5; }
+        .callout.ok { background: #f0fdf4; border-left-color: #16a34a; }
+        .callout.ok strong { color: #166534; }
+        .callout.ok p { color: #14532d; }
+
+        .role-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .role-table th { background: #0f172a; color: white; padding: 10px 12px; text-align: left; font-weight: 700; }
+        .role-table td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; color: #1e293b; vertical-align: top; line-height: 1.45; }
+        .role-table tr:nth-child(even) td { background: #f8fafc; }
+        .role-table .role-emoji { font-size: 16px; }
+
+        .compare-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .compare-table th { background: #0f172a; color: white; padding: 10px 12px; text-align: left; font-weight: 700; }
+        .compare-table td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; color: #1e293b; vertical-align: top; line-height: 1.45; }
+        .compare-table tr:nth-child(even) td { background: #f8fafc; }
+        .compare-table .winner td { background: #f0fdf4 !important; font-weight: 700; }
+        .compare-table .winner td:first-child { color: #166534; }
+
+        /* SVG styles — контрастные и крупные */
+        .axis { stroke: #334155; stroke-width: 2; }
+        .grid-line { stroke: #cbd5e0; stroke-width: 1; }
+        .label { font-family: 'Segoe UI', sans-serif; font-size: 13px; fill: #1e293b; font-weight: 600; }
+        .label-strong { font-family: 'Segoe UI', sans-serif; font-size: 15px; font-weight: 700; fill: #0f172a; }
+        .label-small { font-family: 'Segoe UI', sans-serif; font-size: 12px; fill: #475569; font-weight: 600; }
+        .label-white { font-family: 'Segoe UI', sans-serif; font-size: 13px; fill: #ffffff; font-weight: 700; }
+        .label-white-sm { font-family: 'Segoe UI', sans-serif; font-size: 11px; fill: #ffffff; opacity: 0.95; font-weight: 600; }
+
+        .video-section { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 5px; }
+        .video-container { width: 100%; max-width: 580px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: #000; aspect-ratio: 16 / 9; }
+        .links-hub { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .video-btn { text-decoration: none; padding: 9px 14px; border-radius: 6px; font-size: 13px; font-weight: bold; color: white; display: flex; align-items: center; gap: 6px; transition: transform 0.2s, background 0.2s; cursor: pointer; border: none; }
+        .video-btn:hover { transform: translateY(-2px); }
+        .rt-btn { background: #00a877; }
+        .rt-btn:hover { background: #008f65; }
+        .stop-btn { background: #dc2626; }
+        .stop-btn:hover { background: #b91c1c; }
+
+        .notes-header { font-size: 17px; color: #63b3ed; font-weight: bold; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a5568; padding-bottom: 10px; }
+        .lecture-text { font-size: 14.5px; line-height: 1.65; color: #e2e8f0; text-align: justify; }
+        .lecture-text p { margin-bottom: 14px; }
+        .lecture-text h3 { color: #63b3ed; font-size: 15px; margin: 18px 0 10px; border-bottom: 1px solid #2d3748; padding-bottom: 5px; }
+        .lecture-text h4 { color: #90cdf4; font-size: 13.5px; margin: 14px 0 8px; }
+        .lecture-text ul { margin: 8px 0 14px 18px; }
+        .lecture-text li { margin-bottom: 6px; }
+
+        .dark-block { background: #2d3748; border: 1px solid #4a5568; border-radius: 10px; padding: 16px 18px; margin-top: 20px; }
+        .dark-block-title { font-size: 14px; font-weight: bold; color: #63b3ed; margin-bottom: 12px; border-bottom: 2px solid #4a5568; padding-bottom: 8px; }
+        .dark-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+        .dark-table th { background: #1a202c; color: #90cdf4; padding: 7px 9px; text-align: left; font-weight: 600; border-bottom: 1px solid #4a5568; }
+        .dark-table td { padding: 6px 9px; border-bottom: 1px solid #2d3748; color: #cbd5e0; vertical-align: top; line-height: 1.4; }
+        .dark-table tr:nth-child(even) td { background: #2a3242; }
+        .dark-table .term { font-weight: bold; color: #90cdf4; white-space: nowrap; }
+
+        .lecture-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(12px); border-top: 2px solid rgba(255, 255, 255, 0.08); padding: 12px 20px; display: flex; align-items: center; justify-content: center; gap: 12px; z-index: 9999; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25); }
+        .lecture-nav .nav-progress { position: absolute; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899); border-radius: 0 3px 3px 0; }
+        .lecture-nav .nav-btn-arrow { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); border: 1.5px solid rgba(255, 255, 255, 0.15); color: #e2e8f0; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; }
+        .lecture-nav .nav-btn-arrow:hover:not(:disabled) { background: rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.6); color: white; transform: translateY(-2px); }
+        .lecture-nav .nav-btn-arrow:disabled { opacity: 0.35; cursor: not-allowed; }
+        .lecture-nav .nav-btn-arrow .arrow-icon { font-size: 16px; line-height: 1; }
+        .lecture-nav .nav-btn-arrow .arrow-label { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+        .lecture-nav .nav-btn-arrow .arrow-label small { font-size: 9.5px; font-weight: 400; opacity: 0.7; text-transform: uppercase; }
+        .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { font-size: 12px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lecture-nav .nav-center { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 20px; color: #94a3b8; font-size: 11px; border-left: 1px solid rgba(255, 255, 255, 0.1); border-right: 1px solid rgba(255, 255, 255, 0.1); }
+        .lecture-nav .nav-counter { font-size: 15px; font-weight: 900; color: #f1f5f9; }
+        .lecture-nav .nav-counter span { color: #64748b; font-size: 12px; font-weight: 600; }
+        .lecture-nav .nav-index-link { color: #60a5fa; text-decoration: none; font-size: 11px; font-weight: 600; }
+        .lecture-nav .nav-index-link:hover { color: #93c5fd; text-decoration: underline; }
+        body { padding-bottom: 80px !important; }
+        @media (max-width: 900px) {
+            .lecture-nav { padding: 10px 12px; gap: 8px; }
+            .lecture-nav .nav-btn-arrow { padding: 8px 12px; }
+            .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { max-width: 90px; font-size: 11px; }
+            .grid-2, .grid-3, .stat-grid { grid-template-columns: 1fr; }
+        }
+
+        @keyframes pulseBag {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .pulse-bag { animation: pulseBag 2s ease-in-out infinite; }
+
+        @keyframes flowBoost {
+            0% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+        .flow-boost { animation: flowBoost 1.5s ease-in-out infinite alternate; }
+    </style>
+</head>
+<body>
+
+    <div class="student-view">
+        <div class="slide-header">
+            Лекция 18. Ансамбли: случайный лес и градиентный бустинг
+        </div>
+
+        <div class="slide-body">
+
+            <!-- HERO -->
+            <div class="chart-box" style="background: #faf5ff; border-color: #d8b4fe;">
+                <strong style="color: #6b21a8;">🌲 Главная идея ансамблей</strong>
+                <p>Ансамбль — это <strong>комбинация нескольких моделей</strong>. Несколько моделей вместе работают лучше, чем каждая по отдельности. Это как <strong>мудрость толпы</strong>: один ошибается, но если опросить многих и усреднить — ошибка снижается. Главное условие: модели должны быть <strong>разными</strong>, и их ошибки не должны коррелировать.</p>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 1: БЭГГИНГ vs БУСТИНГ -->
+                       <!-- ВИЗУАЛИЗАЦИЯ 1: БЭГГИНГ vs БУСТИНГ -->
+            <div class="viz-card">
+                <div class="viz-title">⚖️ Два подхода: бэггинг (параллельно) vs бустинг (последовательно)</div>
+                <div class="grid-2">
+                    <!-- Bagging -->
+                    <div>
+                        <div style="font-size: 14px; font-weight: 700; color: #1e40af; margin-bottom: 8px; text-align: center;">Бэггинг: параллельно и независимо</div>
+                        <svg viewBox="0 0 260 300" width="100%">
+                            <rect x="0" y="0" width="260" height="300" fill="#ffffff"/>
+                            
+                            <!-- Data source -->
+                            <rect x="80" y="10" width="100" height="34" rx="6" fill="#1e40af"/>
+                            <text x="130" y="32" text-anchor="middle" class="label-white">Все данные</text>
+                            
+                            <!-- Lines to 3 samples (Fixed) -->
+                            <line x1="130" y1="44" x2="50" y2="74" stroke="#3b82f6" stroke-width="2"/>
+                            <line x1="130" y1="44" x2="115" y2="74" stroke="#3b82f6" stroke-width="2"/>
+                            <line x1="130" y1="44" x2="180" y2="74" stroke="#3b82f6" stroke-width="2"/>
+
+                            <!-- 3 random samples -->
+                            <rect x="20" y="74" width="60" height="30" rx="5" fill="#eff6ff" stroke="#93c5fd" stroke-width="2"/>
+                            <text x="50" y="93" text-anchor="middle" class="label-small">выборка 1</text>
+                            
+                            <rect x="85" y="74" width="60" height="30" rx="5" fill="#eff6ff" stroke="#93c5fd" stroke-width="2"/>
+                            <text x="115" y="93" text-anchor="middle" class="label-small">выборка 2</text>
+                            
+                            <rect x="150" y="74" width="60" height="30" rx="5" fill="#eff6ff" stroke="#93c5fd" stroke-width="2"/>
+                            <text x="180" y="93" text-anchor="middle" class="label-small">выборка 3</text>
+
+                            <!-- Lines to Trees -->
+                            <line x1="50"  y1="104" x2="50"  y2="130" stroke="#3b82f6" stroke-width="2"/>
+                            <line x1="115" y1="104" x2="115" y2="130" stroke="#3b82f6" stroke-width="2"/>
+                            <line x1="180" y1="104" x2="180" y2="130" stroke="#3b82f6" stroke-width="2"/>
+
+                            <!-- Trees -->
+                            <rect x="15" y="130" width="70" height="60" rx="6" fill="#f0fdf4" stroke="#86efac" stroke-width="2.5" class="pulse-bag"/>
+                            <text x="50" y="155" text-anchor="middle" class="label-small" fill="#166534">дерево 1</text>
+                            <text x="50" y="172" text-anchor="middle" class="label-small" fill="#166534">(своя выборка)</text>
+                            
+                            <rect x="80" y="130" width="70" height="60" rx="6" fill="#f0fdf4" stroke="#86efac" stroke-width="2.5" class="pulse-bag" style="animation-delay: 0.5s;"/>
+                            <text x="115" y="155" text-anchor="middle" class="label-small" fill="#166534">дерево 2</text>
+                            <text x="115" y="172" text-anchor="middle" class="label-small" fill="#166534">(своя выборка)</text>
+                            
+                            <rect x="145" y="130" width="70" height="60" rx="6" fill="#f0fdf4" stroke="#86efac" stroke-width="2.5" class="pulse-bag" style="animation-delay: 1s;"/>
+                            <text x="180" y="155" text-anchor="middle" class="label-small" fill="#166534">дерево 3</text>
+                            <text x="180" y="172" text-anchor="middle" class="label-small" fill="#166534">(своя выборка)</text>
+
+                            <!-- Aggregation -->
+                            <line x1="50"  y1="190" x2="130" y2="215" stroke="#1e40af" stroke-width="2"/>
+                            <line x1="115" y1="190" x2="130" y2="215" stroke="#1e40af" stroke-width="2"/>
+                            <line x1="180" y1="190" x2="130" y2="215" stroke="#1e40af" stroke-width="2"/>
+
+                            <rect x="50" y="215" width="160" height="38" rx="8" fill="#2563eb"/>
+                            <text x="130" y="234" text-anchor="middle" class="label-white">Голосование / усреднение</text>
+                            <text x="130" y="248" text-anchor="middle" class="label-white-sm">агрегирование</text>
+
+                            <text x="130" y="274" text-anchor="middle" class="label-small" fill="#166534">Ошибки случайны → ↓ разброс</text>
+                            <text x="130" y="290" text-anchor="middle" class="label-small" fill="#166534">(уменьшает variance)</text>
+                        </svg>
+                    </div>
+
+                    <!-- Boosting -->
+                    <div>
+                        <div style="font-size: 14px; font-weight: 700; color: #92400e; margin-bottom: 8px; text-align: center;">Бустинг: последовательно, на ошибках</div>
+                        <svg viewBox="0 0 260 300" width="100%">
+                            <rect x="0" y="0" width="260" height="300" fill="#ffffff"/>
+
+                            <!-- Data source -->
+                            <rect x="80" y="10" width="100" height="34" rx="6" fill="#92400e"/>
+                            <text x="130" y="32" text-anchor="middle" class="label-white">Все данные</text>
+
+                            <!-- Tree 1 -->
+                            <line x1="130" y1="44" x2="130" y2="64" stroke="#d97706" stroke-width="2"/>
+                            <rect x="80" y="64" width="100" height="44" rx="6" fill="#fffbeb" stroke="#fcd34d" stroke-width="2.5" class="flow-boost"/>
+                            <text x="130" y="82" text-anchor="middle" class="label-small" fill="#92400e">Дерево 1</text>
+                            <text x="130" y="98" text-anchor="middle" class="label-small" fill="#92400e">базовое</text>
+
+                            <!-- Residual -->
+                            <text x="195" y="86" class="label-small" fill="#991b1b">остатки</text>
+                            <line x1="180" y1="84" x2="195" y2="84" stroke="#dc2626" stroke-width="2"/>
+                            <line x1="130" y1="108" x2="130" y2="124" stroke="#d97706" stroke-width="2"/>
+
+                            <!-- Tree 2 -->
+                            <rect x="80" y="124" width="100" height="44" rx="6" fill="#fffbeb" stroke="#fcd34d" stroke-width="2.5" class="flow-boost" style="animation-delay: 0.3s;"/>
+                            <text x="130" y="142" text-anchor="middle" class="label-small" fill="#92400e">Дерево 2</text>
+                            <text x="130" y="158" text-anchor="middle" class="label-small" fill="#92400e">исправляет остатки</text>
+
+                            <text x="195" y="146" class="label-small" fill="#991b1b">остатки</text>
+                            <line x1="180" y1="144" x2="195" y2="144" stroke="#dc2626" stroke-width="2"/>
+                            <line x1="130" y1="168" x2="130" y2="184" stroke="#d97706" stroke-width="2"/>
+
+                            <!-- Tree 3 -->
+                            <rect x="80" y="184" width="100" height="44" rx="6" fill="#fffbeb" stroke="#fcd34d" stroke-width="2.5" class="flow-boost" style="animation-delay: 0.6s;"/>
+                            <text x="130" y="202" text-anchor="middle" class="label-small" fill="#92400e">Дерево 3</text>
+                            <text x="130" y="218" text-anchor="middle" class="label-small" fill="#92400e">исправляет остатки</text>
+
+                            <!-- Sum -->
+                            <line x1="130" y1="228" x2="130" y2="244" stroke="#92400e" stroke-width="2"/>
+                            <rect x="50" y="244" width="160" height="38" rx="8" fill="#d97706"/>
+                            <text x="130" y="263" text-anchor="middle" class="label-white">Взвешенная сумма</text>
+                            <text x="130" y="277" text-anchor="middle" class="label-white-sm">итоговое предсказание</text>
+
+                            <text x="130" y="295" text-anchor="middle" class="label-small" fill="#991b1b">Ошибки исправляются → ↓ смещение</text>
+                        </svg>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    <strong>Бэггинг</strong> — параллельное обучение на случайных подвыборках. Уменьшает <strong>разброс</strong> (variance). <strong>Бустинг</strong> — последовательное обучение, каждое дерево исправляет остатки предыдущего. Уменьшает <strong>смещение</strong> (bias). Это два разных способа улучшить модель.
+                </div>
+            
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 2: RANDOM FOREST -->
+            <div class="viz-card">
+                <div class="viz-title">🌲 Случайный лес: много деревьев голосуют</div>
+                <svg viewBox="0 0 540 310" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="310" fill="#ffffff"/>
+
+                    <!-- 5 trees in a row -->
+                    <g>
+                        <!-- Tree 1 -->
+                        <rect x="20" y="30" width="80" height="110" rx="6" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+                        <circle cx="60" cy="55" r="8" fill="#2563eb"/>
+                        <line x1="60" y1="55" x2="40" y2="80" stroke="#16a34a" stroke-width="2"/>
+                        <line x1="60" y1="55" x2="80" y2="80" stroke="#16a34a" stroke-width="2"/>
+                        <circle cx="40" cy="80" r="6" fill="#3b82f6"/>
+                        <circle cx="80" cy="80" r="6" fill="#3b82f6"/>
+                        <line x1="40" y1="80" x2="30" y2="110" stroke="#16a34a" stroke-width="2"/>
+                        <line x1="40" y1="80" x2="50" y2="110" stroke="#16a34a" stroke-width="2"/>
+                        <line x1="80" y1="80" x2="70" y2="110" stroke="#16a34a" stroke-width="2"/>
+                        <line x1="80" y1="80" x2="90" y2="110" stroke="#16a34a" stroke-width="2"/>
+                        <circle cx="30" cy="110" r="5" fill="#16a34a"/>
+                        <circle cx="50" cy="110" r="5" fill="#dc2626"/>
+                        <circle cx="70" cy="110" r="5" fill="#16a34a"/>
+                        <circle cx="90" cy="110" r="5" fill="#dc2626"/>
+                        <text x="60" y="158" text-anchor="middle" class="label-strong" fill="#0f172a">Дерево 1</text>
+
+                        <!-- Tree 2 -->
+                        <rect x="120" y="30" width="80" height="110" rx="6" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+                        <circle cx="160" cy="55" r="8" fill="#2563eb"/>
+                        <line x1="160" y1="55" x2="140" y2="80" stroke="#16a34a" stroke-width="2"/>
+                        <line x1="160" y1="55" x2="180" y2="80" stroke="#16a34a" stroke-width="2"/>
+                        <circle cx="140" cy="80" r="6" fill="#3b82f6"/>
+                        <circle cx="180" cy="80" r="6" fill="#3b82f6"/>
+                        <line x1="140" y1="80" x2="130" y2="110" stroke="#16a34a" stroke-width="2"/>
+                        <line x1="140" y1="80" x2="150" y2="110" stroke="#16a34a" stroke-width="2"/>
+                        <line x1="180" y1="80" x2="170" y2="110" stroke="#16a34a" stroke-width="2"/>
+                        <line x1="180" y1="80" x2="190" y2="110" stroke="#16a34a" stroke-width="2"/>
+                        <circle cx="130" cy="110" r="5" fill="#dc2626"/>
+                        <circle cx="150" cy="110" r="5" fill="#16a34a"/>
+                        <circle cx="170" cy="110" r="5" fill="#16a34a"/>
+                        <circle cx="190" cy="110" r="5" fill="#16a34a"/>
+                        <text x="160" y="158" text-anchor="middle" class="label-strong" fill="#0f172a">Дерево 2</text>
+
+                        <!-- Tree 3 -->
+                        <rect x="220" y="30" width="80" height="110" rx="6" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+                        <circle cx="260" cy="55" r="8" fill="#2563eb"/>
+                        <line x1="260" y1="55" x2="240" y2="80" stroke="#16a34a" stroke-width="2"/>
+                        <line x1="260" y1="55" x2="280" y2="80" stroke="#16a34a" stroke-width="2"/>
+                        <circle cx="240" cy="80" r="6" fill="#3b82f6"/>
+                        <circle cx="280" cy="80" r="6" fill="#3b82f6"/>
+                        <line x1="240" y1="80" x2="230" y2="110" stroke="#16a34a" stroke-width="2"/>
+                        <line x1="240" y1="80" x2="250" y2="110" stroke="#16a34a" stroke-width="2"/>
+                        <line x1="280" y1="80" x2="270" y2="110" stroke="#16a34a" stroke-width="2"/>
+                        <line x1="280" y1="80" x2="290" y2="110" stroke="#16a34a" stroke-width="2"/>
+                        <circle cx="230" cy="110" r="5" fill="#16a34a"/>
+                        <circle cx="250" cy="110" r="5" fill="#16a34a"/>
+                        <circle cx="270" cy="110" r="5" fill="#dc2626"/>
+                        <circle cx="290" cy="110" r="5" fill="#16a34a"/>
+                        <text x="260" y="158" text-anchor="middle" class="label-strong" fill="#0f172a">Дерево 3</text>
+
+                        <!-- Tree 4 -->
+                        <rect x="320" y="30" width="80" height="110" rx="6" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+                        <circle cx="360" cy="55" r="8" fill="#2563eb"/>
+                        <line x1="360" y1="55" x2="340" y2="80" stroke="#16a34a" stroke-width="2"/>
+                        <line x1="360" y1="55" x2="380" y2="80" stroke="#16a34a" stroke-width="2"/>
+                        <circle cx="340" cy="80" r="6" fill="#3b82f6"/>
+                        <circle cx="380" cy="80" r="6" fill="#3b82f6"/>
+                        <line x1="340" y1="80" x2="330" y2="110" stroke="#16a34a" stroke-width="2"/>
+                        <line x1="340" y1="80" x2="350" y2="110" stroke="#16a34a" stroke-width="2"/>
+                        <line x1="380" y1="80" x2="370" y2="110" stroke="#16a34a" stroke-width="2"/>
+                        <line x1="380" y1="80" x2="390" y2="110" stroke="#16a34a" stroke-width="2"/>
+                        <circle cx="330" cy="110" r="5" fill="#dc2626"/>
+                        <circle cx="350" cy="110" r="5" fill="#16a34a"/>
+                        <circle cx="370" cy="110" r="5" fill="#dc2626"/>
+                        <circle cx="390" cy="110" r="5" fill="#16a34a"/>
+                        <text x="360" y="158" text-anchor="middle" class="label-strong" fill="#0f172a">Дерево 4</text>
+
+                        <!-- Tree 5 -->
+                        <rect x="420" y="30" width="80" height="110" rx="6" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+                        <circle cx="460" cy="55" r="8" fill="#2563eb"/>
+                        <line x1="460" y1="55" x2="440" y2="80" stroke="#16a34a" stroke-width="2"/>
+                        <line x1="460" y1="55" x2="480" y2="80" stroke="#16a34a" stroke-width="2"/>
+                        <circle cx="440" cy="80" r="6" fill="#3b82f6"/>
+                        <circle cx="480" cy="80" r="6" fill="#3b82f6"/>
+                        <line x1="440" y1="80" x2="430" y2="110" stroke="#16a34a" stroke-width="2"/>
+                        <line x1="440" y1="80" x2="450" y2="110" stroke="#16a34a" stroke-width="2"/>
+                        <line x1="480" y1="80" x2="470" y2="110" stroke="#16a34a" stroke-width="2"/>
+                        <line x1="480" y1="80" x2="490" y2="110" stroke="#16a34a" stroke-width="2"/>
+                        <circle cx="430" cy="110" r="5" fill="#16a34a"/>
+                        <circle cx="450" cy="110" r="5" fill="#16a34a"/>
+                        <circle cx="470" cy="110" r="5" fill="#16a34a"/>
+                        <circle cx="490" cy="110" r="5" fill="#16a34a"/>
+                        <text x="460" y="158" text-anchor="middle" class="label-strong" fill="#0f172a">Дерево 5</text>
+                    </g>
+
+                    <!-- Arrows to voting -->
+                    <line x1="60"  y1="170" x2="270" y2="230" stroke="#2563eb" stroke-width="2"/>
+                    <line x1="160" y1="170" x2="270" y2="230" stroke="#2563eb" stroke-width="2"/>
+                    <line x1="260" y1="170" x2="270" y2="230" stroke="#2563eb" stroke-width="2"/>
+                    <line x1="360" y1="170" x2="270" y2="230" stroke="#2563eb" stroke-width="2"/>
+                    <line x1="460" y1="170" x2="270" y2="230" stroke="#2563eb" stroke-width="2"/>
+
+                    <!-- Voting box -->
+                    <rect x="130" y="230" width="280" height="55" rx="10" fill="#2563eb"/>
+                    <text x="270" y="254" text-anchor="middle" class="label-white" style="font-size: 16px;">Голосование деревьев</text>
+                    <text x="270" y="272" text-anchor="middle" class="label-white-sm">4 голоса «да» vs 1 голос «нет» → предсказание «да»</text>
+
+                    <!-- Result -->
+                    <text x="270" y="302" text-anchor="middle" class="label-strong" fill="#166534" style="font-size: 15px;">Итог: класс «да»</text>
+                </svg>
+                <div class="viz-caption">
+                    Случайный лес строит <strong>много деревьев</strong>. Каждое дерево обучено на своей случайной подвыборке данных и на случайном подмножестве признаков. Итоговое предсказание — это <strong>голосование</strong> (для классификации) или <strong>усреднение</strong> (для регрессии). Здесь 4 дерева из 5 проголосовали за «да» — это и есть ответ.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 3: GRADIENT BOOSTING -->
+            <div class="viz-card">
+                <div class="viz-title">📈 Градиентный бустинг: каждое дерево исправляет остатки</div>
+                <svg viewBox="0 0 540 310" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="310" fill="#ffffff"/>
+
+                    <!-- Data (target values) -->
+                    <text x="270" y="20" text-anchor="middle" class="label-strong">Исходные данные: y_true</text>
+                    <circle cx="80"  cy="60" r="5" fill="#334155"/>
+                    <circle cx="160" cy="45" r="5" fill="#334155"/>
+                    <circle cx="240" cy="55" r="5" fill="#334155"/>
+                    <circle cx="320" cy="40" r="5" fill="#334155"/>
+                    <circle cx="400" cy="65" r="5" fill="#334155"/>
+                    <circle cx="480" cy="50" r="5" fill="#334155"/>
+
+                    <!-- Baseline -->
+                    <line x1="60" y1="75" x2="500" y2="75" stroke="#94a3b8" stroke-width="2" stroke-dasharray="5 4"/>
+                    <text x="505" y="80" class="label-small">базовое</text>
+
+                    <!-- Tree 1 prediction line -->
+                    <line x1="60" y1="85" x2="500" y2="95" stroke="#2563eb" stroke-width="3.5"/>
+                    <text x="505" y="102" class="label-strong" fill="#1e40af">T₁</text>
+
+                    <!-- Residual 1 (vertical lines) -->
+                    <line x1="80"  y1="60" x2="80"  y2="86" stroke="#dc2626" stroke-width="2" stroke-dasharray="3 3"/>
+                    <line x1="160" y1="45" x2="160" y2="88" stroke="#dc2626" stroke-width="2" stroke-dasharray="3 3"/>
+                    <line x1="240" y1="55" x2="240" y2="90" stroke="#dc2626" stroke-width="2" stroke-dasharray="3 3"/>
+                    <line x1="320" y1="40" x2="320" y2="92" stroke="#dc2626" stroke-width="2" stroke-dasharray="3 3"/>
+                    <line x1="400" y1="65" x2="400" y2="94" stroke="#dc2626" stroke-width="2" stroke-dasharray="3 3"/>
+                    <line x1="480" y1="50" x2="480" y2="94" stroke="#dc2626" stroke-width="2" stroke-dasharray="3 3"/>
+
+                    <!-- Annotation -->
+                    <text x="270" y="115" text-anchor="middle" class="label-small" fill="#991b1b">остатки = y_true − T₁</text>
+
+                    <!-- Tree 2 line -->
+                    <line x1="60" y1="130" x2="500" y2="135" stroke="#d97706" stroke-width="3.5"/>
+                    <text x="505" y="140" class="label-strong" fill="#92400e">T₂</text>
+                    <text x="270" y="155" text-anchor="middle" class="label-small" fill="#92400e">T₂ учится предсказывать остатки T₁</text>
+
+                    <!-- Tree 3 line -->
+                    <line x1="60" y1="175" x2="500" y2="172" stroke="#16a34a" stroke-width="3.5"/>
+                    <text x="505" y="177" class="label-strong" fill="#166534">T₃</text>
+
+                    <!-- Final prediction line -->
+                    <line x1="60" y1="210" x2="500" y2="200" stroke="#6b21a8" stroke-width="4"/>
+                    <text x="505" y="205" class="label-strong" fill="#6b21a8">∑</text>
+                    <text x="270" y="230" text-anchor="middle" class="label-small" fill="#6b21a8">Итог = T₁ + T₂ + T₃ (взвешенная сумма)</text>
+
+                    <!-- Comparison -->
+                    <rect x="60" y="245" width="480" height="55" rx="6" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+                    <text x="270" y="265" text-anchor="middle" class="label-strong" fill="#166534">Результат: линия всё ближе к точкам</text>
+                    <text x="270" y="285" text-anchor="middle" class="label-small" fill="#166534">Каждое дерево уменьшает ошибку → ошибка → 0</text>
+                </svg>
+                <div class="viz-caption">
+                    Сначала обучается <strong>базовая модель</strong> (T₁) — обычно простое дерево. Затем вычисляются <strong>остатки</strong> — разница между истиной и предсказанием. Следующее дерево (T₂) учится <strong>предсказывать остатки</strong>, а не исходную цель. Затем T₃ исправляет остатки T₁ и T₂. Итоговое предсказание — это <strong>взвешенная сумма</strong> всех деревьев.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 4: ПОЧЕМУ ЭТО РАБОТАЕТ -->
+            <div class="viz-card">
+                <div class="viz-title">🎯 Почему ансамбль лучше одного дерева</div>
+                <div class="grid-2">
+                    <div>
+                        <div style="font-size: 14px; font-weight: 700; color: #991b1b; margin-bottom: 8px; text-align: center;">❌ Одно дерево</div>
+                        <svg viewBox="0 0 260 230" width="100%">
+                            <rect x="0" y="0" width="260" height="230" fill="#ffffff"/>
+                            <line x1="20" y1="200" x2="240" y2="200" class="axis"/>
+                            <line x1="20" y1="20" x2="20" y2="200" class="axis"/>
+                            <circle cx="60" cy="170" r="5" fill="#3b82f6"/>
+                            <circle cx="90" cy="130" r="5" fill="#3b82f6"/>
+                            <circle cx="120" cy="100" r="5" fill="#3b82f6"/>
+                            <circle cx="150" cy="120" r="5" fill="#3b82f6"/>
+                            <circle cx="180" cy="60" r="5" fill="#3b82f6"/>
+                            <circle cx="210" cy="80" r="5" fill="#3b82f6"/>
+                            <circle cx="70" cy="140" r="5" fill="#3b82f6"/>
+                            <circle cx="130" cy="75" r="5" fill="#3b82f6"/>
+                            <path d="M 20 180 Q 70 175 70 140 Q 90 130 100 120 Q 120 100 130 75 Q 150 120 165 100 Q 180 60 210 80 Q 230 90 240 50"
+                                  fill="none" stroke="#dc2626" stroke-width="3"/>
+                            <text x="130" y="225" text-anchor="middle" class="label-small" fill="#991b1b">Нестабильно: ловит шум, не обобщает</text>
+                        </svg>
+                    </div>
+                    <div>
+                        <div style="font-size: 14px; font-weight: 700; color: #166534; margin-bottom: 8px; text-align: center;">✅ Ансамбль</div>
+                        <svg viewBox="0 0 260 230" width="100%">
+                            <rect x="0" y="0" width="260" height="230" fill="#ffffff"/>
+                            <line x1="20" y1="200" x2="240" y2="200" class="axis"/>
+                            <line x1="20" y1="20" x2="20" y2="200" class="axis"/>
+                            <circle cx="60" cy="170" r="5" fill="#3b82f6"/>
+                            <circle cx="90" cy="130" r="5" fill="#3b82f6"/>
+                            <circle cx="120" cy="100" r="5" fill="#3b82f6"/>
+                            <circle cx="150" cy="120" r="5" fill="#3b82f6"/>
+                            <circle cx="180" cy="60" r="5" fill="#3b82f6"/>
+                            <circle cx="210" cy="80" r="5" fill="#3b82f6"/>
+                            <circle cx="70" cy="140" r="5" fill="#3b82f6"/>
+                            <circle cx="130" cy="75" r="5" fill="#3b82f6"/>
+                            <path d="M 20 195 Q 100 130 240 35" fill="none" stroke="#16a34a" stroke-width="4"/>
+                            <text x="130" y="225" text-anchor="middle" class="label-small" fill="#166534">Стабильно: гладкая линия, обобщает</text>
+                        </svg>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    Одно дерево <strong>нестабильно</strong>: небольшое изменение данных — и структура меняется. Оно ловит шум. Ансамбль деревьев <strong>усредняет</strong> эти ошибки: разные деревья ошибаются по-разному, а вместе дают гладкую, устойчивую границу. Это и есть «мудрость толпы» в действии.
+                </div>
+            </div>
+
+            <!-- ГИПЕРПАРАМЕТРЫ СЛУЧАЙНОГО ЛЕСА -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 10px;">⚙️ Гиперпараметры случайного леса</div>
+                <div class="grid-3">
+                    <div class="viz-card" style="padding: 14px;">
+                        <div style="font-size: 13px; font-weight: 700; color: #1e40af; margin-bottom: 6px;">Число деревьев</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.4;">Чем больше — тем стабильнее. Обычно от 100 до нескольких сотен. Дальше качество не растёт.</div>
+                        <div style="font-size: 11px; color: #1e40af; margin-top: 6px; font-weight: bold;">n_estimators</div>
+                    </div>
+                    <div class="viz-card" style="padding: 14px;">
+                        <div style="font-size: 13px; font-weight: 700; color: #92400e; margin-bottom: 6px;">Глубина деревьев</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.4;">Средняя глубина. Слишком глубокие — переобучение, слишком мелкие — недообучение.</div>
+                        <div style="font-size: 11px; color: #92400e; margin-top: 6px; font-weight: bold;">max_depth</div>
+                    </div>
+                    <div class="viz-card" style="padding: 14px;">
+                        <div style="font-size: 13px; font-weight: 700; color: #166534; margin-bottom: 6px;">Число признаков</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.4;">Сколько признаков смотреть при каждом разделении. Меньше — больше разнообразия.</div>
+                        <div style="font-size: 11px; color: #166534; margin-top: 6px; font-weight: bold;">max_features</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ГИПЕРПАРАМЕТРЫ БУСТИНГА -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 10px;">⚙️ Гиперпараметры градиентного бустинга</div>
+                <div class="grid-3">
+                    <div class="viz-card" style="padding: 14px;">
+                        <div style="font-size: 13px; font-weight: 700; color: #6b21a8; margin-bottom: 6px;">Число деревьев</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.4;">От 100 до нескольких тысяч. Останавливаются, когда качество на валидации перестаёт расти.</div>
+                        <div style="font-size: 11px; color: #6b21a8; margin-top: 6px; font-weight: bold;">n_estimators</div>
+                    </div>
+                    <div class="viz-card" style="padding: 14px;">
+                        <div style="font-size: 13px; font-weight: 700; color: #991b1b; margin-bottom: 6px;">Скорость обучения</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.4;">Маленькая (0.1) → медленно, но точно. Большая → быстро, но менее точно.</div>
+                        <div style="font-size: 11px; color: #991b1b; margin-top: 6px; font-weight: bold;">learning_rate</div>
+                    </div>
+                    <div class="viz-card" style="padding: 14px;">
+                        <div style="font-size: 13px; font-weight: 700; color: #166534; margin-bottom: 6px;">Глубина деревьев</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.4;">Небольшая: 3–5. Каждое дерево «слабое», исправляет лишь часть ошибки.</div>
+                        <div style="font-size: 11px; color: #166534; margin-top: 6px; font-weight: bold;">max_depth</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 5: ВАЖНОСТЬ ПРИЗНАКОВ -->
+            <div class="viz-card">
+                <div class="viz-title">📊 Важность признаков: что показал случайный лес</div>
+                <svg viewBox="0 0 540 260" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="260" fill="#ffffff"/>
+
+                    <!-- Bars -->
+                    <text x="130" y="30" text-anchor="end" class="label-strong" fill="#0f172a">Доход</text>
+                    <rect x="140" y="15" width="350" height="26" rx="4" fill="#16a34a"/>
+                    <text x="495" y="33" class="label-strong" fill="#ffffff">0.32</text>
+
+                    <text x="130" y="70" text-anchor="end" class="label-strong" fill="#0f172a">Стаж</text>
+                    <rect x="140" y="55" width="270" height="26" rx="4" fill="#2563eb"/>
+                    <text x="415" y="73" class="label-strong" fill="#ffffff">0.24</text>
+
+                    <text x="130" y="110" text-anchor="end" class="label-strong" fill="#0f172a">Обращения</text>
+                    <rect x="140" y="95" width="200" height="26" rx="4" fill="#d97706"/>
+                    <text x="345" y="113" class="label-strong" fill="#ffffff">0.18</text>
+
+                    <text x="130" y="150" text-anchor="end" class="label-strong" fill="#0f172a">Возраст</text>
+                    <rect x="140" y="135" width="140" height="26" rx="4" fill="#7c3aed"/>
+                    <text x="285" y="153" class="label-strong" fill="#ffffff">0.12</text>
+
+                    <text x="130" y="190" text-anchor="end" class="label-strong" fill="#0f172a">Регион</text>
+                    <rect x="140" y="175" width="80" height="26" rx="4" fill="#64748b"/>
+                    <text x="225" y="193" class="label-strong" fill="#ffffff">0.08</text>
+
+                    <text x="130" y="230" text-anchor="end" class="label-strong" fill="#0f172a">Пол</text>
+                    <rect x="140" y="215" width="60" height="26" rx="4" fill="#64748b"/>
+                    <text x="205" y="233" class="label-strong" fill="#ffffff">0.06</text>
+
+                    <!-- Axis -->
+                    <line x1="140" y1="250" x2="510" y2="250" class="axis"/>
+                    <text x="325" y="265" text-anchor="middle" class="label-strong" fill="#0f172a">Важность признака</text>
+                </svg>
+                <div class="viz-caption">
+                    Случайный лес показывает, <strong>какие признаки сильнее всего влияют</strong> на предсказание. Обычно это суммарное уменьшение неопределённости, которое дал признак во всех деревьях. Это ценно для бизнеса: можно понять, на что обращать внимание. Например, «Доход» и «Стаж» — самые важные. А «Пол» почти не влияет.
+                </div>
+            </div>
+
+            <!-- СРАВНЕНИЕ RF vs GB -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 8px;">⚖️ Случайный лес vs Градиентный бустинг: что выбрать</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr><th>Критерий</th><th>Случайный лес</th><th>Градиентный бустинг</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>Качество</strong></td><td>Высокое</td><td class="winner">Очень высокое — часто лучше</td></tr>
+                        <tr><td><strong>Скорость обучения</strong></td><td class="winner">Быстрое (параллельно)</td><td>Медленное (последовательно)</td></tr>
+                        <tr><td><strong>Скорость предсказания</strong></td><td>Средняя</td><td class="winner">Быстрая</td></tr>
+                        <tr><td><strong>Устойчивость к переобучению</strong></td><td class="winner">Хорошая</td><td>Требует настройки</td></tr>
+                        <tr><td><strong>Интерпретируемость</strong></td><td>Средняя (важность признаков)</td><td>Средняя</td></tr>
+                        <tr><td><strong>Простота настройки</strong></td><td class="winner">Хорошо «из коробки»</td><td>Требует опыта</td></tr>
+                        <tr><td><strong>Работа с категориями</strong></td><td>Хорошая</td><td class="winner">Отличная (CatBoost)</td></tr>
+                        <tr><td><strong>Что уменьшает</strong></td><td>Разброс (variance)</td><td class="winner">Смещение (bias)</td></tr>
+                    </tbody>
+                </table>
+                <div class="callout ok" style="margin-top: 8px;">
+                    <strong>💡 Правило выбора</strong>
+                    <p>Нужна <strong>простота и скорость</strong> — случайный лес. Нужно <strong>максимальное качество</strong> и есть время на настройку — градиентный бустинг.</p>
+                </div>
+            </div>
+
+            <!-- 3 РЕАЛИЗАЦИИ БУСТИНГА -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 10px;">🏆 Три популярные реализации градиентного бустинга</div>
+                <div class="grid-3">
+                    <div class="viz-card" style="padding: 14px; border-color: #86efac; background: #f0fdf4;">
+                        <div style="font-size: 14px; font-weight: 700; color: #166534; margin-bottom: 6px;">XGBoost</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.45;">Классика соревнований. Быстрый, точный, хорошо настраивается.</div>
+                        <span class="tag green" style="margin-top:6px;">проверенный</span>
+                    </div>
+                    <div class="viz-card" style="padding: 14px; border-color: #93c5fd; background: #eff6ff;">
+                        <div style="font-size: 14px; font-weight: 700; color: #1e40af; margin-bottom: 6px;">LightGBM</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.45;">От Microsoft. Очень быстрый на больших данных. Экономит память.</div>
+                        <span class="tag" style="margin-top:6px;">скорость</span>
+                    </div>
+                    <div class="viz-card" style="padding: 14px; border-color: #fcd34d; background: #fffbeb;">
+                        <div style="font-size: 14px; font-weight: 700; color: #92400e; margin-bottom: 6px;">CatBoost</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.45;">От Яндекса. Отличная работа с категориями, устойчив к переобучению.</div>
+                        <span class="tag orange" style="margin-top:6px;">категории</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ПРИМЕНЕНИЕ ПО РОЛЯМ -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 8px;">👥 Кто и для каких задач использует ансамбли</div>
+                <table class="role-table">
+                    <thead>
+                        <tr><th style="width: 32%;">Роль аналитика</th><th>Типичные задачи</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="role-emoji">📈</span> <strong>Аналитик данных</strong></td><td>Прогноз оттока, покупки, конверсии; оценка важности признаков для бизнеса</td></tr>
+                        <tr><td><span class="role-emoji">💰</span> <strong>Финансовый аналитик</strong></td><td>Кредитный скоринг (GB), выявление мошенничества, прогноз финансовых показателей</td></tr>
+                        <tr><td><span class="role-emoji">🚀</span> <strong>Продуктовый аналитик</strong></td><td>Прогноз удержания, ARPU; сегментация пользователей по поведению</td></tr>
+                        <tr><td><span class="role-emoji">🌐</span> <strong>Веб-аналитик</strong></td><td>Прогноз конверсии, клика; атрибуция каналов привлечения</td></tr>
+                        <tr><td><span class="role-emoji">📊</span> <strong>BI-аналитик</strong></td><td>Прогнозные дашборды с высокой точностью; поиск аномалий в отчётности</td></tr>
+                        <tr><td><span class="role-emoji">🗄️</span> <strong>Аналитик больших данных</strong></td><td>Основной инструмент для табличных данных; отбор признаков через важность</td></tr>
+                        <tr><td><span class="role-emoji">📣</span> <strong>Маркетинговый аналитик</strong></td><td>Таргетинг рекламы, предсказание отклика, оценка эффективности каналов</td></tr>
+                        <tr><td><span class="role-emoji">💼</span> <strong>Бизнес-аналитик</strong></td><td>Прогноз успеха проекта, оценка рисков, приоритизация инициатив</td></tr>
+                        <tr><td><span class="role-emoji">⚙️</span> <strong>Системный аналитик</strong></td><td>Прогноз сбоев системы, классификация инцидентов, диагностика</td></tr>
+                        <tr><td><span class="role-emoji">🎨</span> <strong>UX-аналитик</strong></td><td>Прогноз удовлетворённости, оттока пользователей; приоритизация улучшений</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- CALL-OUT -->
+            <div class="callout">
+                <strong>💡 Главный вывод</strong>
+                <p>Ансамбли — это не «много деревьев», а <strong>принципиально другой подход</strong>. Один алгоритм учится на данных, ансамбль — на ошибках друг друга. Это даёт качество, недостижимое для одной модели. Но цена — <strong>меньшая интерпретируемость</strong>. Ансамбли — основной инструмент для табличных данных. Владение ими обязательно для специалиста по данным.</p>
+            </div>
+
+            <!-- ВИДЕОПЛЕЕР -->
+            <div class="video-section">
+                <div class="video-container">
+                    <iframe id="lecture-player" src="https://rutube.ru" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+                </div>
+                <div class="links-hub">
+                    <button onclick="changeVideo('https://rutube.ru/')" class="video-btn stop-btn">⏹ СТОП</button>
+                    <button onclick="changeVideo('https://rutube.ru/play/embed/')" class="video-btn rt-btn">📜 Лекция 18. Ансамбли</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="slide-footer">
+            Направление «Менеджмент» | Курс: Аналитика данных | Лекция 18: «Ансамбли: случайный лес и градиентный бустинг»
+        </div>
+    </div>
+
+    <!-- ПРАВАЯ ПАНЕЛЬ (1/3): СКРИПТ ПРЕПОДАВАТЕЛЯ -->
+     <div class="speaker-notes">
+        <!-- Фиксированная верхняя часть с плеером -->
+        <div style="position: sticky; top: 0; background: #1a202c; padding: 20px 20px 10px 20px; border-bottom: 1px solid #4a5568; width: 100%; z-index: 100;">
+                       <div class="notes-header" style="display: block; padding-bottom: 15px;">
+               <audio id="lecture-audio" preload="auto" controls
+                      src="https://archive.org/download/03_20261110_20261110/17.mp3"
+                      style="width: 100%; height: 32px; border-radius: 4px;"></audio>
+            </div>
+            <div style="width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+             <iframe id="right-lecture-player" src="https://archive.org/embed/20261020_20261020_0955?autoplay=true&loop=true&muted=true"  allow="clipboard-write; autoplay" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen style="border: none;"></iframe>
+
+                           </div>
+        </div>
+
+        <div class="lecture-text" style="margin-top: 20px;">
+
+            <h3>📌 Ансамбли: случайный лес и градиентный бустинг</h3>
+
+            <p>В шестнадцатой лекции мы разобрали дерево решений. И увидели его слабость. Одно дерево нестабильно. Одно дерево склонно к переобучению. Одно дерево редко даёт лучшее качество. И вот здесь на помощь приходят ансамбли. Это одна из самых мощных идей в машинном обучении. Давайте разберёмся, как она работает.</p>
+
+            <h4>Определение и основная идея ансамблей</h4>
+
+            <p>Начнём с определения. Ансамбль — это комбинация нескольких моделей машинного обучения. Идея в том, что несколько моделей вместе работают лучше, чем каждая по отдельности. Это похоже на мудрость толпы. Один человек может ошибиться. Но если опросить многих и усреднить их мнения — ошибка снижается.</p>
+
+            <p>Поясним на примере. Представьте, что вам нужно угадать, сколько конфет в банке. Один человек ошибётся на десять процентов. Другой — на пятнадцать. Третий — на двадцать. Но если опросить сто человек и взять среднее — ошибка будет гораздо меньше. Потому что случайные ошибки компенсируют друг друга. А систематическая ошибка остаётся, но она тоже снижается.</p>
+
+            <p>С ансамблями машинного обучения происходит то же самое. Каждая модель делает свои ошибки. Если ошибки случайны и не коррелируют — ансамбль в среднем ошибается меньше. Это главный принцип. Ансамбль работает лучше одной модели, если модели разные и их ошибки не связаны между собой.</p>
+
+            <h4>Два главных вида ансамблей</h4>
+
+            <p>Теперь разберём два главных подхода к построению ансамблей. Они называются бэггинг и бустинг. Разберём каждый.</p>
+
+            <p><strong>Бэггинг.</strong> Дадим определение. Бэггинг — это подход, при котором модели обучаются параллельно и независимо друг от друга. Каждая модель видит свою часть данных. Затем их предсказания объединяются. Для классификации — голосованием. Для регрессии — усреднением.</p>
+
+            <p>Поясним на примере. Представьте, что у нас есть тысяча объектов. Мы случайно выбираем из них восемьсот с возвращением. То есть некоторые объекты могут попасть в выборку несколько раз. А некоторые не попасть вовсе. На этой выборке обучаем первое дерево. Затем берём другую случайную выборку. Обучаем второе дерево. И так далее. Получаем много деревьев, каждое обучено на своей выборке. А затем объединяем их предсказания.</p>
+
+            <p>Название «бэггинг» происходит от слов «bootstrap aggregating» — то есть «бутстрэп-агрегирование». Бутстрэп — это случайная выборка с возвращением. Агрегирование — это объединение результатов. Идея в том, что каждое дерево видит «свою» картину данных. И их ошибки становятся разными.</p>
+
+            <p><strong>Бустинг.</strong> Теперь перейдём ко второму подходу. Он называется бустинг. Дадим определение. Бустинг — это подход, при котором модели обучаются последовательно. Каждая следующая модель учится исправлять ошибки предыдущих. Итоговое предсказание — это взвешенная сумма предсказаний всех моделей.</p>
+
+            <p>Поясним на примере. Сначала обучаем первое дерево. Оно делает предсказания. Для каждого объекта вычисляем ошибку. Затем обучаем второе дерево. Но не на исходной задаче. А на ошибках первого дерева. То есть второе дерево пытается исправить ошибки первого. Затем третье дерево исправляет ошибки первых двух. И так далее.</p>
+
+            <p>Идея бустинга в том, что каждое новое дерево «фокусируется» на тех объектах, где предыдущие модели ошиблись. Постепенно ансамбль становится всё точнее. Это более сложный подход, чем бэггинг. Но и более мощный. Часто бустинг даёт лучшее качество, чем бэггинг.</p>
+
+            <p>Обратите внимание на важную мысль. Бэггинг — это параллельное обучение. Бустинг — это последовательное обучение. Бэггинг уменьшает разброс. Бустинг уменьшает смещение. Это разные способы улучшить модель. И они решают разные проблемы.</p>
+
+            <h4>Случайный лес: главный представитель бэггинга</h4>
+
+            <p>Теперь разберём первый из двух главных ансамблей. Он называется случайный лес. По-английски это звучит как Random Forest. Это самый популярный алгоритм на основе бэггинга.</p>
+
+            <p><strong>Определение и основная идея.</strong> Дадим определение. Случайный лес — это ансамбль деревьев решений. При котором каждое дерево обучается на случайной подвыборке данных. И на случайном подмножестве признаков. А итоговое предсказание — это голосование или усреднение предсказаний всех деревьев.</p>
+
+            <p>Поясним на примере. Представьте, что у нас есть тысяча объектов и двадцать признаков. Мы строим сто деревьев. Для каждого дерева случайно выбираем восемьсот объектов с возвращением. И случайно выбираем, например, пять признаков из двадцати. На этой подвыборке и этом подмножестве признаков обучаем дерево. Затем повторяем для следующего дерева. И так сто раз. Затем объединяем предсказания всех ста деревьев.</p>
+
+            <p><strong>Почему это работает.</strong> Теперь разберёмся, почему такой подход работает. Каждое дерево видит разные данные и разные признаки. Значит, каждое дерево строит свою структуру. И делает свои ошибки. Эти ошибки разные. И они не коррелируют друг с другом. А значит, при усреднении они компенсируют друг друга. Итоговый результат получается более стабильным и точным.</p>
+
+            <p>Приведём аналогию. Представьте, что мы хотим предсказать погоду. Один синоптик смотрит на облака. Другой — на давление. Третий — на ветер. Четвёртый — на температуру. Каждый ошибается по-своему. Но если мы усредним их прогнозы — получим более точный результат. Чем прогноз каждого по отдельности.</p>
+
+            <p><strong>Ключевые гиперпараметры.</strong> Первый гиперпараметр — это число деревьев. Чем больше деревьев — тем стабильнее ансамбль. Но и тем дольше обучение. На практике обычно используют от ста до нескольких сотен деревьев. После определённого числа добавление новых деревьев уже не улучшает качество. Оно просто увеличивает время.</p>
+
+            <p>Второй гиперпараметр — это максимальная глубина каждого дерева. Если деревья глубокие — каждое из них переобучается. Но ансамбль компенсирует это. Если деревья мелкие — каждое из них недообучается. И ансамбль тоже будет слабым. Обычно выбирают среднюю глубину. Или не ограничивают её вовсе.</p>
+
+            <p>Третий гиперпараметр — это число признаков, рассматриваемых при каждом разделении. Если признаков много — можно рассматривать их все. Если признаков мало — стоит выбрать меньше. Это уменьшает корреляцию между деревьями. И улучшает качество ансамбля.</p>
+
+            <p><strong>Преимущества случайного леса.</strong> Первое преимущество — это устойчивость к переобучению. В отличие от одного дерева, случайный лес гораздо реже переобучается. Потому что ансамбль компенсирует ошибки отдельных деревьев.</p>
+
+            <p>Второе преимущество — это отсутствие необходимости в масштабировании признаков. Как и дерево решений, случайный лес не использует расстояния. Поэтому масштаб признаков не важен.</p>
+
+            <p>Третье преимущество — это работа с категориальными признаками. Случайный лес может напрямую работать с признаками, которые принимают значения из ограниченного списка. Без преобразования в числа.</p>
+
+            <p>Четвёртое преимущество — это оценка важности признаков. Случайный лес позволяет узнать, какие признаки наиболее важны для предсказания. Это очень полезно для бизнеса. И для понимания данных.</p>
+
+            <p>Пятое преимущество — это хорошее качество «из коробки». Случайный лес часто показывает хорошее качество без сложной настройки гиперпараметров. Это его главное достоинство для начинающих.</p>
+
+            <p><strong>Ограничения случайного леса.</strong> Первое ограничение — это меньшая интерпретируемость. В отличие от одного дерева, случайный лес — это сотня деревьев. Его нельзя нарисовать. И нельзя объяснить простыми словами. Хотя можно оценить важность признаков. Но конкретные правила извлечь сложно.</p>
+
+            <p>Второе ограничение — это требовательность к памяти. Сотня деревьев занимает много памяти. Особенно если деревья глубокие. Это может быть проблемой на больших данных.</p>
+
+            <p>Третье ограничение — это медленное предсказание. Каждое предсказание требует обхода всех деревьев. Если деревьев много — предсказание может быть медленным. Хотя это обычно не проблема на практике.</p>
+
+            <p>Четвёртое ограничение — это плохая работа на разреженных данных. Если признаки сильно разрежены (много нулей), случайный лес работает хуже. В таких случаях лучше подходят другие алгоритмы. Например, линейные модели с регуляризацией.</p>
+
+            <h4>Градиентный бустинг: главный представитель бустинга</h4>
+
+            <p>Теперь разберём второй из двух главных ансамблей. Он называется градиентный бустинг. Это самый мощный алгоритм для табличных данных на сегодня.</p>
+
+            <p><strong>Определение и основная идея.</strong> Дадим определение. Градиентный бустинг — это ансамбль деревьев решений. При котором деревья обучаются последовательно. Каждое следующее дерево учится исправлять ошибки предыдущих. Итоговое предсказание — это взвешенная сумма предсказаний всех деревьев.</p>
+
+            <p>Поясним на примере. Представьте, что мы предсказываем цену квартиры. Сначала обучаем первое дерево. Оно делает предсказания. Для каждой квартиры вычисляем разницу между предсказанием и реальной ценой. Эта разница называется остатком. Затем обучаем второе дерево. Но не на исходной задаче предсказания цены. А на остатках первого дерева. То есть второе дерево пытается предсказать, насколько первое дерево ошиблось. Затем третье дерево исправляет ошибки первых двух. И так далее.</p>
+
+            <p>Идея в том, что каждое новое дерево «добавляет» к предсказанию то, что было упущено предыдущими. Постепенно ансамбль становится всё точнее.</p>
+
+            <p><strong>Почему это работает.</strong> Теперь разберёмся, почему градиентный бустинг работает так хорошо. Ключевая идея — это градиентный спуск. Мы уже говорили о нём, когда разбирали линейную регрессию. Там мы двигались по функции ошибки в сторону минимума. Здесь происходит то же самое. Но каждое дерево — это шаг в сторону минимума ошибки.</p>
+
+            <p>Поясним на примере. Представьте, что вы стоите на склоне горы. И хотите спуститься в долину. На каждом шаге вы двигаетесь в сторону самого крутого спуска. В градиентном бустинге роль такого шага играет очередное дерево. Оно «указывает» направление, в котором нужно изменить предсказание, чтобы ошибка уменьшилась.</p>
+
+            <p><strong>Ключевые гиперпараметры.</strong> Первый гиперпараметр — это число деревьев. Чем больше деревьев — тем точнее модель. Но и тем больше риск переобучения. Обычно используют от ста до нескольких тысяч деревьев. И останавливаются, когда качество на валидации перестаёт улучшаться.</p>
+
+            <p>Второй гиперпараметр — это скорость обучения. Он определяет, насколько сильно каждое дерево влияет на итоговое предсказание. Маленькая скорость обучения — это медленное, но точное обучение. Большая скорость — быстрое, но менее точное. Обычно используют маленькие скорости. Например, ноль целых одна десятая. И компенсируют это большим числом деревьев.</p>
+
+            <p>Третий гиперпараметр — это максимальная глубина каждого дерева. В градиентном бустинге деревья обычно неглубокие. Глубина три-пять — это типичное значение. Потому что каждое дерево исправляет лишь небольшую часть ошибки. И не должно переобучаться.</p>
+
+            <p>Четвёртый гиперпараметр — это подвыборка данных для каждого дерева. Можно обучать каждое дерево не на всех данных, а на случайной части. Это уменьшает корреляцию между деревьями. И улучшает качество.</p>
+
+            <p><strong>Популярные реализации.</strong> Первая реализация — это XGBoost. По-русски это звучит как экс-джи-буст. Это одна из самых популярных библиотек. Она известна своей скоростью и качеством. И часто используется в соревнованиях по машинному обучению.</p>
+
+            <p>Вторая реализация — это LightGBM. По-русски это звучит как лайт-джи-би-эм. Она создана компанией Майкрософт. И отличается высокой скоростью обучения. Особенно на больших данных.</p>
+
+            <p>Третья реализация — это CatBoost. По-русски это звучит как кэт-буст. Она создана компанией Яндекс. И отличается хорошей работой с категориальными признаками. А также устойчивостью к переобучению.</p>
+
+            <p>Все три реализации очень мощные. И выбор между ними часто зависит от задачи и от предпочтений команды.</p>
+
+            <p><strong>Преимущества градиентного бустинга.</strong> Первое преимущество — это очень высокое качество. Градиентный бустинг часто показывает лучшее качество на табличных данных. Он превосходит и линейные модели, и случайный лес, и даже нейронные сети в задачах табличного анализа.</p>
+
+            <p>Второе преимущество — это гибкость настройки. Градиентный бустинг имеет много гиперпараметров. И их можно тонко настраивать под конкретную задачу. Это позволяет достичь очень высокого качества.</p>
+
+            <p>Третье преимущество — это работа с разными типами данных. Градиентный бустинг хорошо работает и с числовыми, и с категориальными признаками. Некоторые реализации умеют напрямую обрабатывать категории.</p>
+
+            <p>Четвёртое преимущество — это обработка пропусков. Многие реализации градиентного бустинга умеют работать с пропущенными значениями. Без предварительного заполнения.</p>
+
+            <p><strong>Ограничения градиентного бустинга.</strong> Первое ограничение — это склонность к переобучению. Без аккуратной настройки гиперпараметров градиентный бустинг может переобучиться. Особенно если деревьев много. А скорость обучения большая.</p>
+
+            <p>Второе ограничение — это долгое обучение. Градиентный бустинг требует последовательного обучения. Каждое дерево зависит от предыдущих. Поэтому обучение занимает больше времени, чем у случайного леса.</p>
+
+            <p>Третье ограничение — это меньшая интерпретируемость. Как и случайный лес, градиентный бустинг — это ансамбль деревьев. Его нельзя нарисовать. И сложно объяснить.</p>
+
+            <p>Четвёртое ограничение — это чувствительность к гиперпараметрам. Качество градиентного бустинга сильно зависит от настройки. Неправильная настройка может дать плохой результат. Это требует опыта.</p>
+
+            <h4>Сравнение случайного леса и градиентного бустинга</h4>
+
+            <p>По качеству градиентный бустинг обычно лучше. Он часто показывает более высокую точность. Особенно на сложных задачах. Случайный лес немного уступает.</p>
+
+            <p>По скорости обучения случайный лес быстрее. Он обучается параллельно. А градиентный бустинг — последовательно. Поэтому на больших данных случайный лес часто быстрее.</p>
+
+            <p>По устойчивости к переобучению случайный лес лучше. Он реже переобучается. Градиентный бустинг требует аккуратной настройки.</p>
+
+            <p>По интерпретируемости оба алгоритма уступают одному дереву. Но у случайного леса проще оценить важность признаков. У градиентного бустинга это сложнее.</p>
+
+            <p>По требованиям к настройке случайный лес проще. Он часто даёт хорошее качество «из коробки». Градиентный бустинг требует опыта настройки.</p>
+
+            <p>Отсюда следует практический вывод. Если нужна простота и скорость — выбирайте случайный лес. Если нужно максимальное качество и есть время на настройку — выбирайте градиентный бустинг.</p>
+
+            <h4>Когда ансамбли работают хорошо</h4>
+
+            <p>Первое условие — задача сложная и нелинейная. Ансамбли хорошо справляются со сложными зависимостями. Особенно если есть взаимодействия между признаками.</p>
+
+            <p>Второе условие — данных достаточно. Ансамбли требуют много данных. Если данных мало — они могут переобучиться. Простые модели часто лучше работают на малых данных.</p>
+
+            <p>Третье условие — табличные данные. Ансамбли особенно хорошо работают именно на табличных данных. Для изображений и текстов лучше подходят нейронные сети.</p>
+
+            <p>Четвёртое условие — нужна точность, а не интерпретируемость. Ансамбли менее интерпретируемы, чем одно дерево. Если заказчику важно объяснить решение — лучше выбрать простое дерево.</p>
+
+            <h4>Примеры применения по ролям аналитиков</h4>
+
+            <p><strong>Аналитик данных</strong> использует ансамбли для задач, где нужно максимальное качество. Типичная задача — прогнозирование оттока клиентов. Случайный лес или градиентный бустинг показывают здесь лучшее качество. Ещё одна задача — прогнозирование покупки. Или предсказание конверсии. Кроме того, аналитик данных использует ансамбли для оценки важности признаков.</p>
+
+            <p><strong>Финансовый аналитик</strong> использует ансамбли для кредитного скоринга. Градиентный бустинг показывает здесь лучшее качество. И банки активно его используют. Ещё одна задача — выявление мошенничества. Кроме того, финансовый аналитик применяет ансамбли для прогнозирования финансовых показателей.</p>
+
+            <p><strong>Продуктовый аналитик</strong> использует ансамбли для прогнозирования продуктовых метрик. Типичная задача — прогноз удержания пользователей. Или прогноз среднего дохода на пользователя. Ещё одна задача — сегментация пользователей. Случайный лес помогает найти группы пользователей со схожим поведением.</p>
+
+            <p><strong>Веб-аналитик</strong> использует ансамбли для прогнозирования конверсии. Типичная задача — предсказание, совершит ли пользователь покупку. Или кликнет ли он по рекламе. Ещё одна задача — атрибуция. Ансамбли помогают определить, какие каналы привлечения наиболее важны.</p>
+
+            <p><strong>Специалист по аналитике бизнес-данных</strong> использует ансамбли для построения прогнозных дашбордов. Типичная задача — прогноз ключевых показателей. Ещё одна задача — поиск аномалий в отчётности. Случайный лес хорошо справляется с выявлением подозрительных значений.</p>
+
+            <p><strong>Аналитик больших данных</strong> использует ансамбли очень часто. Это его основной инструмент для табличных данных. Типичная задача — построение прогнозных моделей на больших данных. Кроме того, аналитик больших данных применяет ансамбли для отбора признаков.</p>
+
+            <p><strong>Маркетинговый аналитик</strong> использует ансамбли для таргетинга рекламы. Типичная задача — предсказание отклика на рекламу. Или вероятности покупки. Ещё одна задача — оценка эффективности каналов.</p>
+
+            <p><strong>Бизнес-аналитик</strong> использует ансамбли для прогнозирования успеха проектов. Типичная задача — предсказание вероятности успешного завершения проекта. Ещё одна задача — оценка рисков.</p>
+
+            <p><strong>Системный аналитик</strong> использует ансамбли для прогнозирования сбоев системы. Типичная задача — предсказание вероятности сбоя. Ещё одна задача — классификация инцидентов.</p>
+
+            <p><strong>Специалист по анализу пользовательского опыта</strong> использует ансамбли для прогнозирования удовлетворённости. Типичная задача — предсказание оценки или отзыва. Ещё одна задача — анализ поведения пользователей.</p>
+
+            <h4>Подведём итог блока</h4>
+
+            <p>Давайте соберём всё вместе. Мы разобрали ансамбли. Мы увидели два главных подхода. Это бэггинг и бустинг. Бэггинг — это параллельное обучение. Бустинг — это последовательное обучение. Мы разобрали случайный лес. Это ансамбль деревьев на основе бэггинга. Каждое дерево обучается на случайной подвыборке данных и признаков. Итоговое предсказание — это голосование или усреднение. Мы разобрали градиентный бустинг. Это ансамбль деревьев на основе бустинга. Каждое дерево исправляет ошибки предыдущих. Итоговое предсказание — это взвешенная сумма. Мы познакомились с популярными реализациями градиентного бустинга. Это XGBoost, LightGBM и CatBoost. Мы сравнили случайный лес и градиентный бустинг. И увидели, что каждый хорош в своих задачах. И наконец, увидели конкретные примеры применения в работе разных аналитиков.</p>
+
+            <p>Запомните главное. Ансамбли — это не просто «много деревьев». Это принципиально другой подход к построению моделей. Один алгоритм учится на данных. Ансамбль учится на ошибках друг друга. И это даёт качество, недостижимое для одной модели. Ансамбли — это основной инструмент для табличных данных в современном машинном обучении. И владение ими — обязательное требование для специалиста по данным.</p>
+
+            <p>Но у ансамблей есть цена. Это меньшая интерпретируемость. Мы теряем возможность нарисовать дерево и объяснить заказчику. Мы получаем чёрный ящик. И это компромисс. Иногда он оправдан. А иногда — нет. Поэтому важно понимать, когда ансамбли действительно нужны. А когда можно обойтись простой моделью.</p>
+
+            <!-- СЛОВАРЬ ТЕРМИНОВ -->
+            <div class="dark-block">
+                <div class="dark-block-title">📖 Словарь терминов и аббревиатур</div>
+                <table class="dark-table">
+                    <thead>
+                        <tr><th style="width:22%;">Термин</th><th style="width:30%;">Расшифровка</th><th>Пояснение</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="term">Ансамбль</td><td>Ensemble</td><td>Комбинация нескольких моделей</td></tr>
+                        <tr><td class="term">Бэггинг</td><td>Bagging</td><td>Параллельное обучение на случайных подвыборках</td></tr>
+                        <tr><td class="term">Бустинг</td><td>Boosting</td><td>Последовательное обучение на ошибках предыдущих</td></tr>
+                        <tr><td class="term">Бутстрэп</td><td>Bootstrap</td><td>Случайная выборка с возвращением</td></tr>
+                        <tr><td class="term">Случайный лес</td><td>Random Forest</td><td>Ансамбль деревьев на основе бэггинга</td></tr>
+                        <tr><td class="term">Градиентный бустинг</td><td>Gradient Boosting</td><td>Ансамбль деревьев на основе бустинга</td></tr>
+                        <tr><td class="term">Остаток</td><td>Residual</td><td>Разница между истиной и предсказанием</td></tr>
+                        <tr><td class="term">Скорость обучения</td><td>Learning Rate</td><td>Насколько сильно каждое дерево меняет предсказание</td></tr>
+                        <tr><td class="term">XGBoost</td><td>Extreme Gradient Boosting</td><td>Популярная реализация бустинга</td></tr>
+                        <tr><td class="term">LightGBM</td><td>Light Gradient Boosting Machine</td><td>Быстрая реализация от Microsoft</td></tr>
+                        <tr><td class="term">CatBoost</td><td>Categorical Boosting</td><td>Реализация от Яндекса, хороша с категориями</td></tr>
+                        <tr><td class="term">Важность признаков</td><td>Feature Importance</td><td>Оценка вклада признака в предсказание</td></tr>
+                        <tr><td class="term">Разброс</td><td>Variance</td><td>Чувствительность модели к данным</td></tr>
+                        <tr><td class="term">Смещение</td><td>Bias</td><td>Систематическая ошибка модели</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function changeVideo(embedUrl) {
+            document.getElementById('lecture-player').src = embedUrl;
+        }
+    </script>
+
+   <!-- НАВИГАЦИЯ МЕЖДУ ЛЕКЦИЯМИ -->
+<nav class="lecture-nav" id="lectureNav">
+    <div class="nav-progress" id="navProgress" style="width: 0%;"></div>
+    <a href="Лекция (N-1).html" class="nav-btn-arrow" id="prevBtn">
+        <span class="arrow-icon">←</span>
+        <span class="arrow-label">
+            <small>Назад</small>
+            <span class="arrow-title" id="prevTitle">Лекция (N-1)</span>
+        </span>
+    </a>
+    <div class="nav-center">
+        <div class="nav-counter">Лекция <span id="currentNum">N</span> <span>из 21</span></div>
+        <a href="index.html" class="nav-index-link">📚 К содержанию</a>
+    </div>
+    <a href="Лекция (N+1).html" class="nav-btn-arrow" id="nextBtn">
+        <span class="arrow-label" style="align-items: flex-end;">
+            <small>Вперёд</small>
+            <span class="arrow-title" id="nextTitle">Лекция (N+1)</span>
+        </span>
+        <span class="arrow-icon">→</span>
+    </a>
+</nav>
+
+
+
+<script>
+(function () {
+    'use strict';
+
+    const TOTAL_LECTURES = 21;
+    const totalDurationMs = (28 * 60 + 30) * 1000;
+    const autoNextDelayMs = 2000;
+    const AUTOSTART_PARAM = 'autostart';
+
+    const fileName = decodeURIComponent(location.pathname.split('/').pop() || '');
+    let currentLecture = 18;
+    const match = fileName.match(/Лекция\s*(\d+)\.html/i);
+    if (match) {
+        currentLecture = parseInt(match[1], 10);
+    } else {
+        const el = document.getElementById('currentNum');
+        if (el) currentLecture = parseInt(el.textContent, 10) || 18;
+    }
+    if (isNaN(currentLecture) || currentLecture < 1) currentLecture = 1;
+    if (currentLecture > TOTAL_LECTURES) currentLecture = TOTAL_LECTURES;
+
+    const prev = currentLecture > 1 ? currentLecture - 1 : null;
+    const next = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+
+    const currentNumEl = document.getElementById('currentNum');
+    if (currentNumEl) currentNumEl.textContent = currentLecture;
+
+    const navProgress = document.getElementById('navProgress');
+    if (navProgress) {
+        navProgress.style.width = (currentLecture / TOTAL_LECTURES * 100) + '%';
+    }
+
+    const prevBtn = document.getElementById('prevBtn');
+    if (prevBtn) {
+        if (prev) {
+            prevBtn.href = 'Лекция ' + prev + '.html';
+            const t = document.getElementById('prevTitle');
+            if (t) t.textContent = 'Лекция ' + prev;
+            prevBtn.style.opacity = '1';
+            prevBtn.style.cursor = 'pointer';
+            prevBtn.onclick = null;
+        } else {
+            prevBtn.removeAttribute('href');
+            prevBtn.style.opacity = '0.35';
+            prevBtn.style.cursor = 'not-allowed';
+            prevBtn.onclick = (e) => e.preventDefault();
+            const t = document.getElementById('prevTitle');
+            if (t) t.textContent = 'Это первая лекция';
+        }
+    }
+
+    const nextBtn = document.getElementById('nextBtn');
+    if (nextBtn) {
+        if (next) {
+            nextBtn.href = 'Лекция ' + next + '.html';
+            const t = document.getElementById('nextTitle');
+            if (t) t.textContent = 'Лекция ' + next;
+            nextBtn.style.opacity = '1';
+            nextBtn.style.cursor = 'pointer';
+            nextBtn.onclick = null;
+        } else {
+            nextBtn.removeAttribute('href');
+            nextBtn.style.opacity = '0.35';
+            nextBtn.style.cursor = 'not-allowed';
+            nextBtn.onclick = (e) => e.preventDefault();
+            const t = document.getElementById('nextTitle');
+            if (t) t.textContent = 'Это последняя лекция';
+        }
+    }
+
+    document.addEventListener('keydown', (e) => {
+        const tag = e.target && e.target.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+        if (e.key === 'ArrowLeft' && prev) {
+            window.location.href = 'Лекция ' + prev + '.html';
+        } else if (e.key === 'ArrowRight' && next) {
+            window.location.href = 'Лекция ' + next + '.html';
+        } else if (e.key === 'Home') {
+            window.location.href = 'index.html';
+        }
+    });
+
+    function initScroll() {
+        const studentBlock = document.querySelector('.student-view');
+        const speakerBlock = document.querySelector('.speaker-notes');
+        const badge = document.getElementById('scroll-status-badge');
+        const audio = document.getElementById('lecture-audio');
+        if (!studentBlock || !speakerBlock) return;
+
+        const studentBehavior = studentBlock.style.scrollBehavior;
+        const speakerBehavior = speakerBlock.style.scrollBehavior;
+        let isRunning = false, completed = false, pausedElapsed = 0, startedAt = 0, rafId = null;
+        let startS = 0, startP = 0, maxS = 0, maxP = 0;
+
+        function setBadge(text, color) {
+            if (!badge) return;
+            badge.style.display = 'block';
+            badge.textContent = text;
+            badge.style.borderColor = color;
+        }
+        function measure() {
+            maxS = Math.max(studentBlock.scrollHeight - studentBlock.clientHeight, 0);
+            maxP = Math.max(speakerBlock.scrollHeight - speakerBlock.clientHeight, 0);
+        }
+        function fmt(ms) {
+            const m = Math.floor(ms / 60000);
+            const s = Math.floor((ms % 60000) / 1000);
+            return m + ':' + String(s).padStart(2, '0');
+        }
+        function playAudio() {
+            if (!audio) return;
+            const p = audio.play();
+            if (p && typeof p.catch === 'function') {
+                p.catch(err => {
+                    console.warn('[AutoAudio]', err.message);
+                    setBadge('▶ ИДЕТ ПРОКРУТКА (звук заблокирован)', '#eab308');
+                });
+            }
+        }
+        function pauseAudio() { if (audio) try { audio.pause(); } catch (_) {} }
+        function resetAudio() { if (audio) try { audio.pause(); audio.currentTime = 0; } catch (_) {} }
+
+        function animate() {
+            if (!isRunning) return;
+            const elapsed = pausedElapsed + (performance.now() - startedAt);
+            const fraction = Math.min(elapsed / totalDurationMs, 1);
+            measure();
+            studentBlock.scrollTop = startS + (maxS - startS) * fraction;
+            speakerBlock.scrollTop = startP + (maxP - startP) * fraction;
+            if (badge) {
+                badge.textContent = '▶ ' + fmt(elapsed) + ' / ' + fmt(totalDurationMs);
+                badge.style.borderColor = '#16a34a';
+            }
+            if (fraction >= 1) { finish(); return; }
+            rafId = requestAnimationFrame(animate);
+        }
+
+        function startOrResume() {
+            if (completed) {
+                pausedElapsed = 0; completed = false;
+                studentBlock.scrollTop = 0; speakerBlock.scrollTop = 0;
+                resetAudio();
+            }
+            measure();
+            startS = studentBlock.scrollTop;
+            startP = speakerBlock.scrollTop;
+            startedAt = performance.now();
+            isRunning = true;
+            studentBlock.style.scrollBehavior = 'auto';
+            speakerBlock.style.scrollBehavior = 'auto';
+            cancelAnimationFrame(rafId);
+            rafId = requestAnimationFrame(animate);
+            playAudio();
+        }
+        function pause() {
+            if (isRunning) pausedElapsed += performance.now() - startedAt;
+            isRunning = false;
+            cancelAnimationFrame(rafId);
+            setBadge('⏸ ПАУЗА ' + fmt(pausedElapsed), '#dc2626');
+            studentBlock.style.scrollBehavior = studentBehavior;
+            speakerBlock.style.scrollBehavior = speakerBehavior;
+            pauseAudio();
+        }
+        function finish() {
+            isRunning = false; completed = true;
+            cancelAnimationFrame(rafId);
+            measure();
+            studentBlock.scrollTop = maxS;
+            speakerBlock.scrollTop = maxP;
+            studentBlock.style.scrollBehavior = studentBehavior;
+            speakerBlock.style.scrollBehavior = speakerBehavior;
+
+            const nextLec = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+            if (nextLec) {
+                setBadge('✅ ГОТОВО → Лекция ' + nextLec, '#16a34a');
+                setTimeout(() => {
+                    location.href = 'Лекция ' + nextLec + '.html?' + AUTOSTART_PARAM + '=1';
+                }, autoNextDelayMs);
+            } else {
+                setBadge('✅ КУРС ЗАВЕРШЕН', '#16a34a');
+                pauseAudio();
+            }
+        }
+        function toggle() { isRunning ? pause() : startOrResume(); }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.repeat) return;
+            const t = e.target; const tag = t && t.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+            if (e.code === 'Space' || e.key === ' ') {
+                e.preventDefault();
+                toggle();
+            }
+        }, true);
+
+        if (badge) badge.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+        [studentBlock, speakerBlock].forEach(el => {
+            el.addEventListener('click', (e) => {
+                if (e.target.closest('a,button,iframe,input,textarea,select,video,audio')) return;
+                if (window.getSelection().toString().length > 0) return;
+                toggle();
+            });
+        });
+
+        const params = new URLSearchParams(location.search);
+        if (params.get(AUTOSTART_PARAM) === '1') {
+            params.delete(AUTOSTART_PARAM);
+            const clean = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
+            history.replaceState(null, '', clean);
+            setTimeout(startOrResume, 500);
+        } else {
+            setBadge('▶ ПРОБЕЛ / КЛИК — старт', '#4a5568');
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initScroll, { once: true });
+    } else {
+        initScroll();
+    }
+})();
+</script>
+
+</body>
+</html>

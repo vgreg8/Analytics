@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лекция 8. Аналитик данных на Python: Pandas, Matplotlib, Seaborn, Statsmodels</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #ffffff; }
+        .student-view { width: 66.66%; height: 100vh; background: #ffffff; padding: 35px 40px; display: flex; flex-direction: column; justify-content: space-between; border-right: 2px solid #e2e8f0; overflow-y: auto; scroll-behavior: smooth; }
+        .speaker-notes { width: 33.34%; height: 100%; background: #1a202c; color: #edf2f7; padding: 30px; overflow-y: auto; }
+        .slide-header { font-size: 26px; color: #1a365d; font-weight: bold; line-height: 1.3; margin-bottom: 18px; border-bottom: 4px solid #3182ce; padding-bottom: 12px; }
+        .slide-body { flex-grow: 1; display: flex; flex-direction: column; gap: 18px; padding: 5px 0; }
+        .slide-footer { font-size: 13px; color: #a0aec0; text-align: right; margin-top: 12px; }
+        .chart-box { background: #f7fafc; border: 2.5px dashed #cbd5e0; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .chart-box strong { font-size: 16px; display: block; margin-bottom: 6px; }
+        .chart-box p { font-size: 13px; color: #4a5568; line-height: 1.45; }
+        .cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .cat-card { border-radius: 10px; padding: 14px 16px; border: 2px solid #e2e8f0; }
+        .cat-card.pandas { background: #ebf8ff; border-color: #90cdf4; }
+        .cat-card.matplotlib { background: #f0fff4; border-color: #9ae6b4; }
+        .cat-card.seaborn { background: #fffaf0; border-color: #fbd38d; }
+        .cat-card.statsmodels { background: #faf5ff; border-color: #d6bcfa; }
+        .cat-card.info { background: #f7fafc; border-color: #e2e8f0; }
+        .cat-card.warn { background: #fff5f5; border-color: #fc8181; }
+        .cat-card h4 { font-size: 14px; margin-bottom: 8px; color: #1a365d; display: flex; align-items: center; gap: 8px; }
+        .cat-card .label { font-size: 10px; font-weight: bold; color: #4a5568; margin-top: 7px; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.3px; }
+        .cat-card ul { margin: 0; padding-left: 14px; font-size: 11.5px; color: #2d3748; line-height: 1.45; }
+        .cat-card .stack-icon { font-size: 22px; }
+        .tag { display: inline-block; background: #ebf8ff; color: #2b6cb0; padding: 2px 7px; border-radius: 4px; font-size: 11px; margin: 2px 2px 2px 0; font-weight: 500; }
+        .tag.ru { background: #f0fff4; color: #276749; }
+        .tag.warn { background: #fed7d7; color: #9b2c2c; }
+        .tag.ok { background: #c6f6d5; color: #22543d; }
+        .compare-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .compare-table th { background: #1a365d; color: white; padding: 9px 11px; text-align: left; font-weight: 600; }
+        .compare-table td { padding: 8px 11px; border-bottom: 1px solid #e2e8f0; color: #2d3748; vertical-align: top; }
+        .compare-table tr:nth-child(even) td { background: #f7fafc; }
+        .criteria-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .criteria-card { background: #f7fafc; border-left: 4px solid #3182ce; padding: 10px 12px; border-radius: 6px; }
+        .criteria-card h5 { font-size: 12px; color: #1a365d; margin-bottom: 4px; }
+        .criteria-card p { font-size: 11px; color: #4a5568; line-height: 1.4; }
+        .video-section { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 5px; }
+        .video-container { width: 100%; max-width: 580px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: #000; aspect-ratio: 16 / 9; }
+        .links-hub { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .video-btn { text-decoration: none; padding: 9px 14px; border-radius: 6px; font-size: 12px; font-weight: bold; color: white; display: flex; align-items: center; gap: 6px; transition: transform 0.2s, background 0.2s; cursor: pointer; border: none; }
+        .video-btn:hover { transform: translateY(-2px); }
+        .rt-btn { background: #00a877; }
+        .rt-btn:hover { background: #008f65; }
+        .stop-btn { background: #dc143c; }
+        .stop-btn:hover { background: #b01030; }
+        .notes-header { font-size: 17px; color: #63b3ed; font-weight: bold; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a5568; padding-bottom: 10px; }
+        .lecture-text { font-size: 14.5px; line-height: 1.65; color: #e2e8f0; text-align: justify; }
+        .lecture-text p { margin-bottom: 14px; }
+        .lecture-text h3 { color: #63b3ed; font-size: 15px; margin: 18px 0 10px; border-bottom: 1px solid #2d3748; padding-bottom: 5px; }
+        .lecture-text ul { margin: 8px 0 14px 18px; }
+        .lecture-text li { margin-bottom: 6px; }
+        .highlight-box { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 6px; }
+        .highlight-box strong { color: #92400e; font-size: 13px; }
+        .highlight-box p { font-size: 12px; color: #78350f; margin-top: 4px; line-height: 1.4; }
+        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .stat-box { background: #ebf8ff; border-radius: 10px; padding: 14px; text-align: center; border: 2px solid #90cdf4; }
+        .stat-box .stat-icon { font-size: 28px; }
+        .stat-box .stat-number { font-size: 16px; font-weight: 900; color: #2b6cb0; margin-top: 4px; }
+        .stat-box .stat-label { font-size: 11px; color: #4a5568; margin-top: 2px; }
+        .flow-diagram { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 14px; background: #f7fafc; border-radius: 12px; border: 2px dashed #cbd5e0; flex-wrap: wrap; }
+        .flow-step { flex: 1; min-width: 100px; text-align: center; padding: 8px 6px; background: white; border-radius: 8px; border: 2px solid #e2e8f0; }
+        .flow-step .flow-icon { font-size: 20px; }
+        .flow-step .flow-title { font-size: 11px; font-weight: bold; color: #1a365d; margin-top: 3px; }
+        .flow-step .flow-sub { font-size: 9.5px; color: #718096; }
+        .flow-arrow { font-size: 18px; color: #3182ce; font-weight: bold; }
+        .dark-block { background: #2d3748; border: 1px solid #4a5568; border-radius: 10px; padding: 16px 18px; margin-top: 20px; }
+        .dark-block-title { font-size: 14px; font-weight: bold; color: #63b3ed; margin-bottom: 12px; border-bottom: 2px solid #4a5568; padding-bottom: 8px; }
+        .dark-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+        .dark-table th { background: #1a202c; color: #90cdf4; padding: 7px 9px; text-align: left; font-weight: 600; border-bottom: 1px solid #4a5568; }
+        .dark-table td { padding: 6px 9px; border-bottom: 1px solid #2d3748; color: #cbd5e0; vertical-align: top; line-height: 1.4; }
+        .dark-table tr:nth-child(even) td { background: #2a3242; }
+        .dark-table .term { font-weight: bold; color: #90cdf4; white-space: nowrap; }
+        .dark-block ol { margin: 0 0 12px 18px; padding: 0; font-size: 12px; color: #cbd5e0; line-height: 1.5; }
+        .dark-block ol li { margin-bottom: 5px; }
+        .dark-block .src-group { font-weight: bold; color: #fbd38d; font-size: 12px; margin: 12px 0 6px; }
+        .dark-block a { color: #63b3ed; text-decoration: none; }
+        .dark-block a:hover { text-decoration: underline; }
+        .lecture-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(12px); border-top: 2px solid rgba(255, 255, 255, 0.08); padding: 12px 20px; display: flex; align-items: center; justify-content: center; gap: 12px; z-index: 9999; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25); font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .lecture-nav .nav-progress { position: absolute; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899); border-radius: 0 3px 3px 0; }
+        .lecture-nav .nav-btn-arrow { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); border: 1.5px solid rgba(255, 255, 255, 0.15); color: #e2e8f0; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; font-family: inherit; }
+        .lecture-nav .nav-btn-arrow:hover:not(:disabled) { background: rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.6); color: white; transform: translateY(-2px); }
+        .lecture-nav .nav-btn-arrow:disabled { opacity: 0.35; cursor: not-allowed; }
+        .lecture-nav .nav-btn-arrow .arrow-icon { font-size: 16px; line-height: 1; }
+        .lecture-nav .nav-btn-arrow .arrow-label { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+        .lecture-nav .nav-btn-arrow .arrow-label small { font-size: 9.5px; font-weight: 400; opacity: 0.7; text-transform: uppercase; }
+        .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { font-size: 12px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lecture-nav .nav-center { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 20px; color: #94a3b8; font-size: 11px; border-left: 1px solid rgba(255, 255, 255, 0.1); border-right: 1px solid rgba(255, 255, 255, 0.1); }
+        .lecture-nav .nav-counter { font-size: 15px; font-weight: 900; color: #f1f5f9; }
+        .lecture-nav .nav-counter span { color: #64748b; font-size: 12px; font-weight: 600; }
+        .lecture-nav .nav-index-link { color: #60a5fa; text-decoration: none; font-size: 11px; font-weight: 600; }
+        .lecture-nav .nav-index-link:hover { color: #93c5fd; text-decoration: underline; }
+        body { padding-bottom: 80px !important; }
+        @media (max-width: 900px) {
+            .lecture-nav { padding: 10px 12px; gap: 8px; }
+            .lecture-nav .nav-btn-arrow { padding: 8px 12px; }
+            .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { max-width: 90px; font-size: 11px; }
+            .cat-grid, .criteria-grid, .stat-grid { grid-template-columns: 1fr; }
+            .flow-diagram { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ЛЕВАЯ ПАНЕЛЬ (2/3): ЭКРАН ДЛЯ СТУДЕНТОВ -->
+    <div class="student-view">
+        <div class="slide-header">
+            Лекция 8. Аналитик данных на Python: Pandas, Matplotlib, Seaborn, Statsmodels
+        </div>
+
+        <div class="slide-body">
+
+            <!-- ВВЕДЕНИЕ -->
+            <div class="chart-box" style="background: #ebf8ff; border-color: #90cdf4;">
+                <strong style="color: #2b6cb0;">🎯 Зачем аналитику Python?</strong>
+                <p>В пятой лекции мы разобрали статистические методы: описательные статистики, проверку нормальности, критерии Стьюдента, Манна–Уитни, дисперсионный анализ. Но как выглядит работа аналитика, который использует не готовые кнопки, а код? Ответ — <strong>Python с четырьмя библиотеками</strong>. Они образуют единый конвейер: загрузка → очистка → визуализация → статистика.</p>
+            </div>
+
+            <!-- ФАКТЫ О PYTHON -->
+            <div class="criteria-grid">
+                <div class="criteria-card">
+                    <h5>1989–1991</h5>
+                    <p>Создан Гвидо ван Россумом в CWI, Амстердам. Первый релиз — февраль 1991.</p>
+                </div>
+                <div class="criteria-card">
+                    <h5>PSF</h5>
+                    <p>Python Software Foundation — некоммерческая организация, управляющая языком.</p>
+                </div>
+                <div class="criteria-card">
+                    <h5>500 000+</h5>
+                    <p>пакетов в PyPI — Python Package Index, главном репозитории.</p>
+                </div>
+                <div class="criteria-card">
+                    <h5>19 принципов</h5>
+                    <p>«Дзен Пайтона» — философия читаемости и явности кода.</p>
+                </div>
+            </div>
+
+            <!-- БЛОК 1: PYTHON -->
+            <div class="viz-card">
+                <div class="viz-title">🐍 Блок 1. Python: что это за язык и откуда он взялся</div>
+                <div class="cat-grid">
+                    <div class="cat-card pandas">
+                        <h4><span class="stack-icon">📜</span> История</h4>
+                        <div class="label">Создатель</div>
+                        <ul><li>Гвидо ван Россум, CWI, Амстердам</li><li>Работа начата в декабре 1989</li><li>Первый релиз — февраль 1991 (0.9.0)</li></ul>
+                        <div class="label">Название</div>
+                        <p style="font-size:11.5px; color:#2d3748;">Не от змеи, а от шоу «Монти Пайтон»</p>
+                        <div class="label">Версии</div>
+                        <ul><li>Python 2.0 — 2000</li><li>Python 3.0 — 2008</li><li>Поддержка Python 2 прекращена в 2020</li></ul>
+                    </div>
+                    <div class="cat-card matplotlib">
+                        <h4><span class="stack-icon">🧘</span> Философия</h4>
+                        <div class="label">«Дзен Пайтона»</div>
+                        <ul><li>Читаемость важнее краткости</li><li>Явное лучше неявного</li><li>Один очевидный способ сделать что-то</li><li>Отступы вместо фигурных скобок</li></ul>
+                        <div class="label">Девиз сообщества</div>
+                        <p style="font-size:11.5px; color:#2d3748;">«Батарейки в комплекте» — большая стандартная библиотека</p>
+                    </div>
+                </div>
+
+                <div class="cat-grid" style="margin-top:12px;">
+                    <div class="cat-card" style="background:#f0fff4; border-color:#9ae6b4;">
+                        <h4 style="color:#276749;">✅ Сильные стороны</h4>
+                        <ul>
+                            <li>Низкий порог входа, читаемый синтаксис</li>
+                            <li>Универсальность: анализ, веб, ML, автоматизация</li>
+                            <li>Огромная экосистема — 500 000+ пакетов</li>
+                            <li>Интеграция с C, C++, Java, .NET</li>
+                            <li>Бесплатный и открытый</li>
+                        </ul>
+                    </div>
+                    <div class="cat-card warn">
+                        <h4 style="color:#9b2c2c;">⚠️ Слабые стороны</h4>
+                        <ul>
+                            <li>Медленнее C, Java, Go в десятки раз</li>
+                            <li>GIL ограничивает истинную многопоточность</li>
+                            <li>Высокое потребление памяти</li>
+                            <li>Динамическая типизация: ошибки всплывают при запуске</li>
+                            <li>Слаб в мобильной разработке и в браузере</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="criteria-grid" style="margin-top:12px;">
+                    <div class="criteria-card">
+                        <h5>Интерпретируемый</h5>
+                        <p>Выполняется построчно, без компиляции</p>
+                    </div>
+                    <div class="criteria-card">
+                        <h5>Динамическая типизация</h5>
+                        <p>Тип переменной определяется при выполнении</p>
+                    </div>
+                    <div class="criteria-card">
+                        <h5>Кроссплатформенный</h5>
+                        <p>Windows, macOS, Linux</p>
+                    </div>
+                    <div class="criteria-card">
+                        <h5>Расширяемый</h5>
+                        <p>Тяжёлые вычисления — в C-библиотеках</p>
+                    </div>
+                </div>
+
+                <div class="viz-caption">Почему для аналитика выбран именно Python: скорость чистого Python не критична, потому что тяжёлые операции выполняют C-библиотеки (NumPy, Pandas). Python — «клей» между ними.</div>
+            </div>
+
+            <!-- КЛЮЧЕВЫЕ ЦИФРЫ: 4 БИБЛИОТЕКИ -->
+            <div class="stat-grid">
+                <div class="stat-box" style="background:#ebf8ff; border-color:#90cdf4;">
+                    <div class="stat-icon">🐼</div>
+                    <div class="stat-number">Pandas</div>
+                    <div class="stat-label">данные</div>
+                </div>
+                <div class="stat-box" style="background:#f0fff4; border-color:#9ae6b4;">
+                    <div class="stat-icon">📈</div>
+                    <div class="stat-number">Matplotlib</div>
+                    <div class="stat-label">базовая визуализация</div>
+                </div>
+                <div class="stat-box" style="background:#fffaf0; border-color:#fbd38d;">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-number">Seaborn</div>
+                    <div class="stat-label">статистические графики</div>
+                </div>
+                <div class="stat-box" style="background:#faf5ff; border-color:#d6bcfa;">
+                    <div class="stat-icon">🧮</div>
+                    <div class="stat-number">Statsmodels</div>
+                    <div class="stat-label">статистические модели</div>
+                </div>
+            </div>
+
+            <!-- КОНВЕЙЕР -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 10px;">🔄 Конвейер анализа на Python</div>
+                <div class="flow-diagram">
+                    <div class="flow-step">
+                        <div class="flow-icon">🐼</div>
+                        <div class="flow-title">Pandas</div>
+                        <div class="flow-sub">Загрузка, очистка, группировка</div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-icon">📈📊</div>
+                        <div class="flow-title">Matplotlib + Seaborn</div>
+                        <div class="flow-sub">Визуализация данных</div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-icon">🧮</div>
+                        <div class="flow-title">Statsmodels</div>
+                        <div class="flow-sub">Критерии, регрессия, модели</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- БЛОК 2: ОТЛИЧИЯ ОТ КЛАССИЧЕСКОГО АНАЛИТИКА -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 10px;">⚡ Блок 2. 5 отличий аналитика на Python от классического</div>
+                <div class="cat-grid">
+                    <div class="cat-card pandas">
+                        <h4><span class="stack-icon">📏</span> 1. Масштаб</h4>
+                        <ul><li>Excel: сотни тысяч строк</li><li>Python: миллионы строк</li></ul>
+                    </div>
+                    <div class="cat-card matplotlib">
+                        <h4><span class="stack-icon">⚙️</span> 2. Автоматизация</h4>
+                        <ul><li>Excel: макросы ломаются</li><li>Python: скрипт работает на новых данных</li></ul>
+                    </div>
+                    <div class="cat-card seaborn">
+                        <h4><span class="stack-icon">🔁</span> 3. Воспроизводимость</h4>
+                        <ul><li>Excel: клики скрыты</li><li>Python: каждая строка кода фиксирует действие</li></ul>
+                    </div>
+                    <div class="cat-card statsmodels">
+                        <h4><span class="stack-icon">🧠</span> 4. Статистическая глубина</h4>
+                        <ul><li>Excel: базовые тесты</li><li>Python: полный набор в Statsmodels</li></ul>
+                    </div>
+                    <div class="cat-card info" style="grid-column: span 2;">
+                        <h4><span class="stack-icon">🔌</span> 5. Интеграция</h4>
+                        <ul><li>Excel: ручной экспорт/импорт</li><li>Python: прямое подключение к базам, API, облакам</li></ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- БЛОК 3: ЧЕТЫРЕ БИБЛИОТЕКИ -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 10px;">📚 Блок 3. Четыре библиотеки: роль каждой</div>
+                <div class="cat-grid">
+                    <div class="cat-card pandas">
+                        <h4><span class="stack-icon">🐼</span> Pandas</h4>
+                        <div class="label">Что делает</div>
+                        <ul><li>Загружает данные из файлов, баз, API</li><li>Очищает: пропуски, дубликаты, замены</li><li>Группирует и агрегирует</li><li>Соединяет таблицы</li></ul>
+                        <div class="label">Аналог в Excel</div>
+                        <span class="tag">Фильтр + Сводная таблица + Поиск соответствий</span>
+                    </div>
+                    <div class="cat-card matplotlib">
+                        <h4><span class="stack-icon">📈</span> Matplotlib</h4>
+                        <div class="label">Что делает</div>
+                        <ul><li>Базовые графики любой сложности</li><li>Полный контроль над осями, подписями, цветами</li><li>Встраивается в автоматические отчёты</li></ul>
+                        <div class="label">Аналог в Excel</div>
+                        <span class="tag">Диаграммы, но с полной настройкой</span>
+                    </div>
+                    <div class="cat-card seaborn">
+                        <h4><span class="stack-icon">📊</span> Seaborn</h4>
+                        <div class="label">Что делает</div>
+                        <ul><li>Статистические графики: распределения, ящичные диаграммы, тепловые карты корреляций</li><li>Красиво и с минимальным кодом</li></ul>
+                        <div class="label">Связь с лекцией 5</div>
+                        <span class="tag">Ящичная диаграмма — одна строка</span>
+                    </div>
+                    <div class="cat-card statsmodels">
+                        <h4><span class="stack-icon">🧮</span> Statsmodels</h4>
+                        <div class="label">Что делает</div>
+                        <ul><li>Полный набор статистических моделей: регрессия, временные ряды, обобщённые линейные модели</li><li>Проверка гипотез: Стьюдент, Манна–Уитни, ANOVA, тесты нормальности</li><li>Полный отчёт: коэффициенты, стандартные ошибки, доверительные интервалы, p-value</li></ul>
+                        <div class="label">Связь с лекцией 5</div>
+                        <span class="tag">Все критерии из лекции 5</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- БЛОК 4: СРАВНЕНИЕ С EXCEL -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 8px;">⚖️ Блок 4. Сравнение Python и Excel на конкретных задачах</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr><th>Задача</th><th>Excel</th><th>Python</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>Очистка данных</strong></td><td>Ручные операции мышью; повторять заново на новых данных</td><td>Методы Pandas; скрипт запускается одной командой</td></tr>
+                        <tr><td><strong>Сводные таблицы</strong></td><td>20 разрезов — 20 ручных операций</td><td>20 разрезов — 20 строк кода за секунды</td></tr>
+                        <tr><td><strong>Визуализация</strong></td><td>Статичные графики; при обновлении данных — перестраивать</td><td>Графики встраиваются в автоотчёт; обновляются сами</td></tr>
+                        <tr><td><strong>Статистические тесты</strong></td><td>Пакет анализа: диалоговое окно, диапазоны, кнопка</td><td>Одна функция Statsmodels; полный отчёт</td></tr>
+                        <tr><td><strong>Воспроизводимость</strong></td><td>Низкая: зависит от кликов</td><td>Высокая: код фиксирует каждый шаг</td></tr>
+                    </tbody>
+                </table>
+                <div style="margin-top:8px; font-size:11.5px; color:#4a5568;">
+                    <strong>Когда Excel лучше:</strong> быстрые ответы, совместное редактирование, финансовое моделирование, обмен с коллегами без Python.
+                </div>
+            </div>
+
+            <!-- БЛОК 5: STATSMODELS VS EXCEL -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 8px;">🧮 Блок 5. Statsmodels vs пакет анализа в Excel</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr><th>Критерий</th><th>Excel (пакет анализа)</th><th>Statsmodels</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>Полнота</strong></td><td>Базовые тесты</td><td>Полный набор: все виды регрессии, временные ряды, непараметрические тесты</td></tr>
+                        <tr><td><strong>Глубина вывода</strong></td><td>Статистика + p-value</td><td>Коэффициенты, стандартные ошибки, доверительные интервалы, информационные критерии</td></tr>
+                        <tr><td><strong>Воспроизводимость</strong></td><td>Диалоговое окно, параметры скрыты</td><td>Код с параметрами; можно передать и проверить</td></tr>
+                        <tr><td><strong>Интеграция</strong></td><td>Результат на новом листе</td><td>Результат сразу в графике или в отчёте</td></tr>
+                        <tr><td><strong>Масштаб</strong></td><td>До миллиона строк</td><td>Миллионы строк</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- БЛОК 6: ПРЕИМУЩЕСТВА И ОГРАНИЧЕНИЯ -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 8px;">⚖️ Блок 6. Преимущества и ограничения аналитика на Python</div>
+                <div class="cat-grid">
+                    <div class="cat-card" style="background:#f0fff4; border-color:#9ae6b4;">
+                        <h4 style="color:#276749;">✅ Преимущества</h4>
+                        <ul>
+                            <li><strong>Масштаб:</strong> миллионы строк</li>
+                            <li><strong>Автоматизация:</strong> один скрипт заменяет часы работы</li>
+                            <li><strong>Воспроизводимость:</strong> код фиксирует каждый шаг</li>
+                            <li><strong>Статистическая полнота:</strong> полный набор моделей и тестов</li>
+                            <li><strong>Интеграция:</strong> прямое подключение к базам, API, облакам</li>
+                        </ul>
+                    </div>
+                    <div class="cat-card warn">
+                        <h4 style="color:#9b2c2c;">⚠️ Ограничения</h4>
+                        <ul>
+                            <li><strong>Совместная работа:</strong> коллеги без Python не откроют скрипт</li>
+                            <li><strong>Скорость на малых данных:</strong> Excel быстрее</li>
+                            <li><strong>Риск ошибки в коде:</strong> нужна дисциплина проверки</li>
+                            <li><strong>Экосистема входа:</strong> нужны виртуальные среды</li>
+                            <li><strong>Прозрачность для коллег:</strong> нужен экспорт в Excel или дашборд</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- БЛОК 7: МЕСТО В ЭКОСИСТЕМЕ -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 8px;">🗺️ Блок 7. Место аналитика на Python в четырёх экосистемах (лекция 4)</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr><th>Экосистема</th><th>Роль Python</th><th>Связка</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>Microsoft</strong></td><td>Дополняет Excel и Power BI</td><td>Pandas забирает данные из Excel → анализ → выгрузка обратно</td></tr>
+                        <tr><td><strong>Google</strong></td><td>Основной инструмент анализа</td><td>Colab — родная среда; BigQuery — источник данных</td></tr>
+                        <tr><td><strong>Yandex</strong></td><td>Дополняет ClickHouse и DataLens</td><td>Pandas забирает данные из ClickHouse → анализ → выгрузка в DataLens</td></tr>
+                        <tr><td><strong>Loginom</strong></td><td>Альтернативный подход к воспроизводимости</td><td>Python — через код; Loginom — через визуальные сценарии</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- КЛЮЧЕВЫЕ ВЫВОДЫ -->
+            <div class="highlight-box">
+                <strong>💡 Главные выводы лекции</strong>
+                <p>1. Python — интерпретируемый язык с читаемым синтаксисом, созданный Гвидо ван Россумом в 1989–1991 годах.<br>
+                2. Аналитик на Python — это не дата-сайентист, а специалист по прикладной аналитике.<br>
+                3. Четыре библиотеки образуют конвейер: Pandas → Matplotlib/Seaborn → Statsmodels.<br>
+                4. Python даёт масштаб, автоматизацию, воспроизводимость и статистическую глубину.<br>
+                5. Excel остаётся удобнее для быстрых задач и обмена с коллегами.<br>
+                6. Аналитик на Python гибок: работает с данными из любой экосистемы.<br>
+                7. Воспроизводимость и масштаб — не роскошь, а требование современной аналитики.</p>
+            </div>
+
+            <!-- СЛОВАРЬ -->
+            <div style="font-size: 13px; color: #4a5568; line-height: 1.6;">
+                <strong style="color:#1a365d;">Ключевые термины:</strong>
+                <span class="tag">Python</span>
+                <span class="tag">Guido van Rossum</span>
+                <span class="tag">CWI</span>
+                <span class="tag">PSF</span>
+                <span class="tag">PyPI</span>
+                <span class="tag">GIL</span>
+                <span class="tag">Zen of Python</span>
+                <span class="tag">Pandas</span>
+                <span class="tag">Matplotlib</span>
+                <span class="tag">Seaborn</span>
+                <span class="tag">Statsmodels</span>
+                <span class="tag">NumPy</span>
+                <span class="tag">DataFrame</span>
+                <span class="tag">Series</span>
+                <span class="tag">Сводная таблица</span>
+                <span class="tag">Ящичная диаграмма</span>
+                <span class="tag">Тепловая карта корреляций</span>
+                <span class="tag">Критерий Стьюдента</span>
+                <span class="tag">ANOVA</span>
+                <span class="tag">p-value</span>
+                <span class="tag">Воспроизводимость</span>
+                <span class="tag">Colab</span>
+                <span class="tag">Jupyter</span>
+            </div>
+
+            <!-- ВИДЕОПЛЕЕР -->
+            <div class="video-section">
+                <div class="video-container">
+                    <iframe id="lecture-player" src="https://rutube.ru" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+                </div>
+                <div class="links-hub">
+                    <button onclick="changeVideo('https://rutube.ru/')" class="video-btn stop-btn">⏹ СТОП</button>
+                    <button onclick="changeVideo('https://rutube.ru/play/embed/')" class="video-btn rt-btn">📜 Лекция 8. Аналитик данных на Python</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="slide-footer">
+            Направление «Менеджмент» | Курс: Аналитика данных | Лекция 8: «Аналитик данных на Python: Pandas, Matplotlib, Seaborn, Statsmodels»
+        </div>
+    </div>
+
+    <!-- ПРАВАЯ ПАНЕЛЬ (1/3): СКРИПТ ПРЕПОДАВАТЕЛЯ -->
+    <div class="speaker-notes">
+        <div style="position: sticky; top: 0; background: #1a202c; padding: 20px 20px 10px 20px; border-bottom: 1px solid #4a5568; width: 100%; z-index: 100;">
+            <div class="notes-header" style="display: block; padding-bottom: 15px;">
+                <audio id="lecture-audio" preload="auto" controls
+                       src="https://archive.org/download/03_20261110_20261110/08.mp3"
+                       style="width: 100%; height: 32px; border-radius: 4px;"></audio>
+            </div>
+            <div style="width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                <iframe id="right-lecture-player" src="https://archive.org/embed/20261020_20261020_0955?autoplay=true&loop=true&muted=true" allow="clipboard-write; autoplay" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen style="border: none;"></iframe>
+            </div>
+        </div>
+
+        <div class="lecture-text" style="margin-top: 20px;">
+
+            <h3>📌 Введение</h3>
+
+            <p>Добрый день, коллеги. Мы начинаем восьмую лекцию нашего курса. В пятой лекции мы разобрали статистические методы. Описательные статистики, проверку нормальности, критерий Стьюдента, критерий Манна–Уитни, дисперсионный анализ. Мы увидели, что эти методы реализуются в ЭКСЕЛЬ, в КОЛАБ, в ЛОГИНОМ. Но остался важный вопрос. А как именно выглядит работа аналитика, который использует не готовые кнопки, а код?</p>
+
+            <p>Представьте себе такую задачу. Руководитель просит не просто посчитать статистику. Он просит построить воспроизводимый конвейер анализа. Чтобы завтра этот конвейер можно было запустить на новых данных. Чтобы коллега мог проверить каждый шаг. Чтобы отчёт строился автоматически, без ручных операций. Вот здесь на помощь приходит ПАЙТОН с четырьмя библиотеками.</p>
+
+            <p>Сегодня мы разберём семь блоков. Сначала поговорим о самом ПАЙТОНЕ: откуда он взялся, как устроен, в чём сильные и слабые стороны. Затем посмотрим, чем аналитик на ПАЙТОНЕ отличается от классического аналитика в ЭКСЕЛЬ. Потом разберём четыре библиотеки. Сравним ПАЙТОН и ЭКСЕЛЬ на конкретных задачах. Разберём, что даёт СТАТСМОДЕЛС по сравнению с пакетом анализа в ЭКСЕЛЬ. Обсудим преимущества и ограничения. И наконец, впишем аналитика на ПАЙТОНЕ в четыре экосистемы из четвёртой лекции.</p>
+
+            <p>Обратите внимание на важную мысль. Аналитик на ПАЙТОНЕ — это не дата-сайентист. Дата-сайентист строит сложные модели машинного обучения. Аналитик на ПАЙТОНЕ решает прикладные задачи. Он считает метрики, которые мы определили в первой лекции. Отток, конверсию, средний чек, время выполнения задачи. Он ищет узкие места в воронке. Он проверяет гипотезы. И он строит отчёты, которые обновляются автоматически.</p>
+
+            <h3>📌 Блок 1. ПАЙТОН: что это за язык и откуда он взялся</h3>
+
+            <p>Прежде чем говорить о том, чем аналитик на ПАЙТОНЕ отличается от классического аналитика, давайте разберёмся, что такое сам ПАЙТОН. Язык создал нидерландский программист Гвидо ван Россум в исследовательском центре ЦВИ в Амстердаме. Работа началась в декабре тысяча девятьсот восемьдесят девятого года. Первый публичный релиз вышел в феврале тысяча девятьсот девяносто первого года. Название язык получил не в честь змеи, а в честь комедийного шоу «Монти Пайтон». Это сразу задало тон: язык задумывался как читаемый и дружелюбный.</p>
+
+            <p>Управляет языком некоммерческая организация ПИ-ЭС-ЭФ, то есть ПАЙТОН Софтвэр Фаундейшн. Язык открытый и бесплатный. Первая версия ПАЙТОН 2.0 вышла в двухтысячном году. Версия ПАЙТОН 3.0 — в две тысячи восьмом. Поддержка второй версии официально прекращена первого января две тысячи двадцатого года. Сегодня актуален только ПАЙТОН третьей версии.</p>
+
+            <p>Философия языка сформулирована в девятнадцати принципах, которые называют «Дзен Пайтона». Их можно увидеть, если ввести в интерпретаторе команду import this. Главные принципы такие. Читаемость важнее краткости. Явное лучше неявного. Должен быть один, и желательно только один, очевидный способ сделать что-то. Именно поэтому в ПАЙТОНЕ вместо фигурных скобок используются отступы. Код читается почти как английский текст. А девиз сообщества звучит так: «батарейки в комплекте». Это значит, что большая стандартная библиотека идёт сразу с языком.</p>
+
+            <p>Теперь о том, как язык устроен технически. ПАЙТОН — интерпретируемый язык. Код выполняется построчно интерпретатором, без отдельной компиляции в машинный код. Типизация динамическая: тип переменной определяется во время выполнения, а не заранее. Язык кроссплатформенный: один и тот же код работает в ВИНДОУС, в МАК-ОС и в ЛИНУКС. И ПАЙТОН расширяемый: тяжёлые вычисления выносятся в библиотеки на СИ, на СИ-ПЛЮС-ПЛЮС и на ФОРТРАН. Внутри ПАНДАС и НАМПАЙ устроены именно так. Экосистема огромная — более пятисот тысяч пакетов в репозитории ПАЙ-ПИ-АЙ, то есть ПАЙТОН Пэкэдж Индекс.</p>
+
+            <p>Теперь честно о сильных и слабых сторонах. Сильных сторон семь. Первая — низкий порог входа: синтаксис близок к естественному языку. Вторая — читаемость: код легко проверять и передавать коллегам. Третья — универсальность: один язык для анализа данных, веб-разработки, автоматизации, машинного обучения, научных расчётов. Четвёртая — экосистема: почти на любую задачу уже есть готовая библиотека. Пятая — сообщество: миллионы разработчиков, огромное количество обучающих материалов. Шестая — интеграция с другими языками: ПАЙТОН может вызывать код на СИ, СИ-ПЛЮС-ПЛЮС, ДЖАВА и дот-НЕТ. Седьмая — бесплатность и открытость: язык не требует лицензии и работает везде.</p>
+
+            <p>Слабых сторон тоже хватает. Первая — скорость. Чистый ПАЙТОН медленнее СИ, ДЖАВА и ГО в десятки раз. Для аналитика это компенсируется тем, что тяжёлые вычисления внутри ПАНДАС и НАМПАЙ написаны на СИ. Вторая — ГИЛ, то есть Глобал Интерпретер Лок, глобальная блокировка интерпретатора. Она ограничивает истинную многопоточность. Обходится через многопроцессность или через вынос вычислений в СИ-расширения. Третья — высокое потребление памяти по сравнению с компилируемыми языками. Четвёртая — динамическая типизация: ошибки типов всплывают во время выполнения, а не при компиляции. Смягчается аннотациями типов и проверкой через МАЙПИ. Пятая — ПАЙТОН слаб в мобильной разработке и в браузере, там он почти не используется. Шестая — историческая путаница с управлением зависимостями. Долгое время не было единого стандарта. Сейчас это исправляется инструментами вроде Ю-Ви, ПОЭТРИ и ПИП-ТУЛС.</p>
+
+            <p>Почему же для аналитика данных выбран именно ПАЙТОН? Причин три. Первая — в анализе данных скорость чистого ПАЙТОНА не критична. Тяжёлые операции выполняют СИ-библиотеки, а ПАЙТОН выступает клеем между ними. Вторая — блокноты, такие как ДЖУПИТЕР и ГУГЛ КОЛАБ, позволяют объединить код, текст, графики и таблицы в одном документе. Это идеальная среда для аналитика. Третья — порог входа ниже, чем у ЭР или ДЖУЛИИ, а экосистема шире. ПАЙТОН — де-факто стандарт в аналитике данных. Его используют ГУГЛ, НЕТФЛИКС, СПОТИФАЙ, ЯНДЕКС, СБЕР. И большинство курсов по анализу данных ориентированы именно на него.</p>
+
+            <h3>📌 Блок 2. Кто такой аналитик данных на ПАЙТОНЕ</h3>
+
+            <p>Давайте разберёмся, что меняется, когда аналитик переходит с ЭКСЕЛЬ на ПАЙТОН. На первый взгляд кажется, что меняется только инструмент. Была таблица, стал код. Но на самом деле меняется гораздо больше. Меняется масштаб задач, которые аналитик может решать. Меняется скорость работы. Меняется отношение к воспроизводимости. Давайте разберём эти изменения по порядку.</p>
+
+            <p>Начнём с определения. Аналитик данных на ПАЙТОНЕ — это специалист, который превращает сырые данные в управленческие решения. Но делает это через код, а не через ручные операции в таблицах. Его зона ответственности включает не только красивые графики. Она включает автоматизацию расчётов, связь метрик с бизнес-целями и воспроизводимость каждого шага.</p>
+
+            <p>Первое отличие — это масштаб. ЭКСЕЛЬ комфортно работает с сотнями тысяч строк. Практический предел — около миллиона строк на лист. Когда данных больше, программа начинает тормозить. А иногда и вовсе зависает. ПАЙТОН через ПАНДАС обрабатывает миллионы и десятки миллионов строк на обычном ноутбуке. Это значит, что задачи, которые в ЭКСЕЛЬ требуют разбиения на части, в ПАЙТОНЕ решаются одним запуском.</p>
+
+            <p>Второе отличие — это автоматизация. В ЭКСЕЛЬ автоматизация держится на формулах и макросах. Макросы сложно поддерживать. Они ломаются при изменении структуры файла. Если коллега добавил новый столбец или переименовал лист, макрос может перестать работать. В ПАЙТОНЕ один и тот же скрипт можно запускать на новых данных каждую неделю. И он будет работать одинаково. При условии, конечно, что структура данных не изменилась принципиально.</p>
+
+            <p>Третье отличие — это воспроизводимость. В ЭКСЕЛЬ каждый шаг — это клик мышью. Проверить, что именно сделал аналитик, почти невозможно. Коллега открывает файл и видит только конечный результат. Какие фильтры применялись, какие формулы использовались, какие строки удалялись — всё это скрыто. В ПАЙТОНЕ каждая строка кода фиксирует действие. Любой коллега может прочитать скрипт и повторить результат. Это и есть воспроизводимость, о которой мы говорили в четвёртой лекции.</p>
+
+            <p>Четвёртое отличие — это статистическая глубина. В ЭКСЕЛЬ есть базовые статистические функции. Среднее, медиана, стандартное отклонение. Но полноценные регрессионные модели, проверка гипотез, анализ временных рядов требуют либо дополнительных надстроек, либо внешних инструментов. В ПАЙТОНЕ библиотека СТАТСМОДЕЛС даёт полный набор статистических моделей и тестов. И что важно, она выдаёт результаты в том же виде, что и профессиональные статистические пакеты.</p>
+
+            <p>Пятое отличие — это интеграция. ПАЙТОН подключается напрямую к базам данных, к программным интерфейсам сервисов, к облачным хранилищам. Аналитик может забрать данные из источника, обработать и сохранить результат без ручного экспорта и импорта файлов. В ЭКСЕЛЬ каждый переход между системами — это ручная операция. Открыть файл, скопировать данные, вставить в другой файл. Каждая такая операция — это источник ошибок.</p>
+
+            <p>Теперь сделаем важное уточнение. Аналитик на ПАЙТОНЕ — это не дата-сайентист. Дата-сайентист строит сложные модели машинного обучения. Он работает с нейронными сетями, с алгоритмами рекомендаций, с обработкой естественного языка. Аналитик на ПАЙТОНЕ решает прикладные задачи. Он считает метрики, которые мы определили в первой лекции. Отток, конверсию, средний чек, время выполнения задачи. Он ищет узкие места в воронке. Он проверяет гипотезы. И он строит отчёты, которые обновляются автоматически.</p>
+
+            <h3>📌 Блок 3. Четыре библиотеки как единый конвейер</h3>
+
+            <p>Теперь перейдём к третьему вопросу. Как именно четыре библиотеки образуют единый конвейер анализа? Давайте разберём каждую по порядку. И увидим, какую роль она играет в общей цепочке.</p>
+
+            <p>Начнём с первой библиотеки. Она называется ПАНДАС. Это рабочая лошадка аналитика. ПАНДАС даёт две структуры данных. Первая называется таблицей данных, или ДАТАФРЕЙМ. Вторая называется одномерным рядом, или СИРИЕС. Таблица данных — это аналог листа ЭКСЕЛЬ. Но с гораздо большими возможностями. Одномерный ряд — это один столбец значений. Он нужен для отдельных расчётов.</p>
+
+            <p>Что умеет ПАНДАС? Первое. Она загружает данные из разных источников. Это файлы, базы данных, веб-сервисы. Второе. Она очищает данные. Удаляет пропуски. Заменяет значения. Убирает дубликаты. Третье. Она группирует и агрегирует данные. Считает суммы, средние, количества по группам. Четвёртое. Она соединяет несколько таблиц в одну. По общим полям, как в базе данных.</p>
+
+            <p>Если провести аналогию с ЭКСЕЛЬ, то ПАНДАС заменяет сразу несколько инструментов. Фильтр, сводную таблицу, поиск соответствий. Всё это в ПАНДАС делается одной строкой кода. И что важно, эта строка сохраняется. Её можно запустить заново на новых данных.</p>
+
+            <p>Перейдём ко второй библиотеке. Она называется МАТПЛОТЛИБ. Это базовый инструмент визуализации. МАТПЛОТЛИБ позволяет строить графики любой сложности. Линейные графики, столбиковые диаграммы, точечные диаграммы, гистограммы. Но главное — он даёт полный контроль над каждым элементом графика. Над осями, над подписями, над цветами, над масштабом. Если аналитику нужен нестандартный график, МАТПЛОТЛИБ справится.</p>
+
+            <p>В чём отличие от графиков в ЭКСЕЛЬ? В ЭКСЕЛЬ график строится быстро. Но он статичен. И настроить его до мельчайших деталей сложно. В МАТПЛОТЛИБ график настраивается полностью. И что важнее, его можно встроить в автоматический отчёт. Каждый раз при обновлении данных график перестраивается автоматически.</p>
+
+            <p>Перейдём к третьей библиотеке. Она называется СИБОРН. Это надстройка над МАТПЛОТЛИБ. Она создана специально для статистических графиков. СИБОРН умеет строить распределения. Умеет строить ящичные диаграммы. Умеет строить тепловые карты корреляций. Умеет строить регрессионные графики. И делает это красиво и с минимальным количеством кода.</p>
+
+            <p>Почему это важно? В пятой лекции мы разбирали ящичную диаграмму как инструмент проверки нормальности. В ЭКСЕЛЬ её нужно настраивать через несколько шагов. В ПАЙТОНЕ через СИБОРН она строится одной строкой. И сразу показывает медиану, квартили, усы и выбросы. То же самое с гистограммой. То же самое с тепловой картой корреляций. СИБОРН экономит время аналитика и делает графики более информативными.</p>
+
+            <p>Перейдём к четвёртой библиотеке. Она называется СТАТСМОДЕЛС. Это статистический движок. Он даёт полный набор статистических моделей. Линейная регрессия. Обобщённые линейные модели. Анализ временных рядов. Проверка гипотез. Тесты нормальности. Всё, что мы разбирали в пятой лекции, реализуется в СТАТСМОДЕЛС.</p>
+
+            <p>Критерий Стьюдента. Критерий Манна–Уитни. Дисперсионный анализ. Проверка нормальности по Шапиро–Уилку. Проверка нормальности по Колмогорову–Смирнову. Всё это есть в СТАТСМОДЕЛС. И что важно, СТАТСМОДЕЛС даёт не просто результат. Он даёт полный отчёт. С коэффициентами. Со стандартными ошибками. С доверительными интервалами. С уровнями значимости. С информацией о качестве модели. Такой же отчёт, как в профессиональных статистических пакетах.</p>
+
+            <p>Теперь давайте посмотрим, как эти четыре библиотеки соединяются в единую цепочку. ПАНДАС загружает и очищает данные. МАТПЛОТЛИБ и СИБОРН визуализируют. Показывают распределения, ящичные диаграммы, корреляции. СТАТСМОДЕЛС проверяет гипотезы и строит модели. Всё это живёт в одном документе. Например, в блокноте КОЛАБ. Аналитик пишет код последовательно, шаг за шагом. И видит результат каждого шага прямо в документе.</p>
+
+            <p>Это и есть конвейер. От сырых данных до обоснованного вывода. И каждое звено этого конвейера можно проверить. Можно изменить. Можно запустить заново. Это и есть воспроизводимость, о которой мы говорили в четвёртой лекции.</p>
+
+            <h3>📌 Блок 4. Сравнение с ЭКСЕЛЬ на конкретных задачах</h3>
+
+            <p>Теперь перейдём к четвёртому вопросу. Где именно ПАЙТОН выигрывает у ЭКСЕЛЬ? И где ЭКСЕЛЬ остаётся удобнее? Давайте разберём это на конкретных задачах. Так будет честнее и понятнее.</p>
+
+            <p>Первая задача — очистка данных. В ЭКСЕЛЬ очистка — это ручные операции. Нужно удалить дубликаты. Нужно заполнить пропуски. Нужно заменить неправильные значения. Каждую операцию аналитик делает мышью. И если завтра данные обновятся, всё нужно повторить заново.</p>
+
+            <p>В ПАНДАС те же операции делаются методами. Удалить пропуски. Заполнить пропуски. Заменить значения. Разница в том, что в ЭКСЕЛЬ каждую операцию нужно повторять вручную. А в ПАЙТОНЕ скрипт запускается одной командой. И выполняется за секунды. Даже если данных стало в десять раз больше.</p>
+
+            <p>Вторая задача — сводные таблицы. В ЭКСЕЛЬ сводная таблица строится мышью. Аналитик перетаскивает поля, выбирает агрегаты, настраивает фильтры. Если нужно двадцать сводных таблиц по разным разрезам, это двадцать ручных операций. Каждая занимает несколько минут.</p>
+
+            <p>В ПАНДАС сводная таблица строится одной строкой. Сгруппировать по региону, посчитать сумму, посчитать среднее. Если нужно двадцать разрезов, это двадцать строк кода. И выполняются они за секунды. Аналитик не тратит время на клики. Он тратит его на анализ.</p>
+
+            <p>Третья задача — визуализация. В ЭКСЕЛЬ графики строятся быстро. Но они статичны. Если данные обновились, график нужно перестроить вручную. И настроить его до мельчайших деталей сложно. ЭКСЕЛЬ даёт базовый набор возможностей.</p>
+
+            <p>В МАТПЛОТЛИБ и СИБОРН графики настраиваются полностью. И что важнее, их можно встроить в автоматический отчёт. Каждый раз при обновлении данных график перестраивается автоматически. Аналитик один раз написал код. И график обновляется сам.</p>
+
+            <p>Четвёртая задача — статистические тесты. В ЭКСЕЛЬ для критерия Стьюдента нужно загрузить пакет анализа. Затем заполнить диалоговое окно. Указать диапазоны данных. Выбрать тип теста. И только потом получить результат. Каждый раз, когда данные меняются, всё нужно повторить.</p>
+
+            <p>В СТАТСМОДЕЛС критерий Стьюдента — это одна функция. Аналитик указывает две группы данных. И получает результат. Результат приходит в виде готовой таблицы. С коэффициентами. Со стандартными ошибками. С уровнями значимости. И этот результат можно сохранить. Можно передать коллеге. Можно запустить заново на новых данных.</p>
+
+            <p>Пятая задача — воспроизводимость. Это главное отличие. В ЭКСЕЛЬ результат зависит от того, какие клики сделал аналитик. Какие фильтры применил. Какие строки удалил. Какие формулы исправил вручную. Проверить это почти невозможно. Коллега открывает файл и видит только конечный результат.</p>
+
+            <p>В ПАЙТОНЕ результат зависит от кода. Код можно сохранить. Можно передать коллеге. Можно проверить каждую строку. Можно запустить заново и получить тот же результат. Это называется воспроизводимостью. И это требование к качественной аналитике, которое мы обсуждали в четвёртой лекции.</p>
+
+            <p>Теперь давайте будем честными. Есть задачи, где ЭКСЕЛЬ остаётся лучше. Первая задача — быстрые ответы на срочные вопросы. Руководитель просит цифру через час. Аналитик открывает ЭКСЕЛЬ. Загружает данные. Строит сводную таблицу. И через десять минут даёт ответ. В ПАЙТОНЕ написание скрипта займёт больше времени. И для разовой задачи это неоправданно.</p>
+
+            <p>Вторая задача — совместное редактирование таблицы коллегами. Если несколько человек должны одновременно работать с одной таблицей, ЭКСЕЛЬ удобнее. Особенно облачная версия. В ПАЙТОНЕ совместная работа требует специальных инструментов. И не все коллеги умеют читать код.</p>
+
+            <p>Третья задача — финансовое моделирование с множеством сценариев. В финансовом моделировании ЭКСЕЛЬ остаётся стандартом. Множество взаимосвязанных формул. Сценарии «что если». Всё это в ЭКСЕЛЬ делается естественно. В ПАЙТОНЕ это тоже возможно. Но не так наглядно.</p>
+
+            <p>Отсюда следует важный вывод. Современный аналитик использует оба инструмента. ЭКСЕЛЬ — для быстрых задач. ПАЙТОН — для сложных, повторяющихся и воспроизводимых задач. Это не противоречие. Это разделение труда.</p>
+
+            <h3>📌 Блок 5. Статистика в СТАТСМОДЕЛС и в ЭКСЕЛЬ: в чём разница</h3>
+
+            <p>Теперь перейдём к пятому вопросу. Что именно даёт СТАТСМОДЕЛС по сравнению с пакетом анализа в ЭКСЕЛЬ? На первый взгляд может показаться, что разница небольшая. И там, и там есть критерий Стьюдента. И там, и там есть дисперсионный анализ. Но на самом деле разница существенная. Давайте разберём её по порядку.</p>
+
+            <p>Первое отличие — это полнота. В ЭКСЕЛЬ пакет анализа содержит ограниченный набор тестов. Критерий Стьюдента для двух выборок. Парный критерий Стьюдента. Дисперсионный анализ. Корреляцию. Регрессию. И несколько описательных статистик. На этом список заканчивается.</p>
+
+            <p>В СТАТСМОДЕЛС набор гораздо шире. Все виды регрессии. Линейная, логистическая, пуассоновская, обобщённые линейные модели. Анализ временных рядов. Модели авторегрессии, скользящего среднего, сезонные модели. Непараметрические тесты. Тесты на нормальность. Тесты на гетероскедастичность. Тесты на автокорреляцию. И многое другое.</p>
+
+            <p>В пятой лекции мы разбирали три критерия. Критерий Стьюдента. Критерий Манна–Уитни. Дисперсионный анализ. В ЭКСЕЛЬ все три есть. Но в СТАТСМОДЕЛС к ним добавляются десятки других. И это позволяет аналитику выбрать именно тот метод, который подходит для конкретной задачи. А не тот, который оказался под рукой.</p>
+
+            <p>Второе отличие — это глубина вывода. ЭКСЕЛЬ выдаёт минимальный результат. Значение статистики. Уровень значимости. И несколько дополнительных цифр. Этого достаточно, чтобы сказать «различие значимо» или «различие не значимо». Но недостаточно, чтобы объяснить, насколько и почему.</p>
+
+            <p>СТАТСМОДЕЛС выдаёт полный отчёт. Коэффициенты модели. Стандартные ошибки каждого коэффициента. Доверительные интервалы. Значения статистик. Уровни значимости. Информационные критерии качества модели. И диагностические показатели остатков. Это позволяет аналитику не просто сказать «фактор влияет». А объяснить, насколько сильно он влияет. И насколько надёжна эта оценка.</p>
+
+            <p>Приведём пример. В пятой лекции мы разбирали критерий Стьюдента для сравнения упоминаний губернатора и мэра. В ЭКСЕЛЬ мы бы получили значение статистики и уровень значимости. И сказали бы: различие существенно. Средние различаются на семнадцать упоминаний. В СТАТСМОДЕЛС мы бы получили ещё и доверительный интервал для этой разницы. И увидели бы, что истинная разница лежит, например, между десятью и двадцатью четырьмя упоминаниями. Это более точный и более полезный вывод.</p>
+
+            <p>Третье отличие — это воспроизводимость. В ЭКСЕЛЬ каждый тест настраивается через диалоговое окно. Аналитик выбирает диапазоны данных. Выбирает параметры теста. Нажимает кнопку. Результат появляется на новом листе. Если завтра данные обновятся, всё нужно повторить. И если аналитик забудет, какие параметры он выбирал, результат может измениться.</p>
+
+            <p>В СТАТСМОДЕЛС тест описан в коде. Одна функция с параметрами. Код сохраняется. Код можно передать коллеге. Код можно запустить заново на новых данных. И результат будет тем же. При условии, что данные той же структуры. Это и есть воспроизводимость. Это то, что мы обсуждали в четвёртой лекции как главное требование к качественной аналитике.</p>
+
+            <p>Четвёртое отличие — это интеграция с визуализацией. В ЭКСЕЛЬ результат теста и график живут отдельно. Сначала аналитик строит график. Потом запускает тест. Потом вручную переносит результат на график. Или в текст отчёта. Каждый перенос — это ручная операция. И каждый перенос — это источник ошибок.</p>
+
+            <p>В ПАЙТОНЕ результат теста можно сразу передать в СИБОРН и построить график. Например, построить ящичные диаграммы для двух групп. И тут же на графике подписать уровень значимости. Всё в одном документе. Без переключения между программами. Без ручного копирования. Это и есть бесшовность в работе аналитика.</p>
+
+            <p>Пятое отличие — это масштаб. Пакет анализа в ЭКСЕЛЬ работает с диапазонами на листе. Если данных больше миллиона строк, ЭКСЕЛЬ не справится. В СТАТСМОДЕЛС можно загрузить миллионы строк через ПАНДАС. И запустить тест или модель. Это займёт несколько секунд. А не несколько часов.</p>
+
+            <p>Теперь давайте будем честными. Есть задачи, где пакет анализа в ЭКСЕЛЬ остаётся удобнее. Первая задача — обучение. Студенту проще нажать кнопку в ЭКСЕЛЬ и увидеть результат. Чем писать код и разбираться с синтаксисом. Для первого знакомства со статистикой ЭКСЕЛЬ лучше.</p>
+
+            <p>Вторая задача — быстрые проверки. Если аналитику нужно срочно проверить одну гипотезу на небольших данных, ЭКСЕЛЬ быстрее. Открыть файл. Запустить тест. Получить результат. В ПАЙТОНЕ написание скрипта займёт больше времени.</p>
+
+            <p>Третья задача — прозрачность для коллег. Коллеги без ПАЙТОНА могут открыть файл ЭКСЕЛЬ и увидеть результат теста. А скрипт на ПАЙТОНЕ они не откроют. И не поймут. Поэтому для обмена результатами ЭКСЕЛЬ остаётся удобнее.</p>
+
+            <p>Отсюда следует важный вывод. СТАТСМОДЕЛС и пакет анализа в ЭКСЕЛЬ — это не конкуренты. Это инструменты для разных задач. ЭКСЕЛЬ — для обучения и быстрых проверок. СТАТСМОДЕЛС — для серьёзного анализа и воспроизводимых отчётов.</p>
+
+            <h3>📌 Блок 6. Преимущества и ограничения аналитика на ПАЙТОНЕ</h3>
+
+            <p>Теперь перейдём к шестому вопросу. Какие преимущества даёт работа на ПАЙТОНЕ? И какие ограничения она создаёт именно для аналитика? Общие сильные и слабые стороны самого языка мы уже разобрали в первом блоке. Здесь поговорим о специфике аналитической работы.</p>
+
+            <p>Начнём с преимуществ. Их пять. Первое — масштаб. ПАЙТОН через ПАНДАС обрабатывает миллионы строк там, где ЭКСЕЛЬ начинает тормозить. Это значит, что аналитик может работать с полными выгрузками данных, а не с выборками. А полные выгрузки дают более точную картину. Особенно когда речь идёт о редких событиях: о мошеннических операциях, об отказах клиентов. Обратная сторона в том, что большие данные требуют большей дисциплины. Если аналитик не проверит данные на выбросы, модель или тест может дать ошибочный результат.</p>
+
+            <p>Второе преимущество — это автоматизация. Один скрипт заменяет часы ручной работы. Еженедельный отчёт, который в ЭКСЕЛЬ занимает полдня, в ПАЙТОНЕ строится за минуту. Аналитик один раз написал скрипт. И дальше он просто запускает его на новых данных. Это освобождает время для более важных задач: для анализа, для поиска инсайтов, для разговоров с бизнесом. Обратная сторона в том, что автоматизация требует начальных вложений. Нужно написать скрипт. Нужно его отладить. Нужно убедиться, что он работает на разных данных. Но эти вложения окупаются многократно.</p>
+
+            <p>Третье преимущество — это воспроизводимость. Каждый шаг анализа зафиксирован в коде. Результат можно проверить и повторить. Если коллега сомневается в цифре, он открывает скрипт и видит, откуда она взялась. Это повышает доверие к аналитике и снижает количество ошибок. Обратная сторона в том, что воспроизводимость требует дисциплины: писать понятный код, комментировать сложные места, хранить версии скриптов. Но это та дисциплина, которая отличает профессионала от любителя.</p>
+
+            <p>Четвёртое преимущество — это статистическая полнота. СТАТСМОДЕЛС даёт то, чего нет в ЭКСЕЛЬ. Полный набор моделей и тестов. Полные отчёты с коэффициентами, стандартными ошибками и доверительными интервалами. Это позволяет аналитику не просто сказать «различие значимо». А объяснить, насколько сильно оно значимо и насколько надёжна эта оценка. Обратная сторона в том, что полные отчёты требуют умения их читать: понимать коэффициенты, стандартные ошибки, доверительные интервалы. Но это те знания, которые мы разбирали в пятой лекции. И они остаются с аналитиком навсегда.</p>
+
+            <p>Пятое преимущество — это интеграция. ПАЙТОН соединяется с базами данных, с программными интерфейсами, с облачными сервисами напрямую. Аналитик может забрать данные из источника, обработать их, сохранить результат. И всё это без ручного экспорта и импорта файлов. Обратная сторона в том, что интеграция требует настройки. Но один раз настроив подключение, аналитик получает его навсегда.</p>
+
+            <p>Теперь перейдём к ограничениям. Их пять. Первое — совместная работа. Коллеги без ПАЙТОНА не смогут открыть скрипт и посмотреть результат. Приходится экспортировать результаты в ЭКСЕЛЬ или в дашборд. Это дополнительный шаг. И это дополнительное время. Кроме того, если несколько аналитиков работают над одним скриптом, нужны специальные инструменты для совместной работы, например система контроля версий. Это ещё один навык, который нужно освоить.</p>
+
+            <p>Второе ограничение — скорость на малых данных. Если данных мало и задача разовая, ЭКСЕЛЬ быстрее. Написание скрипта занимает больше времени, чем ручная операция. Аналитик должен понимать, когда стоит писать скрипт, а когда проще открыть ЭКСЕЛЬ. Это вопрос опыта и здравого смысла.</p>
+
+            <p>Третье ограничение — риск ошибки в коде. В ЭКСЕЛЬ аналитик видит каждую формулу и может проверить её глазами. В ПАЙТОНЕ аналитик видит код, но не всегда видит, что происходит внутри функций. Ошибка в коде может остаться незамеченной и привести к неверному результату. Поэтому аналитик должен проверять результаты, сравнивать их с ожидаемыми значениями, использовать контрольные примеры. Это дополнительная дисциплина, которая требуется от аналитика на ПАЙТОНЕ.</p>
+
+            <p>Четвёртое ограничение — зависимость от окружения. Скрипт на ПАЙТОНЕ требует определённых версий библиотек. Если версии изменились, скрипт может перестать работать. Это называется проблемой зависимостей. Аналитик должен уметь управлять окружением: использовать виртуальные среды, фиксировать версии библиотек. Это дополнительная сложность, которой нет в ЭКСЕЛЬ.</p>
+
+            <p>Пятое ограничение — прозрачность для коллег. Даже если скрипт работает правильно, коллегам без ПАЙТОНА сложно его проверить. Приходится либо экспортировать результаты в ЭКСЕЛЬ, либо строить дашборд, либо обучать коллег основам ПАЙТОНА. Это дополнительная нагрузка на аналитика.</p>
+
+            <p>Теперь давайте сделаем вывод. Аналитик на ПАЙТОНЕ — это не замена классического аналитика. Это следующий уровень. Классический аналитик отвечает на вопрос «что произошло» здесь и сейчас. Аналитик на ПАЙТОНЕ строит систему, которая отвечает на этот вопрос автоматически. На новых данных. С полной воспроизводимостью. И с полной статистической глубиной.</p>
+
+            <h3>📌 Блок 7. Место аналитика на ПАЙТОНЕ в экосистеме инструментов</h3>
+
+            <p>Теперь перейдём к седьмому вопросу. Как аналитик на ПАЙТОНЕ соотносится с четырьмя экосистемами, которые мы разбирали в четвёртой лекции? Давайте посмотрим на каждую экосистему по отдельности. И увидим, где ПАЙТОН встраивается, а где остаётся в стороне.</p>
+
+            <p>Начнём со стека компании МАЙКРОСОФТ. В этом стеке ПАЙТОН не является основным инструментом. Основные инструменты — это ЭКСЕЛЬ, ПАУЭР-КВЕРИ, ПАУЭР-ПИВОТ и ПАУЭР-БИ-АЙ. Но ПАЙТОН здесь тоже используется. Аналитик на ПАЙТОНЕ может забрать данные из ЭКСЕЛЬ через ПАНДАС. Очистить их. Посчитать метрики. А затем выгрузить результат обратно в ЭКСЕЛЬ для совместного просмотра. Или в ПАУЭР-БИ-АЙ для визуализации. Таким образом, ПАЙТОН дополняет стек МАЙКРОСОФТ. Он берёт на себя сложные расчёты, которые неудобно делать в ЭКСЕЛЬ. А ЭКСЕЛЬ остаётся средой для обмена результатами с коллегами.</p>
+
+            <p>Перейдём к стеку компании ГУГЛ. Здесь ПАЙТОН чувствует себя как дома. КОЛАБ — это родная среда для ПАЙТОНА. Блокнот объединяет код, текст, графики и таблицы. Аналитик пишет код на ПАЙТОНЕ прямо в браузере. И видит результат каждого шага. БИГ-КВЕРРИ даёт данные для анализа. А ЛУКЕР СТУДИО визуализирует итоговые дашборды. В этом стеке ПАЙТОН — это основной инструмент анализа. И это самое естественное место для работы аналитика на ПАЙТОНЕ.</p>
+
+            <p>Перейдём к стеку компании ЯНДЕКС. Здесь ПАЙТОН тоже используется. Но основная среда — это КЛИКХАУС и ДАТАЛЕНС. КЛИКХАУС даёт быстрые данные. ДАТАЛЕНС визуализирует результаты. Аналитик на ПАЙТОНЕ забирает данные из КЛИКХАУС через ПАНДАС. Обрабатывает их. И выгружает результат в ДАТАЛЕНС. Или строит графики прямо в КОЛАБ. Таким образом, ПАЙТОН дополняет стек ЯНДЕКС. Он берёт на себя статистическую глубину, которой нет в ДАТАЛЕНС.</p>
+
+            <p>Перейдём к платформе ЛОГИНОМ. Здесь ПАЙТОН и ЛОГИНОМ — это два разных подхода к одной цели. Цель — воспроизводимость анализа. ЛОГИНОМ даёт воспроизводимость через визуальные сценарии. Аналитик собирает сценарий из узлов. И запускает его много раз. ПАЙТОН даёт воспроизводимость через код. Аналитик пишет скрипт. И запускает его много раз. Оба подхода работают. Но они подходят разным командам. ЛОГИНОМ удобен для команд без навыков программирования. ПАЙТОН — для тех, кто хочет полного контроля. И для тех, кто уже умеет программировать.</p>
+
+            <p>Теперь давайте сделаем важный вывод. Аналитик на ПАЙТОНЕ не привязан к одной экосистеме. Он может работать с данными из любой из четырёх экосистем. И это его главное преимущество — гибкость. Он не зависит от того, какой инструмент выбрала компания. Он может забрать данные отовсюду. Обработать их. И выгрузить результат в любую среду.</p>
+
+            <h3>📌 Заключение</h3>
+
+            <p>Мы подошли к завершению лекции. Давайте соберём всё вместе. И сформулируем главные выводы.</p>
+
+            <p>Мы начали с метрик в первой лекции. Разобрали инструменты в четвёртой лекции. Статистические методы в пятой лекции. И теперь разобрали аналитика на ПАЙТОНЕ в восьмой лекции. Цепочка стала длиннее. И это правильно. Потому что каждая новая тема опирается на предыдущие.</p>
+
+            <p>Что изменилось с появлением ПАЙТОНА? Раньше аналитик работал руками. Кликал мышью. Строил сводные таблицы. Запускал тесты через диалоговые окна. Теперь аналитик пишет код. И этот код фиксирует каждый шаг. Это делает анализ воспроизводимым. Это делает анализ масштабируемым. И это делает аналитика инженером данных. А не просто пользователем инструментов.</p>
+
+            <p>Что осталось неизменным? Логика анализа. Сначала проверить данные на качество. Затем выбрать правильный статистический метод. Затем интерпретировать результат. В ПАЙТОНЕ эта логика просто записывается в виде кода. ПАНДАС готовит данные. МАТПЛОТЛИБ и СИБОРН визуализируют. СТАТСМОДЕЛС проверяет гипотезы. Всё вместе — это единый конвейер.</p>
+
+            <p>Свяжем это с метриками из первой лекции. Аналитик на ПАЙТОНЕ работает с теми же метриками. Отток. Конверсия. Средний чек. Время выполнения задачи. Но теперь эти метрики считаются не вручную. А через ПАНДАС. И проверяются не через диалоговые окна. А через СТАТСМОДЕЛС. Это позволяет аналитику быстрее получать результат. И быть уверенным в его точности.</p>
+
+            <p>Главный вывод лекции звучит так. Аналитик на ПАЙТОНЕ — это не тот, кто знает четыре библиотеки. Это тот, кто строит воспроизводимый конвейер анализа. ПАНДАС — для данных. МАТПЛОТЛИБ и СИБОРН — для визуализации. СТАТСМОДЕЛС — для статистики. Вместе они дают полный контроль над анализом. И полную воспроизводимость.</p>
+
+            <p>Поговорим о перспективах. В следующей лекции мы углубимся в конкретные статистические модели в СТАТСМОДЕЛС. Регрессия. Анализ временных рядов. Обобщённые линейные модели. Мы увидим, как эти модели применяются к социальным объектам и процессам. И как они помогают прогнозировать будущее.</p>
+
+            <p>Что вы уносите с этой лекции? Вы уносите понимание того, что такое ПАЙТОН, откуда он взялся, в чём его сильные и слабые стороны. Вы уносите понимание того, чем аналитик на ПАЙТОНЕ отличается от классического аналитика. Вы уносите знание четырёх библиотек и их роли. Вы уносите понимание того, как они образуют конвейер. И главное. Вы уносите понимание того, что воспроизводимость и масштаб — это не роскошь. Это требование современной аналитики.</p>
+
+            <p>На этом наша лекция завершена. Спасибо за внимание. Я готов ответить на ваши вопросы.</p>
+
+            <!-- СЛОВАРЬ ТЕРМИНОВ -->
+            <div class="dark-block">
+                <div class="dark-block-title">📖 Словарь терминов и аббревиатур</div>
+                <table class="dark-table">
+                    <thead>
+                        <tr><th style="width:22%;">Термин</th><th style="width:26%;">Расшифровка</th><th>Пояснение</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="term">Python</td><td>Python</td><td>Интерпретируемый язык программирования, созданный Гвидо ван Россумом</td></tr>
+                        <tr><td class="term">Guido van Rossum</td><td>Гвидо ван Россум</td><td>Нидерландский программист, создатель Python</td></tr>
+                        <tr><td class="term">CWI</td><td>Centrum Wiskunde &amp; Informatica</td><td>Исследовательский центр в Амстердаме, где началась работа над Python</td></tr>
+                        <tr><td class="term">PSF</td><td>Python Software Foundation</td><td>Некоммерческая организация, управляющая языком</td></tr>
+                        <tr><td class="term">PyPI</td><td>Python Package Index</td><td>Главный репозиторий пакетов Python, 500 000+ пакетов</td></tr>
+                        <tr><td class="term">GIL</td><td>Global Interpreter Lock</td><td>Глобальная блокировка интерпретатора, ограничивает многопоточность</td></tr>
+                        <tr><td class="term">Zen of Python</td><td>The Zen of Python</td><td>19 принципов философии Python (команда import this)</td></tr>
+                        <tr><td class="term">Pandas</td><td>Pandas</td><td>Библиотека для загрузки, очистки и преобразования данных</td></tr>
+                        <tr><td class="term">Matplotlib</td><td>Matplotlib</td><td>Библиотека для базовой визуализации</td></tr>
+                        <tr><td class="term">Seaborn</td><td>Seaborn</td><td>Библиотека для статистических графиков</td></tr>
+                        <tr><td class="term">Statsmodels</td><td>Statsmodels</td><td>Библиотека для статистических моделей и тестов</td></tr>
+                        <tr><td class="term">NumPy</td><td>NumPy</td><td>Библиотека для численных вычислений на C, фундамент Pandas</td></tr>
+                        <tr><td class="term">DataFrame</td><td>Таблица данных</td><td>Основная структура данных в Pandas</td></tr>
+                        <tr><td class="term">Series</td><td>Одномерный ряд</td><td>Структура для одного столбца значений</td></tr>
+                        <tr><td class="term">Box plot</td><td>Ящичная диаграмма</td><td>Визуализация медианы, квартилей, усов и выбросов</td></tr>
+                        <tr><td class="term">Heatmap</td><td>Тепловая карта</td><td>Визуализация корреляций между переменными</td></tr>
+                        <tr><td class="term">t-test</td><td>Критерий Стьюдента</td><td>Сравнение средних двух групп</td></tr>
+                        <tr><td class="term">ANOVA</td><td>Дисперсионный анализ</td><td>Сравнение средних трёх и более групп</td></tr>
+                        <tr><td class="term">p-value</td><td>Уровень значимости</td><td>Вероятность допустить ошибку, утверждая влияние</td></tr>
+                        <tr><td class="term">Reproducibility</td><td>Воспроизводимость</td><td>Возможность повторить результат по коду</td></tr>
+                        <tr><td class="term">Colab</td><td>Google Colab</td><td>Блокнотная среда для Python от Google</td></tr>
+                        <tr><td class="term">Jupyter</td><td>Jupyter Notebook</td><td>Среда для блокнотов с кодом</td></tr>
+                        <tr><td class="term">BigQuery</td><td>Google BigQuery</td><td>Облачное хранилище данных Google</td></tr>
+                        <tr><td class="term">ClickHouse</td><td>ClickHouse</td><td>Колоночная СУБД Яндекса</td></tr>
+                        <tr><td class="term">DataLens</td><td>Yandex DataLens</td><td>BI-инструмент визуализации Яндекса</td></tr>
+                        <tr><td class="term">Power BI</td><td>Microsoft Power BI</td><td>BI-инструмент визуализации Microsoft</td></tr>
+                        <tr><td class="term">Loginom</td><td>Loginom</td><td>Платформа визуальной аналитики</td></tr>
+                        <tr><td class="term">mypy</td><td>mypy</td><td>Инструмент статической проверки типов в Python</td></tr>
+                        <tr><td class="term">uv / poetry</td><td>uv / poetry</td><td>Современные менеджеры зависимостей Python</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ИСТОЧНИКИ -->
+            <div class="dark-block">
+                <div class="dark-block-title">📚 Источники и литература</div>
+                <div class="src-group">📊 Документация библиотек</div>
+                <ol>
+                    <li>Официальная документация Python: python.org.</li>
+                    <li>Документация Pandas: загрузка, очистка, группировка данных.</li>
+                    <li>Документация Matplotlib: базовые графики.</li>
+                    <li>Документация Seaborn: статистические графики.</li>
+                    <li>Документация Statsmodels: статистические модели и тесты.</li>
+                </ol>
+                <div class="src-group">📖 Учебная литература</div>
+                <ol start="6">
+                    <li>Практические руководства по анализу данных на Python.</li>
+                    <li>Курсы по Pandas, Matplotlib, Seaborn, Statsmodels.</li>
+                    <li>Сравнительные обзоры Excel и Python для аналитики.</li>
+                </ol>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function changeVideo(embedUrl) {
+            document.getElementById('lecture-player').src = embedUrl;
+        }
+    </script>
+
+    <!-- НАВИГАЦИЯ МЕЖДУ ЛЕКЦИЯМИ -->
+   <nav class="lecture-nav" id="lectureNav">
+    <div class="nav-progress" id="navProgress" style="width: 0%;"></div>
+    <a href="Лекция (N-1).html" class="nav-btn-arrow" id="prevBtn">
+        <span class="arrow-icon">←</span>
+        <span class="arrow-label">
+            <small>Назад</small>
+            <span class="arrow-title" id="prevTitle">Лекция (N-1)</span>
+        </span>
+    </a>
+    <div class="nav-center">
+        <div class="nav-counter">Лекция <span id="currentNum">N</span> <span>из 21</span></div>
+        <a href="index.html" class="nav-index-link">📚 К содержанию</a>
+    </div>
+    <a href="Лекция (N+1).html" class="nav-btn-arrow" id="nextBtn">
+        <span class="arrow-label" style="align-items: flex-end;">
+            <small>Вперёд</small>
+            <span class="arrow-title" id="nextTitle">Лекция (N+1)</span>
+        </span>
+        <span class="arrow-icon">→</span>
+    </a>
+</nav>
+
+  
+
+    <script>
+    (function () {
+        'use strict';
+        const TOTAL_LECTURES = 21;
+        const totalDurationMs = (43 * 60 + 30) * 1000;
+        const autoNextDelayMs = 2000;
+        const AUTOSTART_PARAM = 'autostart';
+
+        const fileName = decodeURIComponent(location.pathname.split('/').pop() || '');
+        let currentLecture = 8;
+        const match = fileName.match(/Лекция\s*(\d+)\.html/i);
+        if (match) currentLecture = parseInt(match[1], 10);
+        else { const el = document.getElementById('currentNum'); if (el) currentLecture = parseInt(el.textContent, 10) || 8; }
+        if (isNaN(currentLecture) || currentLecture < 1) currentLecture = 1;
+        if (currentLecture > TOTAL_LECTURES) currentLecture = TOTAL_LECTURES;
+
+        const prev = currentLecture > 1 ? currentLecture - 1 : null;
+        const next = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+
+        const currentNumEl = document.getElementById('currentNum');
+        if (currentNumEl) currentNumEl.textContent = currentLecture;
+        const navProgress = document.getElementById('navProgress');
+        if (navProgress) navProgress.style.width = (currentLecture / TOTAL_LECTURES * 100) + '%';
+
+        const prevBtn = document.getElementById('prevBtn');
+        if (prevBtn) {
+            if (prev) { prevBtn.href = 'Лекция ' + prev + '.html'; document.getElementById('prevTitle').textContent = 'Лекция ' + prev; prevBtn.style.opacity = '1'; prevBtn.onclick = null; }
+            else { prevBtn.removeAttribute('href'); prevBtn.style.opacity = '0.35'; prevBtn.style.cursor = 'not-allowed'; prevBtn.onclick = (e) => e.preventDefault(); document.getElementById('prevTitle').textContent = 'Это первая лекция'; }
+        }
+        const nextBtn = document.getElementById('nextBtn');
+        if (nextBtn) {
+            if (next) { nextBtn.href = 'Лекция ' + next + '.html'; document.getElementById('nextTitle').textContent = 'Лекция ' + next; nextBtn.style.opacity = '1'; nextBtn.onclick = null; }
+            else { nextBtn.removeAttribute('href'); nextBtn.style.opacity = '0.35'; nextBtn.style.cursor = 'not-allowed'; nextBtn.onclick = (e) => e.preventDefault(); document.getElementById('nextTitle').textContent = 'Это последняя лекция'; }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+            if (e.key === 'ArrowLeft' && prev) window.location.href = 'Лекция ' + prev + '.html';
+            else if (e.key === 'ArrowRight' && next) window.location.href = 'Лекция ' + next + '.html';
+            else if (e.key === 'Home') window.location.href = 'index.html';
+        });
+
+        function initScroll() {
+            const studentBlock = document.querySelector('.student-view');
+            const speakerBlock = document.querySelector('.speaker-notes');
+            const badge = document.getElementById('scroll-status-badge');
+            const audio = document.getElementById('lecture-audio');
+            if (!studentBlock || !speakerBlock) return;
+
+            const studentBehavior = studentBlock.style.scrollBehavior;
+            const speakerBehavior = speakerBlock.style.scrollBehavior;
+            let isRunning = false, completed = false, pausedElapsed = 0, startedAt = 0, rafId = null;
+            let startS = 0, startP = 0, maxS = 0, maxP = 0;
+
+            function setBadge(text, color) { if (!badge) return; badge.style.display = 'block'; badge.textContent = text; badge.style.borderColor = color; }
+            function measure() { maxS = Math.max(studentBlock.scrollHeight - studentBlock.clientHeight, 0); maxP = Math.max(speakerBlock.scrollHeight - speakerBlock.clientHeight, 0); }
+            function fmt(ms) { const m = Math.floor(ms / 60000); const s = Math.floor((ms % 60000) / 1000); return m + ':' + String(s).padStart(2, '0'); }
+            function totalFmt() { const m = Math.floor(totalDurationMs / 60000); const s = Math.floor((totalDurationMs % 60000) / 1000); return m + ':' + String(s).padStart(2, '0'); }
+            function playAudio() { if (!audio) return; const p = audio.play(); if (p && typeof p.catch === 'function') { p.catch(err => { console.warn('[AutoAudio]', err.message); setBadge('▶ ИДЕТ ПРОКРУТКА (звук заблокирован)', '#eab308'); }); } }
+            function pauseAudio() { if (audio) try { audio.pause(); } catch (_) {} }
+            function resetAudio() { if (audio) try { audio.pause(); audio.currentTime = 0; } catch (_) {} }
+
+            function animate() {
+                if (!isRunning) return;
+                const elapsed = pausedElapsed + (performance.now() - startedAt);
+                const fraction = Math.min(elapsed / totalDurationMs, 1);
+                measure();
+                studentBlock.scrollTop = startS + (maxS - startS) * fraction;
+                speakerBlock.scrollTop = startP + (maxP - startP) * fraction;
+                if (badge) { badge.textContent = '▶ ' + fmt(elapsed) + ' / ' + totalFmt(); badge.style.borderColor = '#16a34a'; }
+                if (fraction >= 1) { finish(); return; }
+                rafId = requestAnimationFrame(animate);
+            }
+
+            function startOrResume() {
+                if (completed) { pausedElapsed = 0; completed = false; studentBlock.scrollTop = 0; speakerBlock.scrollTop = 0; resetAudio(); }
+                measure(); startS = studentBlock.scrollTop; startP = speakerBlock.scrollTop;
+                startedAt = performance.now(); isRunning = true;
+                studentBlock.style.scrollBehavior = 'auto'; speakerBlock.style.scrollBehavior = 'auto';
+                cancelAnimationFrame(rafId); rafId = requestAnimationFrame(animate);
+                playAudio();
+            }
+            function pause() {
+                if (isRunning) pausedElapsed += performance.now() - startedAt;
+                isRunning = false; cancelAnimationFrame(rafId);
+                setBadge('⏸ ПАУЗА ' + fmt(pausedElapsed), '#dc2626');
+                studentBlock.style.scrollBehavior = studentBehavior; speakerBlock.style.scrollBehavior = speakerBehavior;
+                pauseAudio();
+            }
+            function finish() {
+                isRunning = false; completed = true; cancelAnimationFrame(rafId);
+                measure(); studentBlock.scrollTop = maxS; speakerBlock.scrollTop = maxP;
+                studentBlock.style.scrollBehavior = studentBehavior; speakerBlock.style.scrollBehavior = speakerBehavior;
+                const nextLec = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+                if (nextLec) {
+                    setBadge('✅ ГОТОВО → Лекция ' + nextLec, '#16a34a');
+                    setTimeout(() => { location.href = 'Лекция ' + nextLec + '.html?' + AUTOSTART_PARAM + '=1'; }, autoNextDelayMs);
+                } else {
+                    setBadge('✅ КУРС ЗАВЕРШЕН', '#16a34a');
+                    pauseAudio();
+                }
+            }
+            function toggle() { isRunning ? pause() : startOrResume(); }
+
+            window.addEventListener('keydown', (e) => {
+                if (e.repeat) return;
+                const t = e.target; const tag = t && t.tagName;
+                if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+                if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); toggle(); }
+            }, true);
+
+            if (badge) badge.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+            [studentBlock, speakerBlock].forEach(el => {
+                el.addEventListener('click', (e) => {
+                    if (e.target.closest('a,button,iframe,input,textarea,select,video,audio')) return;
+                    if (window.getSelection().toString().length > 0) return;
+                    toggle();
+                });
+            });
+
+            const params = new URLSearchParams(location.search);
+            if (params.get(AUTOSTART_PARAM) === '1') {
+                params.delete(AUTOSTART_PARAM);
+                const clean = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
+                history.replaceState(null, '', clean);
+                setTimeout(startOrResume, 500);
+            } else { setBadge('▶ ПРОБЕЛ / КЛИК — старт', '#4a5568'); }
+        }
+
+        if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initScroll, { once: true }); }
+        else { initScroll(); }
+    })();
+    </script>
+
+</body>
+</html>

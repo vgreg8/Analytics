@@ -1,0 +1,1351 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лекция 20. Визуализация для машинного обучения: как показать модель</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #ffffff; }
+        .student-view { width: 66.66%; height: 100vh; background: #ffffff; padding: 35px 40px; display: flex; flex-direction: column; justify-content: space-between; border-right: 2px solid #e2e8f0; overflow-y: auto; scroll-behavior: smooth; }
+        .speaker-notes { width: 33.34%; height: 100%; background: #1a202c; color: #edf2f7; padding: 30px; overflow-y: auto; }
+        .slide-header { font-size: 26px; color: #0f172a; font-weight: bold; line-height: 1.3; margin-bottom: 18px; border-bottom: 4px solid #2563eb; padding-bottom: 12px; }
+        .slide-body { flex-grow: 1; display: flex; flex-direction: column; gap: 18px; padding: 5px 0; }
+        .slide-footer { font-size: 13px; color: #64748b; text-align: right; margin-top: 12px; }
+        .chart-box { background: #f8fafc; border: 2.5px dashed #94a3b8; padding: 20px; border-radius: 12px; }
+        .chart-box strong { font-size: 17px; display: block; margin-bottom: 8px; color: #0f172a; }
+        .chart-box p { font-size: 14px; color: #1e293b; line-height: 1.5; }
+        .viz-card { background: #ffffff; border: 2px solid #cbd5e0; border-radius: 12px; padding: 18px; box-shadow: 0 4px 10px rgba(15,23,42,0.06); }
+        .viz-title { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .viz-caption { font-size: 13px; color: #1e293b; margin-top: 10px; line-height: 1.6; }
+        .viz-caption strong { color: #0f172a; font-weight: 700; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .stat-box { border-radius: 10px; padding: 14px; text-align: center; border: 2px solid; }
+        .stat-box .stat-icon { font-size: 26px; }
+        .stat-box .stat-number { font-size: 15px; font-weight: 900; margin-top: 4px; }
+        .stat-box .stat-label { font-size: 11.5px; color: #334155; margin-top: 4px; line-height: 1.35; font-weight: 600; }
+        .stat-box.g1 { background: #eff6ff; border-color: #93c5fd; }
+        .stat-box.g1 .stat-number { color: #1e40af; }
+        .stat-box.g2 { background: #fffbeb; border-color: #fcd34d; }
+        .stat-box.g2 .stat-number { color: #92400e; }
+        .stat-box.g3 { background: #f0fdf4; border-color: #86efac; }
+        .stat-box.g3 .stat-number { color: #166534; }
+        .stat-box.g4 { background: #faf5ff; border-color: #d8b4fe; }
+        .stat-box.g4 .stat-number { color: #6b21a8; }
+        .stat-box.g5 { background: #fef2f2; border-color: #fca5a5; }
+        .stat-box.g5 .stat-number { color: #991b1b; }
+        .tag { display: inline-block; background: #eff6ff; color: #1e40af; padding: 3px 8px; border-radius: 4px; font-size: 12px; margin: 2px 2px 2px 0; font-weight: 600; }
+        .tag.green { background: #f0fdf4; color: #166534; }
+        .tag.red { background: #fef2f2; color: #991b1b; }
+        .tag.orange { background: #fffbeb; color: #92400e; }
+        .tag.purple { background: #faf5ff; color: #6b21a8; }
+        .callout { background: #fffbeb; border-left: 5px solid #d97706; padding: 14px 18px; border-radius: 6px; }
+        .callout strong { color: #78350f; font-size: 14px; }
+        .callout p { font-size: 13px; color: #451a03; margin-top: 4px; line-height: 1.5; }
+        .callout.warn { background: #fef2f2; border-left-color: #dc2626; }
+        .callout.warn strong { color: #991b1b; }
+        .callout.warn p { color: #7f1d1d; }
+        .callout.ok { background: #f0fdf4; border-left-color: #16a34a; }
+        .callout.ok strong { color: #166534; }
+        .callout.ok p { color: #14532d; }
+        .role-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .role-table th { background: #0f172a; color: white; padding: 10px 12px; text-align: left; font-weight: 700; }
+        .role-table td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; color: #1e293b; vertical-align: top; line-height: 1.45; }
+        .role-table tr:nth-child(even) td { background: #f8fafc; }
+        .role-table .role-emoji { font-size: 16px; }
+        .compare-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .compare-table th { background: #0f172a; color: white; padding: 10px 12px; text-align: left; font-weight: 700; }
+        .compare-table td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; color: #1e293b; vertical-align: top; line-height: 1.45; }
+        .compare-table tr:nth-child(even) td { background: #f8fafc; }
+        .axis { stroke: #334155; stroke-width: 2; }
+        .grid-line { stroke: #cbd5e0; stroke-width: 1; }
+        .label { font-family: 'Segoe UI', sans-serif; font-size: 13px; fill: #1e293b; font-weight: 600; }
+        .label-strong { font-family: 'Segoe UI', sans-serif; font-size: 15px; font-weight: 700; fill: #0f172a; }
+        .label-small { font-family: 'Segoe UI', sans-serif; font-size: 12px; fill: #475569; font-weight: 600; }
+        .label-tiny { font-family: 'Segoe UI', sans-serif; font-size: 11px; fill: #475569; font-weight: 500; }
+        .label-white { font-family: 'Segoe UI', sans-serif; font-size: 13px; fill: #ffffff; font-weight: 700; }
+        .label-white-sm { font-family: 'Segoe UI', sans-serif; font-size: 11px; fill: #ffffff; opacity: 0.95; font-weight: 600; }
+        .video-section { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 5px; }
+        .video-container { width: 100%; max-width: 580px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: #000; aspect-ratio: 16 / 9; }
+        .links-hub { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .video-btn { text-decoration: none; padding: 9px 14px; border-radius: 6px; font-size: 13px; font-weight: bold; color: white; display: flex; align-items: center; gap: 6px; transition: transform 0.2s, background 0.2s; cursor: pointer; border: none; }
+        .video-btn:hover { transform: translateY(-2px); }
+        .rt-btn { background: #00a877; }
+        .rt-btn:hover { background: #008f65; }
+        .stop-btn { background: #dc2626; }
+        .stop-btn:hover { background: #b91c1c; }
+        .notes-header { font-size: 17px; color: #63b3ed; font-weight: bold; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a5568; padding-bottom: 10px; }
+        .lecture-text { font-size: 14.5px; line-height: 1.65; color: #e2e8f0; text-align: justify; }
+        .lecture-text p { margin-bottom: 14px; }
+        .lecture-text h3 { color: #63b3ed; font-size: 15px; margin: 18px 0 10px; border-bottom: 1px solid #2d3748; padding-bottom: 5px; }
+        .lecture-text h4 { color: #90cdf4; font-size: 13.5px; margin: 14px 0 8px; }
+        .lecture-text ul { margin: 8px 0 14px 18px; }
+        .lecture-text li { margin-bottom: 6px; }
+        .dark-block { background: #2d3748; border: 1px solid #4a5568; border-radius: 10px; padding: 16px 18px; margin-top: 20px; }
+        .dark-block-title { font-size: 14px; font-weight: bold; color: #63b3ed; margin-bottom: 12px; border-bottom: 2px solid #4a5568; padding-bottom: 8px; }
+        .dark-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+        .dark-table th { background: #1a202c; color: #90cdf4; padding: 7px 9px; text-align: left; font-weight: 600; border-bottom: 1px solid #4a5568; }
+        .dark-table td { padding: 6px 9px; border-bottom: 1px solid #2d3748; color: #cbd5e0; vertical-align: top; line-height: 1.4; }
+        .dark-table tr:nth-child(even) td { background: #2a3242; }
+        .dark-table .term { font-weight: bold; color: #90cdf4; white-space: nowrap; }
+        .dark-block ol { margin: 0 0 12px 18px; padding: 0; font-size: 12px; color: #cbd5e0; line-height: 1.5; }
+        .dark-block ol li { margin-bottom: 5px; }
+        .dark-block .src-group { font-weight: bold; color: #fbd38d; font-size: 12px; margin: 12px 0 6px; }
+        .lecture-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(12px); border-top: 2px solid rgba(255, 255, 255, 0.08); padding: 12px 20px; display: flex; align-items: center; justify-content: center; gap: 12px; z-index: 9999; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25); }
+        .lecture-nav .nav-progress { position: absolute; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899); border-radius: 0 3px 3px 0; }
+        .lecture-nav .nav-btn-arrow { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); border: 1.5px solid rgba(255, 255, 255, 0.15); color: #e2e8f0; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; }
+        .lecture-nav .nav-btn-arrow:hover:not(:disabled) { background: rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.6); color: white; transform: translateY(-2px); }
+        .lecture-nav .nav-btn-arrow:disabled { opacity: 0.35; cursor: not-allowed; }
+        .lecture-nav .nav-btn-arrow .arrow-icon { font-size: 16px; line-height: 1; }
+        .lecture-nav .nav-btn-arrow .arrow-label { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+        .lecture-nav .nav-btn-arrow .arrow-label small { font-size: 9.5px; font-weight: 400; opacity: 0.7; text-transform: uppercase; }
+        .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { font-size: 12px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lecture-nav .nav-center { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 20px; color: #94a3b8; font-size: 11px; border-left: 1px solid rgba(255, 255, 255, 0.1); border-right: 1px solid rgba(255, 255, 255, 0.1); }
+        .lecture-nav .nav-counter { font-size: 15px; font-weight: 900; color: #f1f5f9; }
+        .lecture-nav .nav-counter span { color: #64748b; font-size: 12px; font-weight: 600; }
+        .lecture-nav .nav-index-link { color: #60a5fa; text-decoration: none; font-size: 11px; font-weight: 600; }
+        .lecture-nav .nav-index-link:hover { color: #93c5fd; text-decoration: underline; }
+        body { padding-bottom: 80px !important; }
+        @media (max-width: 900px) {
+            .lecture-nav { padding: 10px 12px; gap: 8px; }
+            .lecture-nav .nav-btn-arrow { padding: 8px 12px; }
+            .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { max-width: 90px; font-size: 11px; }
+            .grid-2, .grid-3, .grid-4, .stat-grid { grid-template-columns: 1fr; }
+        }
+        @keyframes pulseDot {
+            0%, 100% { r: 5; opacity: 1; }
+            50% { r: 7; opacity: 0.7; }
+        }
+        .pulse-dot { animation: pulseDot 2s ease-in-out infinite; }
+    </style>
+</head>
+<body>
+
+    <div class="student-view">
+        <div class="slide-header">
+            Лекция 20. Визуализация для машинного обучения: как показать модель
+        </div>
+
+        <div class="slide-body">
+
+            <!-- HERO -->
+            <div class="chart-box" style="background: #faf5ff; border-color: #d8b4fe;">
+                <strong style="color: #6b21a8;">🎯 Главная идея</strong>
+                <p>Модель машинного обучения для бизнеса — это <strong>чёрный ящик</strong>. Визуализация делает её прозрачной: показывает, как модель училась, насколько она точна, какие признаки важны и где она ошибается. Это превращает магию в <strong>инженерию</strong>.</p>
+            </div>
+
+            <!-- 9 ГРУПП -->
+            <div>
+                <div style="font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 10px;">📊 Девять групп визуализаций для ML</div>
+                <div class="stat-grid">
+                    <div class="stat-box g1">
+                        <div class="stat-icon">📉</div>
+                        <div class="stat-number">Обучение</div>
+                        <div class="stat-label">learning curves · validation · loss</div>
+                    </div>
+                    <div class="stat-box g2">
+                        <div class="stat-icon">🎯</div>
+                        <div class="stat-number">Оценка</div>
+                        <div class="stat-label">confusion · ROC · PR · calibration</div>
+                    </div>
+                    <div class="stat-box g3">
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-number">Регрессия</div>
+                        <div class="stat-label">fact vs pred · residuals · Q-Q</div>
+                    </div>
+                    <div class="stat-box g4">
+                        <div class="stat-icon">🏷️</div>
+                        <div class="stat-number">Классификация</div>
+                        <div class="stat-label">probabilities · precision by threshold</div>
+                    </div>
+                    <div class="stat-box g5">
+                        <div class="stat-icon">⚖️</div>
+                        <div class="stat-number">Важность</div>
+                        <div class="stat-label">bar · permutation · SHAP</div>
+                    </div>
+                    <div class="stat-box g1">
+                        <div class="stat-icon">🌳</div>
+                        <div class="stat-number">Структура</div>
+                        <div class="stat-label">decision tree · network · weights</div>
+                    </div>
+                    <div class="stat-box g2">
+                        <div class="stat-icon">🔵</div>
+                        <div class="stat-number">Кластеризация</div>
+                        <div class="stat-label">scatter · dendrogram · elbow · silhouette</div>
+                    </div>
+                    <div class="stat-box g3">
+                        <div class="stat-icon">📅</div>
+                        <div class="stat-number">Прогноз</div>
+                        <div class="stat-label">forecast · CI · decomposition</div>
+                    </div>
+                    <div class="stat-box g4">
+                        <div class="stat-icon">🔄</div>
+                        <div class="stat-number">Мониторинг</div>
+                        <div class="stat-label">drift · quality over time · dashboard</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- БЛОК 1: КРИВЫЕ ОБУЧЕНИЯ -->
+            <div class="viz-card">
+                <div class="viz-title">📉 Блок 1. Кривые обучения: диагностика переобучения</div>
+                <div class="grid-2">
+
+                    <!-- Overfitting -->
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #991b1b; margin-bottom: 8px; text-align: center;">Переобучение</div>
+                        <svg viewBox="0 0 300 230" width="100%">
+                            <rect x="0" y="0" width="300" height="230" fill="#ffffff"/>
+                            <line x1="50" y1="190" x2="280" y2="190" class="axis"/>
+                            <line x1="50" y1="20" x2="50" y2="190" class="axis"/>
+                            <line x1="50" y1="148" x2="280" y2="148" class="grid-line"/>
+                            <line x1="50" y1="105" x2="280" y2="105" class="grid-line"/>
+                            <line x1="50" y1="62" x2="280" y2="62" class="grid-line"/>
+                            <!-- Train: very low (high on chart) -->
+                            <path d="M 60 35 Q 120 28 280 25" fill="none" stroke="#2563eb" stroke-width="3"/>
+                            <text x="225" y="22" class="label-small" fill="#1e40af">обучение</text>
+                            <!-- Validation: high (low on chart) -->
+                            <path d="M 60 110 Q 130 95 280 100" fill="none" stroke="#dc2626" stroke-width="3"/>
+                            <text x="225" y="115" class="label-small" fill="#991b1b">валидация</text>
+                            <!-- Gap -->
+                            <line x1="200" y1="30" x2="200" y2="98" stroke="#991b1b" stroke-width="2" stroke-dasharray="4 3"/>
+                            <text x="208" y="68" class="label-small" fill="#991b1b" style="font-weight: 700;">разрыв</text>
+                            <text x="165" y="220" text-anchor="middle" class="label-strong">Размер обучающей выборки →</text>
+                            <text x="20" y="105" text-anchor="middle" class="label-strong" transform="rotate(-90 20 105)">Ошибка</text>
+                        </svg>
+                        <div style="font-size: 12px; color: #1e293b; text-align: center; margin-top: 4px;">Обучающая падает, валидационная — нет</div>
+                    </div>
+
+                    <!-- Underfitting -->
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #92400e; margin-bottom: 8px; text-align: center;">Недообучение</div>
+                        <svg viewBox="0 0 300 230" width="100%">
+                            <rect x="0" y="0" width="300" height="230" fill="#ffffff"/>
+                            <line x1="50" y1="190" x2="280" y2="190" class="axis"/>
+                            <line x1="50" y1="20" x2="50" y2="190" class="axis"/>
+                            <line x1="50" y1="148" x2="280" y2="148" class="grid-line"/>
+                            <line x1="50" y1="105" x2="280" y2="105" class="grid-line"/>
+                            <line x1="50" y1="62" x2="280" y2="62" class="grid-line"/>
+                            <!-- Both high (low on chart) and close -->
+                            <path d="M 60 160 Q 130 152 280 148" fill="none" stroke="#2563eb" stroke-width="3"/>
+                            <text x="225" y="140" class="label-small" fill="#1e40af">обучение</text>
+                            <path d="M 60 170 Q 130 162 280 158" fill="none" stroke="#dc2626" stroke-width="3"/>
+                            <text x="225" y="175" class="label-small" fill="#991b1b">валидация</text>
+                            <text x="165" y="220" text-anchor="middle" class="label-strong">Размер обучающей выборки →</text>
+                            <text x="20" y="105" text-anchor="middle" class="label-strong" transform="rotate(-90 20 105)">Ошибка</text>
+                        </svg>
+                        <div style="font-size: 12px; color: #1e293b; text-align: center; margin-top: 4px;">Обе ошибки высоки и близки</div>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    <strong>Переобучение</strong>: обучающая ошибка маленькая, валидационная большая → разрыв. <strong>Недообучение</strong>: обе ошибки высоки и близки. <strong>Хорошая модель</strong>: обе кривые сходятся к низкому значению.
+                </div>
+            </div>
+
+            <!-- БЛОК 2: КРИВАЯ ВАЛИДАЦИИ + LOSS -->
+            <div class="viz-card">
+                <div class="viz-title">📊 Кривая валидации и кривая потерь</div>
+                <div class="grid-2">
+
+                    <!-- Validation curve -->
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #1e40af; margin-bottom: 8px; text-align: center;">Кривая валидации</div>
+                        <svg viewBox="0 0 300 230" width="100%">
+                            <rect x="0" y="0" width="300" height="230" fill="#ffffff"/>
+                            <line x1="50" y1="190" x2="280" y2="190" class="axis"/>
+                            <line x1="50" y1="20" x2="50" y2="190" class="axis"/>
+                            <line x1="50" y1="148" x2="280" y2="148" class="grid-line"/>
+                            <line x1="50" y1="105" x2="280" y2="105" class="grid-line"/>
+                            <line x1="50" y1="62" x2="280" y2="62" class="grid-line"/>
+                            <!-- Train decreasing -->
+                            <path d="M 60 50 Q 150 80 280 165" fill="none" stroke="#2563eb" stroke-width="3"/>
+                            <text x="230" y="178" class="label-small" fill="#1e40af">обучение</text>
+                            <!-- Val U-shape -->
+                            <path d="M 60 155 Q 130 100 170 85 Q 220 80 280 145" fill="none" stroke="#dc2626" stroke-width="3"/>
+                            <text x="230" y="158" class="label-small" fill="#991b1b">валидация</text>
+                            <!-- Optimum -->
+                            <circle cx="180" cy="84" r="7" fill="#16a34a" stroke="#ffffff" stroke-width="2.5"/>
+                            <line x1="180" y1="84" x2="180" y2="190" stroke="#16a34a" stroke-width="2" stroke-dasharray="5 4"/>
+                            <text x="180" y="210" text-anchor="middle" class="label-small" fill="#166534" style="font-weight: 700;">оптимум</text>
+                            <text x="165" y="228" text-anchor="middle" class="label-tiny">Гиперпараметр →</text>
+                        </svg>
+                    </div>
+
+                    <!-- Loss curve -->
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #166534; margin-bottom: 8px; text-align: center;">Кривая потерь (loss)</div>
+                        <svg viewBox="0 0 300 230" width="100%">
+                            <rect x="0" y="0" width="300" height="230" fill="#ffffff"/>
+                            <line x1="50" y1="190" x2="280" y2="190" class="axis"/>
+                            <line x1="50" y1="20" x2="50" y2="190" class="axis"/>
+                            <line x1="50" y1="148" x2="280" y2="148" class="grid-line"/>
+                            <line x1="50" y1="105" x2="280" y2="105" class="grid-line"/>
+                            <line x1="50" y1="62" x2="280" y2="62" class="grid-line"/>
+                            <!-- Train falling -->
+                            <path d="M 60 40 Q 100 60 150 100 Q 200 135 280 170" fill="none" stroke="#2563eb" stroke-width="3"/>
+                            <text x="230" y="163" class="label-small" fill="#1e40af">обучение</text>
+                            <!-- Validation rising -->
+                            <path d="M 60 60 Q 100 100 150 130 Q 200 155 280 60" fill="none" stroke="#dc2626" stroke-width="3"/>
+                            <text x="230" y="55" class="label-small" fill="#991b1b">валидация</text>
+                            <!-- Stop point -->
+                            <line x1="150" y1="20" x2="150" y2="190" stroke="#d97706" stroke-width="2" stroke-dasharray="5 4"/>
+                            <text x="150" y="16" text-anchor="middle" class="label-small" fill="#92400e" style="font-weight: 700;">стоп</text>
+                            <text x="165" y="228" text-anchor="middle" class="label-tiny">Эпоха →</text>
+                        </svg>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    <strong>Кривая валидации</strong> — U-образная. Минимум = оптимальный гиперпараметр. <strong>Кривая потерь</strong>: обучение падает, валидация растёт → переобучение. Точка «стоп» — место остановки обучения.
+                </div>
+            </div>
+
+            <!-- БЛОК 3: МАТРИЦА ОШИБОК + ROC -->
+            <div class="viz-card">
+                <div class="viz-title">🎯 Блок 3. Матрица ошибок и ROC-кривая</div>
+                <div class="grid-2">
+
+                    <!-- Confusion matrix -->
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #991b1b; margin-bottom: 8px; text-align: center;">Матрица ошибок</div>
+                        <svg viewBox="0 0 320 240" width="100%">
+                            <rect x="0" y="0" width="320" height="240" fill="#ffffff"/>
+                            <text x="155" y="20" text-anchor="middle" class="label-tiny">Прогноз «да»</text>
+                            <text x="245" y="20" text-anchor="middle" class="label-tiny">Прогноз «нет»</text>
+                            <text x="30" y="85" class="label-tiny" transform="rotate(-90 30 85)">Реально «да»</text>
+                            <text x="30" y="180" class="label-tiny" transform="rotate(-90 30 180)">Реально «нет»</text>
+                            <rect x="65" y="30" width="90" height="55" rx="4" fill="#bbf7d0" stroke="#16a34a" stroke-width="2"/>
+                            <text x="110" y="55" text-anchor="middle" class="label-strong" fill="#14532d">TP = 84</text>
+                            <text x="110" y="73" text-anchor="middle" class="label-tiny" fill="#14532d">верно нашли</text>
+
+                            <rect x="160" y="30" width="90" height="55" rx="4" fill="#fef08a" stroke="#ca8a04" stroke-width="2"/>
+                            <text x="205" y="55" text-anchor="middle" class="label-strong" fill="#713f12">FN = 16</text>
+                            <text x="205" y="73" text-anchor="middle" class="label-tiny" fill="#713f12">пропустили</text>
+
+                            <rect x="65" y="90" width="90" height="55" rx="4" fill="#fecaca" stroke="#dc2626" stroke-width="2"/>
+                            <text x="110" y="115" text-anchor="middle" class="label-strong" fill="#7f1d1d">FP = 24</text>
+                            <text x="110" y="133" text-anchor="middle" class="label-tiny" fill="#7f1d1d">ложная тревога</text>
+
+                            <rect x="160" y="90" width="90" height="55" rx="4" fill="#bfdbfe" stroke="#2563eb" stroke-width="2"/>
+                            <text x="205" y="115" text-anchor="middle" class="label-strong" fill="#1e3a8a">TN = 176</text>
+                            <text x="205" y="133" text-anchor="middle" class="label-tiny" fill="#1e3a8a">верно отклонили</text>
+
+                            <text x="160" y="175" text-anchor="middle" class="label-small" style="font-weight: 700;">Precision = 84/(84+24) = 78%</text>
+                            <text x="160" y="192" text-anchor="middle" class="label-small" style="font-weight: 700;">Recall = 84/(84+16) = 84%</text>
+                            <text x="160" y="209" text-anchor="middle" class="label-small" style="font-weight: 700;">F₁ ≈ 81%</text>
+                            <text x="160" y="232" text-anchor="middle" class="label-tiny">Accuracy = (84+176)/300 = 87%</text>
+                        </svg>
+                    </div>
+
+                    <!-- ROC curve -->
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #1e40af; margin-bottom: 8px; text-align: center;">ROC-кривая</div>
+                        <svg viewBox="0 0 320 240" width="100%">
+                            <rect x="0" y="0" width="320" height="240" fill="#ffffff"/>
+                            <rect x="50" y="20" width="240" height="180" fill="#f8fafc" stroke="#e2e8f0"/>
+                            <line x1="50" y1="200" x2="290" y2="200" class="axis"/>
+                            <line x1="50" y1="20" x2="50" y2="200" class="axis"/>
+                            <line x1="50" y1="155" x2="290" y2="155" class="grid-line"/>
+                            <line x1="50" y1="110" x2="290" y2="110" class="grid-line"/>
+                            <line x1="50" y1="65" x2="290" y2="65" class="grid-line"/>
+                            <line x1="50" y1="200" x2="290" y2="20" stroke="#94a3b8" stroke-width="2" stroke-dasharray="5 4"/>
+                            <path d="M 50 200 Q 65 120 100 80 Q 150 40 220 25 Q 260 22 290 20" fill="none" stroke="#2563eb" stroke-width="4"/>
+                            <path d="M 50 200 Q 65 120 100 80 Q 150 40 220 25 Q 260 22 290 20 L 290 200 Z" fill="#2563eb" fill-opacity="0.15"/>
+                            <path d="M 50 200 L 50 20 L 290 20" fill="none" stroke="#16a34a" stroke-width="2" stroke-dasharray="4 3"/>
+                            <rect x="180" y="120" width="90" height="30" rx="4" fill="#ffffff" stroke="#2563eb" stroke-width="2"/>
+                            <text x="225" y="141" text-anchor="middle" class="label-strong" fill="#1e40af">AUC ≈ 0.89</text>
+                            <text x="170" y="225" text-anchor="middle" class="label-strong">FPR →</text>
+                            <text x="18" y="110" text-anchor="middle" class="label-strong" transform="rotate(-90 18 110)">TPR</text>
+                            <text x="160" y="15" text-anchor="middle" class="label-tiny" fill="#166534">идеал — левый верхний угол</text>
+                        </svg>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    <strong>Матрица ошибок</strong> — 4 числа TP/FP/FN/TN → все метрики. <strong>ROC-кривая</strong>: TPR vs FPR при разных порогах. Диагональ = случайная модель (AUC 0.5), левый верхний угол = идеал (AUC 1.0). Здесь AUC ≈ 0.89 — хорошая модель.
+                </div>
+            </div>
+
+            <!-- БЛОК 4: PR + CALIBRATION -->
+            <div class="viz-card">
+                <div class="viz-title">🎯 Precision-Recall и калибровочная кривая</div>
+                <div class="grid-2">
+
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #92400e; margin-bottom: 8px; text-align: center;">Precision-Recall (для дисбаланса)</div>
+                        <svg viewBox="0 0 320 220" width="100%">
+                            <rect x="0" y="0" width="320" height="220" fill="#ffffff"/>
+                            <line x1="50" y1="190" x2="290" y2="190" class="axis"/>
+                            <line x1="50" y1="20" x2="50" y2="190" class="axis"/>
+                            <line x1="50" y1="148" x2="290" y2="148" class="grid-line"/>
+                            <line x1="50" y1="105" x2="290" y2="105" class="grid-line"/>
+                            <line x1="50" y1="62" x2="290" y2="62" class="grid-line"/>
+                            <path d="M 60 40 Q 90 45 130 60 Q 180 90 230 130 Q 260 155 280 175" fill="none" stroke="#d97706" stroke-width="3.5"/>
+                            <line x1="50" y1="170" x2="290" y2="170" stroke="#94a3b8" stroke-width="2" stroke-dasharray="5 4"/>
+                            <text x="220" y="165" class="label-tiny">baseline (5%)</text>
+                            <text x="170" y="210" text-anchor="middle" class="label-strong">Recall →</text>
+                            <text x="18" y="105" text-anchor="middle" class="label-strong" transform="rotate(-90 18 105)">Precision</text>
+                        </svg>
+                    </div>
+
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #166534; margin-bottom: 8px; text-align: center;">Калибровочная кривая</div>
+                        <svg viewBox="0 0 320 220" width="100%">
+                            <rect x="0" y="0" width="320" height="220" fill="#ffffff"/>
+                            <line x1="50" y1="190" x2="290" y2="190" class="axis"/>
+                            <line x1="50" y1="20" x2="50" y2="190" class="axis"/>
+                            <line x1="60" y1="180" x2="280" y2="30" stroke="#16a34a" stroke-width="2" stroke-dasharray="5 4"/>
+                            <text x="260" y="25" class="label-tiny" fill="#166534">идеал</text>
+                            <path d="M 60 175 Q 110 155 160 110 Q 210 70 280 30" fill="none" stroke="#16a34a" stroke-width="3"/>
+                            <circle cx="70" cy="175" r="5" fill="#16a34a"/>
+                            <circle cx="110" cy="155" r="5" fill="#16a34a"/>
+                            <circle cx="160" cy="110" r="5" fill="#16a34a"/>
+                            <circle cx="210" cy="70" r="5" fill="#16a34a"/>
+                            <circle cx="270" cy="32" r="5" fill="#16a34a"/>
+                            <text x="170" y="210" text-anchor="middle" class="label-strong">Предсказанная вероятность →</text>
+                            <text x="18" y="105" text-anchor="middle" class="label-strong" transform="rotate(-90 18 105)">Реальная частота</text>
+                        </svg>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    <strong>PR-кривая</strong> — незаменима при сильном дисбалансе (baseline не 0.5, а 5%). <strong>Калибровка</strong> — насколько можно доверять вероятностям: если модель говорит «80%» — значит ли это, что событие происходит в 80 случаях из 100? Точки на диагонали = идеальная калибровка.
+                </div>
+            </div>
+
+            <!-- БЛОК 5: РЕГРЕССИЯ -->
+            <div class="viz-card">
+                <div class="viz-title">📈 Блок 5. Визуализация регрессии: «факт vs прогноз» и остатки</div>
+                <div class="grid-2">
+
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #1e40af; margin-bottom: 8px; text-align: center;">Факт vs прогноз</div>
+                        <svg viewBox="0 0 300 240" width="100%">
+                            <rect x="0" y="0" width="300" height="240" fill="#ffffff"/>
+                            <line x1="50" y1="210" x2="280" y2="210" class="axis"/>
+                            <line x1="50" y1="20" x2="50" y2="210" class="axis"/>
+                            <line x1="55" y1="205" x2="275" y2="25" stroke="#16a34a" stroke-width="2" stroke-dasharray="5 4"/>
+                            <circle cx="80"  cy="185" r="5" fill="#2563eb"/>
+                            <circle cx="110" cy="160" r="5" fill="#2563eb"/>
+                            <circle cx="140" cy="135" r="5" fill="#2563eb"/>
+                            <circle cx="170" cy="115" r="5" fill="#2563eb"/>
+                            <circle cx="200" cy="85"  r="5" fill="#2563eb"/>
+                            <circle cx="230" cy="65"  r="5" fill="#2563eb"/>
+                            <circle cx="255" cy="40"  r="5" fill="#2563eb"/>
+                            <circle cx="120" cy="100" r="6" fill="#dc2626" class="pulse-dot"/>
+                            <text x="128" y="98" class="label-tiny" fill="#991b1b">ошибка</text>
+                            <text x="165" y="232" text-anchor="middle" class="label-strong">Факт →</text>
+                            <text x="18" y="115" text-anchor="middle" class="label-strong" transform="rotate(-90 18 115)">Прогноз</text>
+                        </svg>
+                        <div style="font-size: 12px; color: #1e293b; text-align: center; margin-top: 4px;">Точки на диагонали = идеал</div>
+                    </div>
+
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #92400e; margin-bottom: 8px; text-align: center;">График остатков</div>
+                        <svg viewBox="0 0 300 240" width="100%">
+                            <rect x="0" y="0" width="300" height="240" fill="#ffffff"/>
+                            <line x1="50" y1="210" x2="280" y2="210" class="axis"/>
+                            <line x1="50" y1="20" x2="50" y2="210" class="axis"/>
+                            <line x1="50" y1="115" x2="280" y2="115" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 3"/>
+                            <text x="285" y="118" class="label-tiny">0</text>
+                            <circle cx="75"  cy="100" r="4" fill="#7c3aed"/>
+                            <circle cx="95"  cy="130" r="4" fill="#7c3aed"/>
+                            <circle cx="120" cy="105" r="4" fill="#7c3aed"/>
+                            <circle cx="145" cy="125" r="4" fill="#7c3aed"/>
+                            <circle cx="170" cy="95"  r="4" fill="#7c3aed"/>
+                            <circle cx="195" cy="135" r="4" fill="#7c3aed"/>
+                            <circle cx="220" cy="100" r="4" fill="#7c3aed"/>
+                            <circle cx="245" cy="120" r="4" fill="#7c3aed"/>
+                            <circle cx="265" cy="110" r="4" fill="#7c3aed"/>
+                            <text x="165" y="232" text-anchor="middle" class="label-strong">Прогноз →</text>
+                            <text x="18" y="115" text-anchor="middle" class="label-strong" transform="rotate(-90 18 115)">Остаток</text>
+                        </svg>
+                        <div style="font-size: 12px; color: #1e293b; text-align: center; margin-top: 4px;">Случайный разброс вокруг 0 = хорошо</div>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    <strong>Факт vs прогноз</strong>: точки должны лежать на диагонали y = x. Отклонения — ошибки модели. <strong>Остатки</strong>: если разбросаны случайно вокруг 0 — модель хорошая. Если есть паттерн (волна, рост) — модель что-то не уловила.
+                </div>
+            </div>
+
+            <!-- БЛОК 6: ПОРОГ КЛАССИФИКАЦИИ -->
+            <div class="viz-card">
+                <div class="viz-title">🏷️ Блок 6. Порог классификации: компромисс Precision / Recall</div>
+                <svg viewBox="0 0 540 260" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="260" fill="#ffffff"/>
+                    <line x1="60" y1="220" x2="490" y2="220" class="axis"/>
+                    <line x1="60" y1="30" x2="60" y2="220" class="axis"/>
+                    <path d="M 70 190 Q 200 160 340 100 Q 420 65 480 40" fill="none" stroke="#2563eb" stroke-width="4"/>
+                    <text x="465" y="35" class="label-small" fill="#1e40af" style="font-weight: 700;">Precision</text>
+                    <path d="M 70 40 Q 200 55 340 110 Q 420 155 480 195" fill="none" stroke="#16a34a" stroke-width="4"/>
+                    <text x="465" y="190" class="label-small" fill="#166534" style="font-weight: 700;">Recall</text>
+                    <line x1="340" y1="20" x2="340" y2="220" stroke="#dc2626" stroke-width="2.5" stroke-dasharray="6 4" class="pulse-dot"/>
+                    <text x="340" y="15" text-anchor="middle" class="label-small" fill="#991b1b" style="font-weight: 700;">порог = 0.5</text>
+                    <circle cx="340" cy="105" r="7" fill="#dc2626" stroke="#ffffff" stroke-width="2"/>
+                    <text x="275" y="245" text-anchor="middle" class="label-strong">Порог классификации →</text>
+                    <text x="28" y="130" text-anchor="middle" class="label-strong" transform="rotate(-90 28 130)">Значение метрики</text>
+                    <text x="70"  y="235" text-anchor="middle" class="label-small">0.1</text>
+                    <text x="205" y="235" text-anchor="middle" class="label-small">0.3</text>
+                    <text x="340" y="235" text-anchor="middle" class="label-small">0.5</text>
+                    <text x="475" y="235" text-anchor="middle" class="label-small">0.7</text>
+                </svg>
+                <div class="viz-caption">
+                    Порог — <strong>компромисс</strong>. ↓ порог → ↑ Recall, ↓ Precision (находим больше, но с ложными тревогами). ↑ порог → ↑ Precision, ↓ Recall (точно, но многое пропускаем). Выбор порога — под задачу бизнеса: важно не пропустить (медицина, антифрод) → низкий порог; важно не ошибиться (кредитование) → высокий.
+                </div>
+            </div>
+
+            <!-- БЛОК 7: ВАЖНОСТЬ ПРИЗНАКОВ + SHAP -->
+            <div class="viz-card">
+                <div class="viz-title">⚖️ Блок 7. Важность признаков и SHAP-диаграмма</div>
+                <div class="grid-2">
+
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #1e40af; margin-bottom: 8px; text-align: center;">Bar chart важности признаков</div>
+                        <svg viewBox="0 0 320 240" width="100%">
+                            <rect x="0" y="0" width="320" height="240" fill="#ffffff"/>
+                            <text x="120" y="35" text-anchor="end" class="label-small">Доход</text>
+                            <rect x="130" y="22" width="170" height="22" rx="3" fill="#16a34a"/>
+                            <text x="305" y="38" class="label-tiny" fill="#166534" style="font-weight: 700;">0.32</text>
+
+                            <text x="120" y="75" text-anchor="end" class="label-small">Стаж</text>
+                            <rect x="130" y="62" width="130" height="22" rx="3" fill="#2563eb"/>
+                            <text x="265" y="78" class="label-tiny" style="font-weight: 700;">0.24</text>
+
+                            <text x="120" y="115" text-anchor="end" class="label-small">Обращения</text>
+                            <rect x="130" y="102" width="100" height="22" rx="3" fill="#d97706"/>
+                            <text x="235" y="118" class="label-tiny" style="font-weight: 700;">0.18</text>
+
+                            <text x="120" y="155" text-anchor="end" class="label-small">Возраст</text>
+                            <rect x="130" y="142" width="65" height="22" rx="3" fill="#7c3aed"/>
+                            <text x="200" y="158" class="label-tiny" style="font-weight: 700;">0.12</text>
+
+                            <text x="120" y="195" text-anchor="end" class="label-small">Регион</text>
+                            <rect x="130" y="182" width="40" height="22" rx="3" fill="#64748b"/>
+                            <text x="175" y="198" class="label-tiny" style="font-weight: 700;">0.08</text>
+
+                            <text x="120" y="225" text-anchor="end" class="label-small">Пол</text>
+                            <rect x="130" y="212" width="25" height="22" rx="3" fill="#64748b"/>
+                            <text x="160" y="228" class="label-tiny" style="font-weight: 700;">0.06</text>
+                        </svg>
+                    </div>
+
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #6b21a8; margin-bottom: 8px; text-align: center;">SHAP-диаграмма</div>
+                        <svg viewBox="0 0 320 240" width="100%">
+                            <rect x="0" y="0" width="320" height="240" fill="#ffffff"/>
+                            <line x1="160" y1="25" x2="160" y2="220" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 3"/>
+                            <text x="85" y="50" text-anchor="end" class="label-small">Доход</text>
+                            <circle cx="120" cy="48" r="4" fill="#2563eb"/>
+                            <circle cx="135" cy="48" r="4" fill="#2563eb"/>
+                            <circle cx="180" cy="48" r="4" fill="#dc2626"/>
+                            <circle cx="195" cy="48" r="4" fill="#dc2626"/>
+                            <circle cx="210" cy="48" r="4" fill="#dc2626"/>
+                            <circle cx="225" cy="48" r="4" fill="#dc2626"/>
+
+                            <text x="85" y="80" text-anchor="end" class="label-small">Стаж</text>
+                            <circle cx="130" cy="78" r="4" fill="#2563eb"/>
+                            <circle cx="145" cy="78" r="4" fill="#2563eb"/>
+                            <circle cx="170" cy="78" r="4" fill="#dc2626"/>
+                            <circle cx="185" cy="78" r="4" fill="#dc2626"/>
+                            <circle cx="200" cy="78" r="4" fill="#dc2626"/>
+
+                            <text x="85" y="110" text-anchor="end" class="label-small">Обращения</text>
+                            <circle cx="100" cy="108" r="4" fill="#2563eb"/>
+                            <circle cx="115" cy="108" r="4" fill="#2563eb"/>
+                            <circle cx="185" cy="108" r="4" fill="#dc2626"/>
+                            <circle cx="200" cy="108" r="4" fill="#dc2626"/>
+
+                            <text x="85" y="140" text-anchor="end" class="label-small">Возраст</text>
+                            <circle cx="140" cy="138" r="4" fill="#2563eb"/>
+                            <circle cx="155" cy="138" r="4" fill="#2563eb"/>
+                            <circle cx="175" cy="138" r="4" fill="#dc2626"/>
+                            <circle cx="190" cy="138" r="4" fill="#dc2626"/>
+
+                            <text x="85" y="170" text-anchor="end" class="label-small">Регион</text>
+                            <circle cx="150" cy="168" r="4" fill="#2563eb"/>
+                            <circle cx="170" cy="168" r="4" fill="#dc2626"/>
+
+                            <circle cx="60" cy="210" r="4" fill="#2563eb"/>
+                            <text x="70" y="214" class="label-tiny">низкое значение</text>
+                            <circle cx="200" cy="210" r="4" fill="#dc2626"/>
+                            <text x="210" y="214" class="label-tiny">высокое</text>
+                        </svg>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    <strong>Важность признаков</strong>: «Доход» и «Стаж» — главные. Остальные слабее. <strong>SHAP</strong>: каждая точка — отдельный объект. Красные справа = высокое значение признака повышает предсказание. Синие слева = низкое значение понижает. Видна не только важность, но и <strong>направление</strong> влияния.
+                </div>
+            </div>
+
+            <!-- БЛОК 8: ДЕРЕВО РЕШЕНИЙ -->
+            <div class="viz-card">
+                <div class="viz-title">🌳 Блок 8. Структура модели: дерево решений</div>
+                <svg viewBox="0 0 540 280" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="280" fill="#ffffff"/>
+                    <line x1="270" y1="55" x2="150" y2="120" stroke="#94a3b8" stroke-width="2.5"/>
+                    <line x1="270" y1="55" x2="390" y2="120" stroke="#94a3b8" stroke-width="2.5"/>
+                    <line x1="150" y1="145" x2="80"  y2="210" stroke="#94a3b8" stroke-width="2.5"/>
+                    <line x1="150" y1="145" x2="220" y2="210" stroke="#94a3b8" stroke-width="2.5"/>
+                    <line x1="390" y1="145" x2="320" y2="210" stroke="#94a3b8" stroke-width="2.5"/>
+                    <line x1="390" y1="145" x2="460" y2="210" stroke="#94a3b8" stroke-width="2.5"/>
+                    <text x="200" y="82" text-anchor="middle" class="label-tiny" fill="#166534" style="font-weight: 700;">Да</text>
+                    <text x="340" y="82" text-anchor="middle" class="label-tiny" fill="#991b1b" style="font-weight: 700;">Нет</text>
+                    <rect x="185" y="30" width="170" height="42" rx="8" fill="#1e40af"/>
+                    <text x="270" y="56" text-anchor="middle" class="label-white">Доход &gt; 50 000 ?</text>
+                    <rect x="85" y="120" width="130" height="36" rx="6" fill="#2563eb"/>
+                    <text x="150" y="143" text-anchor="middle" class="label-white">Стаж &gt; 2 г. ?</text>
+                    <rect x="325" y="120" width="130" height="36" rx="6" fill="#2563eb"/>
+                    <text x="390" y="143" text-anchor="middle" class="label-white">Есть залоги ?</text>
+                    <rect x="45" y="210" width="70" height="36" rx="6" fill="#16a34a"/>
+                    <text x="80" y="233" text-anchor="middle" class="label-white">Вернёт</text>
+                    <rect x="185" y="210" width="70" height="36" rx="6" fill="#dc2626"/>
+                    <text x="220" y="233" text-anchor="middle" class="label-white">Не вернёт</text>
+                    <rect x="285" y="210" width="70" height="36" rx="6" fill="#16a34a"/>
+                    <text x="320" y="233" text-anchor="middle" class="label-white">Вернёт</text>
+                    <rect x="425" y="210" width="70" height="36" rx="6" fill="#dc2626"/>
+                    <text x="460" y="233" text-anchor="middle" class="label-white">Не вернёт</text>
+                    <text x="270" y="272" text-anchor="middle" class="label-tiny">путь корень → лист = правило «если—то»</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Дерево решений</strong> — единственная модель, которую можно нарисовать и объяснить заказчику. Путь «Доход &gt; 50к → Стаж &gt; 2 г. → Вернёт» — это готовое бизнес-правило. Дерево показывает, какие признаки и пороги привели к решению.
+                </div>
+            </div>
+
+            <!-- БЛОК 9: КЛАСТЕРИЗАЦИЯ -->
+            <div class="viz-card">
+                <div class="viz-title">🔵 Блок 9. Кластеризация: scatter с кластерами + elbow</div>
+                <div class="grid-2">
+
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #1e40af; margin-bottom: 8px; text-align: center;">Scatter с кластерами</div>
+                        <svg viewBox="0 0 300 240" width="100%">
+                            <rect x="0" y="0" width="300" height="240" fill="#ffffff"/>
+                            <line x1="40" y1="210" x2="280" y2="210" class="axis"/>
+                            <line x1="40" y1="20" x2="40" y2="210" class="axis"/>
+                            <circle cx="90"  cy="150" r="6" fill="#2563eb"/>
+                            <circle cx="105" cy="135" r="6" fill="#2563eb"/>
+                            <circle cx="115" cy="160" r="6" fill="#2563eb"/>
+                            <circle cx="80"  cy="170" r="6" fill="#2563eb"/>
+                            <circle cx="100" cy="145" r="6" fill="#2563eb"/>
+                            <circle cx="125" cy="140" r="6" fill="#2563eb"/>
+                            <circle cx="170" cy="80" r="6" fill="#16a34a"/>
+                            <circle cx="190" cy="65" r="6" fill="#16a34a"/>
+                            <circle cx="200" cy="90" r="6" fill="#16a34a"/>
+                            <circle cx="180" cy="100" r="6" fill="#16a34a"/>
+                            <circle cx="210" cy="75" r="6" fill="#16a34a"/>
+                            <circle cx="165" cy="90" r="6" fill="#16a34a"/>
+                            <circle cx="230" cy="160" r="6" fill="#ea580c"/>
+                            <circle cx="250" cy="170" r="6" fill="#ea580c"/>
+                            <circle cx="245" cy="150" r="6" fill="#ea580c"/>
+                            <circle cx="260" cy="180" r="6" fill="#ea580c"/>
+                            <circle cx="225" cy="180" r="6" fill="#ea580c"/>
+                            <circle cx="240" cy="185" r="6" fill="#ea580c"/>
+                            <text x="160" y="230" text-anchor="middle" class="label-strong">Признак 1 →</text>
+                            <text x="18" y="115" text-anchor="middle" class="label-strong" transform="rotate(-90 18 115)">Признак 2</text>
+                        </svg>
+                    </div>
+
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #92400e; margin-bottom: 8px; text-align: center;">Elbow: выбор числа кластеров</div>
+                        <svg viewBox="0 0 300 240" width="100%">
+                            <rect x="0" y="0" width="300" height="240" fill="#ffffff"/>
+                            <line x1="50" y1="210" x2="280" y2="210" class="axis"/>
+                            <line x1="50" y1="20" x2="50" y2="210" class="axis"/>
+                            <path d="M 70 30 Q 100 90 130 150 Q 160 185 200 195 Q 240 200 270 203" fill="none" stroke="#d97706" stroke-width="3.5"/>
+                            <circle cx="70"  cy="30"  r="5" fill="#d97706"/>
+                            <circle cx="100" cy="90"  r="5" fill="#d97706"/>
+                            <circle cx="130" cy="150" r="5" fill="#d97706" class="pulse-dot"/>
+                            <circle cx="160" cy="185" r="5" fill="#d97706"/>
+                            <circle cx="200" cy="195" r="5" fill="#d97706"/>
+                            <circle cx="240" cy="200" r="5" fill="#d97706"/>
+                            <circle cx="270" cy="203" r="5" fill="#d97706"/>
+                            <line x1="130" y1="150" x2="130" y2="210" stroke="#dc2626" stroke-width="2" stroke-dasharray="5 4"/>
+                            <text x="130" y="226" text-anchor="middle" class="label-small" fill="#991b1b" style="font-weight: 700;">локоть</text>
+                            <text x="165" y="238" text-anchor="middle" class="label-tiny">Число кластеров →</text>
+                            <text x="25" y="115" text-anchor="middle" class="label-tiny" transform="rotate(-90 25 115)">Внутрикластерное расстояние</text>
+                        </svg>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    <strong>Scatter с кластерами</strong> — три цветные группы. <strong>Elbow</strong> показывает, как падает внутрикластерное расстояние с ростом числа кластеров. Точка перегиба («локоть») — оптимальное k. Здесь k = 3.
+                </div>
+            </div>
+
+            <!-- БЛОК 10: ПРОГНОЗ + ДЕКОМПОЗИЦИЯ -->
+            <div class="viz-card">
+                <div class="viz-title">📅 Блок 10. Прогноз с доверительным интервалом и декомпозиция</div>
+                <div class="grid-2">
+
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #1e40af; margin-bottom: 8px; text-align: center;">Прогноз + CI</div>
+                        <svg viewBox="0 0 320 220" width="100%">
+                            <rect x="0" y="0" width="320" height="220" fill="#ffffff"/>
+                            <line x1="40" y1="180" x2="300" y2="180" class="axis"/>
+                            <line x1="40" y1="20" x2="40" y2="180" class="axis"/>
+                            <path d="M 45 140 L 70 130 L 95 135 L 120 110 L 145 115 L 170 95 L 195 100" fill="none" stroke="#2563eb" stroke-width="3"/>
+                            <text x="170" y="80" class="label-tiny" fill="#1e40af">факт</text>
+                            <path d="M 195 100 Q 220 85 245 70 Q 270 60 295 55 L 295 105 Q 270 110 245 120 Q 220 130 195 140 Z" fill="#86efac" fill-opacity="0.45" stroke="#16a34a" stroke-width="2" stroke-dasharray="4 3"/>
+                            <path d="M 195 100 L 245 80 L 295 75" fill="none" stroke="#16a34a" stroke-width="3" stroke-dasharray="6 3"/>
+                            <text x="260" y="70" class="label-tiny" fill="#166534">прогноз</text>
+                            <line x1="195" y1="20" x2="195" y2="180" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5 4"/>
+                            <text x="195" y="196" text-anchor="middle" class="label-tiny" fill="#64748b">сегодня</text>
+                            <text x="170" y="212" text-anchor="middle" class="label-strong">Время →</text>
+                        </svg>
+                    </div>
+
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #92400e; margin-bottom: 8px; text-align: center;">Декомпозиция ряда</div>
+                        <svg viewBox="0 0 320 220" width="100%">
+                            <rect x="0" y="0" width="320" height="220" fill="#ffffff"/>
+                            <text x="55" y="35" text-anchor="end" class="label-tiny">Тренд</text>
+                            <line x1="65" y1="40" x2="300" y2="40" class="grid-line"/>
+                            <path d="M 65 60 L 150 50 L 200 45 L 250 35 L 300 30" fill="none" stroke="#2563eb" stroke-width="2.5"/>
+                            <text x="55" y="95" text-anchor="end" class="label-tiny">Сезонность</text>
+                            <line x1="65" y1="100" x2="300" y2="100" class="grid-line"/>
+                            <path d="M 65 100 Q 80 80 95 100 Q 110 120 125 100 Q 140 80 155 100 Q 170 120 185 100 Q 200 80 215 100 Q 230 120 245 100 Q 260 80 275 100 Q 290 120 300 100" fill="none" stroke="#d97706" stroke-width="2.5"/>
+                            <text x="55" y="155" text-anchor="end" class="label-tiny">Остатки</text>
+                            <line x1="65" y1="160" x2="300" y2="160" class="grid-line"/>
+                            <circle cx="80"  cy="150" r="4" fill="#64748b"/>
+                            <circle cx="110" cy="170" r="4" fill="#64748b"/>
+                            <circle cx="140" cy="155" r="4" fill="#64748b"/>
+                            <circle cx="170" cy="165" r="4" fill="#64748b"/>
+                            <circle cx="200" cy="150" r="4" fill="#64748b"/>
+                            <circle cx="230" cy="172" r="4" fill="#64748b"/>
+                            <circle cx="260" cy="155" r="4" fill="#64748b"/>
+                            <circle cx="290" cy="165" r="4" fill="#64748b"/>
+                            <text x="165" y="212" text-anchor="middle" class="label-strong">Время →</text>
+                        </svg>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    <strong>Прогноз + CI</strong>: линия прогноза и закрашенный коридор — границы неопределённости. Чем шире — тем больше риск. <strong>Декомпозиция</strong>: ряд раскладывается на тренд, сезонность и остатки. Это помогает понять, что именно влияет на показатель.
+                </div>
+            </div>
+
+            <!-- БЛОК 11: МОНИТОРИНГ -->
+            <div class="viz-card">
+                <div class="viz-title">🔄 Блок 11. Мониторинг: дрейф данных и качество во времени</div>
+                <div class="grid-2">
+
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #991b1b; margin-bottom: 8px; text-align: center;">Дрейф данных</div>
+                        <svg viewBox="0 0 300 220" width="100%">
+                            <rect x="0" y="0" width="300" height="220" fill="#ffffff"/>
+                            <line x1="40" y1="180" x2="280" y2="180" class="axis"/>
+                            <line x1="40" y1="20" x2="40" y2="180" class="axis"/>
+                            <path d="M 40 180 Q 80 175 100 130 Q 120 90 140 90 Q 160 90 180 130 Q 200 175 240 180" fill="#bfdbfe" fill-opacity="0.6" stroke="#2563eb" stroke-width="2.5"/>
+                            <text x="140" y="85" text-anchor="middle" class="label-tiny" fill="#1e40af">обучение</text>
+                            <path d="M 40 180 Q 100 175 130 130 Q 160 80 200 80 Q 230 80 260 130 Q 275 165 285 180" fill="#fecaca" fill-opacity="0.5" stroke="#dc2626" stroke-width="2.5" stroke-dasharray="5 3"/>
+                            <text x="200" y="75" text-anchor="middle" class="label-tiny" fill="#991b1b">сейчас</text>
+                            <line x1="150" y1="150" x2="190" y2="150" stroke="#dc2626" stroke-width="3" class="pulse-dot"/>
+                            <polygon points="190,150 184,147 184,153" fill="#dc2626"/>
+                            <text x="170" y="145" text-anchor="middle" class="label-tiny" fill="#991b1b" style="font-weight: 700;">дрейф!</text>
+                            <text x="160" y="200" text-anchor="middle" class="label-strong">Значение признака →</text>
+                        </svg>
+                    </div>
+
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #92400e; margin-bottom: 8px; text-align: center;">Качество во времени</div>
+                        <svg viewBox="0 0 300 220" width="100%">
+                            <rect x="0" y="0" width="300" height="220" fill="#ffffff"/>
+                            <line x1="40" y1="180" x2="280" y2="180" class="axis"/>
+                            <line x1="40" y1="20" x2="40" y2="180" class="axis"/>
+                            <line x1="40" y1="140" x2="280" y2="140" class="grid-line"/>
+                            <line x1="40" y1="100" x2="280" y2="100" class="grid-line"/>
+                            <line x1="40" y1="60" x2="280" y2="60" class="grid-line"/>
+                            <path d="M 50 60 L 100 65 L 150 70 L 180 85 L 210 110 L 240 130 L 270 150" fill="none" stroke="#dc2626" stroke-width="3.5"/>
+                            <circle cx="50"  cy="60"  r="5" fill="#dc2626"/>
+                            <circle cx="100" cy="65"  r="5" fill="#dc2626"/>
+                            <circle cx="150" cy="70"  r="5" fill="#dc2626"/>
+                            <circle cx="180" cy="85"  r="5" fill="#dc2626"/>
+                            <circle cx="210" cy="110" r="5" fill="#dc2626" class="pulse-dot"/>
+                            <circle cx="240" cy="130" r="5" fill="#dc2626"/>
+                            <circle cx="270" cy="150" r="5" fill="#dc2626"/>
+                            <line x1="40" y1="120" x2="280" y2="120" stroke="#d97706" stroke-width="2" stroke-dasharray="5 4"/>
+                            <text x="285" y="123" class="label-tiny" fill="#92400e">порог</text>
+                            <text x="160" y="200" text-anchor="middle" class="label-strong">Время →</text>
+                            <text x="20" y="105" text-anchor="middle" class="label-tiny" transform="rotate(-90 20 105)">Качество</text>
+                        </svg>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    <strong>Дрейф данных</strong>: распределение признака сместилось → модель может ошибаться. <strong>Качество во времени</strong>: если метрика падает ниже порога — пора переобучать модель. Это основа <strong>мониторинга</strong> после внедрения.
+                </div>
+            </div>
+
+            <!-- РОЛЕВАЯ МАТРИЦА -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 8px;">👥 Какие ML-визуализации используют 11 ролей аналитиков</div>
+                <table class="role-table">
+                    <thead>
+                        <tr><th style="width: 28%;">Роль</th><th>Ключевые ML-визуализации</th><th style="width: 32%;">Типичные задачи</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="role-emoji">📈</span> <strong>Аналитик данных</strong></td><td>learning curves, confusion matrix, ROC, residuals</td><td>Диагностика переобучения, выбор модели для прогноза, объяснение бизнесу</td></tr>
+                        <tr><td><span class="role-emoji">💰</span> <strong>Финансовый аналитик</strong></td><td>confusion matrix, ROC, calibration, остатки</td><td>Кредитный скоринг: полнота и калибровка вероятностей дефолта</td></tr>
+                        <tr><td><span class="role-emoji">🚀</span> <strong>Продуктовый аналитик</strong></td><td>learning curves, confusion matrix, residuals</td><td>Прогноз удержания, оценка влияния новых функций</td></tr>
+                        <tr><td><span class="role-emoji">🌐</span> <strong>Веб-аналитик</strong></td><td>ROC, PR-curve, probability distribution</td><td>Прогноз конверсии, оценка моделей клика</td></tr>
+                        <tr><td><span class="role-emoji">📊</span> <strong>BI-аналитик</strong></td><td>forecast + CI, feature importance</td><td>Прогнозные линии на дашбордах, объяснение факторов</td></tr>
+                        <tr><td><span class="role-emoji">🗄️</span> <strong>Аналитик больших данных</strong></td><td>learning curves, loss, SHAP, drift</td><td>Настройка гиперпараметров, интерпретация моделей, мониторинг</td></tr>
+                        <tr><td><span class="role-emoji">📣</span> <strong>Маркетинговый аналитик</strong></td><td>PR-curve, threshold, feature importance</td><td>Таргетинг: выбор порога, понимание ключевых признаков аудитории</td></tr>
+                        <tr><td><span class="role-emoji">💼</span> <strong>Бизнес-аналитик</strong></td><td>confusion matrix, decision tree</td><td>Объяснение модели руководству, описание бизнес-правил</td></tr>
+                        <tr><td><span class="role-emoji">⚙️</span> <strong>Системный аналитик</strong></td><td>confusion matrix, quality over time</td><td>Прогноз сбоев: важнее полнота, чем точность</td></tr>
+                        <tr><td><span class="role-emoji">🗃️</span> <strong>Аналитик 1С</strong></td><td>decision tree, residuals</td><td>Прогноз остатков, объяснение бизнес-правил учёта</td></tr>
+                        <tr><td><span class="role-emoji">🎨</span> <strong>UX-аналитик</strong></td><td>confusion matrix, feature importance, кластеры</td><td>Прогноз удовлетворённости, сегментация пользователей</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- CALL-OUT -->
+            <div class="callout ok">
+                <strong>💡 Главный вывод</strong>
+                <p>Визуализация в ML — это <strong>инструмент диагностики и коммуникации</strong>. Кривые обучения → переобучение. Матрица ошибок → структура ошибок. ROC → общая оценка. Важность признаков → что влияет на решение. SHAP → почему модель сказала «да». Визуализация превращает <strong>чёрный ящик в понятный инструмент</strong>.</p>
+            </div>
+
+            <!-- ВИДЕОПЛЕЕР -->
+            <div class="video-section">
+                <div class="video-container">
+                    <iframe id="lecture-player" src="https://rutube.ru" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+                </div>
+                <div class="links-hub">
+                    <button onclick="changeVideo('https://rutube.ru/')" class="video-btn stop-btn">⏹ СТОП</button>
+                    <button onclick="changeVideo('https://rutube.ru/play/embed/')" class="video-btn rt-btn">📜 Лекция 20. Визуализация для ML</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="slide-footer">
+            Направление «Менеджмент» | Курс: Аналитика данных | Лекция 20: «Визуализация для машинного обучения: как показать модель»
+        </div>
+    </div>
+
+    <!-- ПРАВАЯ ПАНЕЛЬ -->
+       <div class="speaker-notes">
+        <div style="position: sticky; top: 0; background: #1a202c; padding: 20px 20px 10px 20px; border-bottom: 1px solid #4a5568; width: 100%; z-index: 100;">
+                       <div class="notes-header" style="display: block; padding-bottom: 15px;">
+               <audio id="lecture-audio" preload="auto" controls
+                      src="https://archive.org/download/03_20261110_20261110/19.mp3"
+                      style="width: 100%; height: 32px; border-radius: 4px;"></audio>
+            </div>
+            <div style="width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+             <iframe id="right-lecture-player" src="https://archive.org/embed/20261020_20261020_0955?autoplay=true&loop=true&muted=true"  allow="clipboard-write; autoplay" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen style="border: none;"></iframe>
+
+                           </div>
+        </div>
+
+        <div class="lecture-text" style="margin-top: 20px;">
+
+            <h3>📌 Введение</h3>
+
+            <p>Добрый день, коллеги. Мы начинаем двадцатую лекцию нашего курса. Она продолжает тему визуализации. В восьмой лекции мы разобрали, как показать результаты описательного анализа. Как сравнить категории. Как показать доли. Как увидеть динамику. Как оценить распределение. Как найти связь между переменными. И как показать пространственные данные.</p>
+
+            <p>Сегодня мы переходим ко второй части. К визуализации для машинного обучения. Это особый мир диаграмм. Он отвечает не на вопрос «что произошло?». А на вопрос «как работает модель?». Насколько она точна. Где она ошибается. Какие признаки важны. Как она поведёт себя на новых данных.</p>
+
+            <p>Давайте сразу обозначим главную мысль. Модель машинного обучения для бизнеса — это чёрный ящик. Руководитель не видит, что внутри. Он видит только прогноз. И не понимает, можно ли ему доверять. Визуализация делает модель прозрачной. Она показывает, как модель училась. Насколько хорошо она работает. И почему она принимает то или иное решение. Это превращает чёрный ящик в понятный инструмент.</p>
+
+            <p>Представьте себе такую ситуацию. Аналитик построил модель прогноза оттока. Она показывает точность девяносто процентов на тестовой выборке. Руководитель спрашивает. А почему она ошибается в десяти процентах случаев? Какие клиенты попадают в эту ошибку? И что можно сделать, чтобы улучшить модель? Аналитик не может ответить. Потому что он показал только одно число. А нужно было показать больше. Матрицу ошибок. Кривую обучения. Важность признаков. И график остатков. Тогда ответ был бы полным.</p>
+
+            <p>Сегодня мы разберём несколько групп визуализаций для машинного обучения. Это визуализация процесса обучения. Это визуализация оценки качества. Это визуализация регрессии. Это визуализация классификации. Это визуализация важности признаков. Это визуализация структуры модели. Это визуализация кластеризации. Это визуализация прогноза временных рядов. И это визуализация мониторинга модели.</p>
+
+            <p>Для каждой группы мы разберём, какие задачи она решает. Какие ошибки бывают. И какие из одиннадцати ролей аналитиков чаще всего её используют. Напомню, что роли мы разбирали в первой лекции. А метрики качества моделей — в четырнадцатой лекции. Сегодняшняя лекция опирается на них.</p>
+
+            <p>Обратите внимание на важную мысль. Визуализация в машинном обучении — это не просто картинки для отчёта. Это инструмент диагностики. По кривой обучения видно, переобучается модель или нет. По матрице ошибок видно, какие ошибки она делает чаще. По графику остатков видно, есть ли в данных закономерность, которую модель не уловила. Это инструменты для аналитика. А не только для презентации.</p>
+
+            <p>И ещё одна мысль. Визуализация для машинного обучения требует понимания самой модели. Нельзя показать кривую обучения, если не знаешь, что такое переобучение. Нельзя показать ROC-кривую, если не знаешь, что такое точность и полнота. Поэтому эта лекция идёт после лекции об оценке качества. Она опирается на всё, что мы разобрали раньше.</p>
+
+            <p>Давайте начнём.</p>
+
+            <h3>📌 Блок 1. Визуализация процесса обучения</h3>
+
+            <p>Перейдём к первому вопросу. Как показать, что модель училась. И как она училась.</p>
+
+            <p>Начнём с кривых обучения. Кривая обучения — это график зависимости качества модели от размера обучающей выборки. По горизонтальной оси — количество наблюдений, использованных для обучения. По вертикальной — ошибка модели. Обычно строят две кривые. Первую — для обучающей выборки. Вторую — для валидационной. И сравнивают их.</p>
+
+            <p>Если кривые сходятся — модель хорошая. Обучающая и валидационная ошибки близки. Модель обобщает. Если кривые не сходятся — есть проблема. Если обучающая ошибка маленькая, а валидационная большая — это переобучение. Модель запомнила обучающие данные. Если обе ошибки большие — это недообучение. Модель слишком простая.</p>
+
+            <p>Кривые обучения — это диагностический инструмент. Они показывают, в какую сторону двигаться. Если переобучение — нужно упростить модель. Или добавить регуляризацию. Или увеличить объём данных. Если недообучение — нужно усложнить модель. Или добавить признаки. Или выбрать другой алгоритм.</p>
+
+            <p>Теперь перейдём к кривым валидации. Кривая валидации — это график зависимости качества модели от значения одного гиперпараметра. Например, от глубины дерева. Или от числа соседей. Или от силы регуляризации. По горизонтальной оси — значение гиперпараметра. По вертикальной — ошибка. Обычно строят две кривые. Обучающую и валидационную.</p>
+
+            <p>Обучающая ошибка монотонно падает с ростом сложности модели. Валидационная ошибка имеет U-образную форму. Она сначала падает, а затем растёт. Минимум валидационной ошибки — это и есть оптимальное значение гиперпараметра. Кривые валидации помогают найти этот оптимум. И избежать крайностей.</p>
+
+            <p>И третья визуализация — кривая потерь. Это график зависимости функции потерь от эпохи обучения. Обычно используется для нейронных сетей. По горизонтальной оси — номер эпохи. По вертикальной — значение потерь. Строят две кривые. Для обучения и для валидации. Если кривая на обучении падает, а на валидации растёт — модель переобучается. Это сигнал к остановке обучения. Или к регуляризации.</p>
+
+            <p>Кривая потерь — это основной инструмент диагностики нейронных сетей. Без неё невозможно понять, что происходит в процессе обучения.</p>
+
+            <h4>Кто и для каких задач использует визуализацию обучения</h4>
+
+            <p><strong>Аналитик данных</strong> использует кривые обучения для диагностики переобучения. Типичная задача — проверить, не запоминает ли модель данные. И стоит ли упрощать модель.</p>
+
+            <p><strong>Аналитик больших данных</strong> использует кривые обучения и кривые валидации для настройки гиперпараметров. Это его основной инструмент. Без него невозможно найти оптимальную конфигурацию.</p>
+
+            <p><strong>Продуктовый аналитик</strong> использует кривые потерь при обучении нейронных сетей. Например, для рекомендательной системы. Кривая потерь показывает, когда остановить обучение.</p>
+
+            <p><strong>Специалист по аналитике бизнес-данных</strong> использует кривые валидации для выбора гиперпараметров на дашбордах. Например, для прогнозных моделей, которые строят линии на графиках.</p>
+
+            <p>Обратите внимание на важную мысль. Визуализация процесса обучения — это не для бизнеса. Это для аналитика. Она помогает понять, что происходит с моделью. И принять решение о её улучшении. Показывать кривые обучения заказчику обычно не нужно. Но аналитик обязан их смотреть.</p>
+
+            <h3>📌 Блок 2. Визуализация оценки качества</h3>
+
+            <p>Теперь перейдём ко второму вопросу. Как показать, насколько модель точна. И в чём именно она ошибается.</p>
+
+            <p>Начнём с матрицы ошибок. Матрица ошибок — это таблица, которая показывает, сколько объектов модель отнесла к каждому классу. И сколько из них действительно к нему относятся. У матрицы четыре ячейки. Истинно положительные. Ложноположительные. Ложноотрицательные. И истинно отрицательные.</p>
+
+            <p>Визуально матрица ошибок — это таблица с цветовой заливкой. Чем больше значение в ячейке — тем ярче цвет. Аналитик сразу видит, где модель ошибается чаще. И понимает, какого рода ошибки преобладают. Ложноположительные? Значит, модель слишком часто говорит «да». Ложноотрицательные? Значит, модель пропускает важные события.</p>
+
+            <p>Матрица ошибок — это основа для всех метрик классификации. Точность. Полнота. И эф-мера. Они вычисляются из этих четырёх чисел. Но визуально матрица показывает больше. Она показывает структуру ошибок.</p>
+
+            <p>Теперь перейдём к рок-кривой. Рок-кривая — это график, который показывает зависимость доли истинно положительных от доли ложноположительных при разных порогах классификации. По горизонтальной оси — доля ложноположительных. По вертикальной — доля истинно положительных. Идеальная модель имеет кривую, которая проходит через левый верхний угол. Случайная модель имеет прямую диагональ.</p>
+
+            <p>Площадь под этой кривой — это метрика качества. Она называется площадь под рок-кривой. Или просто АУС. Чем ближе к единице — тем лучше модель. Рок-кривая удобна тем, что не зависит от порога. Она оценивает модель в целом.</p>
+
+            <p>Перейдём к кривой точности и полноты. Это альтернатива рок-кривой. Она особенно полезна при сильном дисбалансе классов. По горизонтальной оси — полнота. По вертикальной — точность. Кривая показывает компромисс между этими метриками. И позволяет выбрать порог классификации. Который соответствует требованиям бизнеса.</p>
+
+            <p>И четвёртая визуализация — калибровочная кривая. Она показывает, насколько предсказанные вероятности соответствуют реальности. По горизонтальной оси — предсказанная вероятность. По вертикальной — реальная частота положительного класса. Идеальная модель имеет диагональ. Калибровочная кривая показывает, можно ли доверять вероятностям модели. Если модель говорит «восемьдесят процентов» — значит ли это, что событие произойдёт в восьмидесяти случаях из ста? Калибровочная кривая отвечает на этот вопрос.</p>
+
+            <p>Калибровка особенно важна в задачах, где вероятности используются для принятия решений. Например, в кредитном скоринге. Или в медицинской диагностике.</p>
+
+            <h4>Кто и для каких задач использует визуализацию оценки</h4>
+
+            <p><strong>Аналитик данных</strong> использует матрицу ошибок и рок-кривую для оценки моделей классификации. Типичная задача — сравнить несколько моделей. И выбрать лучшую.</p>
+
+            <p><strong>Финансовый аналитик</strong> использует матрицу ошибок и рок-кривую для кредитного скоринга. Особенно важна полнота — способность находить плохих заёмщиков. И калибровка — насколько можно доверять вероятностям дефолта.</p>
+
+            <p><strong>Продуктовый аналитик</strong> использует матрицу ошибок для прогноза удержания. И для прогноза конверсии. Матрица ошибок показывает, какого рода ошибки преобладают. И где модель нужно улучшить.</p>
+
+            <p><strong>Веб-аналитик</strong> использует рок-кривую для оценки моделей конверсии. Площадь под кривой — это общая метрика качества. А матрица ошибок показывает, сколько пользователей модель ошибочно отнесла к покупателям.</p>
+
+            <p><strong>Маркетинговый аналитик</strong> использует кривую точности и полноты для таргетинга рекламы. Он выбирает порог, который соответствует требованиям бизнеса. Например, чтобы не тратить бюджет на заведомо нецелевых пользователей.</p>
+
+            <p><strong>Бизнес-аналитик</strong> использует матрицу ошибок для объяснения модели руководству. Матрица ошибок понятна даже неспециалисту. Она показывает, сколько правильных и неправильных ответов дала модель.</p>
+
+            <p><strong>Системный аналитик</strong> использует матрицу ошибок для прогноза сбоев. Особенно важна полнота — способность находить все сбои. Пропустить сбой дороже, чем допустить ложную тревогу.</p>
+
+            <p><strong>Специалист по анализу пользовательского опыта</strong> использует матрицу ошибок для прогноза удовлетворённости. Она показывает, какого рода ошибки модель делает чаще. И где можно улучшить.</p>
+
+            <p>Обратите внимание на важную мысль. Визуализация оценки качества — это не только для аналитика. Это и для заказчика. Матрица ошибок и рок-кривая понятны даже без глубоких знаний статистики. Они показывают, насколько модель хороша. И в чём именно она ошибается. Это ключевые инструменты коммуникации.</p>
+
+            <h3>📌 Блок 3. Визуализация регрессии</h3>
+
+            <p>Теперь перейдём к третьему вопросу. Как показать качество модели регрессии. Модели, которая предсказывает число.</p>
+
+            <p>Начнём с графика «факт против прогноза». По горизонтальной оси — реальные значения целевой переменной. По вертикальной — предсказанные значения. Каждое наблюдение — это точка. Идеальная модель имеет все точки на диагонали. Где предсказание равно факту. Чем ближе точки к диагонали — тем лучше модель.</p>
+
+            <p>Этот график показывает, есть ли систематические ошибки. Например, если модель занижает большие значения — точки будут ниже диагонали в правой части графика. Если завышает маленькие значения — точки будут выше диагонали в левой части.</p>
+
+            <p>Теперь перейдём к графику остатков. Остаток — это разность между фактом и прогнозом. По горизонтальной оси — предсказанные значения. По вертикальной — остатки. Если остатки распределены случайно вокруг нуля — модель хорошая. Если есть паттерн — модель что-то не уловила. Например, если остатки растут с ростом предсказаний — модель плохо предсказывает большие значения. Если остатки образуют волну — модель не уловила нелинейность.</p>
+
+            <p>График остатков — это диагностический инструмент. Он показывает, есть ли в данных закономерность, которую модель не увидела. Это очень ценно для улучшения модели.</p>
+
+            <p>И третья визуализация — Q-Q график остатков. Он показывает, насколько остатки соответствуют нормальному распределению. По горизонтальной оси — теоретические квантили нормального распределения. По вертикальной — фактические квантили остатков. Если точки лежат на прямой — остатки нормальны. Если точки отклоняются — есть проблема. Это важно для некоторых статистических тестов.</p>
+
+            <h4>Кто и для каких задач использует визуализацию регрессии</h4>
+
+            <p><strong>Аналитик данных</strong> использует график «факт против прогноза» для оценки моделей регрессии. Типичная задача — прогноз цены или спроса. График показывает, где модель ошибается.</p>
+
+            <p><strong>Финансовый аналитик</strong> использует график остатков для диагностики финансовых моделей. Например, для прогноза выручки. Если остатки растут со временем — модель устарела.</p>
+
+            <p><strong>Продуктовый аналитик</strong> использует график «факт против прогноза» для прогноза метрик продукта. Например, для прогноза удержания. График показывает, насколько точно модель предсказывает.</p>
+
+            <p><strong>Аналитик больших данных</strong> использует график остатков для диагностики сложных моделей. Он ищет паттерны, которые модель не уловила.</p>
+
+            <p><strong>Маркетинговый аналитик</strong> использует график «факт против прогноза» для прогноза продаж. Он смотрит, насколько точны прогнозы в разных диапазонах.</p>
+
+            <h3>📌 Блок 4. Визуализация классификации</h3>
+
+            <p>Теперь перейдём к четвёртому вопросу. Как показать качество модели классификации. Модели, которая предсказывает категорию.</p>
+
+            <p>Начнём с распределения предсказанных вероятностей. Это гистограмма предсказанных вероятностей для каждого класса. По горизонтальной оси — вероятность. По вертикальной — частота. Если модель уверена — распределение будет бимодальным. Много значений около нуля и много около единицы. Если модель неуверена — распределение будет сосредоточено около середины.</p>
+
+            <p>Этот график показывает, насколько модель уверена в своих предсказаниях. И есть ли объекты, где модель колеблется. Такие объекты часто требуют дополнительной проверки.</p>
+
+            <p>Теперь перейдём к графику точности по порогам. Это график зависимости точности и полноты от порога классификации. По горизонтальной оси — порог. По вертикальной — значение метрики. Обычно строят две кривые. Точность растёт с ростом порога. Полнота падает. Аналитик видит компромисс. И выбирает порог, который соответствует требованиям бизнеса.</p>
+
+            <p>Этот график особенно полезен при дисбалансе классов. Он показывает, как меняется качество модели при изменении порога.</p>
+
+            <h4>Кто и для каких задач использует визуализацию классификации</h4>
+
+            <p><strong>Аналитик данных</strong> использует график точности по порогам для выбора порога классификации. Типичная задача — выбрать порог, который даёт нужный баланс между точностью и полнотой.</p>
+
+            <p><strong>Финансовый аналитик</strong> использует распределение предсказанных вероятностей для кредитного скоринга. Он смотрит, насколько модель уверена в оценке риска.</p>
+
+            <p><strong>Продуктовый аналитик</strong> использует график точности по порогам для прогноза удержания. Он выбирает порог, который соответствует требованиям бизнеса.</p>
+
+            <p><strong>Маркетинговый аналитик</strong> использует график точности по порогам для таргетинга рекламы. Он выбирает порог, чтобы оптимизировать бюджет.</p>
+
+            <h3>📌 Блок 5. Визуализация важности признаков</h3>
+
+            <p>Теперь перейдём к пятому вопросу. Как показать, какие признаки важны для модели. Это один из самых ценных инструментов для бизнеса.</p>
+
+            <p>Начнём со столбиковой диаграммы важности. Это горизонтальная столбиковая диаграмма. По одной оси — признаки. По другой — важность. Чем длиннее столбик — тем важнее признак. Важность вычисляется по-разному для разных моделей. Но идея одна. Показать, какие признаки сильнее всего влияют на предсказание.</p>
+
+            <p>Эта диаграмма очень полезна для бизнеса. Она показывает, на что обращать внимание. И какие признаки можно исключить. Например, если признак «пол» имеет низкую важность — его можно не собирать. Это экономит ресурсы.</p>
+
+            <p>Теперь перейдём к перестановочной важности. Это более строгий метод. Он работает так. Мы случайно перемешиваем значения одного признака. И смотрим, насколько упадёт качество модели. Если качество упало сильно — признак важен. Если не упало — признак не важен. Этот метод работает для любой модели. И даёт более честную оценку.</p>
+
+            <p>И третья визуализация — это ШАП-диаграммы. ШАП — это метод интерпретации моделей. Он показывает вклад каждого признака в каждое отдельное предсказание. По горизонтальной оси — вклад признака. По вертикальной — признаки. Каждая точка — это отдельное наблюдение. Цвет показывает значение признака. Красный — высокое. Синий — низкое.</p>
+
+            <p>ШАП-диаграммы очень информативны. Они показывают не только важность признака в целом. Но и то, как он влияет на конкретные предсказания. Например, красные точки справа — это наблюдения, где высокое значение признака увеличивает предсказание. А синие точки слева — где низкое значение уменьшает предсказание.</p>
+
+            <p>ШАП-диаграммы — это мощный инструмент интерпретации. Но они требуют специальных библиотек. И времени на вычисление.</p>
+
+            <h4>Кто и для каких задач использует визуализацию важности</h4>
+
+            <p><strong>Аналитик данных</strong> использует столбиковую диаграмму важности для объяснения модели бизнесу. Типичная задача — показать, какие факторы сильнее всего влияют на отток.</p>
+
+            <p><strong>Финансовый аналитик</strong> использует важность признаков для кредитного скоринга. Он проверяет, что модель не использует запрещённые признаки. Например, пол или расу. Это требование регулятора.</p>
+
+            <p><strong>Продуктовый аналитик</strong> использует важность признаков для понимания поведения пользователей. Какие признаки сильнее всего влияют на удержание.</p>
+
+            <p><strong>Маркетинговый аналитик</strong> использует важность признаков для оптимизации рекламы. Какие характеристики аудитории важнее всего.</p>
+
+            <p><strong>Специалист по анализу пользовательского опыта</strong> использует важность признаков для понимания удовлетворённости. Какие признаки интерфейса влияют сильнее всего.</p>
+
+            <p><strong>Бизнес-аналитик</strong> использует важность признаков для обоснования решений. Какие факторы нужно учитывать в первую очередь.</p>
+
+            <h3>📌 Блок 6. Визуализация структуры модели</h3>
+
+            <p>Теперь перейдём к шестому вопросу. Как показать, как устроена модель. Это полезно для интерпретации.</p>
+
+            <p>Начнём с дерева решений. Это графическое представление модели. Каждый узел — это проверка условия. Каждое ребро — это результат проверки. Каждый лист — это предсказание. Дерево можно нарисовать. И объяснить заказчику. Это одно из главных преимуществ деревьев решений.</p>
+
+            <p>Дерево решений показывает, какие признаки и какие пороги привели к решению. Это очень ценно для бизнеса. Например, если дерево предсказывает уход клиента, можно увидеть, какие условия привели к этому выводу.</p>
+
+            <p>Теперь перейдём к схеме нейронной сети. Это графическое представление архитектуры. Слои. Нейроны. Связи. Схема показывает, как устроена сеть. Но она менее интерпретируема. По схеме нельзя понять, почему сеть принимает то или иное решение. Но схема полезна для отчёта. И для понимания сложности модели.</p>
+
+            <p>И третья визуализация — тепловая карта весов. Она показывает веса между слоями. Для больших сетей. Цвет показывает величину веса. Это инструмент для специалистов. Для анализа того, какие связи в сети сильнее.</p>
+
+            <h4>Кто и для каких задач использует визуализацию структуры</h4>
+
+            <p><strong>Аналитик данных</strong> использует дерево решений для объяснения модели. Например, для кредитного скоринга. Дерево показывает правила принятия решения.</p>
+
+            <p><strong>Бизнес-аналитик</strong> использует дерево решений для описания бизнес-правил. Например, какие условия определяют успех проекта.</p>
+
+            <p><strong>Финансовый аналитик</strong> использует дерево решений для документирования кредитной политики. Дерево показывает, какие условия определяют выдачу кредита.</p>
+
+            <p><strong>Аналитик больших данных</strong> использует схему нейронной сети для отчёта об архитектуре. И тепловую карту весов для анализа.</p>
+
+            <h3>📌 Блок 7. Визуализация кластеризации</h3>
+
+            <p>Теперь перейдём к седьмому вопросу. Как показать результаты кластеризации. Модели без учителя.</p>
+
+            <p>Начнём с точечной диаграммы с цветами кластеров. По горизонтальной оси — один признак. По вертикальной — другой. Каждое наблюдение — точка. Цвет точки показывает кластер. Аналитик сразу видит, как объекты разбились на группы.</p>
+
+            <p>Этот график полезен для понимания структуры данных. Он показывает, есть ли чёткие границы между кластерами. Или кластеры пересекаются. Это влияет на интерпретацию.</p>
+
+            <p>Теперь перейдём к дендрограмме. Это графическое представление иерархической кластеризации. Это дерево. По горизонтальной оси — объекты. По вертикальной — расстояние. Дендрограмма показывает, как объекты объединялись в кластеры. И на каком расстоянии. Это полезно для выбора числа кластеров.</p>
+
+            <p>И третья визуализация — диаграмма локтя. Она показывает зависимость внутрикластерного расстояния от числа кластеров. По горизонтальной оси — число кластеров. По вертикальной — внутрикластерное расстояние. Обычно кривая имеет форму локтя. Точка перегиба — это оптимальное число кластеров.</p>
+
+            <p>Четвёртая визуализация — silhouette plot. Он показывает качество кластеризации для каждого объекта. Значение от минус единицы до единицы. Чем ближе к единице — тем лучше объект вписывается в кластер.</p>
+
+            <h4>Кто и для каких задач использует визуализацию кластеризации</h4>
+
+            <p><strong>Аналитик данных</strong> использует точечную диаграмму с цветами кластеров для сегментации клиентов. Он показывает, на какие группы разбились клиенты.</p>
+
+            <p><strong>Маркетинговый аналитик</strong> использует кластеризацию для сегментации аудитории. Точечная диаграмма показывает разные сегменты.</p>
+
+            <p><strong>Продуктовый аналитик</strong> использует кластеризацию для выделения групп пользователей. График показывает поведение каждой группы.</p>
+
+            <p><strong>Специалист по анализу пользовательского опыта</strong> использует кластеризацию для группировки пользователей по опыту. Диаграмма показывает разные типы опыта.</p>
+
+            <p><strong>Аналитик больших данных</strong> использует дендрограммы и silhouette plots для анализа больших данных. Это инструмент разведки.</p>
+
+            <h3>📌 Блок 8. Визуализация прогноза временных рядов</h3>
+
+            <p>Теперь перейдём к восьмому вопросу. Как показать прогноз. Модели для временных рядов.</p>
+
+            <p>Начнём с линейного графика с прогнозом. По горизонтальной оси — время. По вертикальной — значение. Фактические значения — одной линией. Прогноз — другой линией. И доверительный интервал — закрашенной областью вокруг прогноза.</p>
+
+            <p>Этот график показывает не только прогноз. Но и неопределённость. Доверительный интервал показывает, в каких пределах может оказаться реальное значение. Чем шире интервал — тем больше неопределённость. Это ценно для бизнеса. Потому что позволяет планировать с учётом рисков.</p>
+
+            <p>Теперь перейдём к графику ошибок прогноза. По горизонтальной оси — время. По вертикальной — ошибка. График показывает, насколько модель ошибается в разные периоды. Если ошибки растут со временем — модель устаревает.</p>
+
+            <p>И третья визуализация — декомпозиция ряда. Она показывает тренд, сезонность и остатки отдельно. Это полезно для понимания структуры данных. И для улучшения модели.</p>
+
+            <h4>Кто и для каких задач использует визуализацию прогноза</h4>
+
+            <p><strong>Аналитик данных</strong> использует линейный график с прогнозом для прогноза выручки. Он показывает руководству, сколько ожидается в следующем месяце.</p>
+
+            <p><strong>Финансовый аналитик</strong> использует график ошибок прогноза для контроля финансовых моделей. Он смотрит, насколько точны прогнозы.</p>
+
+            <p><strong>Продуктовый аналитик</strong> использует декомпозицию ряда для прогноза метрик продукта. Он видит, что влияет на метрику — тренд или сезонность.</p>
+
+            <p><strong>BI-аналитик</strong> использует линейный график с прогнозом на дашбордах. Он показывает прогноз ключевых показателей.</p>
+
+            <p><strong>Маркетинговый аналитик</strong> использует прогноз для планирования бюджета. Он видит, сколько можно ожидать продаж.</p>
+
+            <h3>📌 Блок 9. Визуализация мониторинга модели</h3>
+
+            <p>Теперь перейдём к девятому вопросу. Как показать, что модель работает стабильно. Это тема следующей лекции. Но мы упомянем визуализации.</p>
+
+            <p>Начнём с графика распределения признаков до и после. Он показывает, изменилось ли распределение данных. Если изменилось — это дрейф данных. И модель может ошибаться.</p>
+
+            <p>Теперь перейдём к графику качества во времени. Он показывает, как меняется качество модели со временем. Если качество падает — модель устаревает. И нужно переобучение.</p>
+
+            <p>И третья визуализация — дашборд мониторинга. Он объединяет все метрики. И показывает, что происходит с моделью в реальном времени. Это ключевой инструмент для поддержки модели после внедрения.</p>
+
+            <h4>Кто и для каких задач использует визуализацию мониторинга</h4>
+
+            <p><strong>Аналитик данных</strong> использует дашборд мониторинга для отслеживания качества моделей. Он видит, когда нужно переобучение.</p>
+
+            <p><strong>Аналитик больших данных</strong> использует графики распределения признаков для обнаружения дрейфа. Это ранний сигнал о проблемах.</p>
+
+            <p><strong>Финансовый аналитик</strong> использует график качества во времени для контроля кредитных моделей. Он видит, когда модель начинает ошибаться чаще.</p>
+
+            <p><strong>Специалист по аналитике бизнес-данных</strong> использует дашборд мониторинга для отчёта о работе моделей.</p>
+
+            <h3>📌 Заключение</h3>
+
+            <p>Мы подошли к завершению лекции. Давайте соберём всё вместе.</p>
+
+            <p>Мы разобрали визуализации для машинного обучения. Их девять групп. Визуализация процесса обучения. Визуализация оценки качества. Визуализация регрессии. Визуализация классификации. Визуализация важности признаков. Визуализация структуры модели. Визуализация кластеризации. Визуализация прогноза. И визуализация мониторинга.</p>
+
+            <p>Для каждой группы мы увидели, какие задачи она решает. И какие роли аналитиков её используют. Мы увидели, что визуализация для машинного обучения — это не просто картинки. Это инструменты диагностики. Интерпретации. И коммуникации.</p>
+
+            <p>Главный вывод лекции звучит так. Модель без визуализации — это чёрный ящик. Аналитик не может понять, что внутри. Заказчик не может понять, можно ли доверять модели. Визуализация делает модель прозрачной. Она показывает, как модель училась. Насколько она точна. Какие признаки важны. И как она поведёт себя на новых данных.</p>
+
+            <p>Хорошая визуализация — это не украшение отчёта. Это инструмент принятия решений. Она помогает аналитику улучшать модель. И помогает заказчику понимать модель. Без визуализации машинное обучение остаётся магией. С визуализацией — становится инженерией.</p>
+
+            <p>В следующей лекции мы поговорим о внедрении моделей и мониторинге их качества. Мы увидим, как перенести модель из блокнота в продакшен. Как следить за её качеством. И как обнаруживать дрейф данных. Это будет логическим завершением всего блока машинного обучения.</p>
+
+            <p>На этом наша лекция завершена. Спасибо за внимание. Я готов ответить на ваши вопросы.</p>
+
+            <!-- СЛОВАРЬ ТЕРМИНОВ -->
+            <div class="dark-block">
+                <div class="dark-block-title">📖 Словарь терминов и аббревиатур</div>
+                <table class="dark-table">
+                    <thead>
+                        <tr><th style="width:22%;">Термин</th><th style="width:30%;">Расшифровка</th><th>Пояснение</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="term">Learning curve</td><td>Кривая обучения</td><td>Ошибка в зависимости от размера выборки</td></tr>
+                        <tr><td class="term">Validation curve</td><td>Кривая валидации</td><td>Ошибка в зависимости от гиперпараметра</td></tr>
+                        <tr><td class="term">Loss curve</td><td>Кривая потерь</td><td>Функция потерь по эпохам обучения</td></tr>
+                        <tr><td class="term">Confusion matrix</td><td>Матрица ошибок</td><td>TP, FP, FN, TN в таблице 2×2</td></tr>
+                        <tr><td class="term">ROC curve</td><td>Рок-кривая</td><td>TPR vs FPR при разных порогах</td></tr>
+                        <tr><td class="term">AUC</td><td>Площадь под ROC</td><td>Метрика качества от 0 до 1</td></tr>
+                        <tr><td class="term">PR curve</td><td>Precision-Recall</td><td>Кривая для дисбаланса классов</td></tr>
+                        <tr><td class="term">Calibration</td><td>Калибровка</td><td>Насколько вероятности соответствуют реальности</td></tr>
+                        <tr><td class="term">Actual vs predicted</td><td>Факт vs прогноз</td><td>Скаттер для оценки регрессии</td></tr>
+                        <tr><td class="term">Residual plot</td><td>График остатков</td><td>Остатки vs прогноз для диагностики</td></tr>
+                        <tr><td class="term">Feature importance</td><td>Важность признаков</td><td>Какие признаки влияют на модель</td></tr>
+                        <tr><td class="term">Permutation importance</td><td>Перестановочная важность</td><td>Падение качества при перемешивании признака</td></tr>
+                        <tr><td class="term">SHAP</td><td>SHAP</td><td>Вклад каждого признака в каждое предсказание</td></tr>
+                        <tr><td class="term">Decision tree</td><td>Дерево решений</td><td>Графическое представление правил</td></tr>
+                        <tr><td class="term">Dendrogram</td><td>Дендрограмма</td><td>Дерево иерархической кластеризации</td></tr>
+                        <tr><td class="term">Elbow</td><td>Диаграмма локтя</td><td>Выбор числа кластеров</td></tr>
+                        <tr><td class="term">Silhouette</td><td>Silhouette plot</td><td>Качество кластеризации каждого объекта</td></tr>
+                        <tr><td class="term">Forecast + CI</td><td>Прогноз + CI</td><td>Прогноз с доверительным интервалом</td></tr>
+                        <tr><td class="term">Decomposition</td><td>Декомпозиция ряда</td><td>Тренд + сезонность + остатки</td></tr>
+                        <tr><td class="term">Data drift</td><td>Дрейф данных</td><td>Смещение распределения признаков</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function changeVideo(embedUrl) {
+            document.getElementById('lecture-player').src = embedUrl;
+        }
+    </script>
+
+   <!-- НАВИГАЦИЯ МЕЖДУ ЛЕКЦИЯМИ -->
+<nav class="lecture-nav" id="lectureNav">
+    <div class="nav-progress" id="navProgress" style="width: 0%;"></div>
+    <a href="Лекция (N-1).html" class="nav-btn-arrow" id="prevBtn">
+        <span class="arrow-icon">←</span>
+        <span class="arrow-label">
+            <small>Назад</small>
+            <span class="arrow-title" id="prevTitle">Лекция (N-1)</span>
+        </span>
+    </a>
+    <div class="nav-center">
+        <div class="nav-counter">Лекция <span id="currentNum">N</span> <span>из 21</span></div>
+        <a href="index.html" class="nav-index-link">📚 К содержанию</a>
+    </div>
+    <a href="Лекция (N+1).html" class="nav-btn-arrow" id="nextBtn">
+        <span class="arrow-label" style="align-items: flex-end;">
+            <small>Вперёд</small>
+            <span class="arrow-title" id="nextTitle">Лекция (N+1)</span>
+        </span>
+        <span class="arrow-icon">→</span>
+    </a>
+</nav>
+
+
+
+<script>
+(function () {
+    'use strict';
+
+    const TOTAL_LECTURES = 21;
+    const totalDurationMs = (33 * 60 + 30) * 1000;
+    const autoNextDelayMs = 2000;
+    const AUTOSTART_PARAM = 'autostart';
+
+    const fileName = decodeURIComponent(location.pathname.split('/').pop() || '');
+    let currentLecture = 20;
+    const match = fileName.match(/Лекция\s*(\d+)\.html/i);
+    if (match) {
+        currentLecture = parseInt(match[1], 10);
+    } else {
+        const el = document.getElementById('currentNum');
+        if (el) currentLecture = parseInt(el.textContent, 10) || 20;
+    }
+    if (isNaN(currentLecture) || currentLecture < 1) currentLecture = 1;
+    if (currentLecture > TOTAL_LECTURES) currentLecture = TOTAL_LECTURES;
+
+    const prev = currentLecture > 1 ? currentLecture - 1 : null;
+    const next = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+
+    const currentNumEl = document.getElementById('currentNum');
+    if (currentNumEl) currentNumEl.textContent = currentLecture;
+
+    const navProgress = document.getElementById('navProgress');
+    if (navProgress) {
+        navProgress.style.width = (currentLecture / TOTAL_LECTURES * 100) + '%';
+    }
+
+    const prevBtn = document.getElementById('prevBtn');
+    if (prevBtn) {
+        if (prev) {
+            prevBtn.href = 'Лекция ' + prev + '.html';
+            const t = document.getElementById('prevTitle');
+            if (t) t.textContent = 'Лекция ' + prev;
+            prevBtn.style.opacity = '1';
+            prevBtn.style.cursor = 'pointer';
+            prevBtn.onclick = null;
+        } else {
+            prevBtn.removeAttribute('href');
+            prevBtn.style.opacity = '0.35';
+            prevBtn.style.cursor = 'not-allowed';
+            prevBtn.onclick = (e) => e.preventDefault();
+            const t = document.getElementById('prevTitle');
+            if (t) t.textContent = 'Это первая лекция';
+        }
+    }
+
+    const nextBtn = document.getElementById('nextBtn');
+    if (nextBtn) {
+        if (next) {
+            nextBtn.href = 'Лекция ' + next + '.html';
+            const t = document.getElementById('nextTitle');
+            if (t) t.textContent = 'Лекция ' + next;
+            nextBtn.style.opacity = '1';
+            nextBtn.style.cursor = 'pointer';
+            nextBtn.onclick = null;
+        } else {
+            nextBtn.removeAttribute('href');
+            nextBtn.style.opacity = '0.35';
+            nextBtn.style.cursor = 'not-allowed';
+            nextBtn.onclick = (e) => e.preventDefault();
+            const t = document.getElementById('nextTitle');
+            if (t) t.textContent = 'Это последняя лекция';
+        }
+    }
+
+    document.addEventListener('keydown', (e) => {
+        const tag = e.target && e.target.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        if (e.key === 'ArrowLeft' && prev) window.location.href = 'Лекция ' + prev + '.html';
+        else if (e.key === 'ArrowRight' && next) window.location.href = 'Лекция ' + next + '.html';
+        else if (e.key === 'Home') window.location.href = 'index.html';
+    });
+
+    function initScroll() {
+        const studentBlock = document.querySelector('.student-view');
+        const speakerBlock = document.querySelector('.speaker-notes');
+        const badge = document.getElementById('scroll-status-badge');
+        const audio = document.getElementById('lecture-audio');
+        if (!studentBlock || !speakerBlock) return;
+
+        const studentBehavior = studentBlock.style.scrollBehavior;
+        const speakerBehavior = speakerBlock.style.scrollBehavior;
+        let isRunning = false, completed = false, pausedElapsed = 0, startedAt = 0, rafId = null;
+        let startS = 0, startP = 0, maxS = 0, maxP = 0;
+
+        function setBadge(text, color) { if (!badge) return; badge.style.display = 'block'; badge.textContent = text; badge.style.borderColor = color; }
+        function measure() { maxS = Math.max(studentBlock.scrollHeight - studentBlock.clientHeight, 0); maxP = Math.max(speakerBlock.scrollHeight - speakerBlock.clientHeight, 0); }
+        function fmt(ms) { const m = Math.floor(ms / 60000); const s = Math.floor((ms % 60000) / 1000); return m + ':' + String(s).padStart(2, '0'); }
+        function playAudio() { if (!audio) return; const p = audio.play(); if (p && typeof p.catch === 'function') { p.catch(err => { console.warn('[AutoAudio]', err.message); setBadge('▶ ИДЕТ ПРОКРУТКА (звук заблокирован)', '#eab308'); }); } }
+        function pauseAudio() { if (audio) try { audio.pause(); } catch (_) {} }
+        function resetAudio() { if (audio) try { audio.pause(); audio.currentTime = 0; } catch (_) {} }
+
+        function animate() {
+            if (!isRunning) return;
+            const elapsed = pausedElapsed + (performance.now() - startedAt);
+            const fraction = Math.min(elapsed / totalDurationMs, 1);
+            measure();
+            studentBlock.scrollTop = startS + (maxS - startS) * fraction;
+            speakerBlock.scrollTop = startP + (maxP - startP) * fraction;
+            if (badge) { badge.textContent = '▶ ' + fmt(elapsed) + ' / ' + fmt(totalDurationMs); badge.style.borderColor = '#16a34a'; }
+            if (fraction >= 1) { finish(); return; }
+            rafId = requestAnimationFrame(animate);
+        }
+
+        function startOrResume() {
+            if (completed) { pausedElapsed = 0; completed = false; studentBlock.scrollTop = 0; speakerBlock.scrollTop = 0; resetAudio(); }
+            measure(); startS = studentBlock.scrollTop; startP = speakerBlock.scrollTop;
+            startedAt = performance.now(); isRunning = true;
+            studentBlock.style.scrollBehavior = 'auto'; speakerBlock.style.scrollBehavior = 'auto';
+            cancelAnimationFrame(rafId); rafId = requestAnimationFrame(animate);
+            playAudio();
+        }
+        function pause() {
+            if (isRunning) pausedElapsed += performance.now() - startedAt;
+            isRunning = false; cancelAnimationFrame(rafId);
+            setBadge('⏸ ПАУЗА ' + fmt(pausedElapsed), '#dc2626');
+            studentBlock.style.scrollBehavior = studentBehavior; speakerBlock.style.scrollBehavior = speakerBehavior;
+            pauseAudio();
+        }
+        function finish() {
+            isRunning = false; completed = true; cancelAnimationFrame(rafId);
+            measure(); studentBlock.scrollTop = maxS; speakerBlock.scrollTop = maxP;
+            studentBlock.style.scrollBehavior = studentBehavior; speakerBlock.style.scrollBehavior = speakerBehavior;
+            const nextLec = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+            if (nextLec) {
+                setBadge('✅ ГОТОВО → Лекция ' + nextLec, '#16a34a');
+                setTimeout(() => { location.href = 'Лекция ' + nextLec + '.html?' + AUTOSTART_PARAM + '=1'; }, autoNextDelayMs);
+            } else {
+                setBadge('✅ КУРС ЗАВЕРШЕН', '#16a34a');
+                pauseAudio();
+            }
+        }
+        function toggle() { isRunning ? pause() : startOrResume(); }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.repeat) return;
+            const t = e.target; const tag = t && t.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+            if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); toggle(); }
+        }, true);
+
+        if (badge) badge.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+        [studentBlock, speakerBlock].forEach(el => {
+            el.addEventListener('click', (e) => {
+                if (e.target.closest('a,button,iframe,input,textarea,select,video,audio')) return;
+                if (window.getSelection().toString().length > 0) return;
+                toggle();
+            });
+        });
+
+        const params = new URLSearchParams(location.search);
+        if (params.get(AUTOSTART_PARAM) === '1') {
+            params.delete(AUTOSTART_PARAM);
+            const clean = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
+            history.replaceState(null, '', clean);
+            setTimeout(startOrResume, 500);
+        } else { setBadge('▶ ПРОБЕЛ / КЛИК — старт', '#4a5568'); }
+    }
+
+    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initScroll, { once: true }); }
+    else { initScroll(); }
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лекция 21. Внедрение моделей и мониторинг их качества</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #ffffff; }
+
+        .student-view { width: 66.66%; height: 100vh; background: #ffffff; padding: 35px 40px; display: flex; flex-direction: column; justify-content: space-between; border-right: 2px solid #e2e8f0; overflow-y: auto; scroll-behavior: smooth; }
+        .speaker-notes { width: 33.34%; height: 100%; background: #1a202c; color: #edf2f7; padding: 30px; overflow-y: auto; }
+
+        .slide-header { font-size: 26px; color: #0f172a; font-weight: bold; line-height: 1.3; margin-bottom: 18px; border-bottom: 4px solid #2563eb; padding-bottom: 12px; }
+        .slide-body { flex-grow: 1; display: flex; flex-direction: column; gap: 18px; padding: 5px 0; }
+        .slide-footer { font-size: 13px; color: #64748b; text-align: right; margin-top: 12px; }
+
+        .chart-box { background: #f8fafc; border: 2.5px dashed #94a3b8; padding: 20px; border-radius: 12px; }
+        .chart-box strong { font-size: 17px; display: block; margin-bottom: 8px; color: #0f172a; }
+        .chart-box p { font-size: 14px; color: #1e293b; line-height: 1.5; }
+
+        .viz-card { background: #ffffff; border: 2px solid #cbd5e0; border-radius: 12px; padding: 18px; box-shadow: 0 4px 10px rgba(15,23,42,0.06); }
+        .viz-title { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .viz-caption { font-size: 13px; color: #1e293b; margin-top: 10px; line-height: 1.6; }
+        .viz-caption strong { color: #0f172a; font-weight: 700; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+
+        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .stat-box { border-radius: 10px; padding: 14px; text-align: center; border: 2px solid; }
+        .stat-box .stat-icon { font-size: 26px; }
+        .stat-box .stat-number { font-size: 15px; font-weight: 900; margin-top: 4px; }
+        .stat-box .stat-label { font-size: 11.5px; color: #334155; margin-top: 4px; line-height: 1.35; font-weight: 600; }
+        .stat-box.batch { background: #eff6ff; border-color: #93c5fd; }
+        .stat-box.batch .stat-number { color: #1e40af; }
+        .stat-box.online { background: #fffbeb; border-color: #fcd34d; }
+        .stat-box.online .stat-number { color: #92400e; }
+        .stat-box.embed { background: #f0fdf4; border-color: #86efac; }
+        .stat-box.embed .stat-number { color: #166534; }
+
+        .tag { display: inline-block; background: #eff6ff; color: #1e40af; padding: 3px 8px; border-radius: 4px; font-size: 12px; margin: 2px 2px 2px 0; font-weight: 600; }
+        .tag.green { background: #f0fdf4; color: #166534; }
+        .tag.red { background: #fef2f2; color: #991b1b; }
+        .tag.orange { background: #fffbeb; color: #92400e; }
+        .tag.purple { background: #faf5ff; color: #6b21a8; }
+
+        .callout { background: #fffbeb; border-left: 5px solid #d97706; padding: 14px 18px; border-radius: 6px; }
+        .callout strong { color: #78350f; font-size: 14px; }
+        .callout p { font-size: 13px; color: #451a03; margin-top: 4px; line-height: 1.5; }
+        .callout.warn { background: #fef2f2; border-left-color: #dc2626; }
+        .callout.warn strong { color: #991b1b; }
+        .callout.warn p { color: #7f1d1d; }
+        .callout.ok { background: #f0fdf4; border-left-color: #16a34a; }
+        .callout.ok strong { color: #166534; }
+        .callout.ok p { color: #14532d; }
+
+        .role-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .role-table th { background: #0f172a; color: white; padding: 10px 12px; text-align: left; font-weight: 700; }
+        .role-table td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; color: #1e293b; vertical-align: top; line-height: 1.45; }
+        .role-table tr:nth-child(even) td { background: #f8fafc; }
+        .role-table .role-emoji { font-size: 16px; }
+
+        .compare-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .compare-table th { background: #0f172a; color: white; padding: 10px 12px; text-align: left; font-weight: 700; }
+        .compare-table td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; color: #1e293b; vertical-align: top; line-height: 1.45; }
+        .compare-table tr:nth-child(even) td { background: #f8fafc; }
+
+        /* SVG styles */
+        .axis { stroke: #334155; stroke-width: 2; }
+        .grid-line { stroke: #cbd5e0; stroke-width: 1; }
+        .label { font-family: 'Segoe UI', sans-serif; font-size: 13px; fill: #1e293b; font-weight: 600; }
+        .label-strong { font-family: 'Segoe UI', sans-serif; font-size: 15px; font-weight: 700; fill: #0f172a; }
+        .label-small { font-family: 'Segoe UI', sans-serif; font-size: 12px; fill: #475569; font-weight: 500; }
+        .label-white { font-family: 'Segoe UI', sans-serif; font-size: 13px; fill: #ffffff; font-weight: 700; }
+        .label-white-sm { font-family: 'Segoe UI', sans-serif; font-size: 11px; fill: #ffffff; opacity: 0.95; font-weight: 600; }
+
+        .video-section { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 5px; }
+        .video-container { width: 100%; max-width: 580px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: #000; aspect-ratio: 16 / 9; }
+        .links-hub { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .video-btn { text-decoration: none; padding: 9px 14px; border-radius: 6px; font-size: 13px; font-weight: bold; color: white; display: flex; align-items: center; gap: 6px; transition: transform 0.2s, background 0.2s; cursor: pointer; border: none; }
+        .video-btn:hover { transform: translateY(-2px); }
+        .rt-btn { background: #00a877; }
+        .rt-btn:hover { background: #008f65; }
+        .stop-btn { background: #dc2626; }
+        .stop-btn:hover { background: #b91c1c; }
+
+        .notes-header { font-size: 17px; color: #63b3ed; font-weight: bold; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a5568; padding-bottom: 10px; }
+        .lecture-text { font-size: 14.5px; line-height: 1.65; color: #e2e8f0; text-align: justify; }
+        .lecture-text p { margin-bottom: 14px; }
+        .lecture-text h3 { color: #63b3ed; font-size: 15px; margin: 18px 0 10px; border-bottom: 1px solid #2d3748; padding-bottom: 5px; }
+        .lecture-text h4 { color: #90cdf4; font-size: 13.5px; margin: 14px 0 8px; }
+        .lecture-text ul { margin: 8px 0 14px 18px; }
+        .lecture-text li { margin-bottom: 6px; }
+
+        .dark-block { background: #2d3748; border: 1px solid #4a5568; border-radius: 10px; padding: 16px 18px; margin-top: 20px; }
+        .dark-block-title { font-size: 14px; font-weight: bold; color: #63b3ed; margin-bottom: 12px; border-bottom: 2px solid #4a5568; padding-bottom: 8px; }
+        .dark-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+        .dark-table th { background: #1a202c; color: #90cdf4; padding: 7px 9px; text-align: left; font-weight: 600; border-bottom: 1px solid #4a5568; }
+        .dark-table td { padding: 6px 9px; border-bottom: 1px solid #2d3748; color: #cbd5e0; vertical-align: top; line-height: 1.4; }
+        .dark-table tr:nth-child(even) td { background: #2a3242; }
+        .dark-table .term { font-weight: bold; color: #90cdf4; white-space: nowrap; }
+
+        .lecture-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(12px); border-top: 2px solid rgba(255, 255, 255, 0.08); padding: 12px 20px; display: flex; align-items: center; justify-content: center; gap: 12px; z-index: 9999; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25); }
+        .lecture-nav .nav-progress { position: absolute; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899); border-radius: 0 3px 3px 0; }
+        .lecture-nav .nav-btn-arrow { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); border: 1.5px solid rgba(255, 255, 255, 0.15); color: #e2e8f0; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; }
+        .lecture-nav .nav-btn-arrow:hover:not(:disabled) { background: rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.6); color: white; transform: translateY(-2px); }
+        .lecture-nav .nav-btn-arrow:disabled { opacity: 0.35; cursor: not-allowed; }
+        .lecture-nav .nav-btn-arrow .arrow-icon { font-size: 16px; line-height: 1; }
+        .lecture-nav .nav-btn-arrow .arrow-label { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+        .lecture-nav .nav-btn-arrow .arrow-label small { font-size: 9.5px; font-weight: 400; opacity: 0.7; text-transform: uppercase; }
+        .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { font-size: 12px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lecture-nav .nav-center { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 20px; color: #94a3b8; font-size: 11px; border-left: 1px solid rgba(255, 255, 255, 0.1); border-right: 1px solid rgba(255, 255, 255, 0.1); }
+        .lecture-nav .nav-counter { font-size: 15px; font-weight: 900; color: #f1f5f9; }
+        .lecture-nav .nav-counter span { color: #64748b; font-size: 12px; font-weight: 600; }
+        .lecture-nav .nav-index-link { color: #60a5fa; text-decoration: none; font-size: 11px; font-weight: 600; }
+        .lecture-nav .nav-index-link:hover { color: #93c5fd; text-decoration: underline; }
+        body { padding-bottom: 80px !important; }
+        @media (max-width: 900px) {
+            .lecture-nav { padding: 10px 12px; gap: 8px; }
+            .lecture-nav .nav-btn-arrow { padding: 8px 12px; }
+            .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { max-width: 90px; font-size: 11px; }
+            .grid-2, .grid-3, .stat-grid { grid-template-columns: 1fr; }
+        }
+
+        @keyframes pulseAlert {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        .pulse-alert { animation: pulseAlert 1.5s ease-in-out infinite; }
+
+        @keyframes flowData {
+            0% { stroke-dashoffset: 0; }
+            100% { stroke-dashoffset: -20; }
+        }
+        .flow-data { animation: flowData 2s linear infinite; }
+    </style>
+</head>
+<body>
+
+    <div class="student-view">
+        <div class="slide-header">
+            Лекция 21. Внедрение моделей и мониторинг их качества
+        </div>
+
+        <div class="slide-body">
+
+            <!-- HERO -->
+            <div class="chart-box" style="background: #faf5ff; border-color: #d8b4fe;">
+                <strong style="color: #6b21a8;">🚀 Главная идея</strong>
+                <p>Модель в блокноте — это только <strong>половина работы</strong>. Настоящая польза начинается после <strong>внедрения</strong>. Но внедрение — это не финиш, а <strong>старт нового этапа</strong>. Данные меняются, поведение клиентов меняется, рынок меняется — и модель должна меняться вместе с ними. <strong>Мониторинг и обновление</strong> — обязательные этапы жизненного цикла.</p>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 1: ТРИ СПОСОБА ВНЕДРЕНИЯ -->
+                        <!-- ВИЗУАЛИЗАЦИЯ 1: ТРИ СПОСОБА ВНЕДРЕНИЯ -->
+            <div class="viz-card">
+                <div class="viz-title">🚀 Три способа внедрения модели</div>
+                <div class="grid-3">
+                    
+                    <!-- BATCH -->
+                    <div>
+                        <div style="font-size: 14px; font-weight: 700; color: #1e40af; margin-bottom: 8px; text-align: center;">Пакетный</div>
+                        <svg viewBox="0 0 240 240" width="100%">
+                            <rect x="0" y="0" width="240" height="240" fill="#ffffff"/>
+                            
+                            <!-- Clock -->
+                            <circle cx="120" cy="45" r="22" fill="#eff6ff" stroke="#2563eb" stroke-width="2.5"/>
+                            <line x1="120" y1="45" x2="120" y2="30" stroke="#2563eb" stroke-width="2.5"/>
+                            <line x1="120" y1="45" x2="132" y2="50" stroke="#2563eb" stroke-width="2.5"/>
+                            
+                            <text x="120" y="88" text-anchor="middle" class="label-small">ночью по расписанию</text>
+                            
+                            <!-- Data -->
+                            <rect x="40" y="105" width="160" height="30" rx="4" fill="#2563eb"/>
+                            <text x="120" y="125" text-anchor="middle" class="label-white-sm">накопленные данные</text>
+                            
+                            <!-- Arrow -->
+                            <line x1="120" y1="140" x2="120" y2="165" stroke="#334155" stroke-width="2.5" stroke-dasharray="4 3"/>
+                            <polygon points="120,173 114,163 126,163" fill="#334155"/>
+                            
+                            <!-- Model -->
+                            <rect x="60" y="175" width="120" height="30" rx="4" fill="#f0fdf4" stroke="#16a34a" stroke-width="2.5"/>
+                            <text x="120" y="195" text-anchor="middle" class="label-small" fill="#166534">модель</text>
+                            
+                            <text x="120" y="230" text-anchor="middle" class="label-small" fill="#166534" style="font-weight: bold;">→ база данных → отчёт</text>
+                        </svg>
+                    </div>
+
+                    <!-- ONLINE -->
+                    <div>
+                        <div style="font-size: 14px; font-weight: 700; color: #92400e; margin-bottom: 8px; text-align: center;">Онлайн</div>
+                        <svg viewBox="0 0 240 240" width="100%">
+                            <rect x="0" y="0" width="240" height="240" fill="#ffffff"/>
+
+                            <!-- Server Box -->
+                            <rect x="105" y="40" width="115" height="165" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 4"/>
+                            <text x="162" y="30" text-anchor="middle" class="label-small" fill="#475569">сервер</text>
+
+                            <!-- Client -->
+                            <circle cx="40" cy="120" r="18" fill="#fffbeb" stroke="#d97706" stroke-width="2.5"/>
+                            <!-- Client label moved down -->
+                            <text x="40" y="170" text-anchor="middle" class="label-small" fill="#92400e">клиент</text>
+
+                            <!-- API -->
+                            <rect x="115" y="65" width="95" height="30" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+                            <text x="162" y="85" text-anchor="middle" class="label-small">API</text>
+
+                            <!-- Model -->
+                            <rect x="115" y="145" width="95" height="30" rx="4" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+                            <text x="162" y="165" text-anchor="middle" class="label-small">модель</text>
+
+                            <!-- Arrow: Client -> API (Request) -->
+                            <line x1="58" y1="112" x2="110" y2="85" stroke="#d97706" stroke-width="2.5" class="flow-data"/>
+                            <polygon points="110,85 102,83 104,91" fill="#d97706"/>
+                            <!-- Request label -->
+                            <text x="75" y="88" text-anchor="middle" class="label-small" fill="#92400e">запрос</text>
+
+                            <!-- Arrow: API -> Model (Internal) -->
+                            <line x1="162" y1="95" x2="162" y2="140" stroke="#d97706" stroke-width="2.5"/>
+                            <polygon points="162,140 157,132 167,132" fill="#d97706"/>
+
+                            <!-- Arrow: Model -> Client (Response) -->
+                            <line x1="110" y1="155" x2="58" y2="128" stroke="#d97706" stroke-width="2.5" class="flow-data"/>
+                            <polygon points="58,128 66,130 64,122" fill="#d97706"/>
+                            <!-- Response label moved up and right -->
+                            <text x="85" y="165" text-anchor="middle" class="label-small" fill="#92400e">ответ (мс)</text>
+
+                            <text x="120" y="230" text-anchor="middle" class="label-small" fill="#92400e" style="font-weight: bold;">мгновенный ответ</text>
+                        </svg>
+                    </div>
+
+                    <!-- EMBEDDED -->
+                    <div>
+                        <div style="font-size: 14px; font-weight: 700; color: #166534; margin-bottom: 8px; text-align: center;">Встроенный</div>
+                        <svg viewBox="0 0 240 240" width="100%">
+                            <rect x="0" y="0" width="240" height="240" fill="#ffffff"/>
+                            
+                            <!-- Phone -->
+                            <rect x="70" y="20" width="100" height="190" rx="14" fill="#f0fdf4" stroke="#16a34a" stroke-width="2.5"/>
+                            <rect x="75" y="35" width="90" height="150" rx="4" fill="#ffffff" stroke="#16a34a" stroke-width="1.5"/>
+                            <circle cx="120" cy="195" r="6" fill="#16a34a"/>
+                            
+                            <!-- Model inside -->
+                            <rect x="85" y="85" width="70" height="50" rx="6" fill="#bbf7d0" stroke="#16a34a" stroke-width="2"/>
+                            <text x="120" y="106" text-anchor="middle" class="label-small" fill="#14532d">модель</text>
+                            <text x="120" y="122" text-anchor="middle" class="label-small" fill="#14532d">внутри</text>
+                            
+                            <!-- No internet -->
+                            <line x1="30" y1="45" x2="55" y2="70" stroke="#dc2626" stroke-width="3"/>
+                            <line x1="55" y1="45" x2="30" y2="70" stroke="#dc2626" stroke-width="3"/>
+                            <text x="42" y="90" text-anchor="middle" class="label-small" fill="#991b1b">без сети</text>
+                            
+                            <text x="120" y="230" text-anchor="middle" class="label-small" fill="#166534" style="font-weight: bold;">работает автономно</text>
+                        </svg>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    <strong>Пакетный</strong> — по расписанию, обрабатывает накопленные данные (отчёты, сегментация). <strong>Онлайн</strong> — мгновенный ответ на запрос (рекомендации, скоринг, антифрод). <strong>Встроенный</strong> — работает на устройстве без сети (распознавание на телефоне, медицинские приборы).
+                </div>
+            </div>
+            <!-- ВИЗУАЛИЗАЦИЯ 2: ЧЕТЫРЕ УРОВНЯ МОНИТОРИНГА -->
+            <div class="viz-card">
+                <div class="viz-title">📊 Четыре уровня мониторинга модели</div>
+                <svg viewBox="0 0 540 320" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="320" fill="#ffffff"/>
+
+                    <!-- Pyramid -->
+                    <!-- Level 1: technical (bottom, widest) -->
+                    <polygon points="40,290 500,290 450,235 90,235" fill="#eff6ff" stroke="#2563eb" stroke-width="2.5"/>
+                    <text x="270" y="258" text-anchor="middle" class="label-strong" fill="#1e40af">1. Технический мониторинг</text>
+                    <text x="270" y="276" text-anchor="middle" class="label-small">сервис работает? скорость? ошибки?</text>
+
+                    <!-- Level 2: data -->
+                    <polygon points="90,235 450,235 405,180 135,180" fill="#f0fdf4" stroke="#16a34a" stroke-width="2.5"/>
+                    <text x="270" y="203" text-anchor="middle" class="label-strong" fill="#166534">2. Данные</text>
+                    <text x="270" y="221" text-anchor="middle" class="label-small">пропуски? выбросы? дрейф?</text>
+
+                    <!-- Level 3: predictions -->
+                    <polygon points="135,180 405,180 360,125 180,125" fill="#fffbeb" stroke="#d97706" stroke-width="2.5"/>
+                    <text x="270" y="148" text-anchor="middle" class="label-strong" fill="#92400e">3. Предсказания</text>
+                    <text x="270" y="166" text-anchor="middle" class="label-small">сдвиг распределения? доля «да»?</text>
+
+                    <!-- Level 4: quality (top, narrowest) -->
+                    <polygon points="180,125 360,125 320,70 220,70" fill="#faf5ff" stroke="#7c3aed" stroke-width="2.5"/>
+                    <text x="270" y="93" text-anchor="middle" class="label-strong" fill="#6b21a8">4. Качество</text>
+                    <text x="270" y="110" text-anchor="middle" class="label-small" fill="#4c1d95">точность, полнота, AUC</text>
+
+                    <!-- Top tip -->
+                    <text x="270" y="45" text-anchor="middle" class="label-strong" fill="#6b21a8">← самый ценный, но с задержкой</text>
+
+                    <!-- Side annotations -->
+                    <text x="20" y="280" text-anchor="middle" class="label-small" transform="rotate(-90 20 280)">базовый уровень</text>
+                    <text x="520" y="100" text-anchor="middle" class="label-small" transform="rotate(90 520 100)">продвинутый уровень</text>
+                </svg>
+                <div class="viz-caption">
+                    Мониторинг — это <strong>пирамида</strong>. Внизу — базовый технический уровень: работает ли сервис. Выше — данные: не изменилось ли их качество. Ещё выше — предсказания: не сместилось ли их распределение. На вершине — <strong>реальное качество</strong>: самые ценные метрики, но они требуют обратной связи и появляются с задержкой.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 3: ДРЕЙФ ДАННЫХ -->
+            <div class="viz-card">
+                <div class="viz-title">📉 Дрейф данных: распределение признаков меняется</div>
+                <svg viewBox="0 0 540 260" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="260" fill="#ffffff"/>
+
+                    <!-- Axes -->
+                    <line x1="60" y1="220" x2="500" y2="220" class="axis"/>
+                    <line x1="60" y1="30"  x2="60"  y2="220" class="axis"/>
+                    <text x="280" y="245" text-anchor="middle" class="label-strong">Возраст клиента</text>
+                    <text x="25" y="125" text-anchor="middle" class="label-strong" transform="rotate(-90 25 125)">Плотность</text>
+
+                    <!-- Old distribution (blue, centered at 35) -->
+                    <path d="M 60 220 Q 110 215 140 170 Q 170 100 200 100 Q 230 100 260 170 Q 290 215 340 220"
+                          fill="#bfdbfe" fill-opacity="0.5" stroke="#2563eb" stroke-width="3"/>
+                    <line x1="200" y1="100" x2="200" y2="220" stroke="#2563eb" stroke-width="2" stroke-dasharray="5 4"/>
+                    <text x="200" y="86" text-anchor="middle" class="label-small" fill="#1e40af">обучение: средний 35</text>
+
+                    <!-- New distribution (orange, centered at 48) -->
+                    <path d="M 60 220 Q 160 215 220 170 Q 260 120 300 120 Q 340 120 380 160 Q 420 200 500 220"
+                          fill="#fde68a" fill-opacity="0.6" stroke="#d97706" stroke-width="3"/>
+                    <line x1="300" y1="120" x2="300" y2="220" stroke="#d97706" stroke-width="2" stroke-dasharray="5 4"/>
+                    <text x="300" y="106" text-anchor="middle" class="label-small" fill="#92400e">сейчас: средний 48</text>
+
+                    <!-- Arrow between centers -->
+                    <line x1="210" y1="185" x2="290" y2="185" stroke="#dc2626" stroke-width="3" class="pulse-alert"/>
+                    <polygon points="290,185 284,182 284,188" fill="#dc2626"/>
+                    <text x="250" y="205" text-anchor="middle" class="label-small" fill="#991b1b" style="font-weight: 700;">дрейф!</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Дрейф данных</strong> — распределение входных признаков смещается. Модель обучена на данных, где средний возраст был 35 лет. А сейчас средний возраст — 48. Модель просто «не видела» таких клиентов. И может давать неверные прогнозы. Решение: мониторить распределения и регулярно переобучать.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 4: ДРЕЙФ КОНЦЕПЦИИ -->
+            <div class="viz-card">
+                <div class="viz-title">⚡ Дрейф концепции: связь признаков и цели меняется</div>
+                <svg viewBox="0 0 540 260" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="260" fill="#ffffff"/>
+
+                    <!-- Axes -->
+                    <line x1="60" y1="220" x2="500" y2="220" class="axis"/>
+                    <line x1="60" y1="30"  x2="60"  y2="220" class="axis"/>
+                    <text x="280" y="245" text-anchor="middle" class="label-strong">Признак (например, активность)</text>
+                    <text x="25" y="125" text-anchor="middle" class="label-strong" transform="rotate(-90 25 125)">Вероятность оттока</text>
+
+                    <!-- Old relationship (blue line) -->
+                    <path d="M 80 180 Q 180 160 280 90 Q 380 40 480 30"
+                          fill="none" stroke="#2563eb" stroke-width="4"/>
+                    <circle cx="150" cy="170" r="4" fill="#2563eb"/>
+                    <circle cx="250" cy="105" r="4" fill="#2563eb"/>
+                    <circle cx="350" cy="60" r="4" fill="#2563eb"/>
+                    <circle cx="450" cy="35" r="4" fill="#2563eb"/>
+                    <text x="400" y="55" class="label-small" fill="#1e40af">обучение</text>
+
+                    <!-- New relationship (orange, different shape) -->
+                    <path d="M 80 200 Q 180 180 280 170 Q 380 165 480 160"
+                          fill="none" stroke="#d97706" stroke-width="4" stroke-dasharray="7 4"/>
+                    <circle cx="150" cy="192" r="4" fill="#d97706"/>
+                    <circle cx="250" cy="172" r="4" fill="#d97706"/>
+                    <circle cx="350" cy="167" r="4" fill="#d97706"/>
+                    <circle cx="450" cy="161" r="4" fill="#d97706"/>
+                    <text x="400" y="180" class="label-small" fill="#92400e">сейчас</text>
+
+                    <!-- Gap arrow -->
+                    <line x1="350" y1="65" x2="350" y2="160" stroke="#dc2626" stroke-width="3" class="pulse-alert"/>
+                    <text x="365" y="115" class="label-small" fill="#991b1b" style="font-weight: 700;">дрейф!</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Дрейф концепции</strong> — сама зависимость меняется. До пандемии главным фактором оттока была активность. После пандемии — экономика. Распределение признаков может остаться прежним, но модель предсказывает по устаревшей логике. Решение: мониторить реальное качество и переобучать при падении.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 5: СТРАТЕГИИ ОБНОВЛЕНИЯ -->
+            <div class="viz-card">
+                <div class="viz-title">🔄 Когда и как обновлять модель</div>
+                <svg viewBox="0 0 540 260" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="260" fill="#ffffff"/>
+
+                    <!-- Timeline -->
+                    <line x1="60" y1="130" x2="490" y2="130" stroke="#334155" stroke-width="2.5"/>
+                    <polygon points="490,130 480,125 480,135" fill="#334155"/>
+                    <text x="280" y="225" text-anchor="middle" class="label-strong">Время</text>
+
+                    <!-- Strategy 1: scheduled -->
+                    <rect x="80" y="50" width="100" height="60" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="2.5"/>
+                    <text x="130" y="75" text-anchor="middle" class="label-strong" style="font-size: 12px;">По расписанию</text>
+                    <text x="130" y="93" text-anchor="middle" class="label-small">каждый месяц</text>
+                    <line x1="130" y1="110" x2="130" y2="130" stroke="#2563eb" stroke-width="2" stroke-dasharray="4 3"/>
+                    <circle cx="130" cy="130" r="6" fill="#2563eb"/>
+
+                    <!-- Strategy 2: quality drop -->
+                    <rect x="220" y="150" width="100" height="60" rx="8" fill="#fffbeb" stroke="#d97706" stroke-width="2.5"/>
+                    <text x="270" y="175" text-anchor="middle" class="label-strong" style="font-size: 12px;">По падению</text>
+                    <text x="270" y="193" text-anchor="middle" class="label-small">точность &lt; порога</text>
+                    <line x1="270" y1="150" x2="270" y2="130" stroke="#d97706" stroke-width="2" stroke-dasharray="4 3"/>
+                    <circle cx="270" cy="130" r="6" fill="#d97706"/>
+
+                    <!-- Strategy 3: drift detection -->
+                    <rect x="360" y="50" width="100" height="60" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="2.5"/>
+                    <text x="410" y="75" text-anchor="middle" class="label-strong" style="font-size: 12px;">По дрейфу</text>
+                    <text x="410" y="93" text-anchor="middle" class="label-small">данные изменились</text>
+                    <line x1="410" y1="110" x2="410" y2="130" stroke="#16a34a" stroke-width="2" stroke-dasharray="4 3"/>
+                    <circle cx="410" cy="130" r="6" fill="#16a34a"/>
+                </svg>
+                <div class="viz-caption">
+                    Три стратегии обновления. <strong>По расписанию</strong> — просто, но может опоздать. <strong>По падению качества</strong> — адаптивно, но требует ответов, которые приходят с задержкой. <strong>По дрейфу данных</strong> — самое раннее обнаружение, но может быть слишком чувствительным. <strong>Лучшая практика:</strong> комбинировать регулярное обновление + внеочередное при обнаружении проблем.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 6: ЭТИКА -->
+            <div class="viz-card">
+                <div class="viz-title">⚖️ Пять принципов ответственной работы с моделями</div>
+                <svg viewBox="0 0 540 260" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="260" fill="#ffffff"/>
+
+                    <!-- Center circle -->
+                    <circle cx="270" cy="130" r="40" fill="#1e40af"/>
+                    <text x="270" y="126" text-anchor="middle" class="label-white" style="font-size: 14px;">Этика</text>
+                    <text x="270" y="144" text-anchor="middle" class="label-white" style="font-size: 14px;">модели</text>
+
+                    <!-- 1. Fairness -->
+                    <circle cx="120" cy="55" r="35" fill="#f0fdf4" stroke="#16a34a" stroke-width="2.5"/>
+                    <text x="120" y="52" text-anchor="middle" class="label-strong" style="font-size: 12px;">Справед-</text>
+                    <text x="120" y="66" text-anchor="middle" class="label-strong" style="font-size: 12px;">ливость</text>
+                    <line x1="148" y1="78" x2="235" y2="105" stroke="#16a34a" stroke-width="2"/>
+
+                    <!-- 2. Transparency -->
+                    <circle cx="420" cy="55" r="35" fill="#eff6ff" stroke="#2563eb" stroke-width="2.5"/>
+                    <text x="420" y="52" text-anchor="middle" class="label-strong" style="font-size: 12px;">Прозрач-</text>
+                    <text x="420" y="66" text-anchor="middle" class="label-strong" style="font-size: 12px;">ность</text>
+                    <line x1="392" y1="78" x2="305" y2="105" stroke="#2563eb" stroke-width="2"/>
+
+                    <!-- 3. Accountability -->
+                    <circle cx="270" cy="220" r="35" fill="#faf5ff" stroke="#7c3aed" stroke-width="2.5"/>
+                    <text x="270" y="217" text-anchor="middle" class="label-strong" style="font-size: 12px;">Под-</text>
+                    <text x="270" y="231" text-anchor="middle" class="label-strong" style="font-size: 12px;">отчётность</text>
+                    <line x1="270" y1="185" x2="270" y2="170" stroke="#7c3aed" stroke-width="2"/>
+
+                    <!-- 4. Privacy -->
+                    <circle cx="50" cy="195" r="35" fill="#fffbeb" stroke="#d97706" stroke-width="2.5"/>
+                    <text x="50" y="192" text-anchor="middle" class="label-strong" style="font-size: 11px;">Конфиден-</text>
+                    <text x="50" y="206" text-anchor="middle" class="label-strong" style="font-size: 11px;">циальность</text>
+                    <line x1="82" y1="187" x2="235" y2="150" stroke="#d97706" stroke-width="2"/>
+
+                    <!-- 5. Safety -->
+                    <circle cx="490" cy="195" r="35" fill="#fef2f2" stroke="#dc2626" stroke-width="2.5"/>
+                    <text x="490" y="192" text-anchor="middle" class="label-strong" style="font-size: 12px;">Безопас-</text>
+                    <text x="490" y="206" text-anchor="middle" class="label-strong" style="font-size: 12px;">ность</text>
+                    <line x1="458" y1="187" x2="305" y2="150" stroke="#dc2626" stroke-width="2"/>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Справедливость</strong> — нет дискриминации по полу, возрасту, расе. <strong>Прозрачность</strong> — понятно, как модель принимает решения. <strong>Подотчётность</strong> — есть человек, отвечающий за модель. <strong>Конфиденциальность</strong> — защита персональных данных. <strong>Безопасность</strong> — модель не причиняет вреда. Это не формальность — это защита людей.
+                </div>
+            </div>
+
+            <!-- СРАВНЕНИЕ СПОСОБОВ ВНЕДРЕНИЯ -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 8px;">⚖️ Три способа внедрения: что выбрать</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr><th>Критерий</th><th>Пакетный</th><th>Онлайн</th><th>Встроенный</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>Скорость</strong></td><td>Не важна</td><td>Доли секунды</td><td>Мгновенно</td></tr>
+                        <tr><td><strong>Сложность</strong></td><td>Низкая</td><td>Высокая</td><td>Очень высокая</td></tr>
+                        <tr><td><strong>Зависимость от сети</strong></td><td>Есть</td><td>Обязательна</td><td>Не нужна</td></tr>
+                        <tr><td><strong>Пример задачи</strong></td><td>Ежедневный отчёт</td><td>Рекомендации, скоринг</td><td>Распознавание на телефоне</td></tr>
+                        <tr><td><strong>Инфраструктура</strong></td><td>Скрипт по расписанию</td><td>Веб-сервис</td><td>Мобильное приложение</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ПРОБЛЕМЫ ПРИ ОБНОВЛЕНИИ -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 10px;">⚠️ Четыре проблемы при обновлении модели</div>
+                <div class="grid-2">
+                    <div class="callout warn">
+                        <strong>Регрессия</strong>
+                        <p>Новая модель может оказаться хуже старой из-за шума в новых данных. Всегда сравнивайте новую модель со старой перед внедрением.</p>
+                    </div>
+                    <div class="callout warn">
+                        <strong>Несовместимость</strong>
+                        <p>Новая модель может требовать других признаков или формата данных. Это потребует изменений в инфраструктуре.</p>
+                    </div>
+                    <div class="callout warn">
+                        <strong>Задержка</strong>
+                        <p>Переобучение занимает время. В этот период старая модель продолжает работать и может давать плохие прогнозы.</p>
+                    </div>
+                    <div class="callout warn">
+                        <strong>Обратная совместимость</strong>
+                        <p>Если модель используется в нескольких системах — обновление в одной может сломать другие. Планируйте обновления.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ПРИМЕНЕНИЕ ПО РОЛЯМ -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 8px;">👥 Как разные аналитики работают с внедрением и мониторингом</div>
+                <table class="role-table">
+                    <thead>
+                        <tr><th style="width: 30%;">Роль аналитика</th><th>Внедрение + мониторинг</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="role-emoji">📈</span> <strong>Аналитик данных</strong></td><td>Пакетный прогноз оттока; дашборд качества; переобучение при падении</td></tr>
+                        <tr><td><span class="role-emoji">💰</span> <strong>Финансовый аналитик</strong></td><td>Онлайн-скоринг; проверка справедливости; документирование для регулятора</td></tr>
+                        <tr><td><span class="role-emoji">🚀</span> <strong>Продуктовый аналитик</strong></td><td>Онлайн-рекомендации; мониторинг дрейфа данных; переобучение</td></tr>
+                        <tr><td><span class="role-emoji">🌐</span> <strong>Веб-аналитик</strong></td><td>Пакетный отчёт конверсии; проверка утечек; мониторинг временных данных</td></tr>
+                        <tr><td><span class="role-emoji">📊</span> <strong>BI-аналитик</strong></td><td>Пакетные прогнозы для дашбордов; технический мониторинг</td></tr>
+                        <tr><td><span class="role-emoji">🗄️</span> <strong>Аналитик больших данных</strong></td><td>Онлайн на миллионы запросов; автоматические алерты по дрейфу</td></tr>
+                        <tr><td><span class="role-emoji">📣</span> <strong>Маркетинговый аналитик</strong></td><td>Онлайн-таргетинг; проверка справедливости; этика рекламы</td></tr>
+                        <tr><td><span class="role-emoji">💼</span> <strong>Бизнес-аналитик</strong></td><td>Пакетный прогноз проектов; объяснимость для руководства</td></tr>
+                        <tr><td><span class="role-emoji">⚙️</span> <strong>Системный аналитик</strong></td><td>Онлайн-обнаружение сбоев; технический мониторинг инфраструктуры</td></tr>
+                        <tr><td><span class="role-emoji">🎨</span> <strong>UX-аналитик</strong></td><td>Онлайн-персонализация; прозрачность для пользователя</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- CALL-OUT -->
+            <div class="callout warn">
+                <strong>⚠️ Главный вывод</strong>
+                <p>Внедрение и мониторинг — это <strong>не финиш, а старт нового этапа</strong>. Модель — живой инструмент. Данные меняются, и модель должна меняться вместе с ними. Хорошая модель — не та, что показывает красивые цифры на тесте, а та, что <strong>приносит пользу каждый день и остаётся полезной со временем</strong>.</p>
+            </div>
+
+            <!-- ВИДЕОПЛЕЕР -->
+            <div class="video-section">
+                <div class="video-container">
+                    <iframe id="lecture-player" src="https://rutube.ru" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+                </div>
+                <div class="links-hub">
+                    <button onclick="changeVideo('https://rutube.ru/')" class="video-btn stop-btn">⏹ СТОП</button>
+                    <button onclick="changeVideo('https://rutube.ru/play/embed/')" class="video-btn rt-btn">📜 Лекция 21. Внедрение и мониторинг</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="slide-footer">
+            Направление «Менеджмент» | Курс: Аналитика данных | Лекция 21: «Внедрение моделей и мониторинг их качества»
+        </div>
+    </div>
+
+    <!-- ПРАВАЯ ПАНЕЛЬ (1/3): СКРИПТ ПРЕПОДАВАТЕЛЯ -->
+      <div class="speaker-notes">
+        <div style="position: sticky; top: 0; background: #1a202c; padding: 20px 20px 10px 20px; border-bottom: 1px solid #4a5568; width: 100%; z-index: 100;">
+                       <div class="notes-header" style="display: block; padding-bottom: 15px;">
+               <audio id="lecture-audio" preload="auto" controls
+                      src="https://archive.org/download/03_20261110_20261110/20.mp3"
+                      style="width: 100%; height: 32px; border-radius: 4px;"></audio>
+            </div>
+            <div style="width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+             <iframe id="right-lecture-player" src="https://archive.org/embed/20261020_20261020_0955?autoplay=true&loop=true&muted=true"  allow="clipboard-write; autoplay" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen style="border: none;"></iframe>
+                           </div>
+        </div>
+
+        <div class="lecture-text" style="margin-top: 20px;">
+
+            <h3>📌 Введение</h3>
+
+            <p>Добрый день, коллеги. Мы начинаем очередную лекцию нашего курса. В предыдущей лекции мы разобрали, как оценивать качество моделей. Мы научились использовать перекрёстную проверку. Мы разобрали подбор гиперпараметров. И увидели, как распознать переобучение и недообучение. Но хорошая модель на тестовой выборке — это ещё не всё. Настоящая задача начинается после того, как модель покидает блокнот аналитика.</p>
+
+            <p>Сегодня мы поговорим о внедрении моделей и мониторинге их качества. Это финальный, но, пожалуй, самый важный этап жизненного цикла проекта. Именно здесь модель встречается с реальностью. И именно здесь становится понятно, приносит ли она пользу бизнесу.</p>
+
+            <p>Давайте сразу обозначим главную мысль. Модель — это не артефакт, который создаётся один раз и навсегда. Это живой инструмент. Он требует постоянного внимания. Данные меняются. Поведение клиентов меняется. Рынок меняется. И модель, которая была хороша год назад, сегодня может давать неверные прогнозы. Поэтому внедрение — это не финиш, а старт нового этапа.</p>
+
+            <p>Сегодня мы разберём несколько важных тем. Сначала поймём, что такое внедрение и зачем оно нужно. Затем разберём основные способы внедрения. После этого поговорим о мониторинге качества модели. Разберём, что такое дрейф данных и дрейф концепции. Узнаем, как и когда обновлять модель. И в конце обсудим ответственность и этику при работе с моделями.</p>
+
+            <p>Обратите внимание на важную мысль. Многие специалисты по данным любят строить модели. Это интересно. Это творческая работа. Но внедрение и мониторинг часто воспринимаются как скучная рутина. Однако именно они определяют, принесёт ли модель реальную пользу. Без внедрения модель остаётся игрушкой в блокноте. А без мониторинга она быстро теряет качество. Поэтому эти этапы заслуживают такого же внимания, как и построение модели.</p>
+
+            <p>Я желаю вам продуктивной работы. И надеюсь, что после этой лекции вы увидите полную картину жизненного цикла модели. От идеи до работающего инструмента, который приносит пользу каждый день.</p>
+
+            <h3>📌 Блок 1. Что такое внедрение модели и зачем оно нужно</h3>
+
+            <p>Перейдём к первому вопросу. Давайте разберёмся, что такое внедрение модели.</p>
+
+            <p>Дадим определение. Внедрение модели — это процесс переноса модели из среды разработки в рабочую среду. Где она будет использоваться для решения реальных задач. Другими словами, это момент, когда модель начинает работать на бизнес.</p>
+
+            <p>Поясним на примере. Представьте, что аналитик построил модель прогноза оттока клиентов. Пока модель лежит в блокноте — она бесполезна. Она никому не помогает. Но как только она встроена в систему компании — она начинает работать. Каждый день она получает данные о клиентах. И выдаёт прогнозы. И эти прогнозы используются для удержания клиентов. Вот это и есть внедрение.</p>
+
+            <p>Зачем это нужно. Внедрение превращает модель в инструмент. Из абстрактной конструкции она становится частью бизнес-процесса. И начинает приносить реальную пользу. Без внедрения вся работа аналитика остаётся теоретической.</p>
+
+            <h4>Ключевые требования к внедрению</h4>
+
+            <p>Теперь разберём, что должно быть обеспечено при внедрении. Есть несколько ключевых требований. Первое требование — это воспроизводимость. Модель должна работать одинаково при каждом запуске. И давать одинаковый результат на одинаковых данных. Это обеспечивается версионированием кода и фиксацией окружения.</p>
+
+            <p>Второе требование — это масштабируемость. Модель должна справляться с тем объёмом данных, который есть в рабочей среде. Если она обучена на тысяче объектов, а работает с миллионом — она должна это выдержать. Это требует правильной архитектуры.</p>
+
+            <p>Третье требование — это скорость. Предсказание должно выполняться за приемлемое время. Если модель делает прогноз несколько секунд — это может быть неприемлемо для онлайн-систем. Если несколько часов — это может быть нормально для пакетной обработки. Всё зависит от задачи.</p>
+
+            <p>Четвёртое требование — это надёжность. Модель не должна падать при неожиданных данных. Она должна корректно обрабатывать пропуски. И выдавать осмысленный результат даже в сложных ситуациях.</p>
+
+            <p>Пятое требование — это мониторинг. Должна быть возможность отслеживать работу модели в реальном времени. И быстро обнаруживать проблемы.</p>
+
+            <h4>Разница между моделью и сервисом</h4>
+
+            <p>Теперь сделаем важное уточнение. Модель — это не то же самое, что сервис. Модель — это математический объект. Она принимает на вход признаки и возвращает предсказание. Сервис — это инфраструктура вокруг модели. Он принимает запросы. Он подготавливает данные. Он вызывает модель. Он возвращает результат. И он обеспечивает все требования, о которых мы говорили.</p>
+
+            <p>Отсюда следует важная мысль. Построить модель — это работа специалиста по данным. А сделать из неё сервис — это работа инженера по машинному обучению. Или инженера по данным. Это разные роли. И разные навыки. Специалист по данным фокусируется на качестве модели. Инженер фокусируется на её надёжной работе в производственной среде.</p>
+
+            <p>Обратите внимание на важную мысль. В небольших командах эти роли может выполнять один человек. Но в крупных компаниях их разделяют. И это правильно. Потому что каждая роль требует глубоких знаний в своей области.</p>
+
+            <h3>📌 Блок 2. Способы внедрения моделей</h3>
+
+            <p>Перейдём ко второму вопросу. Теперь разберём основные способы внедрения моделей. Их три.</p>
+
+            <h4>Пакетное внедрение</h4>
+
+            <p>Первый способ называется пакетное внедрение. По-английски это бэтч-инференс. Дадим определение. Пакетное внедрение — это способ, при котором модель запускается по расписанию. Обрабатывает накопленные данные. И сохраняет результаты в базу данных или в отчёт.</p>
+
+            <p>Поясним на примере. Представьте, что компания хочет каждый день прогнозировать отток клиентов. Ночью запускается скрипт. Он загружает данные о клиентах за прошедший день. Модель делает прогнозы для каждого клиента. Результаты сохраняются в таблицу. Утром менеджеры видят список клиентов с высоким риском оттока. И могут с ними связаться.</p>
+
+            <p>Пакетное внедрение — это самый простой и самый распространённый способ. Он подходит для задач, где не нужен мгновенный ответ. Например, для ежедневных отчётов. Для еженедельных прогнозов. Для сегментации клиентов. Для задач, где важна не скорость, а регулярность и точность.</p>
+
+            <h4>Онлайн-внедрение</h4>
+
+            <p>Второй способ называется онлайн-внедрение. По-английски это риэл-тайм-инференс. Дадим определение. Онлайн-внедрение — это способ, при котором модель работает как сервис. Она принимает запросы в реальном времени. И сразу возвращает ответ.</p>
+
+            <p>Поясним на примере. Представьте, что пользователь заходит на сайт интернет-магазина. Система должна показать ему рекомендованные товары. Модель рекомендаций получает данные о пользователе. И сразу возвращает список товаров. Весь процесс занимает доли секунды. Пользователь даже не замечает, что за этим стоит модель.</p>
+
+            <p>Онлайн-внедрение сложнее, чем пакетное. Оно требует высокой скорости. Оно требует надёжности. Оно требует масштабируемости. Потому что запросов может быть много. И каждый запрос должен получить ответ быстро.</p>
+
+            <p>Онлайн-внедрение используется в задачах, где нужен мгновенный ответ. Это рекомендательные системы. Это системы обнаружения мошенничества. Это системы кредитного скоринга в реальном времени. Это системы модерации контента.</p>
+
+            <h4>Встроенное внедрение</h4>
+
+            <p>Третий способ называется встроенное внедрение. По-английски это эмбед-инференс. Дадим определение. Встроенное внедрение — это способ, при котором модель встраивается непосредственно в устройство или в приложение. И работает без обращения к серверу.</p>
+
+            <p>Поясним на примере. Представьте, что у вас есть мобильное приложение для распознавания растений. Модель распознавания встроена прямо в приложение. Пользователь фотографирует растение. И приложение сразу показывает результат. Без интернета. Без обращения к серверу.</p>
+
+            <p>Встроенное внедрение используется там, где важна автономность. Где нет постоянного подключения к сети. Или где важна конфиденциальность данных. Например, в медицинских приборах. В системах безопасности. В мобильных приложениях.</p>
+
+            <h4>Сравнение способов</h4>
+
+            <p>Теперь сравним три способа. Пакетное внедрение — самое простое. Оно не требует высокой скорости. Оно подходит для большинства аналитических задач. Онлайн-внедрение — сложнее. Оно требует высокой скорости и надёжности. Но даёт мгновенный ответ. Встроенное внедрение — самое сложное. Оно требует специальных инструментов. Но работает автономно.</p>
+
+            <p>Выбор способа зависит от задачи. Если нужен отчёт раз в день — пакетное. Если нужна рекомендация в момент клика — онлайн. Если нужно распознавание на телефоне — встроенное.</p>
+
+            <h3>📌 Блок 3. Мониторинг качества модели</h3>
+
+            <p>Перейдём к третьему вопросу. Теперь разберём мониторинг качества модели после внедрения.</p>
+
+            <p>Дадим определение. Мониторинг модели — это процесс постоянного наблюдения за работой модели в производственной среде. Цель мониторинга — вовремя обнаружить проблемы. И принять меры до того, как они приведут к потерям.</p>
+
+            <p>Поясним на примере. Представьте, что модель прогноза оттока перестала работать. Она предсказывает отток всем клиентам подряд. Или никому. Это не сразу заметно. Потому что модель продолжает выдавать прогнозы. Но эти прогнозы бесполезны. Мониторинг помогает обнаружить такую проблему. И исправить её.</p>
+
+            <h4>Что отслеживать</h4>
+
+            <p>Теперь разберём, что именно нужно отслеживать. Есть несколько уровней мониторинга.</p>
+
+            <p>Первый уровень — это технический мониторинг. Он отслеживает работу инфраструктуры. Работает ли сервис. Отвечает ли он на запросы. Какова скорость ответа. Сколько ошибок. Это базовый уровень. Если здесь проблемы — модель не работает вообще.</p>
+
+            <p>Второй уровень — это мониторинг данных. Он отслеживает качество входящих данных. Нет ли пропусков. Нет ли выбросов. Совпадает ли распределение признаков с тем, что было на обучении. Это важный уровень. Потому что если данные изменились — модель может давать неверные прогнозы.</p>
+
+            <p>Третий уровень — это мониторинг предсказаний. Он отслеживает распределение предсказаний модели. Не сместилось ли оно. Не стала ли модель предсказывать только один класс. Не изменилась ли средняя вероятность. Это тоже важный сигнал.</p>
+
+            <p>Четвёртый уровень — это мониторинг качества. Он отслеживает реальное качество модели. Насколько точны её прогнозы. Но здесь есть проблема. Мы не всегда знаем правильный ответ сразу. Например, прогноз оттока делается на месяц вперёд. И реальный ответ мы узнаем только через месяц. Поэтому мониторинг качества требует отложенной обратной связи.</p>
+
+            <h4>Метрики мониторинга</h4>
+
+            <p>Теперь разберём, какие метрики используются для мониторинга. Для технического мониторинга — это время ответа. Количество запросов. Количество ошибок. Доступность сервиса.</p>
+
+            <p>Для мониторинга данных — это доля пропусков. Средние значения признаков. Стандартные отклонения. Распределения категориальных признаков.</p>
+
+            <p>Для мониторинга предсказаний — это средняя вероятность. Доля положительных предсказаний. Распределение вероятностей.</p>
+
+            <p>Для мониторинга качества — те же метрики, что и при оценке. Точность. Полнота. Эф-мера. Площадь под рок-кривой. Но измеряемые на реальных данных.</p>
+
+            <p>Обратите внимание на важную мысль. Мониторинг должен быть автоматизирован. Ручной мониторинг не масштабируется. И не работает в реальном времени. Нужны дашборды. Нужны алерты. Нужны автоматические проверки. Это требует инженерной работы. Но без этого модель не может надёжно работать.</p>
+
+            <h3>📌 Блок 4. Дрейф данных и дрейф концепции</h3>
+
+            <p>Перейдём к четвёртому вопросу. Теперь разберём главные причины деградации модели. Их две. И они называются дрейф данных и дрейф концепции.</p>
+
+            <h4>Дрейф данных</h4>
+
+            <p>Дадим определение. Дрейф данных — это изменение распределения входных признаков с течением времени. Другими словами, данные, на которых работает модель, становятся не такими, как данные, на которых она обучалась.</p>
+
+            <p>Поясним на примере. Представьте, что модель прогноза оттока обучена на данных за прошлый год. В тот период средний возраст клиентов был тридцать пять лет. А сейчас средний возраст вырос до сорока пяти. Распределение признака «возраст» изменилось. Это и есть дрейф данных.</p>
+
+            <p>Почему это проблема. Потому что модель не видела таких данных при обучении. И может давать неверные прогнозы. Например, она может недооценивать отток среди более взрослых клиентов. Потому что в обучающих данных их было мало.</p>
+
+            <p>Дрейф данных — это очень частая проблема. Он возникает из-за изменения рынка. Из-за изменения поведения клиентов. Из-за изменения продуктовой линейки. Из-за сезонности. Из-за многого другого.</p>
+
+            <p>Как бороться с дрейфом данных. Первый способ — регулярно переобучать модель. На свежих данных. Второй способ — отслеживать распределение признаков. И запускать алерт при значительном отклонении. Третий способ — использовать методы адаптации. Которые позволяют модели подстраиваться под новые данные.</p>
+
+            <h4>Дрейф концепции</h4>
+
+            <p>Теперь разберём вторую причину. Она называется дрейф концепции. Дадим определение. Дрейф концепции — это изменение связи между признаками и целевой переменной. Другими словами, меняется сама зависимость, которую изучает модель.</p>
+
+            <p>Поясним на примере. Представьте, что модель прогноза оттока обучена на данных до пандемии. В то время главным фактором оттока было снижение активности. А после пандемии главным фактором стала экономическая ситуация. Связь между признаками и оттоком изменилась. Это и есть дрейф концепции.</p>
+
+            <p>Почему это проблема. Потому что модель выучила старую зависимость. И применяет её к новым данным. А зависимость уже другая. Поэтому прогнозы становятся неверными.</p>
+
+            <p>Дрейф концепции — это более серьёзная проблема, чем дрейф данных. Потому что она не всегда видна по распределению признаков. Признаки могут остаться теми же. А зависимость изменилась. Поэтому нужны специальные методы обнаружения.</p>
+
+            <p>Как бороться с дрейфом концепции. Основной способ — это регулярное переобучение. С учётом новых данных. Кроме того, важно отслеживать реальное качество модели. Если оно падает — это сигнал о дрейфе концепции.</p>
+
+            <p>Обратите внимание на важную мысль. Дрейф данных и дрейф концепции часто идут вместе. Но не всегда. Иногда данные меняются, а зависимость остаётся. Иногда наоборот. Поэтому нужно отслеживать и то, и другое.</p>
+
+            <h3>📌 Блок 5. Переобучение и обновление модели</h3>
+
+            <p>Перейдём к пятому вопросу. Теперь разберём, как и когда обновлять модель.</p>
+
+            <p>Дадим определение. Обновление модели — это процесс переобучения модели на новых данных. Цель обновления — восстановить качество модели. Которое могло упасть из-за дрейфа данных или дрейфа концепции.</p>
+
+            <p>Когда обновлять модель. Есть несколько стратегий. Первая стратегия — по расписанию. Например, каждый месяц. Или каждый квартал. Это простой подход. Но он может быть неоптимальным. Потому что дрейф может произойти раньше.</p>
+
+            <p>Вторая стратегия — по падению качества. Мы отслеживаем качество модели. И когда оно падает ниже порога — запускаем переобучение. Это более адаптивный подход. Но требует наличия правильных ответов. А они не всегда доступны сразу.</p>
+
+            <p>Третья стратегия — по обнаружению дрейфа. Мы отслеживаем распределение данных. И когда оно значительно меняется — запускаем переобучение. Это тоже адаптивный подход. Но может быть слишком чувствительным.</p>
+
+            <p>На практике часто используют комбинацию. Регулярное переобучение по расписанию. Плюс внеочередное — при обнаружении проблем. Это даёт баланс между стабильностью и адаптивностью.</p>
+
+            <h4>Проблемы при обновлении</h4>
+
+            <p>Теперь разберём проблемы, которые могут возникнуть при обновлении. Первая проблема — это регрессия. Новая модель может оказаться хуже старой. Особенно если новые данные содержат шум или аномалии. Поэтому нужно сравнивать новую модель со старой. И принимать новую только если она лучше.</p>
+
+            <p>Вторая проблема — это несовместимость. Новая модель может требовать других признаков. Или другого формата данных. Это может потребовать изменения инфраструктуры. Что не всегда возможно быстро.</p>
+
+            <p>Третья проблема — это задержка. Переобучение занимает время. И в этот период старая модель продолжает работать. Если дрейф сильный — старая модель может давать плохие прогнозы. Нужно минимизировать время переобучения.</p>
+
+            <p>Четвёртая проблема — это обратная совместимость. Если модель используется в нескольких системах, обновление в одной может сломать другие. Нужно тщательно планировать обновления.</p>
+
+            <p>Обратите внимание на важную мысль. Обновление модели — это не просто запуск скрипта. Это процесс. Он требует планирования. Он требует тестирования. Он требует мониторинга после обновления. Как и внедрение новой модели.</p>
+
+            <h3>📌 Блок 6. Ответственность и этика</h3>
+
+            <p>Перейдём к шестому вопросу. Теперь разберём важную тему. Она касается ответственности и этики при работе с моделями.</p>
+
+            <p>Дадим определение. Ответственность за модель — это осознание того, что модель влияет на жизнь людей. И что её решения могут иметь последствия. Этика в работе с моделями — это следование принципам справедливости, прозрачности и подотчётности.</p>
+
+            <p>Поясним на примере. Представьте, что модель кредитного скоринга отказывает клиенту в кредите. Это решение влияет на его жизнь. Он не сможет купить квартиру. Или открыть бизнес. Или оплатить лечение. Поэтому к таким моделям предъявляются особые требования.</p>
+
+            <h4>Принципы ответственной работы с моделями</h4>
+
+            <p>Теперь разберём основные принципы. Первый принцип — это справедливость. Модель не должна дискриминировать людей по признакам, которые не связаны с задачей. Например, по полу. По расе. По возрасту. По месту жительства. Это называется дискриминацией. И она недопустима.</p>
+
+            <p>Второй принцип — это прозрачность. Должно быть понятно, как модель принимает решения. Особенно в критических задачах. Где решения влияют на людей. Модель должна быть объяснимой. Или должен быть хотя бы способ объяснить её решения.</p>
+
+            <p>Третий принцип — это подотчётность. Должен быть человек, который отвечает за работу модели. Который может объяснить её решения. И который может принять меры, если что-то пошло не так.</p>
+
+            <p>Четвёртый принцип — это конфиденциальность. Модель не должна раскрывать персональные данные. И не должна использовать их без согласия. Это особенно важно в медицине. В финансах. И в других чувствительных областях.</p>
+
+            <p>Пятый принцип — это безопасность. Модель не должна причинять вред. Например, модель медицинской диагностики не должна пропускать серьёзные заболевания. Модель автономного автомобиля не должна создавать аварийные ситуации.</p>
+
+            <h4>Как обеспечить ответственное использование</h4>
+
+            <p>Теперь разберём, как обеспечить ответственное использование моделей. Первое — это аудит моделей. Регулярная проверка на справедливость и на отсутствие дискриминации. Это может быть частью процесса разработки.</p>
+
+            <p>Второе — это документирование. Каждая модель должна иметь документацию. Какие данные использовались. Какие признаки. Какие ограничения. Какие риски. Это помогает понять модель и её ограничения.</p>
+
+            <p>Третье — это человеческий контроль. В критических задачах решения модели должны проверяться человеком. Особенно если есть сомнения. Это называется «человек в цикле». Это гарантирует, что модель не принимает важные решения автономно.</p>
+
+            <p>Четвёртое — это обратная связь. Пользователи должны иметь возможность оспорить решение модели. И получить объяснение. Это право на объяснение. И оно становится всё более важным.</p>
+
+            <p>Обратите внимание на важную мысль. Ответственность за модель лежит на всех участниках. На специалисте, который её строил. На инженере, который её внедрил. На менеджере, который её использует. На компании, которая её предоставляет. Это коллективная ответственность. И её нельзя перекладывать на «алгоритм».</p>
+
+            <h3>📌 Блок 7. Примеры применения по ролям аналитиков</h3>
+
+            <p><strong>Аналитик данных</strong> чаще всего работает с пакетным внедрением. Типичная задача — ежедневный прогноз оттока. Он настраивает скрипт. Который запускается ночью. Загружает данные. Делает прогнозы. Сохраняет результаты. Утром менеджеры видят список клиентов с высоким риском. Кроме того, аналитик данных отслеживает качество модели. Он строит дашборд. На котором видно, как меняется точность прогнозов со временем. И если точность падает — он запускает переобучение.</p>
+
+            <p><strong>Финансовый аналитик</strong> работает с онлайн-внедрением. Типичная задача — кредитный скоринг в реальном времени. Когда клиент подаёт заявку — модель сразу оценивает риск. И банк принимает решение за секунды. Это требует высокой скорости и надёжности. Кроме того, финансовый аналитик отвечает за справедливость модели. Он проверяет, что модель не дискриминирует по полу или по возрасту. И документирует, как модель принимает решения. Это требование регулятора.</p>
+
+            <p><strong>Продуктовый аналитик</strong> работает с онлайн-внедрением. Типичная задача — рекомендательная система. Модель рекомендует пользователю товары или контент. В реальном времени. И это влияет на пользовательский опыт. Кроме того, продуктовый аналитик отслеживает дрейф данных. Он проверяет, не изменилось ли поведение пользователей. И если изменилось — запускает переобучение.</p>
+
+            <p><strong>Веб-аналитик</strong> работает с пакетным внедрением. Типичная задача — еженедельный отчёт по конверсии. Модель прогнозирует конверсию для каждого сегмента трафика. И результаты попадают в дашборд. Кроме того, веб-аналитик отслеживает утечки данных. Он проверяет, что в модели нет признаков, содержащих информацию из будущего.</p>
+
+            <p><strong>Специалист по аналитике бизнес-данных</strong> работает с пакетным внедрением. Типичная задача — ежедневные прогнозы для дашбордов. Модель обновляет прогнозные линии. И они видны на дашборде. Кроме того, такой специалист отслеживает технические метрики. Работает ли сервис. Отвечает ли он на запросы.</p>
+
+            <p><strong>Аналитик больших данных</strong> работает с онлайн-внедрением. Типичная задача — рекомендательная система на миллионы пользователей. Это требует высокой масштабируемости. И высокой скорости. Модель должна обрабатывать тысячи запросов в секунду. Кроме того, аналитик больших данных отвечает за мониторинг дрейфа. Он строит автоматические проверки. Которые отслеживают распределение данных. И запускают алерт при отклонениях.</p>
+
+            <p><strong>Маркетинговый аналитик</strong> работает с онлайн-внедрением. Типичная задача — таргетинг рекламы. Модель оценивает вероятность покупки. И рекламная система показывает рекламу в первую очередь перспективным клиентам. Кроме того, маркетинговый аналитик отслеживает справедливость модели. Он проверяет, что модель не дискриминирует по возрасту или по полу.</p>
+
+            <p><strong>Бизнес-аналитик</strong> работает с пакетным внедрением. Типичная задача — еженедельный отчёт по успеху проектов. Модель прогнозирует вероятность успеха. И результаты попадают в отчёт для руководства. Кроме того, бизнес-аналитик отвечает за объяснимость модели. Он должен объяснить руководству, как модель принимает решения.</p>
+
+            <p><strong>Системный аналитик</strong> работает с онлайн-внедрением. Типичная задача — система обнаружения сбоев. Модель мониторит метрики системы. И предсказывает сбои. Кроме того, системный аналитик отвечает за технический мониторинг. Работает ли сервис. Отвечает ли он на запросы. Есть ли ошибки.</p>
+
+            <p><strong>Специалист по анализу пользовательского опыта</strong> работает с онлайн-внедрением. Типичная задача — персонализация интерфейса. Модель предсказывает, какие функции будут полезны пользователю. Кроме того, такой специалист отвечает за прозрачность. Пользователь должен понимать, почему он видит определённый интерфейс.</p>
+
+            <h3>📌 Заключение</h3>
+
+            <p>Мы подошли к завершению лекции. Давайте соберём всё вместе.</p>
+
+            <p>Мы начали с определения внедрения. Внедрение — это перенос модели из блокнота в рабочую среду. Где она начинает приносить пользу. Мы разобрали три способа внедрения. Пакетное, онлайн и встроенное. Пакетное — для регулярных отчётов. Онлайн — для мгновенных ответов. Встроенное — для автономной работы.</p>
+
+            <p>Мы разобрали мониторинг модели. Он включает четыре уровня. Технический, данные, предсказания и качество. Мы разобрали две главные причины деградации. Это дрейф данных и дрейф концепции. Мы разобрали, как и когда обновлять модель. И какие проблемы могут при этом возникнуть.</p>
+
+            <p>Мы разобрали ответственность и этику. Модель влияет на жизнь людей. И это требует справедливости, прозрачности, подотчётности, конфиденциальности и безопасности. И наконец, увидели конкретные примеры применения в работе разных аналитиков.</p>
+
+            <p>Запомните главное. Внедрение и мониторинг — это не финиш. Это старт нового этапа. Модель — это живой инструмент. Он требует постоянного внимания. Данные меняются. Поведение меняется. И модель должна меняться вместе с ними.</p>
+
+            <p>Хорошая модель — это не та, которая хорошо работает на тестовой выборке. Это та, которая приносит пользу бизнесу каждый день. И которая остаётся полезной со временем. И это требует не только технических навыков. Но и ответственности. И этического мышления.</p>
+
+            <p>На этом мы завершаем наш курс лекций. Спасибо за внимание. Я готов ответить на ваши вопросы.</p>
+
+            <!-- СЛОВАРЬ ТЕРМИНОВ -->
+            <div class="dark-block">
+                <div class="dark-block-title">📖 Словарь терминов и аббревиатур</div>
+                <table class="dark-table">
+                    <thead>
+                        <tr><th style="width:22%;">Термин</th><th style="width:30%;">Расшифровка</th><th>Пояснение</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="term">Внедрение</td><td>Deployment</td><td>Перенос модели в рабочую среду</td></tr>
+                        <tr><td class="term">Пакетный</td><td>Batch Inference</td><td>По расписанию, на накопленных данных</td></tr>
+                        <tr><td class="term">Онлайн</td><td>Real-time Inference</td><td>Мгновенный ответ на запрос</td></tr>
+                        <tr><td class="term">Встроенный</td><td>Embedded Inference</td><td>На устройстве, без сети</td></tr>
+                        <tr><td class="term">Мониторинг</td><td>Monitoring</td><td>Наблюдение за работой модели</td></tr>
+                        <tr><td class="term">Дрейф данных</td><td>Data Drift</td><td>Изменение распределения признаков</td></tr>
+                        <tr><td class="term">Дрейф концепции</td><td>Concept Drift</td><td>Изменение связи признаков и цели</td></tr>
+                        <tr><td class="term">Переобучение модели</td><td>Retraining</td><td>Обучение на новых данных</td></tr>
+                        <tr><td class="term">Алерт</td><td>Alert</td><td>Уведомление о проблеме</td></tr>
+                        <tr><td class="term">Дашборд</td><td>Dashboard</td><td>Панель визуализации метрик</td></tr>
+                        <tr><td class="term">Справедливость</td><td>Fairness</td><td>Отсутствие дискриминации</td></tr>
+                        <tr><td class="term">Прозрачность</td><td>Transparency</td><td>Понятность решений модели</td></tr>
+                        <tr><td class="term">Подотчётность</td><td>Accountability</td><td>Наличие ответственного за модель</td></tr>
+                        <tr><td class="term">Конфиденциальность</td><td>Privacy</td><td>Защита персональных данных</td></tr>
+                        <tr><td class="term">Человек в цикле</td><td>Human-in-the-loop</td><td>Проверка решений человеком</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function changeVideo(embedUrl) {
+            document.getElementById('lecture-player').src = embedUrl;
+        }
+    </script>
+
+   <!-- НАВИГАЦИЯ МЕЖДУ ЛЕКЦИЯМИ -->
+<nav class="lecture-nav" id="lectureNav">
+    <div class="nav-progress" id="navProgress" style="width: 0%;"></div>
+    <a href="Лекция (N-1).html" class="nav-btn-arrow" id="prevBtn">
+        <span class="arrow-icon">←</span>
+        <span class="arrow-label">
+            <small>Назад</small>
+            <span class="arrow-title" id="prevTitle">Лекция (N-1)</span>
+        </span>
+    </a>
+    <div class="nav-center">
+        <div class="nav-counter">Лекция <span id="currentNum">N</span> <span>из 21</span></div>
+        <a href="index.html" class="nav-index-link">📚 К содержанию</a>
+    </div>
+    <a href="Лекция (N+1).html" class="nav-btn-arrow" id="nextBtn">
+        <span class="arrow-label" style="align-items: flex-end;">
+            <small>Вперёд</small>
+            <span class="arrow-title" id="nextTitle">Лекция (N+1)</span>
+        </span>
+        <span class="arrow-icon">→</span>
+    </a>
+</nav>
+
+
+
+<script>
+(function () {
+    'use strict';
+
+    const TOTAL_LECTURES = 21;
+    const totalDurationMs = (32 * 60 + 30) * 1000;
+    const autoNextDelayMs = 2000;
+    const AUTOSTART_PARAM = 'autostart';
+
+    const fileName = decodeURIComponent(location.pathname.split('/').pop() || '');
+    let currentLecture = 21;
+    const match = fileName.match(/Лекция\s*(\d+)\.html/i);
+    if (match) {
+        currentLecture = parseInt(match[1], 10);
+    } else {
+        const el = document.getElementById('currentNum');
+        if (el) currentLecture = parseInt(el.textContent, 10) || 21;
+    }
+    if (isNaN(currentLecture) || currentLecture < 1) currentLecture = 1;
+    if (currentLecture > TOTAL_LECTURES) currentLecture = TOTAL_LECTURES;
+
+    const prev = currentLecture > 1 ? currentLecture - 1 : null;
+    const next = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+
+    const currentNumEl = document.getElementById('currentNum');
+    if (currentNumEl) currentNumEl.textContent = currentLecture;
+
+    const navProgress = document.getElementById('navProgress');
+    if (navProgress) {
+        navProgress.style.width = (currentLecture / TOTAL_LECTURES * 100) + '%';
+    }
+
+    const prevBtn = document.getElementById('prevBtn');
+    if (prevBtn) {
+        if (prev) {
+            prevBtn.href = 'Лекция ' + prev + '.html';
+            const t = document.getElementById('prevTitle');
+            if (t) t.textContent = 'Лекция ' + prev;
+            prevBtn.style.opacity = '1';
+            prevBtn.style.cursor = 'pointer';
+            prevBtn.onclick = null;
+        } else {
+            prevBtn.removeAttribute('href');
+            prevBtn.style.opacity = '0.35';
+            prevBtn.style.cursor = 'not-allowed';
+            prevBtn.onclick = (e) => e.preventDefault();
+            const t = document.getElementById('prevTitle');
+            if (t) t.textContent = 'Это первая лекция';
+        }
+    }
+
+    const nextBtn = document.getElementById('nextBtn');
+    if (nextBtn) {
+        if (next) {
+            nextBtn.href = 'Лекция ' + next + '.html';
+            const t = document.getElementById('nextTitle');
+            if (t) t.textContent = 'Лекция ' + next;
+            nextBtn.style.opacity = '1';
+            nextBtn.style.cursor = 'pointer';
+            nextBtn.onclick = null;
+        } else {
+            nextBtn.removeAttribute('href');
+            nextBtn.style.opacity = '0.35';
+            nextBtn.style.cursor = 'not-allowed';
+            nextBtn.onclick = (e) => e.preventDefault();
+            const t = document.getElementById('nextTitle');
+            if (t) t.textContent = 'Это последняя лекция';
+        }
+    }
+
+    document.addEventListener('keydown', (e) => {
+        const tag = e.target && e.target.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        if (e.key === 'ArrowLeft' && prev) window.location.href = 'Лекция ' + prev + '.html';
+        else if (e.key === 'ArrowRight' && next) window.location.href = 'Лекция ' + next + '.html';
+        else if (e.key === 'Home') window.location.href = 'index.html';
+    });
+
+    function initScroll() {
+        const studentBlock = document.querySelector('.student-view');
+        const speakerBlock = document.querySelector('.speaker-notes');
+        const badge = document.getElementById('scroll-status-badge');
+        const audio = document.getElementById('lecture-audio');
+        if (!studentBlock || !speakerBlock) return;
+
+        const studentBehavior = studentBlock.style.scrollBehavior;
+        const speakerBehavior = speakerBlock.style.scrollBehavior;
+        let isRunning = false, completed = false, pausedElapsed = 0, startedAt = 0, rafId = null;
+        let startS = 0, startP = 0, maxS = 0, maxP = 0;
+
+        function setBadge(text, color) { if (!badge) return; badge.style.display = 'block'; badge.textContent = text; badge.style.borderColor = color; }
+        function measure() { maxS = Math.max(studentBlock.scrollHeight - studentBlock.clientHeight, 0); maxP = Math.max(speakerBlock.scrollHeight - speakerBlock.clientHeight, 0); }
+        function fmt(ms) { const m = Math.floor(ms / 60000); const s = Math.floor((ms % 60000) / 1000); return m + ':' + String(s).padStart(2, '0'); }
+        function playAudio() { if (!audio) return; const p = audio.play(); if (p && typeof p.catch === 'function') { p.catch(err => { console.warn('[AutoAudio]', err.message); setBadge('▶ ИДЕТ ПРОКРУТКА (звук заблокирован)', '#eab308'); }); } }
+        function pauseAudio() { if (audio) try { audio.pause(); } catch (_) {} }
+        function resetAudio() { if (audio) try { audio.pause(); audio.currentTime = 0; } catch (_) {} }
+
+        function animate() {
+            if (!isRunning) return;
+            const elapsed = pausedElapsed + (performance.now() - startedAt);
+            const fraction = Math.min(elapsed / totalDurationMs, 1);
+            measure();
+            studentBlock.scrollTop = startS + (maxS - startS) * fraction;
+            speakerBlock.scrollTop = startP + (maxP - startP) * fraction;
+            if (badge) { badge.textContent = '▶ ' + fmt(elapsed) + ' / ' + fmt(totalDurationMs); badge.style.borderColor = '#16a34a'; }
+            if (fraction >= 1) { finish(); return; }
+            rafId = requestAnimationFrame(animate);
+        }
+
+        function startOrResume() {
+            if (completed) { pausedElapsed = 0; completed = false; studentBlock.scrollTop = 0; speakerBlock.scrollTop = 0; resetAudio(); }
+            measure(); startS = studentBlock.scrollTop; startP = speakerBlock.scrollTop;
+            startedAt = performance.now(); isRunning = true;
+            studentBlock.style.scrollBehavior = 'auto'; speakerBlock.style.scrollBehavior = 'auto';
+            cancelAnimationFrame(rafId); rafId = requestAnimationFrame(animate);
+            playAudio();
+        }
+        function pause() {
+            if (isRunning) pausedElapsed += performance.now() - startedAt;
+            isRunning = false; cancelAnimationFrame(rafId);
+            setBadge('⏸ ПАУЗА ' + fmt(pausedElapsed), '#dc2626');
+            studentBlock.style.scrollBehavior = studentBehavior; speakerBlock.style.scrollBehavior = speakerBehavior;
+            pauseAudio();
+        }
+        function finish() {
+            isRunning = false; completed = true; cancelAnimationFrame(rafId);
+            measure(); studentBlock.scrollTop = maxS; speakerBlock.scrollTop = maxP;
+            studentBlock.style.scrollBehavior = studentBehavior; speakerBlock.style.scrollBehavior = speakerBehavior;
+            const nextLec = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+            if (nextLec) {
+                setBadge('✅ ГОТОВО → Лекция ' + nextLec, '#16a34a');
+                setTimeout(() => { location.href = 'Лекция ' + nextLec + '.html?' + AUTOSTART_PARAM + '=1'; }, autoNextDelayMs);
+            } else {
+                setBadge('✅ КУРС ЗАВЕРШЕН', '#16a34a');
+                pauseAudio();
+            }
+        }
+        function toggle() { isRunning ? pause() : startOrResume(); }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.repeat) return;
+            const t = e.target; const tag = t && t.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+            if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); toggle(); }
+        }, true);
+
+        if (badge) badge.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+        [studentBlock, speakerBlock].forEach(el => {
+            el.addEventListener('click', (e) => {
+                if (e.target.closest('a,button,iframe,input,textarea,select,video,audio')) return;
+                if (window.getSelection().toString().length > 0) return;
+                toggle();
+            });
+        });
+
+        const params = new URLSearchParams(location.search);
+        if (params.get(AUTOSTART_PARAM) === '1') {
+            params.delete(AUTOSTART_PARAM);
+            const clean = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
+            history.replaceState(null, '', clean);
+            setTimeout(startOrResume, 500);
+        } else { setBadge('▶ ПРОБЕЛ / КЛИК — старт', '#4a5568'); }
+    }
+
+    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initScroll, { once: true }); }
+    else { initScroll(); }
+})();
+</script>
+
+</body>
+</html>

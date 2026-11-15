@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лекция 10. Введение в Data Science: от анализа данных к предсказательным системам</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #ffffff; }
+
+        .student-view { width: 66.66%; height: 100vh; background: #ffffff; padding: 35px 40px; display: flex; flex-direction: column; justify-content: space-between; border-right: 2px solid #e2e8f0; overflow-y: auto; scroll-behavior: smooth; }
+        .speaker-notes { width: 33.34%; height: 100%; background: #1a202c; color: #edf2f7; padding: 30px; overflow-y: auto; }
+
+        .slide-header { font-size: 24px; color: #1a365d; font-weight: bold; line-height: 1.3; margin-bottom: 18px; border-bottom: 4px solid #3182ce; padding-bottom: 12px; }
+        .slide-body { flex-grow: 1; display: flex; flex-direction: column; gap: 18px; padding: 5px 0; }
+        .slide-footer { font-size: 13px; color: #a0aec0; text-align: right; margin-top: 12px; }
+
+        .chart-box { background: #f7fafc; border: 2.5px dashed #cbd5e0; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .chart-box strong { font-size: 16px; display: block; margin-bottom: 6px; }
+        .chart-box p { font-size: 13px; color: #4a5568; line-height: 1.45; }
+
+        .cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .cat-card { border-radius: 10px; padding: 14px 16px; border: 2px solid #e2e8f0; }
+        .cat-card.ds { background: #faf5ff; border-color: #d6bcfa; }
+        .cat-card.da { background: #ebf8ff; border-color: #90cdf4; }
+        .cat-card.numpy { background: #fff5f5; border-color: #fc8181; }
+        .cat-card.pandas { background: #ebf8ff; border-color: #90cdf4; }
+        .cat-card.matplotlib { background: #f0fff4; border-color: #9ae6b4; }
+        .cat-card.seaborn { background: #fffaf0; border-color: #fbd38d; }
+        .cat-card.sklearn { background: #faf5ff; border-color: #d6bcfa; }
+        .cat-card.tf { background: #fff5f5; border-color: #feb2b2; }
+        .cat-card.torch { background: #ebf8ff; border-color: #90cdf4; }
+        .cat-card.info { background: #f7fafc; border-color: #e2e8f0; }
+        .cat-card.warn { background: #fff5f5; border-color: #fc8181; }
+        .cat-card h4 { font-size: 14px; margin-bottom: 8px; color: #1a365d; display: flex; align-items: center; gap: 8px; }
+        .cat-card .label { font-size: 10px; font-weight: bold; color: #4a5568; margin-top: 7px; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.3px; }
+        .cat-card ul { margin: 0; padding-left: 14px; font-size: 11.5px; color: #2d3748; line-height: 1.45; }
+        .cat-card .stack-icon { font-size: 22px; }
+
+        .tag { display: inline-block; background: #ebf8ff; color: #2b6cb0; padding: 2px 7px; border-radius: 4px; font-size: 11px; margin: 2px 2px 2px 0; font-weight: 500; }
+        .tag.purple { background: #faf5ff; color: #553c9a; }
+        .tag.green { background: #f0fff4; color: #276749; }
+        .tag.warn { background: #fed7d7; color: #9b2c2c; }
+        .tag.ok { background: #c6f6d5; color: #22543d; }
+
+        .compare-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .compare-table th { background: #1a365d; color: white; padding: 9px 11px; text-align: left; font-weight: 600; }
+        .compare-table td { padding: 8px 11px; border-bottom: 1px solid #e2e8f0; color: #2d3748; vertical-align: top; }
+        .compare-table tr:nth-child(even) td { background: #f7fafc; }
+        .compare-table .group-row td { background: #ebf8ff; font-weight: bold; color: #1a365d; font-size: 12.5px; }
+
+        .highlight-box { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 6px; }
+        .highlight-box strong { color: #92400e; font-size: 13px; }
+        .highlight-box p { font-size: 12px; color: #78350f; margin-top: 4px; line-height: 1.4; }
+
+        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .stat-box { background: #ebf8ff; border-radius: 10px; padding: 14px; text-align: center; border: 2px solid #90cdf4; }
+        .stat-box .stat-icon { font-size: 28px; }
+        .stat-box .stat-number { font-size: 15px; font-weight: 900; color: #2b6cb0; margin-top: 4px; }
+        .stat-box .stat-label { font-size: 11px; color: #4a5568; margin-top: 2px; }
+
+        .flow-diagram { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 14px; background: #f7fafc; border-radius: 12px; border: 2px dashed #cbd5e0; flex-wrap: wrap; }
+        .flow-step { flex: 1; min-width: 90px; text-align: center; padding: 8px 6px; background: white; border-radius: 8px; border: 2px solid #e2e8f0; }
+        .flow-step .flow-icon { font-size: 20px; }
+        .flow-step .flow-title { font-size: 10.5px; font-weight: bold; color: #1a365d; margin-top: 3px; }
+        .flow-step .flow-sub { font-size: 9px; color: #718096; }
+        .flow-arrow { font-size: 16px; color: #3182ce; font-weight: bold; }
+
+        .lifecycle-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+        .lifecycle-step { background: white; border: 2px solid #e2e8f0; border-radius: 8px; padding: 10px 6px; text-align: center; position: relative; }
+        .lifecycle-step .num { font-size: 18px; font-weight: 900; color: #3182ce; }
+        .lifecycle-step .title { font-size: 10px; font-weight: bold; color: #1a365d; margin-top: 3px; line-height: 1.2; }
+        .lifecycle-step .desc { font-size: 8.5px; color: #718096; margin-top: 3px; line-height: 1.25; }
+
+        .video-section { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 5px; }
+        .video-container { width: 100%; max-width: 580px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: #000; aspect-ratio: 16 / 9; }
+        .links-hub { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .video-btn { text-decoration: none; padding: 9px 14px; border-radius: 6px; font-size: 12px; font-weight: bold; color: white; display: flex; align-items: center; gap: 6px; transition: transform 0.2s, background 0.2s; cursor: pointer; border: none; }
+        .video-btn:hover { transform: translateY(-2px); }
+        .rt-btn { background: #00a877; }
+        .rt-btn:hover { background: #008f65; }
+        .stop-btn { background: #dc143c; }
+        .stop-btn:hover { background: #b01030; }
+
+        .notes-header { font-size: 17px; color: #63b3ed; font-weight: bold; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a5568; padding-bottom: 10px; }
+        .lecture-text { font-size: 14.5px; line-height: 1.65; color: #e2e8f0; text-align: justify; }
+        .lecture-text p { margin-bottom: 14px; }
+        .lecture-text h3 { color: #63b3ed; font-size: 15px; margin: 18px 0 10px; border-bottom: 1px solid #2d3748; padding-bottom: 5px; }
+        .lecture-text ul { margin: 8px 0 14px 18px; }
+        .lecture-text li { margin-bottom: 6px; }
+
+        .dark-block { background: #2d3748; border: 1px solid #4a5568; border-radius: 10px; padding: 16px 18px; margin-top: 20px; }
+        .dark-block-title { font-size: 14px; font-weight: bold; color: #63b3ed; margin-bottom: 12px; border-bottom: 2px solid #4a5568; padding-bottom: 8px; }
+        .dark-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+        .dark-table th { background: #1a202c; color: #90cdf4; padding: 7px 9px; text-align: left; font-weight: 600; border-bottom: 1px solid #4a5568; }
+        .dark-table td { padding: 6px 9px; border-bottom: 1px solid #2d3748; color: #cbd5e0; vertical-align: top; line-height: 1.4; }
+        .dark-table tr:nth-child(even) td { background: #2a3242; }
+        .dark-table .term { font-weight: bold; color: #90cdf4; white-space: nowrap; }
+        .dark-block ol { margin: 0 0 12px 18px; padding: 0; font-size: 12px; color: #cbd5e0; line-height: 1.5; }
+        .dark-block ol li { margin-bottom: 5px; }
+        .dark-block .src-group { font-weight: bold; color: #fbd38d; font-size: 12px; margin: 12px 0 6px; }
+
+        .lecture-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(12px); border-top: 2px solid rgba(255, 255, 255, 0.08); padding: 12px 20px; display: flex; align-items: center; justify-content: center; gap: 12px; z-index: 9999; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25); font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .lecture-nav .nav-progress { position: absolute; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899); border-radius: 0 3px 3px 0; }
+        .lecture-nav .nav-btn-arrow { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); border: 1.5px solid rgba(255, 255, 255, 0.15); color: #e2e8f0; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; font-family: inherit; }
+        .lecture-nav .nav-btn-arrow:hover:not(:disabled) { background: rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.6); color: white; transform: translateY(-2px); }
+        .lecture-nav .nav-btn-arrow:disabled { opacity: 0.35; cursor: not-allowed; }
+        .lecture-nav .nav-btn-arrow .arrow-icon { font-size: 16px; line-height: 1; }
+        .lecture-nav .nav-btn-arrow .arrow-label { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+        .lecture-nav .nav-btn-arrow .arrow-label small { font-size: 9.5px; font-weight: 400; opacity: 0.7; text-transform: uppercase; }
+        .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { font-size: 12px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lecture-nav .nav-center { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 20px; color: #94a3b8; font-size: 11px; border-left: 1px solid rgba(255, 255, 255, 0.1); border-right: 1px solid rgba(255, 255, 255, 0.1); }
+        .lecture-nav .nav-counter { font-size: 15px; font-weight: 900; color: #f1f5f9; }
+        .lecture-nav .nav-counter span { color: #64748b; font-size: 12px; font-weight: 600; }
+        .lecture-nav .nav-index-link { color: #60a5fa; text-decoration: none; font-size: 11px; font-weight: 600; }
+        .lecture-nav .nav-index-link:hover { color: #93c5fd; text-decoration: underline; }
+        body { padding-bottom: 80px !important; }
+        @media (max-width: 900px) {
+            .lecture-nav { padding: 10px 12px; gap: 8px; }
+            .lecture-nav .nav-btn-arrow { padding: 8px 12px; }
+            .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { max-width: 90px; font-size: 11px; }
+            .cat-grid, .stat-grid, .lifecycle-grid { grid-template-columns: 1fr; }
+            .flow-diagram { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ЛЕВАЯ ПАНЕЛЬ (2/3): ЭКРАН ДЛЯ СТУДЕНТОВ -->
+    <div class="student-view">
+        <div class="slide-header">
+            Лекция 10. Введение в Data Science: от анализа данных к предсказательным системам
+        </div>
+
+        <div class="slide-body">
+
+            <!-- ВВЕДЕНИЕ -->
+            <div class="chart-box" style="background: #faf5ff; border-color: #d6bcfa;">
+                <strong style="color: #553c9a;">🎯 Зачем аналитику Data Science?</strong>
+                <p>В шестой лекции мы разобрали конвейер анализа на Python: Pandas → Matplotlib/Seaborn → Statsmodels. Мы научились объяснять прошлое. Но современная аналитика идёт дальше. <strong>Data Science</strong> добавляет к объяснению предсказание. Сегодня мы разберём, чем Data Science отличается от Data Analytics, как устроен жизненный цикл проекта и какие библиотеки образуют инструментальный стек специалиста по данным.</p>
+            </div>
+
+            <!-- КЛЮЧЕВЫЕ ИДЕИ -->
+            <div class="stat-grid">
+                <div class="stat-box" style="background:#ebf8ff; border-color:#90cdf4;">
+                    <div class="stat-icon">🔍</div>
+                    <div class="stat-number">Data Analytics</div>
+                    <div class="stat-label">что произошло и почему</div>
+                </div>
+                <div class="stat-box" style="background:#faf5ff; border-color:#d6bcfa;">
+                    <div class="stat-icon">🔮</div>
+                    <div class="stat-number">Data Science</div>
+                    <div class="stat-label">что произойдёт и как повлиять</div>
+                </div>
+                <div class="stat-box" style="background:#f0fff4; border-color:#9ae6b4;">
+                    <div class="stat-icon">♻️</div>
+                    <div class="stat-number">7 этапов</div>
+                    <div class="stat-label">жизненный цикл проекта</div>
+                </div>
+                <div class="stat-box" style="background:#fffaf0; border-color:#fbd38d;">
+                    <div class="stat-icon">🧰</div>
+                    <div class="stat-number">7 библиотек</div>
+                    <div class="stat-label">инструментальный стек</div>
+                </div>
+            </div>
+
+            <!-- СРАВНЕНИЕ DA И DS -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 10px;">⚖️ Data Analytics и Data Science: не просто разные слова</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr><th>Критерий</th><th>Data Analytics</th><th>Data Science</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>Главный вопрос</strong></td><td>Что произошло и почему?</td><td>Что произойдёт дальше и как на это повлиять?</td></tr>
+                        <tr><td><strong>Результат</strong></td><td>Отчёты, дашборды, инсайты</td><td>Прогнозные модели, рекомендательные системы</td></tr>
+                        <tr><td><strong>Инструменты</strong></td><td>Excel, SQL, Power BI, Tableau, Python (Pandas)</td><td>Python, R, SQL + ML-библиотеки (Scikit-learn, TensorFlow, PyTorch)</td></tr>
+                        <tr><td><strong>Акцент</strong></td><td>Бизнес-контекст, визуализация, коммуникация</td><td>Математика, моделирование, программирование</td></tr>
+                        <tr><td><strong>Типичная задача</strong></td><td>«Почему упали продажи в прошлом квартале?»</td><td>«Какой будет спрос в следующем месяце и как пополнить склад?»</td></tr>
+                    </tbody>
+                </table>
+                <div style="margin-top:8px; font-size:11.5px; color:#4a5568;">
+                    <strong>Важно:</strong> Data Science включает в себя аналитику как один из этапов (исследовательский анализ данных — EDA). Это не замена, а надстройка.
+                </div>
+            </div>
+
+            <!-- ЖИЗНЕННЫЙ ЦИКЛ -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 10px;">🔄 Жизненный цикл проекта в Data Science</div>
+                <div class="lifecycle-grid">
+                    <div class="lifecycle-step" style="border-color:#90cdf4;">
+                        <div class="num">1</div>
+                        <div class="title">Постановка проблемы</div>
+                        <div class="desc">Бизнес-цель, метрики успеха</div>
+                    </div>
+                    <div class="lifecycle-step" style="border-color:#9ae6b4;">
+                        <div class="num">2</div>
+                        <div class="title">Сбор данных</div>
+                        <div class="desc">Базы, API, файлы, облака</div>
+                    </div>
+                    <div class="lifecycle-step" style="border-color:#fbd38d;">
+                        <div class="num">3</div>
+                        <div class="title">Очистка</div>
+                        <div class="desc">Пропуски, дубликаты, форматы</div>
+                    </div>
+                    <div class="lifecycle-step" style="border-color:#d6bcfa;">
+                        <div class="num">4</div>
+                        <div class="title">Разведочный анализ</div>
+                        <div class="desc">Распределения, корреляции, EDA</div>
+                    </div>
+                    <div class="lifecycle-step" style="border-color:#feb2b2;">
+                        <div class="num">5</div>
+                        <div class="title">Признаки</div>
+                        <div class="desc">Конструирование новых признаков</div>
+                    </div>
+                    <div class="lifecycle-step" style="border-color:#90cdf4;">
+                        <div class="num">6</div>
+                        <div class="title">Модель</div>
+                        <div class="desc">Обучение, оценка, перекрёстная проверка</div>
+                    </div>
+                    <div class="lifecycle-step" style="border-color:#9ae6b4;">
+                        <div class="num">7</div>
+                        <div class="title">Внедрение</div>
+                        <div class="desc">Интеграция, мониторинг, переобучение</div>
+                    </div>
+                </div>
+                <div style="margin-top:8px; font-size:11.5px; color:#4a5568;">
+                    <strong>Ключевая мысль:</strong> цикл итеративный. Возврат на предыдущие этапы — норма, а не ошибка. Очистка данных занимает большую часть времени проекта.
+                </div>
+            </div>
+
+            <!-- БИБЛИОТЕКИ: ОБЗОР -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 10px;">📚 Стек библиотек Data Science: роль каждой</div>
+                <div class="cat-grid">
+                    <div class="cat-card numpy">
+                        <h4><span class="stack-icon">🔢</span> NumPy</h4>
+                        <div class="label">Фундамент</div>
+                        <ul><li>Многомерные массивы (ndarray)</li><li>Векторизованные вычисления</li><li>Линейная алгебра, случайные числа</li><li>Основа для всех остальных библиотек</li></ul>
+                    </div>
+                    <div class="cat-card pandas">
+                        <h4><span class="stack-icon">🐼</span> Pandas</h4>
+                        <div class="label">Табличные данные</div>
+                        <ul><li>DataFrame и Series</li><li>Загрузка, очистка, группировка</li><li>Соединение таблиц, агрегация</li><li>Исследовательский анализ</li></ul>
+                    </div>
+                    <div class="cat-card matplotlib">
+                        <h4><span class="stack-icon">📈</span> Matplotlib</h4>
+                        <div class="label">Базовая визуализация</div>
+                        <ul><li>Полный контроль над графиком</li><li>Оси, подписи, цвета, масштаб</li><li>Статические графики любой сложности</li></ul>
+                    </div>
+                    <div class="cat-card seaborn">
+                        <h4><span class="stack-icon">📊</span> Seaborn</h4>
+                        <div class="label">Статистическая визуализация</div>
+                        <ul><li>Ящичные диаграммы, распределения</li><li>Тепловые карты корреляций</li><li>Минимум кода — максимум смысла</li></ul>
+                    </div>
+                    <div class="cat-card sklearn">
+                        <h4><span class="stack-icon">🎯</span> Scikit-learn</h4>
+                        <div class="label">Классическое ML</div>
+                        <ul><li>Классификация, регрессия, кластеризация</li><li>Единый интерфейс: fit, predict, score</li><li>Метрики, перекрёстная проверка</li><li>Конвейеры обработки данных</li></ul>
+                    </div>
+                    <div class="cat-card tf">
+                        <h4><span class="stack-icon">🧠</span> TensorFlow</h4>
+                        <div class="label">Глубокое обучение</div>
+                        <ul><li>Нейронные сети через вычислительный граф</li><li>Высокоуровневый интерфейс Keras</li><li>Промышленное применение</li></ul>
+                    </div>
+                    <div class="cat-card torch">
+                        <h4><span class="stack-icon">🔥</span> PyTorch</h4>
+                        <div class="label">Глубокое обучение</div>
+                        <ul><li>Динамический вычислительный граф</li><li>Автоматическое дифференцирование (Autograd)</li><li>Гибкость для исследований</li></ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ДЕТАЛЬНО: NumPy -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 8px;">🔢 NumPy: фундамент численных вычислений</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr><th>Возможность</th><th>Как работает</th><th>Зачем нужно</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>Многомерный массив</strong></td><td>Сетка значений одного типа в непрерывной памяти</td><td>Быстрый доступ и хранение чисел</td></tr>
+                        <tr><td><strong>Векторизация</strong></td><td>Операции выполняются на низком уровне (C), без циклов</td><td>Скорость в десятки раз выше списков</td></tr>
+                        <tr><td><strong>Вещание (broadcasting)</strong></td><td>Автоматическое приведение массивов разной формы</td><td>Короткий код без явных циклов</td></tr>
+                        <tr><td><strong>Индексация и срезы</strong></td><td>Доступ по индексу, срезы, булевы маски</td><td>Выборка элементов по условию без циклов</td></tr>
+                        <tr><td><strong>Линейная алгебра</strong></td><td>Умножение матриц, решение систем, разложения</td><td>Основа регрессии и нейронных сетей</td></tr>
+                        <tr><td><strong>Генератор случайных чисел</strong></td><td>Разные распределения, воспроизводимость</td><td>Инициализация весов, разбиение данных</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ДЕТАЛЬНО: Scikit-learn -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 8px;">🎯 Scikit-learn: сердце классического ML</div>
+                <div class="cat-grid">
+                    <div class="cat-card sklearn">
+                        <h4>Обучение с учителем</h4>
+                        <ul><li>Классификация: логистическая регрессия, деревья, случайный лес, градиентный бустинг, метод опорных векторов</li><li>Регрессия: линейная, гребневая, лассо</li></ul>
+                    </div>
+                    <div class="cat-card info">
+                        <h4>Обучение без учителя</h4>
+                        <ul><li>Кластеризация: средних, на основе плотности, иерархическая</li><li>Снижение размерности: метод главных компонент</li></ul>
+                    </div>
+                    <div class="cat-card pandas">
+                        <h4>Подготовка данных</h4>
+                        <ul><li>Масштабирование и стандартизация</li><li>Кодирование категорий</li><li>Заполнение пропусков</li></ul>
+                    </div>
+                    <div class="cat-card matplotlib">
+                        <h4>Оценка и выбор модели</h4>
+                        <ul><li>Перекрёстная проверка</li><li>Метрики: точность, полнота, F-мера, средняя ошибка</li><li>Поиск гиперпараметров</li></ul>
+                    </div>
+                    <div class="cat-card seaborn" style="grid-column: span 2;">
+                        <h4>Конвейер (Pipeline)</h4>
+                        <ul><li>Объединение шагов обработки и модели в один объект</li><li>Защита от утечки информации при перекрёстной проверке</li><li>Воспроизводимость всего процесса</li></ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ДЕТАЛЬНО: TensorFlow и PyTorch -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 8px;">🧠 TensorFlow и PyTorch: глубокое обучение</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr><th>Критерий</th><th>TensorFlow</th><th>PyTorch</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>Вычислительный граф</strong></td><td>Исторически статический, сейчас есть режим немедленного выполнения</td><td>Динамический, строится по мере выполнения кода</td></tr>
+                        <tr><td><strong>Высокоуровневый интерфейс</strong></td><td>Keras — сборка модели как конструктор</td><td>Модуль nn — класс модели с методами инициализации и прямого прохода</td></tr>
+                        <tr><td><strong>Автодифференцирование</strong></td><td>Автоматическое вычисление градиентов</td><td>Autograd — запоминает операции и вычисляет градиенты</td></tr>
+                        <tr><td><strong>Ускорение</strong></td><td>Автоматическое распределение между CPU и GPU</td><td>Тензоры на GPU, автоматический перенос данных</td></tr>
+                        <tr><td><strong>Философия</strong></td><td>Промышленное применение, развёртывание</td><td>Гибкость, исследования, нестандартные архитектуры</td></tr>
+                        <tr><td><strong>Визуализация</strong></td><td>TensorBoard</td><td>TensorBoard</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ПРАКТИЧЕСКИЙ ПРИМЕР -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 10px;">🛒 Практический пример: прогноз спроса</div>
+                <div class="flow-diagram">
+                    <div class="flow-step">
+                        <div class="flow-icon">🐼</div>
+                        <div class="flow-title">Pandas</div>
+                        <div class="flow-sub">Загрузка и очистка</div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-icon">📊</div>
+                        <div class="flow-title">Seaborn</div>
+                        <div class="flow-sub">Сезонность, корреляции</div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-icon">🎯</div>
+                        <div class="flow-title">Scikit-learn</div>
+                        <div class="flow-sub">Линейная регрессия, лес</div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-icon">🧠</div>
+                        <div class="flow-title">TensorFlow / PyTorch</div>
+                        <div class="flow-sub">Нейросеть при необходимости</div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-icon">🚀</div>
+                        <div class="flow-title">Внедрение</div>
+                        <div class="flow-sub">Сервис, мониторинг</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ПРЕИМУЩЕСТВА И ОГРАНИЧЕНИЯ -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 8px;">⚖️ Преимущества и ограничения Data Science</div>
+                <div class="cat-grid">
+                    <div class="cat-card ok" style="background:#f0fff4; border-color:#9ae6b4;">
+                        <h4 style="color:#276749;">✅ Преимущества</h4>
+                        <ul>
+                            <li><strong>Предсказание:</strong> модель работает на новых данных</li>
+                            <li><strong>Автоматизация решений:</strong> система действует без человека</li>
+                            <li><strong>Глубина:</strong> нейронные сети находят сложные зависимости</li>
+                            <li><strong>Масштаб:</strong> миллионы строк и петабайты данных</li>
+                            <li><strong>Интеграция:</strong> модели встраиваются в бизнес-процессы</li>
+                        </ul>
+                    </div>
+                    <div class="cat-card warn">
+                        <h4 style="color:#9b2c2c;">⚠️ Ограничения</h4>
+                        <ul>
+                            <li><strong>Порог входа:</strong> нужна математика и программирование</li>
+                            <li><strong>Ресурсы:</strong> для глубокого обучения нужна GPU</li>
+                            <li><strong>Интерпретируемость:</strong> нейросети — «чёрный ящик»</li>
+                            <li><strong>Переобучение:</strong> риск запомнить данные вместо закономерностей</li>
+                            <li><strong>Мониторинг:</strong> модель устаревает при изменении данных</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- СВЯЗЬ С ПРЕДЫДУЩИМИ ЛЕКЦИЯМИ -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 8px;">🔗 Связь с предыдущими лекциями</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr><th>Лекция</th><th>Что разобрали</th><th>Как связано с Data Science</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>Лекция 4</strong></td><td>Экосистемы аналитика (Excel, SQL, BI)</td><td>Готовят данные, представляют результаты</td></tr>
+                        <tr><td><strong>Лекция 5</strong></td><td>Статистические методы и критерии</td><td>Проверка гипотез — этап разведочного анализа</td></tr>
+                        <tr><td><strong>Лекция 6</strong></td><td>Statsmodels: регрессия, тесты</td><td>Объяснение связей — фундамент для предсказания</td></tr>
+                        <tr><td><strong>Лекция 7</strong></td><td>Data Science: предсказательные системы</td><td>Надстройка: от объяснения к прогнозу</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- КЛЮЧЕВЫЕ ВЫВОДЫ -->
+            <div class="highlight-box">
+                <strong>💡 Главные выводы лекции</strong>
+                <p>1. Data Analytics объясняет прошлое, Data Science предсказывает будущее.<br>
+                2. Data Science надстраивается над аналитикой, а не заменяет её.<br>
+                3. Жизненный цикл проекта — семь итеративных этапов от постановки задачи до внедрения.<br>
+                4. Стек библиотек образует иерархию: NumPy → Pandas → Matplotlib/Seaborn → Scikit-learn → TensorFlow/PyTorch.<br>
+                5. Качество данных определяет качество модели. Очистка — самый трудоёмкий этап.<br>
+                6. Data Science — это система: данные, инструменты, процесс и предметная область.</p>
+            </div>
+
+            <!-- СЛОВАРЬ -->
+            <div style="font-size: 13px; color: #4a5568; line-height: 1.6;">
+                <strong style="color:#1a365d;">Ключевые термины:</strong>
+                <span class="tag purple">Data Science</span>
+                <span class="tag">Data Analytics</span>
+                <span class="tag">NumPy</span>
+                <span class="tag">Pandas</span>
+                <span class="tag">Matplotlib</span>
+                <span class="tag">Seaborn</span>
+                <span class="tag">Scikit-learn</span>
+                <span class="tag">TensorFlow</span>
+                <span class="tag">PyTorch</span>
+                <span class="tag green">Жизненный цикл</span>
+                <span class="tag">Разведочный анализ</span>
+                <span class="tag">Признаки</span>
+                <span class="tag">Модель</span>
+                <span class="tag">Перекрёстная проверка</span>
+                <span class="tag">Переобучение</span>
+                <span class="tag">Внедрение</span>
+            </div>
+
+            <!-- ВИДЕОПЛЕЕР -->
+            <div class="video-section">
+                <div class="video-container">
+                    <iframe id="lecture-player" src="https://rutube.ru" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+                </div>
+                <div class="links-hub">
+                    <button onclick="changeVideo('https://rutube.ru/')" class="video-btn stop-btn">⏹ СТОП</button>
+                    <button onclick="changeVideo('https://rutube.ru/play/embed/')" class="video-btn rt-btn">📜 Лекция 7. Введение в Data Science</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="slide-footer">
+            Направление «Менеджмент» | Курс: Аналитика данных | Лекция 7: «Введение в Data Science: от анализа данных к предсказательным системам»
+        </div>
+    </div>
+
+    <!-- ПРАВАЯ ПАНЕЛЬ (1/3): СКРИПТ ПРЕПОДАВАТЕЛЯ -->
+      <div class="speaker-notes">
+        <!-- Фиксированная верхняя часть с плеером -->
+        <div style="position: sticky; top: 0; background: #1a202c; padding: 20px 20px 10px 20px; border-bottom: 1px solid #4a5568; width: 100%; z-index: 100;">
+                       <div class="notes-header" style="display: block; padding-bottom: 15px;">
+               <audio id="lecture-audio" preload="auto" controls
+                      src="https://archive.org/download/03_20261110_20261110/10.mp3"
+                      style="width: 100%; height: 32px; border-radius: 4px;"></audio>
+            </div>
+            <div style="width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+             <iframe id="right-lecture-player" src="https://archive.org/embed/20261020_20261020_0955?autoplay=true&loop=true&muted=true"  allow="clipboard-write; autoplay" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen style="border: none;"></iframe>
+
+                           </div>
+        </div>
+
+        <div class="lecture-text" style="margin-top: 20px;">
+
+            <h3>📌 Введение</h3>
+
+            <p>Добрый день, коллеги. Мы начинаем десятую лекцию нашего курса. В предыдущих лекциях мы разобрали статистические методы и научились строить воспроизводимые конвейеры анализа. Мы говорили о том, как описать прошлое и объяснить настоящее. Но современная аналитика идёт дальше. Сегодня мы поговорим о науке о данных.</p>
+
+            <p>Тема нашей лекции звучит так. Введение в науку о данных. От анализа данных к предсказательным системам. Возможно, вы уже слышали это словосочетание. Оно часто встречается в объявлениях о вакансиях и в новостях о технологиях. Но не все понимают, что оно означает на практике. И чем специалист по науке о данных отличается от аналитика.</p>
+
+            <p>Давайте сразу обозначим главную мысль. Аналитик отвечает на вопрос, что произошло и почему. А специалист по науке о данных отвечает на вопрос, что произойдёт дальше. И как на это повлиять. Это различие кажется простым. Но за ним стоит целая смена мышления.</p>
+
+            <p>Представьте себе два подхода к одной задаче. Руководитель просит разобраться с оттоком клиентов. Аналитик строит отчёт. Он показывает, сколько клиентов ушло в прошлом месяце. И в каких регионах отток был самым высоким. Специалист по науке о данных идёт дальше. Он строит модель. Эта модель предсказывает, какой клиент уйдёт в следующем месяце. И предлагает удержать его заранее.</p>
+
+            <p>Вот это и есть переход от анализа к предсказанию. От описания прошлого к управлению будущим. И сегодня мы разберём, как такой переход устроен. Мы посмотрим на полный жизненный цикл проекта в науке о данных. Мы разберём основные библиотеки и их роль. И увидим, как все части соединяются в единую систему.</p>
+
+            <p>Наша лекция состоит из нескольких частей. Сначала мы чётко разделим аналитику и науку о данных. Затем разберём жизненный цикл проекта от постановки задачи до внедрения. После этого изучим основные библиотеки и их назначение. В конце разберём практический пример и свяжем новый материал с предыдущими лекциями.</p>
+
+            <p>Обратите внимание на важную мысль. Наука о данных не отменяет статистику и аналитику. Она надстраивается над ними. Сначала вы анализируете данные. Затем вы строите прогнозную модель. Эти два этапа не конкурируют. Они дополняют друг друга. И вместе они дают полную картину для принятия решений.</p>
+
+            <p>Я желаю вам продуктивной работы. И надеюсь, что после этой лекции вы увидите разницу между описанием и предсказанием. А также поймёте, какие инструменты нужны для каждого этапа. Давайте начнём.</p>
+
+            <h3>📌 Блок 1. Аналитика данных и наука о данных: не просто разные слова</h3>
+
+            <p>Перейдём к первому вопросу. Давайте чётко разделим два понятия. Аналитика данных и наука о данных. Многие используют эти слова как синонимы. Но это не так. Между ними есть принципиальная разница. И эту разницу важно понять с самого начала.</p>
+
+            <p>Начнём с аналитики данных. Аналитик работает с прошлым и настоящим. Он собирает данные. Он очищает их. Он строит отчёты и дашборды. Он отвечает на вопрос, что произошло. И почему это произошло. Его главный инструмент — это описание. Он превращает сырые цифры в понятные выводы для бизнеса.</p>
+
+            <p>Теперь посмотрим на науку о данных. Специалист по науке о данных идёт на шаг дальше. Он тоже работает с данными. Но его цель другая. Он строит модели, которые предсказывают будущее. Он отвечает на вопрос, что произойдёт. И как на это повлиять. Его главный инструмент — это предсказание. Он создаёт системы, которые действуют на основе прогнозов.</p>
+
+            <p>Давайте сравним их по нескольким признакам. Первый признак — это главный вопрос. Аналитик спрашивает, что случилось. Специалист по науке о данных спрашивает, что будет дальше. Второй признак — это результат работы. У аналитика результат — это отчёт или дашборд. У специалиста по науке о данных результат — это прогнозная модель или рекомендательная система.</p>
+
+            <p>Третий признак — это инструменты. Аналитик использует таблицы, язык запросов, платформы визуализации. Специалист по науке о данных использует язык программирования и библиотеки машинного обучения. Четвёртый признак — это глубина. Аналитик фокусируется на бизнес-контексте и коммуникации. Специалист по науке о данных фокусируется на математике и моделировании.</p>
+
+            <p>Приведём пример. Представьте интернет-магазин. Аналитик строит отчёт о продажах за прошлый месяц. Он показывает, какие товары продавались лучше. И в каких регионах спрос был выше. Специалист по науке о данных строит модель. Эта модель предсказывает, какой товар будет популярен в следующем месяце. И сколько единиц нужно заказать на склад.</p>
+
+            <p>Видите разницу. Аналитик объясняет прошлое. Специалист по науке о данных управляет будущим. Но это не значит, что один лучше другого. Это значит, что они решают разные задачи. И работают вместе.</p>
+
+            <p>Обратите внимание на важную мысль. Наука о данных включает в себя аналитику. Но не заменяет её. Сначала вы анализируете данные. Вы изучаете их, находите закономерности, проверяете гипотезы. И только потом вы строите прогнозную модель. Аналитика — это фундамент. Наука о данных — это надстройка.</p>
+
+            <p>Запомните главное. Аналитик данных — это врач-диагност. Он ставит диагноз по прошлым симптомам. Специалист по науке о данных — это инженер-конструктор. Он создаёт прибор, который предсказывает болезнь до её появления. Оба нужны. Оба важны. Но у них разные роли.</p>
+
+            <h3>📌 Блок 2. Жизненный цикл проекта в науке о данных</h3>
+
+            <p>Перейдём ко второму вопросу. Рассмотрим жизненный цикл проекта в науке о данных. Это последовательность этапов, которую проходит специалист от постановки задачи до работающей системы. Важно понимать, что этот цикл не является линейным. Он итеративный. На каждом этапе возможен возврат назад. И это нормально.</p>
+
+            <p>Первый этап — это постановка проблемы. На этом этапе формулируется бизнес-цель. Определяется, какую именно задачу нужно решить. И какие метрики будут свидетельствовать об успехе. Ошибка на этом этапе обходится дороже всего. Если задача поставлена неверно, то любая модель будет бесполезной. Поэтому специалист обязан понять контекст. Он должен говорить с бизнесом на одном языке.</p>
+
+            <p>Второй этап — это сбор и извлечение данных. Данные могут находиться в разных источниках. Это базы данных, файлы, программные интерфейсы, облачные хранилища. На этом этапе важно оценить доступность данных. И их достаточность для решения задачи. Иногда выясняется, что нужных данных просто нет. Тогда проект возвращается к первому этапу.</p>
+
+            <p>Третий этап — это очистка данных. Это самый трудоёмкий этап. По оценкам практиков, он занимает большую часть времени проекта. На этом этапе обрабатываются пропуски. Удаляются дубликаты. Исправляются ошибки в значениях. Приводятся к единому виду форматы. Качество данных напрямую определяет качество будущей модели. Здесь активно используется библиотека Pandas.</p>
+
+            <p>Четвёртый этап — это исследовательский анализ данных. Его часто называют разведочным анализом. На этом этапе специалист изучает распределения признаков. Ищет закономерности и аномалии. Строит корреляции между переменными. Визуализирует данные. Цель этого этапа — понять структуру данных. И сформулировать гипотезы о связях. Здесь применяются библиотеки Matplotlib и Seaborn.</p>
+
+            <p>Пятый этап — это конструирование признаков. На этом этапе из исходных данных создаются новые признаки. Эти признаки должны лучше описывать изучаемое явление. Например, из даты рождения можно вычислить возраст. Из суммы покупок можно вычислить средний чек. Хорошо сконструированные признаки повышают качество модели. И часто важнее выбора самого алгоритма.</p>
+
+            <p>Шестой этап — это построение и оценка модели. На этом этапе выбирается алгоритм машинного обучения. Модель обучается на исторических данных. Затем проверяется её качество на отложенной выборке. Оценка качества должна быть честной. Для этого используется перекрёстная проверка. И метрики, соответствующие задаче. Например, для классификации это точность и полнота. Для регрессии это средняя ошибка. Основные библиотеки здесь — Scikit-learn для классического машинного обучения. И TensorFlow или PyTorch для глубокого обучения.</p>
+
+            <p>Седьмой этап — это внедрение. На этом этапе модель интегрируется в бизнес-процесс. Она может работать как программный сервис. Или как часть отчётной системы. Или как модуль в приложении. После внедрения начинается мониторинг. Модель может устаревать. Данные могут меняться. Поэтому качество модели нужно регулярно проверять. И при необходимости переобучать.</p>
+
+            <p>Обратите внимание на важную мысль. Все семь этапов связаны между собой. Нельзя пропустить очистку данных и сразу перейти к модели. Нельзя построить хорошую модель без понимания бизнес-контекста. Наука о данных — это не только алгоритмы. Это процесс. И этот процесс требует дисциплины и последовательности.</p>
+
+            <p>Запомните главное. Жизненный цикл проекта — это не формальность. Это рабочий инструмент. Он помогает не потерять логику. И помогает объяснить заказчику, на каком этапе находится проект. Академическая строгость здесь сочетается с практической пользой.</p>
+
+            <h3>📌 Блок 3. Основные библиотеки языка программирования для науки о данных</h3>
+
+            <p>Перейдём к третьему вопросу. Рассмотрим основные библиотеки, которые образуют инструментальную основу науки о данных. Мы разберём их назначение и принципы работы. Важно понимать не только то, что делает каждая библиотека. Но и то, как они связаны между собой. Все вместе они образуют единый вычислительный конвейер.</p>
+
+            <p>Начнём с библиотеки NumPy. Это фундамент для всех численных вычислений. Её главный объект — это многомерный массив. Такой массив хранит числа в непрерывной области памяти. И операции над ним выполняются на низком уровне. Это делает вычисления очень быстрыми. Многие другие библиотеки построены поверх NumPy. Поэтому её часто называют базовым слоем экосистемы.</p>
+
+            <p>Перейдём к библиотеке Pandas. Она отвечает за работу с табличными данными. Её основная структура — это таблица данных. По смыслу она близка к листу электронной таблицы. Но обладает гораздо большими возможностями. Pandas умеет загружать данные из разных источников. Умеет очищать их. Умеет группировать и агрегировать. Умеет соединять несколько таблиц по общим полям. Без Pandas не обходится ни один проект в науке о данных.</p>
+
+            <p>Теперь рассмотрим визуализацию. Здесь работают две библиотеки. Первая — это Matplotlib. Это базовый движок построения графиков. Он даёт полный контроль над каждым элементом изображения. Над осями, подписями, цветами и масштабом. Вторая библиотека — это Seaborn. Она является надстройкой над Matplotlib. И создана специально для статистических графиков. Seaborn умеет строить распределения, ящичные диаграммы и тепловые карты корреляций. Причём с минимальным количеством кода.</p>
+
+            <p>Перейдём к машинному обучению. Здесь центральное место занимает библиотека Scikit-learn. Она предоставляет единый интерфейс для десятков алгоритмов. Обучение модели выполняется одним методом. Предсказание — другим методом. Такое единообразие очень удобно. Оно позволяет быстро сравнивать разные алгоритмы между собой. Scikit-learn включает классификацию, регрессию, кластеризацию. А также инструменты для оценки качества моделей и подготовки данных.</p>
+
+            <p>Отдельно стоит сказать о глубоком обучении. Здесь используются две основные библиотеки. Первая — это TensorFlow. Она позволяет строить и обучать нейронные сети. И хорошо подходит для промышленного применения. Вторая — это PyTorch. Она отличается гибкостью и динамическим построением вычислительного графа. Поэтому её часто выбирают исследователи. Обе библиотеки решают сложные задачи. Это распознавание изображений, обработка естественного языка и прогнозирование сложных временных рядов.</p>
+
+            <p>Обратите внимание на важную мысль. Все эти библиотеки не существуют изолированно. Они образуют иерархию. NumPy лежит в основании. Pandas строится поверх NumPy. Matplotlib и Seaborn визуализируют результаты. Scikit-learn использует массивы NumPy для обучения моделей. TensorFlow и PyTorch также работают с массивами. И часто данные передаются из Pandas в Scikit-learn или в нейронные сети. Эта иерархия обеспечивает совместимость и эффективность.</p>
+
+            <p>Запомните главное. Каждая библиотека решает свою задачу. NumPy — это вычисления. Pandas — это данные. Matplotlib и Seaborn — это визуализация. Scikit-learn — это классическое машинное обучение. TensorFlow и PyTorch — это глубокое обучение. Вместе они покрывают весь спектр задач науки о данных. И владение ими является базовым требованием для специалиста.</p>
+
+            <h3>📌 Блок 4. Практический пример: как библиотеки работают вместе</h3>
+
+            <p>Перейдём к четвёртому вопросу. Рассмотрим практический пример. И увидим, как все библиотеки соединяются в единый конвейер. Возьмём задачу прогнозирования спроса. Представим интернет-магазин. Руководитель хочет знать, сколько единиц товара понадобится на складе в следующем месяце. Это типичная задача науки о данных.</p>
+
+            <p>Первый шаг — это загрузка и очистка данных. Специалист использует библиотеку Pandas. Он загружает исторические данные о продажах. Эти данные могут лежать в файле или в базе данных. Затем он очищает их. Удаляет пропуски. Убирает дубликаты. Приводит даты к единому формату. И группирует продажи по дням и по категориям товаров. На выходе получается аккуратная таблица. С ней уже можно работать дальше.</p>
+
+            <p>Второй шаг — это исследовательский анализ. Здесь вступает в работу библиотека Seaborn. Специалист строит график продаж по месяцам. Он видит сезонность. Например, спрос растёт перед праздниками. И падает в летние месяцы. Затем он строит тепловую карту корреляций. И видит, какие признаки связаны с объёмом продаж. Это могут быть цена, скидка, день недели. Такой анализ помогает понять структуру данных. И подсказывает, какие признаки стоит использовать в модели.</p>
+
+            <p>Третий шаг — это конструирование признаков. На основе выводов разведочного анализа специалист создаёт новые признаки. Например, он добавляет признак праздничного дня. Или признак средней температуры за окно. Эти признаки могут улучшить прогноз. Здесь снова используется Pandas. Он позволяет удобно преобразовывать столбцы и добавлять новые.</p>
+
+            <p>Четвёртый шаг — это построение модели. Специалист выбирает алгоритм. Для начала он берёт модель линейной регрессии из библиотеки Scikit-learn. Или модель случайного леса. Он обучает её на исторических данных. Затем проверяет качество на отложенном периоде. Если качество недостаточное, он пробует другой алгоритм. Или возвращается к конструированию признаков. Это итеративный процесс.</p>
+
+            <p>Пятый шаг — это усложнение модели при необходимости. Если данных очень много. И зависимости между признаками сложные и нелинейные. Специалист может использовать нейронную сеть. Тогда он обращается к библиотеке TensorFlow или PyTorch. Он строит сеть. Обучает её на тех же данных. И сравнивает результат с классическими моделями. Иногда нейронная сеть даёт лучший прогноз. Иногда классическая модель оказывается достаточно хорошей. Выбор зависит от задачи и от доступных ресурсов.</p>
+
+            <p>Шестой шаг — это внедрение и мониторинг. Готовая модель сохраняется. Она превращается в программный сервис. Этот сервис принимает на вход новые данные. И возвращает прогноз спроса. Руководитель видит результат в дашборде. И принимает решение о закупке. Специалист регулярно проверяет качество модели. Если данные изменились, модель переобучается.</p>
+
+            <p>Обратите внимание на важную мысль. В этом примере каждая библиотека выполняет свою роль. Pandas готовит данные. Seaborn помогает понять их структуру. Scikit-learn строит базовую модель. TensorFlow или PyTorch усложняют модель при необходимости. И всё это соединяется в единый воспроизводимый конвейер. Ни один этап нельзя пропустить. И каждый этап опирается на предыдущий.</p>
+
+            <p>Запомните главное. Наука о данных — это не одна библиотека и не один алгоритм. Это система. И эта система работает только тогда, когда все части согласованы между собой. Практический пример показывает, как теория превращается в работающий инструмент. И как отдельные библиотеки становятся единой предсказательной системой.</p>
+
+            <h3>📌 Блок 5. Связь с предыдущими лекциями и ключевые выводы</h3>
+
+            <p>Перейдём к пятому вопросу. Свяжем новый материал с предыдущими лекциями. И сформулируем ключевые выводы. Это поможет увидеть всю картину целиком. И понять место науки о данных в общем курсе.</p>
+
+            <p>В шестой лекции мы разобрали библиотеку Statsmodels. Мы говорили о регрессии, о проверке гипотез и о статистических моделях. Тогда речь шла о статистической глубине. Мы учились объяснять связи между переменными. И оценивать надёжность этих связей. Наука о данных продолжает эту линию. Но добавляет к объяснению предсказание. Statsmodels отвечает на вопрос, почему признаки связаны с результатом. А библиотеки машинного обучения отвечают на вопрос, какой результат мы получим для нового объекта.</p>
+
+            <p>В четвёртой лекции мы говорили об экосистемах аналитика. Об Excel, о языке запросов, о платформах визуализации. Эти инструменты остаются важными. Они готовят данные и представляют результаты. Но наука о данных добавляет новый слой. Это слой прогнозных моделей. И этот слой опирается на те же данные, которые готовит аналитик.</p>
+
+            <p>Отсюда следует первый вывод. Наука о данных не отменяет аналитику. Она надстраивается над ней. Аналитика описывает прошлое. Наука о данных предсказывает будущее. И вместе они дают полную поддержку принятия решений.</p>
+
+            <p>Второй вывод касается жизненного цикла. Мы разобрали семь этапов. От постановки проблемы до внедрения и мониторинга. Этот цикл итеративный. И каждый этап важен. Нельзя перескочить через очистку данных. Нельзя построить модель без понимания бизнес-контекста. Дисциплина процесса отличает профессионала от любителя.</p>
+
+            <p>Третий вывод касается библиотек. Мы увидели иерархию инструментов. NumPy лежит в основании. Pandas работает с таблицами. Matplotlib и Seaborn визуализируют. Scikit-learn строит классические модели. TensorFlow и PyTorch строят нейронные сети. Владение этим стеком — это базовое требование для специалиста по науке о данных.</p>
+
+            <p>Четвёртый вывод касается практики. Мы разобрали пример прогноза спроса. И увидели, как библиотеки соединяются в единый конвейер. Pandas готовит данные. Seaborn помогает понять структуру. Scikit-learn строит базовую модель. Нейронные сети усложняют модель при необходимости. Всё это работает как единая система. И результат этой системы — не отчёт, а действующий прогноз.</p>
+
+            <p>Обратите внимание на важную мысль. Наука о данных — это междисциплинарная область. Она соединяет статистику, программирование и знание предметной области. Без статистики модель будет необоснованной. Без программирования её не построить. Без знания предметной области она будет бесполезной. Поэтому специалист по науке о данных должен развиваться в трёх направлениях одновременно.</p>
+
+            <p>Запомните главное. Наука о данных — это не набор модных слов. Это практическая дисциплина. Она превращает данные в предсказания. А предсказания — в управленческие решения. И она требует системного мышления. Не случайных экспериментов, а выстроенного процесса.</p>
+
+            <h3>📌 Заключение</h3>
+
+            <p>Мы подошли к завершению лекции. Давайте соберём всё вместе. И сформулируем итоговые тезисы.</p>
+
+            <p>Мы начали с различия между аналитикой данных и наукой о данных. Аналитик объясняет прошлое. Специалист по науке о данных предсказывает будущее. Это разные роли. Но они дополняют друг друга.</p>
+
+            <p>Мы разобрали жизненный цикл проекта. Семь этапов от постановки задачи до внедрения. Мы увидели, что этот цикл итеративный. И что качество данных определяет качество модели. Мы назвали основные библиотеки. И увидели, как они образуют иерархию инструментов. От вычислений на массивах до глубокого обучения. Мы разобрали практический пример. И увидели, как теория превращается в работающую систему.</p>
+
+            <p>Главный вывод лекции звучит так. Наука о данных — это система. А не отдельный алгоритм и не одна библиотека. Эта система включает данные, инструменты, процесс и предметную область. И только согласованная работа всех частей даёт результат.</p>
+
+            <p>Поговорим о перспективах. В следующей лекции мы углубимся в конкретные алгоритмы машинного обучения. Мы разберём, как устроены деревья решений и случайный лес. Как работает логистическая регрессия для классификации. И как оценивать качество моделей честно и надёжно. Мы увидим, что выбор алгоритма — это не магия. Это обоснованное решение на основе данных и задачи.</p>
+
+            <p>Что вы уносите с этой лекции. Вы уносите понимание различия между аналитикой и наукой о данных. Вы уносите знание жизненного цикла проекта. Вы уносите представление об основных библиотеках и их роли. И главное. Вы уносите понимание того, что наука о данных — это процесс. А не разовый результат.</p>
+
+            <p>На этом наша лекция завершена. Спасибо за внимание. Я готов ответить на ваши вопросы.</p>
+
+            <!-- СЛОВАРЬ ТЕРМИНОВ -->
+            <div class="dark-block">
+                <div class="dark-block-title">📖 Словарь терминов и аббревиатур</div>
+                <table class="dark-table">
+                    <thead>
+                        <tr><th style="width:20%;">Термин</th><th style="width:30%;">Расшифровка</th><th>Пояснение</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="term">Data Science</td><td>Наука о данных</td><td>Область, которая строит предсказательные модели</td></tr>
+                        <tr><td class="term">Data Analytics</td><td>Аналитика данных</td><td>Область, которая описывает прошлое и настоящее</td></tr>
+                        <tr><td class="term">NumPy</td><td>NumPy</td><td>Библиотека для численных вычислений на массивах</td></tr>
+                        <tr><td class="term">Pandas</td><td>Pandas</td><td>Библиотека для табличных данных</td></tr>
+                        <tr><td class="term">Matplotlib</td><td>Matplotlib</td><td>Библиотека для базовой визуализации</td></tr>
+                        <tr><td class="term">Seaborn</td><td>Seaborn</td><td>Библиотека для статистической визуализации</td></tr>
+                        <tr><td class="term">Scikit-learn</td><td>Scikit-learn</td><td>Библиотека для классического машинного обучения</td></tr>
+                        <tr><td class="term">TensorFlow</td><td>TensorFlow</td><td>Библиотека для глубокого обучения</td></tr>
+                        <tr><td class="term">PyTorch</td><td>PyTorch</td><td>Библиотека для глубокого обучения с динамическим графом</td></tr>
+                        <tr><td class="term">EDA</td><td>Разведочный анализ</td><td>Исследовательский анализ данных</td></tr>
+                        <tr><td class="term">Feature Engineering</td><td>Конструирование признаков</td><td>Создание новых признаков из исходных данных</td></tr>
+                        <tr><td class="term">Overfitting</td><td>Переобучение</td><td>Модель запоминает данные вместо закономерностей</td></tr>
+                        <tr><td class="term">Cross-validation</td><td>Перекрёстная проверка</td><td>Честная оценка качества модели</td></tr>
+                        <tr><td class="term">Pipeline</td><td>Конвейер</td><td>Объединение шагов обработки и модели</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ИСТОЧНИКИ -->
+            <div class="dark-block">
+                <div class="dark-block-title">📚 Источники и литература</div>
+                <div class="src-group">📊 Документация библиотек</div>
+                <ol>
+                    <li>Документация NumPy: массивы, векторизация, линейная алгебра.</li>
+                    <li>Документация Pandas: табличные данные, очистка, группировка.</li>
+                    <li>Документация Scikit-learn: классическое машинное обучение.</li>
+                    <li>Документация TensorFlow и Keras: глубокое обучение.</li>
+                    <li>Документация PyTorch: тензоры, Autograd, нейронные сети.</li>
+                </ol>
+                <div class="src-group">📖 Учебная литература</div>
+                <ol start="6">
+                    <li>Практические руководства по науке о данных на Python.</li>
+                    <li>Курсы по машинному обучению и глубокому обучению.</li>
+                    <li>Сравнительные обзоры Data Analytics и Data Science.</li>
+                </ol>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function changeVideo(embedUrl) {
+            document.getElementById('lecture-player').src = embedUrl;
+        }
+    </script>
+
+    <!-- НАВИГАЦИЯ МЕЖДУ ЛЕКЦИЯМИ -->
+<nav class="lecture-nav" id="lectureNav">
+    <div class="nav-progress" id="navProgress" style="width: 0%;"></div>
+    <a href="Лекция (N-1).html" class="nav-btn-arrow" id="prevBtn">
+        <span class="arrow-icon">←</span>
+        <span class="arrow-label">
+            <small>Назад</small>
+            <span class="arrow-title" id="prevTitle">Лекция (N-1)</span>
+        </span>
+    </a>
+    <div class="nav-center">
+        <div class="nav-counter">Лекция <span id="currentNum">N</span> <span>из 21</span></div>
+        <a href="index.html" class="nav-index-link">📚 К содержанию</a>
+    </div>
+    <a href="Лекция (N+1).html" class="nav-btn-arrow" id="nextBtn">
+        <span class="arrow-label" style="align-items: flex-end;">
+            <small>Вперёд</small>
+            <span class="arrow-title" id="nextTitle">Лекция (N+1)</span>
+        </span>
+        <span class="arrow-icon">→</span>
+    </a>
+</nav>
+
+
+
+<script>
+(function () {
+    'use strict';
+
+    // =========================================================
+    // НАСТРОЙКИ
+    // =========================================================
+    const TOTAL_LECTURES = 21;                         // всего лекций в курсе
+    const totalDurationMs = (52 * 60 + 30) * 1000;     // длительность автопрокрутки
+    const autoNextDelayMs = 2000;                      // задержка автоперехода
+    const AUTOSTART_PARAM = 'autostart';
+
+    // =========================================================
+    // ОПРЕДЕЛЕНИЕ НОМЕРА ТЕКУЩЕЙ ЛЕКЦИИ
+    // =========================================================
+    const fileName = decodeURIComponent(location.pathname.split('/').pop() || '');
+    let currentLecture = 1;
+
+    // 1) Пытаемся извлечь номер из имени файла "Лекция 7.html"
+    const match = fileName.match(/Лекция\s*(\d+)\.html/i);
+    if (match) {
+        currentLecture = parseInt(match[1], 10);
+    } else {
+        // 2) Fallback: берём из HTML-счётчика
+        const el = document.getElementById('currentNum');
+        if (el) currentLecture = parseInt(el.textContent, 10) || 1;
+    }
+
+    // Ограничиваем допустимым диапазоном
+    if (isNaN(currentLecture) || currentLecture < 1) currentLecture = 1;
+    if (currentLecture > TOTAL_LECTURES) currentLecture = TOTAL_LECTURES;
+
+    // =========================================================
+    // ОПРЕДЕЛЕНИЕ СОСЕДНИХ ЛЕКЦИЙ
+    // =========================================================
+    const prev = currentLecture > 1 ? currentLecture - 1 : null;
+    const next = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+
+    // =========================================================
+    // ОБНОВЛЕНИЕ СЧЁТЧИКА И ПРОГРЕСС-БАРА
+    // =========================================================
+    const currentNumEl = document.getElementById('currentNum');
+    if (currentNumEl) currentNumEl.textContent = currentLecture;
+
+    const navProgress = document.getElementById('navProgress');
+    if (navProgress) {
+        navProgress.style.width = (currentLecture / TOTAL_LECTURES * 100) + '%';
+    }
+
+    // =========================================================
+    // НАСТРОЙКА КНОПКИ "НАЗАД"
+    // =========================================================
+    const prevBtn = document.getElementById('prevBtn');
+    if (prevBtn) {
+        if (prev) {
+            prevBtn.href = 'Лекция ' + prev + '.html';
+            const t = document.getElementById('prevTitle');
+            if (t) t.textContent = 'Лекция ' + prev;
+            prevBtn.style.opacity = '1';
+            prevBtn.style.cursor = 'pointer';
+            prevBtn.onclick = null;
+        } else {
+            prevBtn.removeAttribute('href');
+            prevBtn.style.opacity = '0.35';
+            prevBtn.style.cursor = 'not-allowed';
+            prevBtn.onclick = (e) => e.preventDefault();
+            const t = document.getElementById('prevTitle');
+            if (t) t.textContent = 'Это первая лекция';
+        }
+    }
+
+    // =========================================================
+    // НАСТРОЙКА КНОПКИ "ВПЕРЁД"
+    // =========================================================
+    const nextBtn = document.getElementById('nextBtn');
+    if (nextBtn) {
+        if (next) {
+            nextBtn.href = 'Лекция ' + next + '.html';
+            const t = document.getElementById('nextTitle');
+            if (t) t.textContent = 'Лекция ' + next;
+            nextBtn.style.opacity = '1';
+            nextBtn.style.cursor = 'pointer';
+            nextBtn.onclick = null;
+        } else {
+            nextBtn.removeAttribute('href');
+            nextBtn.style.opacity = '0.35';
+            nextBtn.style.cursor = 'not-allowed';
+            nextBtn.onclick = (e) => e.preventDefault();
+            const t = document.getElementById('nextTitle');
+            if (t) t.textContent = 'Это последняя лекция';
+        }
+    }
+
+    // =========================================================
+    // КЛАВИАТУРНАЯ НАВИГАЦИЯ
+    // =========================================================
+    document.addEventListener('keydown', (e) => {
+        const tag = e.target && e.target.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+        if (e.key === 'ArrowLeft' && prev) {
+            window.location.href = 'Лекция ' + prev + '.html';
+        } else if (e.key === 'ArrowRight' && next) {
+            window.location.href = 'Лекция ' + next + '.html';
+        } else if (e.key === 'Home') {
+            window.location.href = 'index.html';
+        }
+    });
+
+    // =========================================================
+    // АВТОПРОКРУТКА И СИНХРОНИЗАЦИЯ ПАНЕЛЕЙ
+    // =========================================================
+    function initScroll() {
+        const studentBlock = document.querySelector('.student-view');
+        const speakerBlock = document.querySelector('.speaker-notes');
+        const badge = document.getElementById('scroll-status-badge');
+        const audio = document.getElementById('lecture-audio');
+        if (!studentBlock || !speakerBlock) return;
+
+        const studentBehavior = studentBlock.style.scrollBehavior;
+        const speakerBehavior = speakerBlock.style.scrollBehavior;
+        let isRunning = false, completed = false, pausedElapsed = 0, startedAt = 0, rafId = null;
+        let startS = 0, startP = 0, maxS = 0, maxP = 0;
+
+        function setBadge(text, color) {
+            if (!badge) return;
+            badge.style.display = 'block';
+            badge.textContent = text;
+            badge.style.borderColor = color;
+        }
+        function measure() {
+            maxS = Math.max(studentBlock.scrollHeight - studentBlock.clientHeight, 0);
+            maxP = Math.max(speakerBlock.scrollHeight - speakerBlock.clientHeight, 0);
+        }
+        function fmt(ms) {
+            const m = Math.floor(ms / 60000);
+            const s = Math.floor((ms % 60000) / 1000);
+            return m + ':' + String(s).padStart(2, '0');
+        }
+        function playAudio() {
+            if (!audio) return;
+            const p = audio.play();
+            if (p && typeof p.catch === 'function') {
+                p.catch(err => {
+                    console.warn('[AutoAudio]', err.message);
+                    setBadge('▶ ИДЕТ ПРОКРУТКА (звук заблокирован)', '#eab308');
+                });
+            }
+        }
+        function pauseAudio() { if (audio) try { audio.pause(); } catch (_) {} }
+        function resetAudio() { if (audio) try { audio.pause(); audio.currentTime = 0; } catch (_) {} }
+
+        function animate() {
+            if (!isRunning) return;
+            const elapsed = pausedElapsed + (performance.now() - startedAt);
+            const fraction = Math.min(elapsed / totalDurationMs, 1);
+            measure();
+            studentBlock.scrollTop = startS + (maxS - startS) * fraction;
+            speakerBlock.scrollTop = startP + (maxP - startP) * fraction;
+            if (badge) {
+                badge.textContent = '▶ ' + fmt(elapsed) + ' / 25:00';
+                badge.style.borderColor = '#16a34a';
+            }
+            if (fraction >= 1) { finish(); return; }
+            rafId = requestAnimationFrame(animate);
+        }
+
+        function startOrResume() {
+            if (completed) {
+                pausedElapsed = 0; completed = false;
+                studentBlock.scrollTop = 0; speakerBlock.scrollTop = 0;
+                resetAudio();
+            }
+            measure();
+            startS = studentBlock.scrollTop;
+            startP = speakerBlock.scrollTop;
+            startedAt = performance.now();
+            isRunning = true;
+            studentBlock.style.scrollBehavior = 'auto';
+            speakerBlock.style.scrollBehavior = 'auto';
+            cancelAnimationFrame(rafId);
+            rafId = requestAnimationFrame(animate);
+            playAudio();
+        }
+        function pause() {
+            if (isRunning) pausedElapsed += performance.now() - startedAt;
+            isRunning = false;
+            cancelAnimationFrame(rafId);
+            setBadge('⏸ ПАУЗА ' + fmt(pausedElapsed), '#dc2626');
+            studentBlock.style.scrollBehavior = studentBehavior;
+            speakerBlock.style.scrollBehavior = speakerBehavior;
+            pauseAudio();
+        }
+        function finish() {
+            isRunning = false; completed = true;
+            cancelAnimationFrame(rafId);
+            measure();
+            studentBlock.scrollTop = maxS;
+            speakerBlock.scrollTop = maxP;
+            studentBlock.style.scrollBehavior = studentBehavior;
+            speakerBlock.style.scrollBehavior = speakerBehavior;
+
+            const nextLec = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+            if (nextLec) {
+                setBadge('✅ ГОТОВО → Лекция ' + nextLec, '#16a34a');
+                setTimeout(() => {
+                    location.href = 'Лекция ' + nextLec + '.html?' + AUTOSTART_PARAM + '=1';
+                }, autoNextDelayMs);
+            } else {
+                setBadge('✅ КУРС ЗАВЕРШЕН', '#16a34a');
+                pauseAudio();
+            }
+        }
+        function toggle() { isRunning ? pause() : startOrResume(); }
+
+        // Пробел — старт/пауза
+        window.addEventListener('keydown', (e) => {
+            if (e.repeat) return;
+            const t = e.target; const tag = t && t.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+            if (e.code === 'Space' || e.key === ' ') {
+                e.preventDefault();
+                toggle();
+            }
+        }, true);
+
+        if (badge) badge.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+        [studentBlock, speakerBlock].forEach(el => {
+            el.addEventListener('click', (e) => {
+                if (e.target.closest('a,button,iframe,input,textarea,select,video,audio')) return;
+                if (window.getSelection().toString().length > 0) return;
+                toggle();
+            });
+        });
+
+        // Автостарт при переходе с предыдущей лекции
+        const params = new URLSearchParams(location.search);
+        if (params.get(AUTOSTART_PARAM) === '1') {
+            params.delete(AUTOSTART_PARAM);
+            const clean = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
+            history.replaceState(null, '', clean);
+            setTimeout(startOrResume, 500);
+        } else {
+            setBadge('▶ ПРОБЕЛ / КЛИК — старт', '#4a5568');
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initScroll, { once: true });
+    } else {
+        initScroll();
+    }
+})();
+</script>
+
+</body>
+</html>

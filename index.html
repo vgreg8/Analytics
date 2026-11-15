@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Аналитика данных — Курс лекций (21 лекция, 7 модулей)</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f7fafc;
+            color: #2d3748;
+            line-height: 1.6;
+            padding: 30px 20px 60px;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        /* ==================== HERO ==================== */
+        .hero {
+            background: linear-gradient(135deg, #1a365d 0%, #2b6cb0 50%, #3182ce 100%);
+            background-size: 200% 200%;
+            animation: gradientMove 12s ease infinite;
+            border-radius: 20px;
+            padding: 50px 40px;
+            color: #ffffff;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(26, 54, 93, 0.3);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 40px;
+        }
+
+        @keyframes gradientMove {
+            0%   { background-position: 0% 50%; }
+            50%  { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .hero::before, .hero::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+            pointer-events: none;
+        }
+        .hero::before { width: 300px; height: 300px; top: -150px; right: -100px; }
+        .hero::after  { width: 200px; height: 200px; bottom: -100px; left: -50px; }
+
+        .hero-emoji {
+            font-size: 72px; line-height: 1; margin-bottom: 16px;
+            display: inline-block; animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50%      { transform: translateY(-10px); }
+        }
+
+        .hero h1 {
+            font-size: 42px; font-weight: 900; letter-spacing: -0.5px;
+            margin-bottom: 12px; text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            position: relative;
+        }
+
+        .hero-subtitle {
+            font-size: 17px; opacity: 0.92; max-width: 700px;
+            margin: 0 auto 30px; position: relative; line-height: 1.5;
+        }
+
+        .hero-stats {
+            display: flex; justify-content: center; gap: 16px;
+            flex-wrap: wrap; margin-bottom: 32px; position: relative;
+        }
+
+        .hero-stat {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1.5px solid rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(8px);
+            border-radius: 14px; padding: 14px 24px; min-width: 120px;
+            transition: transform 0.25s, background 0.25s;
+        }
+        .hero-stat:hover { transform: translateY(-3px); background: rgba(255, 255, 255, 0.22); }
+
+        .hero-stat-number { font-size: 28px; font-weight: 900; line-height: 1; margin-bottom: 4px; }
+        .hero-stat-label {
+            font-size: 12px; opacity: 0.85; text-transform: uppercase;
+            letter-spacing: 0.5px; font-weight: 600;
+        }
+
+        .hero-progress-wrap { max-width: 500px; margin: 0 auto 24px; position: relative; }
+
+        .hero-progress-info {
+            display: flex; justify-content: space-between; font-size: 12px;
+            margin-bottom: 6px; opacity: 0.9; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+
+        .hero-progress-bar {
+            height: 10px; background: rgba(255, 255, 255, 0.2);
+            border-radius: 6px; overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .hero-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #f6ad55, #fbd38d, #fefcbf);
+            width: 0%; border-radius: 6px; transition: width 0.6s ease;
+            box-shadow: 0 0 12px rgba(251, 211, 141, 0.5);
+        }
+
+        .hero-actions {
+            display: flex; justify-content: center; gap: 12px;
+            flex-wrap: wrap; position: relative;
+        }
+
+        .btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 13px 26px; border-radius: 10px; font-size: 14px;
+            font-weight: 700; text-decoration: none; cursor: pointer;
+            border: none; transition: all 0.25s ease; font-family: inherit;
+        }
+
+        .btn-primary {
+            background: #ffffff; color: #1a365d;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(0,0,0,0.3); }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.15); color: #ffffff;
+            border: 1.5px solid rgba(255, 255, 255, 0.4);
+        }
+        .btn-secondary:hover { background: rgba(255, 255, 255, 0.25); transform: translateY(-2px); }
+
+        .btn-ghost {
+            background: transparent; color: #ffffff;
+            border: 1.5px solid rgba(255, 255, 255, 0.3);
+            font-size: 12px; padding: 8px 16px;
+        }
+        .btn-ghost:hover { background: rgba(255, 255, 255, 0.1); }
+
+        /* ==================== MODULES ==================== */
+        .modules { display: flex; flex-direction: column; gap: 36px; }
+
+        .module { animation: fadeInUp 0.6s ease both; }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .module-header {
+            display: flex; align-items: center; gap: 14px;
+            margin-bottom: 18px; padding-bottom: 14px; border-bottom: 3px solid;
+        }
+
+        .module-icon {
+            font-size: 32px; line-height: 1; width: 56px; height: 56px;
+            border-radius: 14px; display: flex; align-items: center; justify-content: center;
+            color: #ffffff; box-shadow: 0 6px 16px rgba(0,0,0,0.12); flex-shrink: 0;
+        }
+
+        .module-info { flex: 1; }
+
+        .module-title {
+            font-size: 20px; font-weight: 900; color: #1a365d; letter-spacing: -0.2px;
+        }
+
+        .module-subtitle {
+            font-size: 12px; color: #718096; font-weight: 500; margin-top: 2px;
+        }
+
+        .module-count {
+            background: #edf2f7; color: #4a5568; font-size: 12px;
+            font-weight: 800; padding: 6px 12px; border-radius: 20px; white-space: nowrap;
+        }
+
+        /* Module color themes */
+        .module[data-color="blue"]   .module-header { border-color: #3182ce; }
+        .module[data-color="blue"]   .module-icon   { background: linear-gradient(135deg, #3182ce, #2b6cb0); }
+        .module[data-color="navy"]   .module-header { border-color: #2b6cb0; }
+        .module[data-color="navy"]   .module-icon   { background: linear-gradient(135deg, #2b6cb0, #1a365d); }
+        .module[data-color="green"]  .module-header { border-color: #38a169; }
+        .module[data-color="green"]  .module-icon   { background: linear-gradient(135deg, #38a169, #276749); }
+        .module[data-color="purple"] .module-header { border-color: #805ad5; }
+        .module[data-color="purple"] .module-icon   { background: linear-gradient(135deg, #805ad5, #553c9a); }
+        .module[data-color="gold"]   .module-header { border-color: #d69e2e; }
+        .module[data-color="gold"]   .module-icon   { background: linear-gradient(135deg, #d69e2e, #975a16); }
+        .module[data-color="orange"] .module-header { border-color: #dd6b20; }
+        .module[data-color="orange"] .module-icon   { background: linear-gradient(135deg, #dd6b20, #c05621); }
+        .module[data-color="red"]    .module-header { border-color: #e53e3e; }
+        .module[data-color="red"]    .module-icon   { background: linear-gradient(135deg, #e53e3e, #9b2c2c); }
+
+        .lectures-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        /* ==================== LECTURE CARD ==================== */
+        .lecture-card {
+            background: #ffffff; border: 2px solid #e2e8f0; border-radius: 14px;
+            padding: 20px; text-decoration: none; color: inherit;
+            display: flex; flex-direction: column; gap: 10px;
+            transition: all 0.3s ease; position: relative; overflow: hidden;
+            cursor: pointer; min-height: 160px;
+        }
+
+        .lecture-card::before {
+            content: ''; position: absolute; top: 0; left: 0;
+            width: 5px; height: 100%; background: #3182ce;
+            transform: scaleY(0); transform-origin: top;
+            transition: transform 0.3s ease;
+        }
+
+        .lecture-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 14px 32px rgba(0,0,0,0.1);
+            border-color: #90cdf4;
+        }
+
+        .lecture-card:hover::before { transform: scaleY(1); }
+
+        .lecture-card.visited {
+            background: linear-gradient(135deg, #f0fff4 0%, #ffffff 100%);
+            border-color: #9ae6b4;
+        }
+        .lecture-card.visited::before { background: #38a169; }
+        .lecture-card.visited .lecture-badge { background: #c6f6d5; color: #22543d; }
+
+        .lecture-card-top {
+            display: flex; justify-content: space-between;
+            align-items: flex-start; gap: 10px;
+        }
+
+        .lecture-number {
+            font-size: 11px; font-weight: 900; color: #a0aec0;
+            letter-spacing: 1px; text-transform: uppercase;
+        }
+
+        .lecture-badge {
+            background: #ebf8ff; color: #2b6cb0; padding: 3px 9px;
+            border-radius: 20px; font-size: 10px; font-weight: 800;
+            letter-spacing: 0.3px; text-transform: uppercase;
+            display: flex; align-items: center; gap: 4px;
+        }
+
+        .lecture-icon { font-size: 26px; line-height: 1; }
+
+        .lecture-title {
+            font-size: 15px; font-weight: 700; color: #1a365d; line-height: 1.35;
+        }
+
+        .lecture-desc {
+            font-size: 12px; color: #718096; line-height: 1.45; flex-grow: 1;
+        }
+
+        .lecture-footer {
+            display: flex; align-items: center; justify-content: space-between;
+            font-size: 11px; color: #a0aec0; font-weight: 600;
+            padding-top: 8px; border-top: 1px dashed #e2e8f0;
+        }
+
+        .lecture-arrow {
+            color: #3182ce; font-size: 14px; transition: transform 0.25s;
+        }
+
+        .lecture-card:hover .lecture-arrow { transform: translateX(4px); }
+
+        /* ==================== FOOTER ==================== */
+        .footer {
+            margin-top: 60px; padding: 30px; background: #ffffff;
+            border: 2px solid #e2e8f0; border-radius: 16px; text-align: center;
+        }
+
+        .footer-title {
+            font-size: 16px; font-weight: 800; color: #1a365d; margin-bottom: 8px;
+        }
+
+        .footer-text {
+            font-size: 13px; color: #718096; line-height: 1.6;
+        }
+
+        .footer-links {
+            margin-top: 14px; display: flex; justify-content: center;
+            gap: 16px; flex-wrap: wrap; font-size: 12px;
+        }
+
+        .footer-links a {
+            color: #3182ce; text-decoration: none; font-weight: 600;
+        }
+        .footer-links a:hover { text-decoration: underline; }
+
+        /* ==================== RESPONSIVE ==================== */
+        @media (max-width: 700px) {
+            .hero { padding: 36px 22px; }
+            .hero h1 { font-size: 30px; }
+            .hero-subtitle { font-size: 14px; }
+            .hero-emoji { font-size: 54px; }
+            .hero-stat { padding: 10px 18px; min-width: 90px; }
+            .hero-stat-number { font-size: 22px; }
+            .lectures-grid { grid-template-columns: 1fr; }
+            .module-header { flex-wrap: wrap; }
+            .module-icon { width: 46px; height: 46px; font-size: 24px; }
+            .module-title { font-size: 17px; }
+        }
+
+        /* ==================== SCROLL TOP ==================== */
+        .scroll-top {
+            position: fixed; bottom: 24px; right: 24px; width: 46px; height: 46px;
+            border-radius: 50%; background: #1a365d; color: #ffffff;
+            border: none; cursor: pointer; font-size: 20px;
+            display: none; align-items: center; justify-content: center;
+            box-shadow: 0 6px 20px rgba(26, 54, 93, 0.4);
+            transition: transform 0.25s, background 0.25s; z-index: 999;
+        }
+
+        .scroll-top.visible { display: flex; }
+        .scroll-top:hover { transform: translateY(-3px); background: #2b6cb0; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- ==================== HERO ==================== -->
+    <header class="hero">
+        <div class="hero-emoji">📊</div>
+        <h1>Аналитика данных</h1>
+        <p class="hero-subtitle">
+            Полный курс из 21 лекции: от базовых метрик и инструментов до машинного обучения, оценки качества и внедрения моделей. Теория, практика и реальные примеры для аналитиков, BI-специалистов и инженеров данных.
+        </p>
+
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <div class="hero-stat-number">21</div>
+                <div class="hero-stat-label">лекция</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-number">7</div>
+                <div class="hero-stat-label">модулей</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-number" id="visitedCount">0</div>
+                <div class="hero-stat-label">пройдено</div>
+            </div>
+        </div>
+
+        <div class="hero-progress-wrap" id="progressWrap" style="display: none;">
+            <div class="hero-progress-info">
+                <span>Общий прогресс</span>
+                <span id="progressLabel">0%</span>
+            </div>
+            <div class="hero-progress-bar">
+                <div class="hero-progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <div class="hero-actions">
+            <a href="Лекция 1.html" class="btn btn-primary" id="startBtn">
+                🚀 Начать курс
+            </a>
+            <a href="#" class="btn btn-secondary" id="continueBtn" style="display: none;">
+                ▶ Продолжить с Лекции <span id="continueNum">1</span>
+            </a>
+            <button class="btn btn-ghost" id="resetBtn" style="display: none;">
+                🗑 Сбросить прогресс
+            </button>
+        </div>
+    </header>
+
+    <!-- ==================== MODULES ==================== -->
+    <main class="modules">
+
+        <!-- Модуль 1 -->
+        <section class="module" data-color="blue" style="animation-delay: 0.05s;">
+            <div class="module-header">
+                <div class="module-icon">🎯</div>
+                <div class="module-info">
+                    <div class="module-title">Модуль 1. Введение в аналитику</div>
+                    <div class="module-subtitle">Кто такие аналитики и в чём они работают</div>
+                </div>
+                <div class="module-count">2 лекции</div>
+            </div>
+            <div class="lectures-grid">
+                <a href="Лекция 1.html" class="lecture-card" data-lecture="1">
+                    <div class="lecture-card-top">
+                        <span class="lecture-number">Лекция 01</span>
+                        <span class="lecture-badge">База</span>
+                    </div>
+                    <div class="lecture-icon">👥</div>
+                    <div class="lecture-title">Кто такие аналитики</div>
+                    <div class="lecture-desc">11 типов аналитиков, их компетенции, инструменты и нормативная база. Как выбрать направление.</div>
+                    <div class="lecture-footer">
+                        <span>Введение</span>
+                        <span class="lecture-arrow">→</span>
+                    </div>
+                </a>
+                <a href="Лекция 2.html" class="lecture-card" data-lecture="2">
+                    <div class="lecture-card-top">
+                        <span class="lecture-number">Лекция 02</span>
+                        <span class="lecture-badge">Инструменты</span>
+                    </div>
+                    <div class="lecture-icon">💻</div>
+                    <div class="lecture-title">ИТ и средства аналитика</div>
+                    <div class="lecture-desc">7 классов программных продуктов, международные и отечественные решения, критерии выбора.</div>
+                    <div class="lecture-footer">
+                        <span>Обзор</span>
+                        <span class="lecture-arrow">→</span>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- Модуль 2 -->
+        <section class="module" data-color="navy" style="animation-delay: 0.1s;">
+            <div class="module-header">
+                <div class="module-icon">📊</div>
+                <div class="module-info">
+                    <div class="module-title">Модуль 2. Метрики бизнеса</div>
+                    <div class="module-subtitle">Что и как измерять, чтобы принимать решения</div>
+                </div>
+                <div class="module-count">2 лекции</div>
+            </div>
+            <div class="lectures-grid">
+                <a href="Лекция 3.html" class="lecture-card" data-lecture="3">
+                    <div class="lecture-card-top">
+                        <span class="lecture-number">Лекция 03</span>
+                        <span class="lecture-badge">Метрики</span>
+                    </div>
+                    <div class="lecture-icon">📈</div>
+                    <div class="lecture-title">Ключевые показатели и метрики</div>
+                    <div class="lecture-desc">ARPU, LTV, CAC, Retention, Churn — ключевые метрики для каждой роли аналитика.</div>
+                    <div class="lecture-footer">
+                        <span>Метрики</span>
+                        <span class="lecture-arrow">→</span>
+                    </div>
+                </a>
+                <a href="Лекция 4.html" class="lecture-card" data-lecture="4">
+                    <div class="lecture-card-top">
+                        <span class="lecture-number">Лекция 04</span>
+                        <span class="lecture-badge">Экономика</span>
+                    </div>
+                    <div class="lecture-icon">💰</div>
+                    <div class="lecture-title">Unit-экономика и когортный анализ</div>
+                    <div class="lecture-desc">LTV/CAC, payback period, когортные таблицы, RFM-анализ и практические кейсы.</div>
+                    <div class="lecture-footer">
+                        <span>Экономика</span>
+                        <span class="lecture-arrow">→</span>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- Модуль 3 -->
+        <section class="module" data-color="green" style="animation-delay: 0.15s;">
+            <div class="module-header">
+                <div class="module-icon">🛠️</div>
+                <div class="module-info">
+                    <div class="module-title">Модуль 3. Инструменты и данные</div>
+                    <div class="module-subtitle">Стек, статистика, качество данных и Python</div>
+                </div>
+                <div class="module-count">4 лекции</div>
+            </div>
+            <div class="lectures-grid">
+                <a href="Лекция 5.html" class="lecture-card" data-lecture="5">
+                    <div class="lecture-card-top">
+                        <span class="lecture-number">Лекция 05</span>
+                        <span class="lecture-badge">Инструменты</span>
+                    </div>
+                    <div class="lecture-icon">⚙️</div>
+                    <div class="lecture-title">Базовые инструменты аналитика</div>
+                    <div class="lecture-desc">4 экосистемы: Microsoft, Google, Yandex, Loginom. Интеграция, бесшовность, критерии выбора.</div>
+                    <div class="lecture-footer">
+                        <span>Экосистемы</span>
+                        <span class="lecture-arrow">→</span>
+                    </div>
+                </a>
+                <a href="Лекция 6.html" class="lecture-card" data-lecture="6">
+                    <div class="lecture-card-top">
+                        <span class="lecture-number">Лекция 06</span>
+                        <span class="lecture-badge">Статистика</span>
+                    </div>
+                    <div class="lecture-icon">📐</div>
+                    <div class="lecture-title">Статистические методы анализа</div>
+                    <div class="lecture-desc">Типы шкал, описательные статистики, проверка нормальности, критерии Стьюдента и Манна–Уитни.</div>
+                    <div class="lecture-footer">
+                        <span>Методология</span>
+                        <span class="lecture-arrow">→</span>
+                    </div>
+                </a>
+                <a href="Лекция 7.html" class="lecture-card" data-lecture="7">
+                    <div class="lecture-card-top">
+                        <span class="lecture-number">Лекция 07</span>
+                        <span class="lecture-badge">Качество</span>
+                    </div>
+                    <div class="lecture-icon">🧹</div>
+                    <div class="lecture-title">Качество данных и ETL/ELT</div>
+                    <div class="lecture-desc">Пропуски, дубликаты, выбросы, валидация, quality gates и архитектуры ETL/ELT.</div>
+                    <div class="lecture-footer">
+                        <span>Данные</span>
+                        <span class="lecture-arrow">→</span>
+                    </div>
+                </a>
+                <a href="Лекция 8.html" class="lecture-card" data-lecture="8">
+                    <div class="lecture-card-top">
+                        <span class="lecture-number">Лекция 08</span>
+                        <span class="lecture-badge">Python</span>
+                    </div>
+                    <div class="lecture-icon">🐼</div>
+                    <div class="lecture-title">Аналитик данных на Python</div>
+                    <div class="lecture-desc">Pandas, Matplotlib, Seaborn, Statsmodels: конвейер анализа, автоматизация, воспроизводимость.</div>
+                    <div class="lecture-footer">
+                        <span>Программирование</span>
+                        <span class="lecture-arrow">→</span>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- Модуль 4 -->
+        <section class="module" data-color="gold" style="animation-delay: 0.2s;">
+            <div class="module-header">
+                <div class="module-icon">📈</div>
+                <div class="module-info">
+                    <div class="module-title">Модуль 4. Визуализация и Data Science</div>
+                    <div class="module-subtitle">Как показать данные и перейти к предсказаниям</div>
+                </div>
+                <div class="module-count">2 лекции</div>
+            </div>
+            <div class="lectures-grid">
+                <a href="Лекция 9.html" class="lecture-card" data-lecture="9">
+                    <div class="lecture-card-top">
+                        <span class="lecture-number">Лекция 09</span>
+                        <span class="lecture-badge">Визуализация</span>
+                    </div>
+                    <div class="lecture-icon">🎨</div>
+                    <div class="lecture-title">Визуализация в аналитике</div>
+                    <div class="lecture-desc">6 групп диаграмм для описательного анализа: сравнение, доли, динамика, распределение, связь, карты.</div>
+                    <div class="lecture-footer">
+                        <span>Диаграммы</span>
+                        <span class="lecture-arrow">→</span>
+                    </div>
+                </a>
+                <a href="Лекция 10.html" class="lecture-card" data-lecture="10">
+                    <div class="lecture-card-top">
+                        <span class="lecture-number">Лекция 10</span>
+                        <span class="lecture-badge">Data Science</span>
+                    </div>
+                    <div class="lecture-icon">🔮</div>
+                    <div class="lecture-title">Введение в Data Science</div>
+                    <div class="lecture-desc">От анализа к предсказанию, жизненный цикл DS-проекта, NumPy, Scikit-learn, TensorFlow, PyTorch.</div>
+                    <div class="lecture-footer">
+                        <span>Data Science</span>
+                        <span class="lecture-arrow">→</span>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- Модуль 5 -->
+        <section class="module" data-color="purple" style="animation-delay: 0.25s;">
+            <div class="module-header">
+                <div class="module-icon">💬</div>
+                <div class="module-info">
+                    <div class="module-title">Модуль 5. Коммуникация с бизнесом</div>
+                    <div class="module-subtitle">Как понять задачу и донести результат</div>
+                </div>
+                <div class="module-count">1 лекция</div>
+            </div>
+            <div class="lectures-grid">
+                <a href="Лекция 11.html" class="lecture-card" data-lecture="11">
+                    <div class="lecture-card-top">
+                        <span class="lecture-number">Лекция 11</span>
+                        <span class="lecture-badge">Коммуникация</span>
+                    </div>
+                    <div class="lecture-icon">💼</div>
+                    <div class="lecture-title">Сбор требований и коммуникация</div>
+                    <div class="lecture-desc">5 почему, дерево проблем, стейкхолдеры, презентация результатов и споры с бизнесом.</div>
+                    <div class="lecture-footer">
+                        <span>Мягкие навыки</span>
+                        <span class="lecture-arrow">→</span>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- Модуль 6 -->
+        <section class="module" data-color="orange" style="animation-delay: 0.3s;">
+            <div class="module-header">
+                <div class="module-icon">🤖</div>
+                <div class="module-info">
+                    <div class="module-title">Модуль 6. Машинное обучение</div>
+                    <div class="module-subtitle">От линейной регрессии до ансамблей и кластеризации</div>
+                </div>
+                <div class="module-count">7 лекций</div>
+            </div>
+            <div class="lectures-grid">
+                <a href="Лекция 12.html" class="lecture-card" data-lecture="12">
+                    <div class="lecture-card-top">
+                        <span class="lecture-number">Лекция 12</span>
+                        <span class="lecture-badge">ML</span>
+                    </div>
+                    <div class="lecture-icon">🤖</div>
+                    <div class="lecture-title">Основные подходы к ML</div>
+                    <div class="lecture-desc">Три типа обучения, регрессия, классификация, кластеризация, ключевые понятия.</div>
+                    <div class="lecture-footer">
+                        <span>Введение</span>
+                        <span class="lecture-arrow">→</span>
+                    </div>
+                </a>
+                <a href="Лекция 13.html" class="lecture-card" data-lecture="13">
+                    <div class="lecture-card-top">
+                        <span class="lecture-number">Лекция 13</span>
+                        <span class="lecture-badge">Регрессия</span>
+                    </div>
+                    <div class="lecture-icon">📉</div>
+                    <div class="lecture-title">Линейная регрессия</div>
+                    <div class="lecture-desc">Метод наименьших квадратов, градиентный спуск, MAE, MSE, R², мультиколлинеарность, регуляризация.</div>
+                    <div class="lecture-footer">
+                        <span>Алгоритм</span>
+                        <span class="lecture-arrow">→</span>
+                    </div>
+                </a>
+                <a href="Лекция 14.html" class="lecture-card" data-lecture="14">
+                    <div class="lecture-card-top">
+                        <span class="lecture-number">Лекция 14</span>
+                        <span class="lecture-badge">k-NN</span>
+                    </div>
+                    <div class="lecture-icon">📍</div>
+                    <div class="lecture-title">Метод k-ближайших соседей</div>
+                    <div class="lecture-desc">Метрики расстояния, ленивое обучение, выбор k, проклятие размерности, дисбаланс классов.</div>
+                    <div class="lecture-footer">
+                        <span>Алгоритм</span>
+                        <span class="lecture-arrow">→</span>
+                    </div>
+                </a>
+                <a href="Лекция 15.html" class="lecture-card" data-lecture="15">
+                    <div class="lecture-card-top">
+                        <span class="lecture-number">Лекция 15</span>
+                        <span class="lecture-badge">Классификация</span>
+                    </div>
+                    <div class="lecture-icon">🎯</div>
+                    <div class="lecture-title">Логистическая регрессия</div>
+                    <div class="lecture-desc">Сигмоида, кросс-энтропия, матрица ошибок, precision, recall, F1, ROC-AUC, дисбаланс классов.</div>
+                    <div class="lecture-footer">
+                        <span>Алгоритм</span>
+                        <span class="lecture-arrow">→</span>
+                    </div>
+                </a>
+                <a href="Лекция 16.html" class="lecture-card" data-lecture="16">
+                    <div class="lecture-card-top">
+                        <span class="lecture-number">Лекция 16</span>
+                        <span class="lecture-badge">Деревья</span>
+                    </div>
+                    <div class="lecture-icon">🌳</div>
+                    <div class="lecture-title">Деревья решений</div>
+                    <div class="lecture-desc">Жадный алгоритм, энтропия, индекс Джини, гиперпараметры, обрезка, интерпретируемость.</div>
+                    <div class="lecture-footer">
+                        <span>Алгоритм</span>
+                        <span class="lecture-arrow">→</span>
+                    </div>
+                </a>
+                <a href="Лекция 17.html" class="lecture-card" data-lecture="17">
+                    <div class="lecture-card-top">
+                        <span class="lecture-number">Лекция 17</span>
+                        <span class="lecture-badge">Кластеризация</span>
+                    </div>
+                    <div class="lecture-icon">🌀</div>
+                    <div class="lecture-title">Кластеризация</div>
+                    <div class="lecture-desc">K-means, иерархическая, DBSCAN, GMM. Как найти группы в данных без учителя.</div>
+                    <div class="lecture-footer">
+                        <span>Без учителя</span>
+                        <span class="lecture-arrow">→</span>
+                    </div>
+                </a>
+                <a href="Лекция 18.html" class="lecture-card" data-lecture="18">
+                    <div class="lecture-card-top">
+                        <span class="lecture-number">Лекция 18</span>
+                        <span class="lecture-badge">Ансамбли</span>
+                    </div>
+                    <div class="lecture-icon">🌲</div>
+                    <div class="lecture-title">Ансамбли: лес и бустинг</div>
+                    <div class="lecture-desc">Бэггинг, бустинг, случайный лес, градиентный бустинг, XGBoost, LightGBM, CatBoost.</div>
+                    <div class="lecture-footer">
+                        <span>Алгоритм</span>
+                        <span class="lecture-arrow">→</span>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- Модуль 7 -->
+        <section class="module" data-color="red" style="animation-delay: 0.35s;">
+            <div class="module-header">
+                <div class="module-icon">🚀</div>
+                <div class="module-info">
+                    <div class="module-title">Модуль 7. Оценка и внедрение</div>
+                    <div class="module-subtitle">Как выбрать модель, показать её и внедрить</div>
+                </div>
+                <div class="module-count">3 лекции</div>
+            </div>
+            <div class="lectures-grid">
+                <a href="Лекция 19.html" class="lecture-card" data-lecture="19">
+                    <div class="lecture-card-top">
+                        <span class="lecture-number">Лекция 19</span>
+                        <span class="lecture-badge">Оценка</span>
+                    </div>
+                    <div class="lecture-icon">📏</div>
+                    <div class="lecture-title">Оценка качества моделей</div>
+                    <div class="lecture-desc">Перекрёстная проверка, подбор гиперпараметров, кривые обучения, утечки данных, выбор модели.</div>
+                    <div class="lecture-footer">
+                        <span>Методология</span>
+                        <span class="lecture-arrow">→</span>
+                    </div>
+                </a>
+                <a href="Лекция 20.html" class="lecture-card" data-lecture="20">
+                    <div class="lecture-card-top">
+                        <span class="lecture-number">Лекция 20</span>
+                        <span class="lecture-badge">Визуализация</span>
+                    </div>
+                    <div class="lecture-icon">🎨</div>
+                    <div class="lecture-title">Визуализация для ML</div>
+                    <div class="lecture-desc">Кривые обучения, матрица ошибок, ROC, важность признаков, SHAP, дрейф данных, мониторинг.</div>
+                    <div class="lecture-footer">
+                        <span>Диагностика</span>
+                        <span class="lecture-arrow">→</span>
+                    </div>
+                </a>
+                <a href="Лекция 21.html" class="lecture-card" data-lecture="21">
+                    <div class="lecture-card-top">
+                        <span class="lecture-number">Лекция 21</span>
+                        <span class="lecture-badge">Внедрение</span>
+                    </div>
+                    <div class="lecture-icon">🚀</div>
+                    <div class="lecture-title">Внедрение и мониторинг</div>
+                    <div class="lecture-desc">Способы внедрения, дрейф данных и концепции, обновление модели, этика и ответственность.</div>
+                    <div class="lecture-footer">
+                        <span>Финал</span>
+                        <span class="lecture-arrow">→</span>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer class="footer">
+        <div class="footer-title">Курс «Аналитика данных»</div>
+        <div class="footer-text">
+            21 лекция · 7 модулей · от базовых метрик до внедрения моделей машинного обучения.<br>
+            Для аналитиков данных, BI-специалистов, инженеров данных и всех, кто хочет освоить профессию.
+        </div>
+        <div class="footer-links">
+            <a href="Лекция 1.html">Начать с первой лекции</a>
+            <a href="#" id="footerReset">Сбросить прогресс</a>
+        </div>
+    </footer>
+
+</div>
+
+<!-- Scroll to top -->
+<button class="scroll-top" id="scrollTop" title="Наверх">↑</button>
+
+<script>
+    (function () {
+        'use strict';
+
+        // =========================================================
+        // НАСТРОЙКИ
+        // =========================================================
+        const TOTAL_LECTURES = 21;
+        const STORAGE_VISITED_PREFIX = 'analytics_course_visited_';
+        const STORAGE_LAST_KEY = 'analytics_course_last';
+
+        // =========================================================
+        // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+        // =========================================================
+        function getVisited() {
+            const visited = [];
+            for (let i = 1; i <= TOTAL_LECTURES; i++) {
+                if (localStorage.getItem(STORAGE_VISITED_PREFIX + i) === 'true') {
+                    visited.push(i);
+                }
+            }
+            return visited;
+        }
+
+        function getLastLecture() {
+            const last = localStorage.getItem(STORAGE_LAST_KEY);
+            return last ? parseInt(last, 10) : null;
+        }
+
+        function markVisited(num) {
+            localStorage.setItem(STORAGE_VISITED_PREFIX + num, 'true');
+            localStorage.setItem(STORAGE_LAST_KEY, num);
+        }
+
+        function resetProgress() {
+            for (let i = 1; i <= TOTAL_LECTURES; i++) {
+                localStorage.removeItem(STORAGE_VISITED_PREFIX + i);
+            }
+            localStorage.removeItem(STORAGE_LAST_KEY);
+            location.reload();
+        }
+
+        // =========================================================
+        // ОБНОВЛЕНИЕ ИНТЕРФЕЙСА
+        // =========================================================
+        function updateUI() {
+            const visited = getVisited();
+            const count = visited.length;
+            const percent = Math.round((count / TOTAL_LECTURES) * 100);
+            const last = getLastLecture();
+
+            const visitedCountEl = document.getElementById('visitedCount');
+            if (visitedCountEl) visitedCountEl.textContent = count;
+
+            const progressWrap = document.getElementById('progressWrap');
+            const progressFill = document.getElementById('progressFill');
+            const progressLabel = document.getElementById('progressLabel');
+
+            if (count > 0) {
+                if (progressWrap) progressWrap.style.display = 'block';
+                if (progressFill) progressFill.style.width = percent + '%';
+                if (progressLabel) progressLabel.textContent = percent + '%';
+            } else {
+                if (progressWrap) progressWrap.style.display = 'none';
+            }
+
+            const continueBtn = document.getElementById('continueBtn');
+            const continueNum = document.getElementById('continueNum');
+            const startBtn = document.getElementById('startBtn');
+            const resetBtn = document.getElementById('resetBtn');
+
+            if (count > 0 && last) {
+                let nextLecture = last;
+                if (visited.includes(last)) {
+                    nextLecture = Math.min(last + 1, TOTAL_LECTURES);
+                }
+
+                if (continueBtn && continueNum) {
+                    continueBtn.style.display = 'inline-flex';
+                    continueNum.textContent = nextLecture;
+                    continueBtn.href = 'Лекция ' + nextLecture + '.html';
+                }
+                if (startBtn) {
+                    startBtn.textContent = '📖 Смотреть все лекции';
+                    startBtn.href = 'Лекция 1.html';
+                }
+                if (resetBtn) resetBtn.style.display = 'inline-flex';
+            } else {
+                if (continueBtn) continueBtn.style.display = 'none';
+                if (resetBtn) resetBtn.style.display = 'none';
+                if (startBtn) {
+                    startBtn.textContent = '🚀 Начать курс';
+                    startBtn.href = 'Лекция 1.html';
+                }
+            }
+
+            document.querySelectorAll('.lecture-card').forEach(card => {
+                const num = parseInt(card.dataset.lecture, 10);
+                if (visited.includes(num)) {
+                    card.classList.add('visited');
+                    const badge = card.querySelector('.lecture-badge');
+                    if (badge) {
+                        badge.innerHTML = '✓ Пройдено';
+                    }
+                }
+            });
+        }
+
+        // =========================================================
+        // ОБРАБОТКА КЛИКОВ НА КАРТОЧКИ
+        // =========================================================
+        function attachCardHandlers() {
+            document.querySelectorAll('.lecture-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const num = parseInt(card.dataset.lecture, 10);
+                    if (!isNaN(num)) markVisited(num);
+                });
+            });
+        }
+
+        // =========================================================
+        // КНОПКА СБРОСА
+        // =========================================================
+        function attachResetHandlers() {
+            const resetBtn = document.getElementById('resetBtn');
+            const footerReset = document.getElementById('footerReset');
+
+            const handler = (e) => {
+                e.preventDefault();
+                if (confirm('Сбросить прогресс курса? Все отметки «Пройдено» будут удалены.')) {
+                    resetProgress();
+                }
+            };
+
+            if (resetBtn) resetBtn.addEventListener('click', handler);
+            if (footerReset) footerReset.addEventListener('click', handler);
+        }
+
+        // =========================================================
+        // КНОПКА «НАВЕРХ»
+        // =========================================================
+        function attachScrollTop() {
+            const btn = document.getElementById('scrollTop');
+            if (!btn) return;
+
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 400) btn.classList.add('visible');
+                else btn.classList.remove('visible');
+            });
+
+            btn.addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        }
+
+        // =========================================================
+        // ИНИЦИАЛИЗАЦИЯ
+        // =========================================================
+        function init() {
+            attachCardHandlers();
+            attachResetHandlers();
+            attachScrollTop();
+            updateUI();
+            console.log('[Index] Курс «Аналитика данных» загружен. Пройдено: ' + getVisited().length + ' / ' + TOTAL_LECTURES);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init, { once: true });
+        } else {
+            init();
+        }
+    })();
+</script>
+
+</body>
+</html>

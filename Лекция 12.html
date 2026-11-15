@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лекция 12. Основные подходы к машинному обучению: от линейной регрессии до ансамблей</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #ffffff; }
+
+        .student-view { width: 66.66%; height: 100vh; background: #ffffff; padding: 35px 40px; display: flex; flex-direction: column; justify-content: space-between; border-right: 2px solid #e2e8f0; overflow-y: auto; scroll-behavior: smooth; }
+        .speaker-notes { width: 33.34%; height: 100%; background: #1a202c; color: #edf2f7; padding: 30px; overflow-y: auto; }
+
+        .slide-header { font-size: 24px; color: #1a365d; font-weight: bold; line-height: 1.3; margin-bottom: 18px; border-bottom: 4px solid #3182ce; padding-bottom: 12px; }
+        .slide-body { flex-grow: 1; display: flex; flex-direction: column; gap: 18px; padding: 5px 0; }
+        .slide-footer { font-size: 13px; color: #a0aec0; text-align: right; margin-top: 12px; }
+
+        .chart-box { background: #f7fafc; border: 2.5px dashed #cbd5e0; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .chart-box strong { font-size: 16px; display: block; margin-bottom: 6px; }
+        .chart-box p { font-size: 13px; color: #4a5568; line-height: 1.45; }
+        .chart-box .source { color: #a0aec0; font-size: 11px; font-style: italic; }
+
+        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .stat-box { border-radius: 10px; padding: 14px; text-align: center; border: 2px solid; }
+        .stat-box .stat-icon { font-size: 28px; }
+        .stat-box .stat-number { font-size: 15px; font-weight: 900; margin-top: 4px; }
+        .stat-box .stat-label { font-size: 11px; color: #4a5568; margin-top: 2px; line-height: 1.3; }
+        .stat-box.supervised { background: #ebf8ff; border-color: #90cdf4; }
+        .stat-box.supervised .stat-number { color: #2b6cb0; }
+        .stat-box.unsupervised { background: #f0fff4; border-color: #9ae6b4; }
+        .stat-box.unsupervised .stat-number { color: #276749; }
+        .stat-box.reinforcement { background: #faf5ff; border-color: #d6bcfa; }
+        .stat-box.reinforcement .stat-number { color: #553c9a; }
+
+        .cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .cat-card { border-radius: 10px; padding: 14px 16px; border: 2px solid #e2e8f0; }
+        .cat-card.regression { background: #ebf8ff; border-color: #90cdf4; }
+        .cat-card.classification { background: #fffaf0; border-color: #fbd38d; }
+        .cat-card.clustering { background: #f0fff4; border-color: #9ae6b4; }
+        .cat-card.info { background: #f7fafc; border-color: #e2e8f0; }
+        .cat-card.warn { background: #fff5f5; border-color: #fc8181; }
+        .cat-card.ok { background: #f0fff4; border-color: #9ae6b4; }
+        .cat-card h4 { font-size: 14px; margin-bottom: 8px; color: #1a365d; display: flex; align-items: center; gap: 8px; }
+        .cat-card .label { font-size: 10px; font-weight: bold; color: #4a5568; margin-top: 7px; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.3px; }
+        .cat-card ul { margin: 0; padding-left: 14px; font-size: 11.5px; color: #2d3748; line-height: 1.45; }
+        .cat-card .stack-icon { font-size: 22px; }
+
+        .tag { display: inline-block; background: #ebf8ff; color: #2b6cb0; padding: 2px 7px; border-radius: 4px; font-size: 11px; margin: 2px 2px 2px 0; font-weight: 500; }
+        .tag.green { background: #f0fff4; color: #276749; }
+        .tag.orange { background: #fffaf0; color: #975a16; }
+        .tag.purple { background: #faf5ff; color: #553c9a; }
+        .tag.warn { background: #fed7d7; color: #9b2c2c; }
+
+        .compare-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .compare-table th { background: #1a365d; color: white; padding: 9px 11px; text-align: left; font-weight: 600; }
+        .compare-table td { padding: 8px 11px; border-bottom: 1px solid #e2e8f0; color: #2d3748; vertical-align: top; }
+        .compare-table tr:nth-child(even) td { background: #f7fafc; }
+        .compare-table .group-row td { background: #ebf8ff; font-weight: bold; color: #1a365d; font-size: 12.5px; }
+
+        .flow-diagram { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 14px; background: #f7fafc; border-radius: 12px; border: 2px dashed #cbd5e0; flex-wrap: wrap; }
+        .flow-step { flex: 1; min-width: 100px; text-align: center; padding: 8px 6px; background: white; border-radius: 8px; border: 2px solid #e2e8f0; }
+        .flow-step .flow-icon { font-size: 20px; }
+        .flow-step .flow-title { font-size: 11px; font-weight: bold; color: #1a365d; margin-top: 3px; }
+        .flow-step .flow-sub { font-size: 9.5px; color: #718096; }
+        .flow-arrow { font-size: 18px; color: #3182ce; font-weight: bold; }
+
+        .split-visual { display: flex; gap: 4px; margin-top: 8px; border-radius: 8px; overflow: hidden; height: 48px; }
+        .split-piece { display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: bold; }
+        .split-piece.train { background: #3182ce; flex: 6; }
+        .split-piece.val { background: #d69e2e; flex: 2; }
+        .split-piece.test { background: #38a169; flex: 2; }
+
+        .concept-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .concept-card { background: #f7fafc; border-left: 4px solid #3182ce; padding: 10px 12px; border-radius: 6px; }
+        .concept-card h5 { font-size: 12px; color: #1a365d; margin-bottom: 4px; }
+        .concept-card p { font-size: 11px; color: #4a5568; line-height: 1.4; }
+        .concept-card.warn { border-left-color: #e53e3e; }
+        .concept-card.ok { border-left-color: #38a169; }
+        .concept-card.warn h5 { color: #9b2c2c; }
+        .concept-card.ok h5 { color: #276749; }
+
+        .video-section { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 5px; }
+        .video-container { width: 100%; max-width: 580px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: #000; aspect-ratio: 16 / 9; }
+        .links-hub { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .video-btn { text-decoration: none; padding: 9px 14px; border-radius: 6px; font-size: 12px; font-weight: bold; color: white; display: flex; align-items: center; gap: 6px; transition: transform 0.2s, background 0.2s; cursor: pointer; border: none; }
+        .video-btn:hover { transform: translateY(-2px); }
+        .rt-btn { background: #00a877; }
+        .rt-btn:hover { background: #008f65; }
+        .stop-btn { background: #dc143c; }
+        .stop-btn:hover { background: #b01030; }
+
+        .notes-header { font-size: 17px; color: #63b3ed; font-weight: bold; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a5568; padding-bottom: 10px; }
+        .lecture-text { font-size: 14.5px; line-height: 1.65; color: #e2e8f0; text-align: justify; }
+        .lecture-text p { margin-bottom: 14px; }
+        .lecture-text h3 { color: #63b3ed; font-size: 15px; margin: 18px 0 10px; border-bottom: 1px solid #2d3748; padding-bottom: 5px; }
+        .lecture-text h4 { color: #90cdf4; font-size: 13.5px; margin: 14px 0 8px; }
+        .lecture-text ul { margin: 8px 0 14px 18px; }
+        .lecture-text li { margin-bottom: 6px; }
+        .lecture-text .source { color: #a0aec0; font-size: 12px; font-style: italic; }
+        .lecture-text .action-hint { color: #fbd38d; font-style: italic; background: #2d3748; padding: 10px 14px; border-radius: 6px; border-left: 4px solid #fbd38d; margin: 16px 0; font-size: 13px; line-height: 1.4; }
+
+        .dark-block { background: #2d3748; border: 1px solid #4a5568; border-radius: 10px; padding: 16px 18px; margin-top: 20px; }
+        .dark-block-title { font-size: 14px; font-weight: bold; color: #63b3ed; margin-bottom: 12px; border-bottom: 2px solid #4a5568; padding-bottom: 8px; }
+        .dark-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+        .dark-table th { background: #1a202c; color: #90cdf4; padding: 7px 9px; text-align: left; font-weight: 600; border-bottom: 1px solid #4a5568; }
+        .dark-table td { padding: 6px 9px; border-bottom: 1px solid #2d3748; color: #cbd5e0; vertical-align: top; line-height: 1.4; }
+        .dark-table tr:nth-child(even) td { background: #2a3242; }
+        .dark-table .term { font-weight: bold; color: #90cdf4; white-space: nowrap; }
+        .dark-block ol { margin: 0 0 12px 18px; padding: 0; font-size: 12px; color: #cbd5e0; line-height: 1.5; }
+        .dark-block ol li { margin-bottom: 5px; }
+        .dark-block .src-group { font-weight: bold; color: #fbd38d; font-size: 12px; margin: 12px 0 6px; }
+
+        .lecture-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(12px); border-top: 2px solid rgba(255, 255, 255, 0.08); padding: 12px 20px; display: flex; align-items: center; justify-content: center; gap: 12px; z-index: 9999; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25); font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .lecture-nav .nav-progress { position: absolute; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899); border-radius: 0 3px 3px 0; }
+        .lecture-nav .nav-btn-arrow { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); border: 1.5px solid rgba(255, 255, 255, 0.15); color: #e2e8f0; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; font-family: inherit; }
+        .lecture-nav .nav-btn-arrow:hover:not(:disabled) { background: rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.6); color: white; transform: translateY(-2px); }
+        .lecture-nav .nav-btn-arrow:disabled { opacity: 0.35; cursor: not-allowed; }
+        .lecture-nav .nav-btn-arrow .arrow-icon { font-size: 16px; line-height: 1; }
+        .lecture-nav .nav-btn-arrow .arrow-label { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+        .lecture-nav .nav-btn-arrow .arrow-label small { font-size: 9.5px; font-weight: 400; opacity: 0.7; text-transform: uppercase; }
+        .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { font-size: 12px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lecture-nav .nav-center { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 20px; color: #94a3b8; font-size: 11px; border-left: 1px solid rgba(255, 255, 255, 0.1); border-right: 1px solid rgba(255, 255, 255, 0.1); }
+        .lecture-nav .nav-counter { font-size: 15px; font-weight: 900; color: #f1f5f9; }
+        .lecture-nav .nav-counter span { color: #64748b; font-size: 12px; font-weight: 600; }
+        .lecture-nav .nav-index-link { color: #60a5fa; text-decoration: none; font-size: 11px; font-weight: 600; }
+        .lecture-nav .nav-index-link:hover { color: #93c5fd; text-decoration: underline; }
+        body { padding-bottom: 80px !important; }
+        @media (max-width: 900px) {
+            .lecture-nav { padding: 10px 12px; gap: 8px; }
+            .lecture-nav .nav-btn-arrow { padding: 8px 12px; }
+            .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { max-width: 90px; font-size: 11px; }
+            .cat-grid, .concept-grid, .stat-grid { grid-template-columns: 1fr; }
+            .flow-diagram { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ЛЕВАЯ ПАНЕЛЬ (2/3): ЭКРАН ДЛЯ СТУДЕНТОВ -->
+    <div class="student-view">
+        <div class="slide-header">
+            Лекция 12. Основные подходы к машинному обучению: от линейной регрессии до ансамблей
+        </div>
+
+        <div class="slide-body">
+
+            <!-- ВВЕДЕНИЕ: ЗАЧЕМ НУЖНО МАШИННОЕ ОБУЧЕНИЕ -->
+            <div class="chart-box" style="background: #faf5ff; border-color: #d6bcfa;">
+                <strong style="color: #553c9a;">🎯 Зачем нужно машинное обучение?</strong>
+                <p>В седьмой лекции мы разобрали, чем Data Science отличается от аналитики и как устроен жизненный цикл проекта. Теперь перейдём к конкретике. <strong>Машинное обучение</strong> — это не один универсальный алгоритм, а семейство подходов. У каждого своя логика, свои сильные стороны и свои ограничения. Сегодня мы наведём порядок в этом множестве методов.</p>
+            </div>
+
+            <!-- ТРИ ТИПА ОБУЧЕНИЯ -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 10px;">🎓 Три типа машинного обучения</div>
+                <div class="stat-grid">
+                    <div class="stat-box supervised">
+                        <div class="stat-icon">👨‍🏫</div>
+                        <div class="stat-number">С учителем</div>
+                        <div class="stat-label">есть правильные ответы в исторических данных</div>
+                    </div>
+                    <div class="stat-box unsupervised">
+                        <div class="stat-icon">🔍</div>
+                        <div class="stat-number">Без учителя</div>
+                        <div class="stat-label">ответов нет, ищем скрытую структуру</div>
+                    </div>
+                    <div class="stat-box reinforcement">
+                        <div class="stat-icon">🎮</div>
+                        <div class="stat-number">С подкреплением</div>
+                        <div class="stat-label">агент учится через награды и штрафы</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ДВЕ ГЛАВНЫЕ ЗАДАЧИ С УЧИТЕЛЕМ -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 10px;">🎯 Две главные задачи обучения с учителем</div>
+                <div class="cat-grid">
+                    <div class="cat-card regression">
+                        <h4><span class="stack-icon">📈</span> Регрессия</h4>
+                        <div class="label">Что предсказываем</div>
+                        <ul>
+                            <li><strong>Непрерывное число</strong></li>
+                            <li>Может принимать любое значение в диапазоне</li>
+                        </ul>
+                        <div class="label">Примеры</div>
+                        <span class="tag">Цена квартиры</span>
+                        <span class="tag">Объём продаж</span>
+                        <span class="tag">Температура</span>
+                        <span class="tag">Время доставки</span>
+                    </div>
+                    <div class="cat-card classification">
+                        <h4><span class="stack-icon">🏷️</span> Классификация</h4>
+                        <div class="label">Что предсказываем</div>
+                        <ul>
+                            <li><strong>Категорию (класс)</strong></li>
+                            <li>Выбор из готового списка вариантов</li>
+                        </ul>
+                        <div class="label">Примеры</div>
+                        <span class="tag orange">Спам / не спам</span>
+                        <span class="tag orange">Уйдёт / останется</span>
+                        <span class="tag orange">Болен / здоров</span>
+                        <span class="tag orange">Категория новости</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ГЛАВНАЯ ЗАДАЧА БЕЗ УЧИТЕЛЯ -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 10px;">🔍 Главная задача обучения без учителя</div>
+                <div class="cat-grid" style="grid-template-columns: 1fr;">
+                    <div class="cat-card clustering">
+                        <h4><span class="stack-icon">🗂️</span> Кластеризация</h4>
+                        <div class="label">Что делаем</div>
+                        <ul>
+                            <li>Разбиваем объекты на группы схожих между собой</li>
+                            <li>Группы называются <strong>кластерами</strong></li>
+                            <li>Заранее неизвестно, сколько кластеров и какие они</li>
+                        </ul>
+                        <div class="label">Пример</div>
+                        <span class="tag green">Сегментация клиентов по поведению</span>
+                        <span class="tag green">Группы товаров по спросу</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- КЛЮЧЕВЫЕ ПОНЯТИЯ -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 10px;">🔑 Ключевые понятия, общие для всех алгоритмов</div>
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h5>Признак и целевая переменная</h5>
+                        <p><strong>Признак</strong> — характеристика объекта (возраст, доход, площадь). <strong>Целевая переменная</strong> — то, что предсказываем.</p>
+                    </div>
+                    <div class="concept-card ok">
+                        <h5>Три выборки</h5>
+                        <p><strong>Обучающая</strong> — модель учится. <strong>Валидационная</strong> — настраиваем гиперпараметры. <strong>Тестовая</strong> — финальная оценка.</p>
+                    </div>
+                </div>
+                <div style="margin-top: 10px;">
+                    <div style="font-size: 11px; color: #4a5568; margin-bottom: 4px;"><strong>Разбиение данных:</strong> 60% обучающая · 20% валидационная · 20% тестовая</div>
+                    <div class="split-visual">
+                        <div class="split-piece train">Обучающая 60%</div>
+                        <div class="split-piece val">Вал. 20%</div>
+                        <div class="split-piece test">Тест 20%</div>
+                    </div>
+                </div>
+                <div class="concept-grid" style="margin-top: 10px;">
+                    <div class="concept-card warn">
+                        <h5>⚠️ Переобучение</h5>
+                        <p>Модель запомнила обучающие данные, но плохо работает на новых. Выучила шумы вместо закономерностей.</p>
+                    </div>
+                    <div class="concept-card warn">
+                        <h5>⚠️ Недообучение</h5>
+                        <p>Модель слишком простая. Не уловила даже основных закономерностей. Плохо работает и на старых, и на новых данных.</p>
+                    </div>
+                </div>
+                <div class="concept-grid" style="margin-top: 10px;">
+                    <div class="concept-card">
+                        <h5>⚖️ Смещение и разброс</h5>
+                        <p><strong>Смещение</strong> — систематическая ошибка (модель слишком простая). <strong>Разброс</strong> — чувствительность к данным (модель слишком сложная).</p>
+                    </div>
+                    <div class="concept-card">
+                        <h5>⚙️ Гиперпараметры</h5>
+                        <p>Задаются человеком до обучения. Не настраиваются моделью. Примеры: глубина дерева, число соседей, сила регуляризации.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- СРАВНЕНИЕ ЗАДАЧ -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 8px;">⚖️ Сравнение трёх типов задач</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr><th>Критерий</th><th>Регрессия</th><th>Классификация</th><th>Кластеризация</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>Тип обучения</strong></td><td>С учителем</td><td>С учителем</td><td>Без учителя</td></tr>
+                        <tr><td><strong>Целевая переменная</strong></td><td>Непрерывное число</td><td>Категория (класс)</td><td>Отсутствует</td></tr>
+                        <tr><td><strong>Что ищем</strong></td><td>Значение на шкале</td><td>Выбор из списка</td><td>Скрытые группы</td></tr>
+                        <tr><td><strong>Пример</strong></td><td>Цена квартиры</td><td>Спам / не спам</td><td>Сегменты клиентов</td></tr>
+                        <tr><td><strong>Метрика</strong></td><td>Средняя ошибка, R²</td><td>Точность, полнота, F-мера</td><td>Внутрикластерное расстояние</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ВИДЕОПЛЕЕР -->
+            <div class="video-section">
+                <div class="video-container">
+                    <iframe id="lecture-player" src="https://rutube.ru" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+                </div>
+                <div class="links-hub">
+                    <button onclick="changeVideo('https://rutube.ru/')" class="video-btn stop-btn">⏹ СТОП</button>
+                    <button onclick="changeVideo('https://rutube.ru/play/embed/')" class="video-btn rt-btn">📜 Лекция 8. Основные подходы к ML</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="slide-footer">
+            Направление «Менеджмент» | Курс: Аналитика данных | Лекция 8: «Основные подходы к машинному обучению: от линейной регрессии до ансамблей»
+        </div>
+    </div>
+
+    <!-- ПРАВАЯ ПАНЕЛЬ (1/3): СКРИПТ ПРЕПОДАВАТЕЛЯ -->
+    <div class="speaker-notes">
+        <!-- Фиксированная верхняя часть с плеером -->
+        <div style="position: sticky; top: 0; background: #1a202c; padding: 20px 20px 10px 20px; border-bottom: 1px solid #4a5568; width: 100%; z-index: 100;">
+                       <div class="notes-header" style="display: block; padding-bottom: 15px;">
+               <audio id="lecture-audio" preload="auto" controls
+                      src="https://archive.org/download/03_20261110_20261110/12.mp3"
+                      style="width: 100%; height: 32px; border-radius: 4px;"></audio>
+            </div>
+            <div style="width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+             <iframe id="right-lecture-player" src="https://archive.org/embed/20261020_20261020_0955?autoplay=true&loop=true&muted=true"  allow="clipboard-write; autoplay" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen style="border: none;"></iframe>
+
+                           </div>
+        </div>
+
+        <div class="lecture-text" style="margin-top: 20px;">
+
+            <h3>📌 Введение</h3>
+
+            <p>Добрый день, коллеги. Мы начинаем двенадцатую лекцию нашего курса. В прошлой лекции мы познакомились с наукой о данных. Мы увидели, что она превращает данные в предсказания. Но тогда мы говорили об общих принципах. Сегодня мы перейдём к конкретике. Мы разберём основные алгоритмы машинного обучения.</p>
+
+            <p>Тема нашей лекции звучит так. Основные подходы к машинному обучению. От линейной регрессии до ансамблей. Возможно, вы уже слышали эти названия. Линейная регрессия, деревья решений, случайный лес. Но не все понимают, как они устроены. И в каких задачах их стоит применять. Сегодня мы наведём порядок в этом множестве методов.</p>
+
+            <p>Давайте сразу обозначим главную мысль. Машинное обучение — это не один универсальный алгоритм. Это семейство подходов. У каждого подхода своя логика. Свои сильные стороны. И свои ограничения. Специалист по данным должен уметь выбирать алгоритм осознанно. А не пробовать всё подряд наугад.</p>
+
+            <p>Представьте себе врача. Он не назначает одно лекарство всем подряд. Он сначала ставит диагноз. Потом выбирает препарат под конкретную болезнь. Так же и со специалистом по данным. Сначала нужно понять задачу. А затем выбрать алгоритм под эту задачу. Не наоборот.</p>
+
+            <p>Сегодня мы разберём три большие группы алгоритмов. Первая группа — это методы для предсказания чисел. Здесь главный герой — линейная регрессия. Вторая группа — это методы для предсказания категорий. Здесь мы разберём логистическую регрессию и метод ближайших соседей. Третья группа — это ансамблевые методы. Это деревья решений, случайный лес и градиентный бустинг.</p>
+
+            <p>Отдельно мы поговорим о кластеризации. Это задачи без правильных ответов. И о методе опорных векторов. Это один из самых красивых алгоритмов классификации. И в завершении мы ответим на самый важный вопрос. Как выбирать алгоритм и как честно оценивать качество модели.</p>
+
+            <p>Обратите внимание на важную мысль. Простые модели часто не хуже сложных. А иногда и лучше. Линейная регрессия старше многих современных алгоритмов. Но она до сих пор остаётся базовой линией в каждом проекте. Поэтому не стоит гнаться за модой. Стоит сначала попробовать простое решение.</p>
+
+            <p>Я желаю вам продуктивной работы. И надеюсь, что после этой лекции вы будете видеть алгоритмы не как чёрный ящик. А как понятные инструменты с ясной логикой. Давайте начнём.</p>
+
+            <h3>📌 Блок 1. Как устроено машинное обучение: типы задач и типы обучения</h3>
+
+            <p>Перейдём к первому вопросу. Прежде чем разбирать конкретные алгоритмы, нужно понять общую картину. Машинное обучение — это не единый метод. Это большая область. И внутри неё есть свои разделы. Давайте наведём порядок в базовых понятиях.</p>
+
+            <h4>Что такое машинное обучение</h4>
+
+            <p>Начнём с определения. Машинное обучение — это раздел искусственного интеллекта. Он изучает методы, которые позволяют компьютеру находить закономерности в данных. И использовать эти закономерности для решения новых задач. Без явного программирования каждого шага.</p>
+
+            <p>Поясним это на примере. В классическом программировании человек пишет правила. Если сумма покупок больше некоторого порога, то клиент считается крупным. Компьютер просто выполняет эти правила. В машинном обучении всё иначе. Человек не пишет правила. Он даёт компьютеру примеры. Компьютер сам находит закономерность. И сам формулирует правило.</p>
+
+            <p>Отсюда следует важное различие. Классическое программирование отвечает на вопрос «как сделать». Машинное обучение отвечает на вопрос «что видно в данных». Это смена подхода. Не инструкция, а обучение на примерах.</p>
+
+            <h4>Три типа машинного обучения</h4>
+
+            <p>Теперь перейдём к классификации. Всё машинное обучение делится на три больших типа. Это обучение с учителем. Это обучение без учителя. И это обучение с подкреплением. Разберём каждый тип подробно.</p>
+
+            <p><strong>Обучение с учителем.</strong> Первый и самый распространённый тип. Он называется обучение с учителем. По-английски этот термин звучит как supervised learning. Но мы будем использовать русское название.</p>
+
+            <p>Дадим определение. Обучение с учителем — это тип машинного обучения. При котором в исторических данных есть правильные ответы. Эти правильные ответы называются целевой переменной. Или метками. Или целевым признаком. Компьютер видит примеры. Для каждого примера он знает правильный ответ. И его задача — научиться предсказывать этот ответ для новых примеров.</p>
+
+            <p>Приведём пример. Представьте базу клиентов банка. Для каждого клиента известны его характеристики. Возраст, доход, кредитная история. И известен факт. Вернул ли он кредит или нет. Это исторические данные с правильными ответами. Теперь банк хочет предсказывать для новых клиентов. Вернут они кредит или нет. Это и есть задача обучения с учителем.</p>
+
+            <p>Слово «учитель» здесь не случайно. Учитель — это исторические данные с правильными ответами. Они как бы показывают компьютеру, что правильно и что неправильно. Компьютер учится на этих подсказках. Отсюда и название.</p>
+
+            <p><strong>Обучение без учителя.</strong> Второй тип называется обучение без учителя. По-английски это unsupervised learning. Дадим определение. Обучение без учителя — это тип машинного обучения. При котором в данных нет правильных ответов. Нет целевой переменной. Компьютер не знает, что правильно и что неправильно. Его задача — найти скрытую структуру в данных. Найти закономерности, о которых мы даже не подозревали.</p>
+
+            <p>Приведём пример. Представьте базу покупателей интернет-магазина. Для каждого покупателя известны его покупки. Но нет никаких меток. Никто не сказал, к какому типу относится этот покупатель. Задача — разбить покупателей на группы схожего поведения. Одна группа покупает только со скидками. Другая покупает премиальные товары. Третья покупает подарки. Мы не знаем эти группы заранее. Мы хотим, чтобы компьютер нашёл их сам.</p>
+
+            <p>Слово «без учителя» означает отсутствие правильных ответов. Компьютер не получает подсказок. Он исследует данные самостоятельно. И находит в них структуру.</p>
+
+            <p><strong>Обучение с подкреплением.</strong> Третий тип называется обучение с подкреплением. По-английски это reinforcement learning. Дадим определение. Обучение с подкреплением — это тип машинного обучения. При котором агент взаимодействует со средой. И учится на основе наград и штрафов. У агента нет правильных ответов. Но есть сигнал обратной связи. Если он сделал правильно — получает награду. Если неправильно — получает штраф.</p>
+
+            <p>Приведём пример. Представьте робота, который учится играть в шахматы. В начале он не знает правил. Он делает случайные ходы. За проигрыш получает штраф. За выигрыш получает награду. Постепенно он понимает, какие ходы ведут к победе. И начинает играть всё лучше.</p>
+
+            <p>Этот тип обучения особенно важен для игр. Для робототехники. Для автономных автомобилей. Но в прикладной аналитике он встречается реже. Поэтому мы будем упоминать его только для полноты картины. А подробно разберём первые два типа. Это обучение с учителем и обучение без учителя.</p>
+
+            <h4>Две главные задачи обучения с учителем</h4>
+
+            <p>Теперь вернёмся к обучению с учителем. Внутри него есть две главные задачи. Это регрессия и классификация. Разберём каждую подробно.</p>
+
+            <p><strong>Задача регрессии.</strong> Дадим определение. Регрессия — это задача машинного обучения. В которой нужно предсказать непрерывное числовое значение. Непрерывное значение — это число, которое может принимать любое значение в некотором диапазоне. Например, цена товара. Температура воздуха. Объём продаж. Время доставки.</p>
+
+            <p>Приведём пример. Представьте, что мы хотим предсказать цену квартиры. Цена — это непрерывная величина. Она может быть равна трём миллионам. Трём миллионам двумстам тысячам. Трём миллионам четырёмстам пятидесяти тысячам. И так далее. Любое значение в большом диапазоне. Задача регрессии — предсказать это значение с минимальной ошибкой.</p>
+
+            <p>Обратите внимание на важную мысль. В регрессии ответ — это число. И это число может быть любым. Мы не выбираем из готовых вариантов. Мы предсказываем значение на непрерывной шкале.</p>
+
+            <p><strong>Задача классификации.</strong> Дадим определение. Классификация — это задача машинного обучения. В которой нужно предсказать категорию или класс. Категория — это дискретное значение. То есть значение из ограниченного набора вариантов. Например, спам или не спам. Уйдёт клиент или останется. Заболевание есть или нет.</p>
+
+            <p>Приведём пример. Представьте, что мы хотим определить, является ли письмо спамом. Здесь только два варианта ответа. Спам или не спам. Это бинарная классификация. Если вариантов больше двух, это многоклассовая классификация. Например, определить, к какой категории относится новость. Политика, спорт, экономика, культура.</p>
+
+            <p>Обратите внимание на важную мысль. В классификации ответ — это выбор из готового списка. Мы не предсказываем любое число. Мы выбираем одну из готовых меток.</p>
+
+            <p><strong>Различие между регрессией и классификацией.</strong> Поясним различие ещё раз. Оно очень важное. От него зависит выбор алгоритма. Если целевая переменная непрерывна — это регрессия. Если целевая переменная дискретна — это классификация.</p>
+
+            <p>Приведём наглядный пример. Прогноз температуры на завтра — это регрессия. Температура может быть любой. Двадцать градусов. Двадцать один. Двадцать один и пять десятых. Прогноз «будет ли завтра дождь» — это классификация. Ответ только один из двух. Будет или не будет.</p>
+
+            <p>Обратите внимание. Иногда задачу можно переформулировать. Например, вместо «какой будет цена» можно спросить «будет ли цена выше порога». Первая задача — регрессия. Вторая — классификация. Поэтому прежде чем выбирать алгоритм, нужно понять, какую именно задачу вы решаете.</p>
+
+            <h4>Главная задача обучения без учителя</h4>
+
+            <p>Теперь перейдём к обучению без учителя. Здесь тоже есть свои задачи. Но главная из них — это кластеризация.</p>
+
+            <p><strong>Задача кластеризации.</strong> Дадим определение. Кластеризация — это задача машинного обучения без учителя. В которой нужно разбить объекты на группы схожих между собой. Эти группы называются кластерами. Объекты внутри одного кластера должны быть похожи друг на друга. А объекты из разных кластеров должны отличаться.</p>
+
+            <p>Приведём пример. Представьте базу клиентов. У каждого клиента известны покупки, частота заходов на сайт, средний чек. Задача — разбить клиентов на группы. Чтобы потом с каждой группой работать отдельно. Одна группа — это те, кто покупает часто и много. Другая группа — те, кто покупает редко, но дорого. Третья группа — те, кто заходит часто, но не покупает.</p>
+
+            <p>Важно понимать отличие от классификации. В классификации мы заранее знаем, какие классы существуют. И у нас есть примеры с правильными ответами. В кластеризации мы не знаем, сколько кластеров должно быть. И какие они. Мы хотим, чтобы алгоритм сам нашёл структуру в данных.</p>
+
+            <h4>Ключевые понятия, общие для всех алгоритмов</h4>
+
+            <p>Теперь перейдём к важной части. Есть понятия, которые используются во всех алгоритмах. Независимо от их типа. Без понимания этих понятий невозможно разобраться в машинном обучении. Разберём их подробно.</p>
+
+            <p><strong>Признаки и целевая переменная.</strong> Начнём с двух базовых понятий. Первое — это признак. Признак — это характеристика объекта. Это то, что описывает объект. Например, возраст, доход, пол, регион. Каждый объект имеет много признаков. Они образуют матрицу признаков.</p>
+
+            <p>Второе понятие — это целевая переменная. Целевая переменная — это то, что мы хотим предсказать. Это ответ, который мы ищем. В задаче регрессии целевая переменная — это число. В задаче классификации целевая переменная — это класс.</p>
+
+            <p>Приведём пример. Представьте таблицу клиентов банка. В ней много столбцов. Возраст, доход, семейное положение, кредитная история. Это признаки. И есть один особый столбец. Вернул клиент кредит или нет. Это целевая переменная. Задача обучения — найти связь между признаками и целевой переменной. И использовать эту связь для предсказания.</p>
+
+            <p><strong>Обучающая, валидационная и тестовая выборки.</strong> Следующее важное понятие — это разбиение данных. В машинном обучении нельзя обучать модель на всех данных. Иначе она запомнит их наизусть. И не сможет работать с новыми объектами. Поэтому данные делятся на три части. Обучающую, валидационную и тестовую.</p>
+
+            <p>Дадим определения. Обучающая выборка — это часть данных. На которой модель учится. Модель видит эти данные. И настраивает свои параметры по ним. Валидационная выборка — это часть данных. На которой настраиваются гиперпараметры. Гиперпараметры — это параметры, которые задаёт человек. А не модель. Например, глубина дерева. Или число соседей в методе ближайших соседей. Тестовая выборка — это часть данных. Которая используется только один раз. В самом конце. Для финальной оценки качества.</p>
+
+            <p>Поясним на примере. Представьте, что вы готовитесь к экзамену. Обучающая выборка — это задачи из учебника. На них вы тренируетесь. Валидационная выборка — это пробный экзамен. На нём вы проверяете, готовы ли вы. Тестовая выборка — это настоящий экзамен. К нему нельзя готовиться заранее. Иначе оценка будет нечестной.</p>
+
+            <p>Обратите внимание на важную мысль. Если вы будете смотреть на тестовую выборку во время обучения, вы переобучитесь. Модель подстроится под тест. И оценка качества будет завышенной. Честная оценка — это оценка на данных, которые модель никогда не видела.</p>
+
+            <p><strong>Переобучение и недообучение.</strong> Теперь разберём два ключевых понятия. Без них невозможно понять, почему одни модели работают хорошо, а другие плохо. Это переобучение и недообучение.</p>
+
+            <p>Дадим определение. Переобучение — это ситуация. При которой модель слишком хорошо запомнила обучающие данные. Но плохо работает на новых данных. Модель выучила не общие закономерности. А конкретные шумы и случайности обучающей выборки. По-английски это называется overfitting.</p>
+
+            <p>Приведём пример. Представьте студента, который выучил ответы на все задачи из учебника наизусть. На экзамене ему дают другую задачу. И он не может её решить. Потому что он не понял принцип. Он запомнил конкретные решения. Так и модель. Она запомнила конкретные примеры. Но не общую закономерность.</p>
+
+            <p>Теперь дадим определение. Недообучение — это ситуация. При которой модель слишком простая. Она не уловила даже основных закономерностей в данных. И плохо работает как на обучающих, так и на новых данных. По-английски это называется underfitting.</p>
+
+            <p>Приведём пример. Студент вообще не готовился к экзамену. Он ничего не знает. И не может решить ни одной задачи. Так и модель. Она слишком проста. Она не уловила связей между признаками и целевой переменной.</p>
+
+            <p>Обратите внимание на важную мысль. Задача специалиста — найти баланс. Модель должна быть достаточно сложной. Чтобы уловить закономерности. Но не настолько сложной, чтобы запомнить шумы. Этот баланс называется компромиссом между смещением и разбросом. По-английски это bias-variance tradeoff.</p>
+
+            <p><strong>Компромисс между смещением и разбросом.</strong> Дадим определения. Смещение — это систематическая ошибка модели. Она возникает, когда модель слишком простая. И не улавливает реальную зависимость. Разброс — это чувствительность модели к конкретной обучающей выборке. Он возникает, когда модель слишком сложная. И реагирует на шумы.</p>
+
+            <p>Приведём пример. Стрелок стреляет по мишени. Если его пули летят кучно, но далеко от центра — это большое смещение. Он систематически ошибается в одну сторону. Если его пули разбросаны по всей мишени — это большой разброс. Он стреляет нестабильно. Идеальный стрелок — это пули в центре мишени. То есть маленькое смещение и маленький разброс.</p>
+
+            <p>Так и с моделью. Простая модель имеет большое смещение и маленький разброс. Сложная модель имеет маленькое смещение и большой разброс. Идеальная модель имеет маленькое смещение и маленький разброс. Но на практике идеала достичь трудно. Нужно искать компромисс.</p>
+
+            <p><strong>Гиперпараметры.</strong> И последнее ключевое понятие — это гиперпараметры. Дадим определение. Гиперпараметр — это параметр модели. Который задаётся человеком до начала обучения. И не настраивается в процессе обучения. От гиперпараметров зависит сложность модели. И её поведение.</p>
+
+            <p>Приведём примеры. В методе ближайших соседей гиперпараметр — это число соседей. В дереве решений — это максимальная глубина дерева. В линейной регрессии с регуляризацией — это сила штрафа. В нейронной сети — это число слоёв и нейронов.</p>
+
+            <p>Обратите внимание на важную мысль. Гиперпараметры — это не то, что модель узнаёт. Это то, что мы задаём сами. И от правильного выбора гиперпараметров зависит качество модели. Поэтому существует специальный процесс — подбор гиперпараметров. Мы поговорим о нём в конце лекции.</p>
+
+            <h4>Подведём итог блока</h4>
+
+            <p>Давайте соберём всё вместе. Мы разобрали базовые понятия машинного обучения. Мы увидели три типа обучения. Это обучение с учителем, обучение без учителя и обучение с подкреплением. Мы разобрали две главные задачи обучения с учителем. Это регрессия и классификация. И одну главную задачу обучения без учителя. Это кластеризация. Мы ввели ключевые понятия. Признаки, целевая переменная, обучающая и тестовая выборки. Переобучение, недообучение, смещение и разброс. И гиперпараметры.</p>
+
+            <p>Запомните главное. Алгоритм — это не волшебная кнопка. Это инструмент. И чтобы выбрать правильный инструмент, нужно понять задачу. Какой тип обучения подходит. Какая задача стоит. Регрессия или классификация. И какие данные есть. С правильными ответами или без них. Только после этого имеет смысл выбирать конкретный алгоритм.</p>
+
+            <p>В следующем блоке мы начнём разбирать конкретные алгоритмы. И первым будет линейная регрессия. Самый простой и самый важный алгоритм для задач регрессии.</p>
+
+            <!-- СЛОВАРЬ ТЕРМИНОВ -->
+            <div class="dark-block">
+                <div class="dark-block-title">📖 Словарь терминов и аббревиатур</div>
+                <table class="dark-table">
+                    <thead>
+                        <tr><th style="width:20%;">Термин</th><th style="width:30%;">Расшифровка</th><th>Пояснение</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="term">Машинное обучение</td><td>Machine Learning</td><td>Раздел ИИ, который находит закономерности в данных</td></tr>
+                        <tr><td class="term">Обучение с учителем</td><td>Supervised Learning</td><td>Есть правильные ответы в исторических данных</td></tr>
+                        <tr><td class="term">Обучение без учителя</td><td>Unsupervised Learning</td><td>Правильных ответов нет, ищем структуру</td></tr>
+                        <tr><td class="term">Обучение с подкреплением</td><td>Reinforcement Learning</td><td>Агент учится через награды и штрафы</td></tr>
+                        <tr><td class="term">Регрессия</td><td>Regression</td><td>Предсказание непрерывного числа</td></tr>
+                        <tr><td class="term">Классификация</td><td>Classification</td><td>Предсказание категории из готового списка</td></tr>
+                        <tr><td class="term">Кластеризация</td><td>Clustering</td><td>Разбиение объектов на группы схожих</td></tr>
+                        <tr><td class="term">Признак</td><td>Feature</td><td>Характеристика объекта</td></tr>
+                        <tr><td class="term">Целевая переменная</td><td>Target</td><td>То, что предсказываем</td></tr>
+                        <tr><td class="term">Обучающая выборка</td><td>Train set</td><td>Данные, на которых модель учится</td></tr>
+                        <tr><td class="term">Валидационная выборка</td><td>Validation set</td><td>Данные для настройки гиперпараметров</td></tr>
+                        <tr><td class="term">Тестовая выборка</td><td>Test set</td><td>Данные для финальной оценки качества</td></tr>
+                        <tr><td class="term">Переобучение</td><td>Overfitting</td><td>Модель запомнила шумы вместо закономерностей</td></tr>
+                        <tr><td class="term">Недообучение</td><td>Underfitting</td><td>Модель слишком простая, не уловила связей</td></tr>
+                        <tr><td class="term">Смещение</td><td>Bias</td><td>Систематическая ошибка простой модели</td></tr>
+                        <tr><td class="term">Разброс</td><td>Variance</td><td>Чувствительность сложной модели к данным</td></tr>
+                        <tr><td class="term">Гиперпараметр</td><td>Hyperparameter</td><td>Параметр, задаваемый человеком до обучения</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function changeVideo(embedUrl) {
+            document.getElementById('lecture-player').src = embedUrl;
+        }
+    </script>
+
+   <!-- НАВИГАЦИЯ МЕЖДУ ЛЕКЦИЯМИ -->
+<nav class="lecture-nav" id="lectureNav">
+    <div class="nav-progress" id="navProgress" style="width: 0%;"></div>
+    <a href="Лекция (N-1).html" class="nav-btn-arrow" id="prevBtn">
+        <span class="arrow-icon">←</span>
+        <span class="arrow-label">
+            <small>Назад</small>
+            <span class="arrow-title" id="prevTitle">Лекция (N-1)</span>
+        </span>
+    </a>
+    <div class="nav-center">
+        <div class="nav-counter">Лекция <span id="currentNum">N</span> <span>из 21</span></div>
+        <a href="index.html" class="nav-index-link">📚 К содержанию</a>
+    </div>
+    <a href="Лекция (N+1).html" class="nav-btn-arrow" id="nextBtn">
+        <span class="arrow-label" style="align-items: flex-end;">
+            <small>Вперёд</small>
+            <span class="arrow-title" id="nextTitle">Лекция (N+1)</span>
+        </span>
+        <span class="arrow-icon">→</span>
+    </a>
+</nav>
+
+
+
+<script>
+(function () {
+    'use strict';
+
+    // =========================================================
+    // НАСТРОЙКИ
+    // =========================================================
+    const TOTAL_LECTURES = 21;                         // всего лекций в курсе
+    const totalDurationMs = (22 * 60 + 30) * 1000;     // длительность автопрокрутки
+    const autoNextDelayMs = 2000;                      // задержка автоперехода
+    const AUTOSTART_PARAM = 'autostart';
+
+    // =========================================================
+    // ОПРЕДЕЛЕНИЕ НОМЕРА ТЕКУЩЕЙ ЛЕКЦИИ
+    // =========================================================
+    const fileName = decodeURIComponent(location.pathname.split('/').pop() || '');
+    let currentLecture = 1;
+
+    // 1) Пытаемся извлечь номер из имени файла "Лекция 7.html"
+    const match = fileName.match(/Лекция\s*(\d+)\.html/i);
+    if (match) {
+        currentLecture = parseInt(match[1], 10);
+    } else {
+        // 2) Fallback: берём из HTML-счётчика
+        const el = document.getElementById('currentNum');
+        if (el) currentLecture = parseInt(el.textContent, 10) || 1;
+    }
+
+    // Ограничиваем допустимым диапазоном
+    if (isNaN(currentLecture) || currentLecture < 1) currentLecture = 1;
+    if (currentLecture > TOTAL_LECTURES) currentLecture = TOTAL_LECTURES;
+
+    // =========================================================
+    // ОПРЕДЕЛЕНИЕ СОСЕДНИХ ЛЕКЦИЙ
+    // =========================================================
+    const prev = currentLecture > 1 ? currentLecture - 1 : null;
+    const next = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+
+    // =========================================================
+    // ОБНОВЛЕНИЕ СЧЁТЧИКА И ПРОГРЕСС-БАРА
+    // =========================================================
+    const currentNumEl = document.getElementById('currentNum');
+    if (currentNumEl) currentNumEl.textContent = currentLecture;
+
+    const navProgress = document.getElementById('navProgress');
+    if (navProgress) {
+        navProgress.style.width = (currentLecture / TOTAL_LECTURES * 100) + '%';
+    }
+
+    // =========================================================
+    // НАСТРОЙКА КНОПКИ "НАЗАД"
+    // =========================================================
+    const prevBtn = document.getElementById('prevBtn');
+    if (prevBtn) {
+        if (prev) {
+            prevBtn.href = 'Лекция ' + prev + '.html';
+            const t = document.getElementById('prevTitle');
+            if (t) t.textContent = 'Лекция ' + prev;
+            prevBtn.style.opacity = '1';
+            prevBtn.style.cursor = 'pointer';
+            prevBtn.onclick = null;
+        } else {
+            prevBtn.removeAttribute('href');
+            prevBtn.style.opacity = '0.35';
+            prevBtn.style.cursor = 'not-allowed';
+            prevBtn.onclick = (e) => e.preventDefault();
+            const t = document.getElementById('prevTitle');
+            if (t) t.textContent = 'Это первая лекция';
+        }
+    }
+
+    // =========================================================
+    // НАСТРОЙКА КНОПКИ "ВПЕРЁД"
+    // =========================================================
+    const nextBtn = document.getElementById('nextBtn');
+    if (nextBtn) {
+        if (next) {
+            nextBtn.href = 'Лекция ' + next + '.html';
+            const t = document.getElementById('nextTitle');
+            if (t) t.textContent = 'Лекция ' + next;
+            nextBtn.style.opacity = '1';
+            nextBtn.style.cursor = 'pointer';
+            nextBtn.onclick = null;
+        } else {
+            nextBtn.removeAttribute('href');
+            nextBtn.style.opacity = '0.35';
+            nextBtn.style.cursor = 'not-allowed';
+            nextBtn.onclick = (e) => e.preventDefault();
+            const t = document.getElementById('nextTitle');
+            if (t) t.textContent = 'Это последняя лекция';
+        }
+    }
+
+    // =========================================================
+    // КЛАВИАТУРНАЯ НАВИГАЦИЯ
+    // =========================================================
+    document.addEventListener('keydown', (e) => {
+        const tag = e.target && e.target.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+        if (e.key === 'ArrowLeft' && prev) {
+            window.location.href = 'Лекция ' + prev + '.html';
+        } else if (e.key === 'ArrowRight' && next) {
+            window.location.href = 'Лекция ' + next + '.html';
+        } else if (e.key === 'Home') {
+            window.location.href = 'index.html';
+        }
+    });
+
+    // =========================================================
+    // АВТОПРОКРУТКА И СИНХРОНИЗАЦИЯ ПАНЕЛЕЙ
+    // =========================================================
+    function initScroll() {
+        const studentBlock = document.querySelector('.student-view');
+        const speakerBlock = document.querySelector('.speaker-notes');
+        const badge = document.getElementById('scroll-status-badge');
+        const audio = document.getElementById('lecture-audio');
+        if (!studentBlock || !speakerBlock) return;
+
+        const studentBehavior = studentBlock.style.scrollBehavior;
+        const speakerBehavior = speakerBlock.style.scrollBehavior;
+        let isRunning = false, completed = false, pausedElapsed = 0, startedAt = 0, rafId = null;
+        let startS = 0, startP = 0, maxS = 0, maxP = 0;
+
+        function setBadge(text, color) {
+            if (!badge) return;
+            badge.style.display = 'block';
+            badge.textContent = text;
+            badge.style.borderColor = color;
+        }
+        function measure() {
+            maxS = Math.max(studentBlock.scrollHeight - studentBlock.clientHeight, 0);
+            maxP = Math.max(speakerBlock.scrollHeight - speakerBlock.clientHeight, 0);
+        }
+        function fmt(ms) {
+            const m = Math.floor(ms / 60000);
+            const s = Math.floor((ms % 60000) / 1000);
+            return m + ':' + String(s).padStart(2, '0');
+        }
+        function playAudio() {
+            if (!audio) return;
+            const p = audio.play();
+            if (p && typeof p.catch === 'function') {
+                p.catch(err => {
+                    console.warn('[AutoAudio]', err.message);
+                    setBadge('▶ ИДЕТ ПРОКРУТКА (звук заблокирован)', '#eab308');
+                });
+            }
+        }
+        function pauseAudio() { if (audio) try { audio.pause(); } catch (_) {} }
+        function resetAudio() { if (audio) try { audio.pause(); audio.currentTime = 0; } catch (_) {} }
+
+        function animate() {
+            if (!isRunning) return;
+            const elapsed = pausedElapsed + (performance.now() - startedAt);
+            const fraction = Math.min(elapsed / totalDurationMs, 1);
+            measure();
+            studentBlock.scrollTop = startS + (maxS - startS) * fraction;
+            speakerBlock.scrollTop = startP + (maxP - startP) * fraction;
+            if (badge) {
+                badge.textContent = '▶ ' + fmt(elapsed) + ' / 25:00';
+                badge.style.borderColor = '#16a34a';
+            }
+            if (fraction >= 1) { finish(); return; }
+            rafId = requestAnimationFrame(animate);
+        }
+
+        function startOrResume() {
+            if (completed) {
+                pausedElapsed = 0; completed = false;
+                studentBlock.scrollTop = 0; speakerBlock.scrollTop = 0;
+                resetAudio();
+            }
+            measure();
+            startS = studentBlock.scrollTop;
+            startP = speakerBlock.scrollTop;
+            startedAt = performance.now();
+            isRunning = true;
+            studentBlock.style.scrollBehavior = 'auto';
+            speakerBlock.style.scrollBehavior = 'auto';
+            cancelAnimationFrame(rafId);
+            rafId = requestAnimationFrame(animate);
+            playAudio();
+        }
+        function pause() {
+            if (isRunning) pausedElapsed += performance.now() - startedAt;
+            isRunning = false;
+            cancelAnimationFrame(rafId);
+            setBadge('⏸ ПАУЗА ' + fmt(pausedElapsed), '#dc2626');
+            studentBlock.style.scrollBehavior = studentBehavior;
+            speakerBlock.style.scrollBehavior = speakerBehavior;
+            pauseAudio();
+        }
+        function finish() {
+            isRunning = false; completed = true;
+            cancelAnimationFrame(rafId);
+            measure();
+            studentBlock.scrollTop = maxS;
+            speakerBlock.scrollTop = maxP;
+            studentBlock.style.scrollBehavior = studentBehavior;
+            speakerBlock.style.scrollBehavior = speakerBehavior;
+
+            const nextLec = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+            if (nextLec) {
+                setBadge('✅ ГОТОВО → Лекция ' + nextLec, '#16a34a');
+                setTimeout(() => {
+                    location.href = 'Лекция ' + nextLec + '.html?' + AUTOSTART_PARAM + '=1';
+                }, autoNextDelayMs);
+            } else {
+                setBadge('✅ КУРС ЗАВЕРШЕН', '#16a34a');
+                pauseAudio();
+            }
+        }
+        function toggle() { isRunning ? pause() : startOrResume(); }
+
+        // Пробел — старт/пауза
+        window.addEventListener('keydown', (e) => {
+            if (e.repeat) return;
+            const t = e.target; const tag = t && t.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+            if (e.code === 'Space' || e.key === ' ') {
+                e.preventDefault();
+                toggle();
+            }
+        }, true);
+
+        if (badge) badge.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+        [studentBlock, speakerBlock].forEach(el => {
+            el.addEventListener('click', (e) => {
+                if (e.target.closest('a,button,iframe,input,textarea,select,video,audio')) return;
+                if (window.getSelection().toString().length > 0) return;
+                toggle();
+            });
+        });
+
+        // Автостарт при переходе с предыдущей лекции
+        const params = new URLSearchParams(location.search);
+        if (params.get(AUTOSTART_PARAM) === '1') {
+            params.delete(AUTOSTART_PARAM);
+            const clean = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
+            history.replaceState(null, '', clean);
+            setTimeout(startOrResume, 500);
+        } else {
+            setBadge('▶ ПРОБЕЛ / КЛИК — старт', '#4a5568');
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initScroll, { once: true });
+    } else {
+        initScroll();
+    }
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лекция 19. Оценка качества моделей и выбор алгоритма</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #ffffff; }
+        .student-view { width: 66.66%; height: 100vh; background: #ffffff; padding: 35px 40px; display: flex; flex-direction: column; justify-content: space-between; border-right: 2px solid #e2e8f0; overflow-y: auto; scroll-behavior: smooth; }
+        .speaker-notes { width: 33.34%; height: 100%; background: #1a202c; color: #edf2f7; padding: 30px; overflow-y: auto; }
+        .slide-header { font-size: 26px; color: #0f172a; font-weight: bold; line-height: 1.3; margin-bottom: 18px; border-bottom: 4px solid #2563eb; padding-bottom: 12px; }
+        .slide-body { flex-grow: 1; display: flex; flex-direction: column; gap: 18px; padding: 5px 0; }
+        .slide-footer { font-size: 13px; color: #64748b; text-align: right; margin-top: 12px; }
+        .chart-box { background: #f8fafc; border: 2.5px dashed #94a3b8; padding: 20px; border-radius: 12px; }
+        .chart-box strong { font-size: 17px; display: block; margin-bottom: 8px; color: #0f172a; }
+        .chart-box p { font-size: 14px; color: #1e293b; line-height: 1.5; }
+        .viz-card { background: #ffffff; border: 2px solid #cbd5e0; border-radius: 12px; padding: 18px; box-shadow: 0 4px 10px rgba(15,23,42,0.06); }
+        .viz-title { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .viz-caption { font-size: 13px; color: #1e293b; margin-top: 10px; line-height: 1.6; }
+        .viz-caption strong { color: #0f172a; font-weight: 700; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .stat-box { border-radius: 10px; padding: 14px; text-align: center; border: 2px solid; }
+        .stat-box .stat-icon { font-size: 26px; }
+        .stat-box .stat-number { font-size: 15px; font-weight: 900; margin-top: 4px; }
+        .stat-box .stat-label { font-size: 11.5px; color: #334155; margin-top: 4px; line-height: 1.35; font-weight: 600; }
+        .stat-box.cv { background: #eff6ff; border-color: #93c5fd; }
+        .stat-box.cv .stat-number { color: #1e40af; }
+        .stat-box.strat { background: #f0fdf4; border-color: #86efac; }
+        .stat-box.strat .stat-number { color: #166534; }
+        .stat-box.ts { background: #fffbeb; border-color: #fcd34d; }
+        .stat-box.ts .stat-number { color: #92400e; }
+        .formula-box { background: linear-gradient(135deg, #0f172a, #1e293b); color: #f1f5f9; padding: 18px 20px; border-radius: 10px; text-align: center; box-shadow: 0 4px 14px rgba(15,23,42,0.3); }
+        .formula-main { font-family: 'Courier New', monospace; font-size: 16px; letter-spacing: 0.5px; color: #93c5fd; font-weight: 700; }
+        .formula-example { font-size: 13px; color: #e2e8f0; margin-top: 8px; line-height: 1.5; }
+        .tag { display: inline-block; background: #eff6ff; color: #1e40af; padding: 3px 8px; border-radius: 4px; font-size: 12px; margin: 2px 2px 2px 0; font-weight: 600; }
+        .tag.green { background: #f0fdf4; color: #166534; }
+        .tag.red { background: #fef2f2; color: #991b1b; }
+        .tag.orange { background: #fffbeb; color: #92400e; }
+        .tag.purple { background: #faf5ff; color: #6b21a8; }
+        .callout { background: #fffbeb; border-left: 5px solid #d97706; padding: 14px 18px; border-radius: 6px; }
+        .callout strong { color: #78350f; font-size: 14px; }
+        .callout p { font-size: 13px; color: #451a03; margin-top: 4px; line-height: 1.5; }
+        .callout.warn { background: #fef2f2; border-left-color: #dc2626; }
+        .callout.warn strong { color: #991b1b; }
+        .callout.warn p { color: #7f1d1d; }
+        .callout.ok { background: #f0fdf4; border-left-color: #16a34a; }
+        .callout.ok strong { color: #166534; }
+        .callout.ok p { color: #14532d; }
+        .role-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .role-table th { background: #0f172a; color: white; padding: 10px 12px; text-align: left; font-weight: 700; }
+        .role-table td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; color: #1e293b; vertical-align: top; line-height: 1.45; }
+        .role-table tr:nth-child(even) td { background: #f8fafc; }
+        .role-table .role-emoji { font-size: 16px; }
+        .compare-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .compare-table th { background: #0f172a; color: white; padding: 10px 12px; text-align: left; font-weight: 700; }
+        .compare-table td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; color: #1e293b; vertical-align: top; line-height: 1.45; }
+        .compare-table tr:nth-child(even) td { background: #f8fafc; }
+        .axis { stroke: #334155; stroke-width: 2; }
+        .grid-line { stroke: #cbd5e0; stroke-width: 1; }
+        .label { font-family: 'Segoe UI', sans-serif; font-size: 13px; fill: #1e293b; font-weight: 600; }
+        .label-strong { font-family: 'Segoe UI', sans-serif; font-size: 15px; font-weight: 700; fill: #0f172a; }
+        .label-small { font-family: 'Segoe UI', sans-serif; font-size: 12px; fill: #475569; font-weight: 600; }
+        .label-white { font-family: 'Segoe UI', sans-serif; font-size: 13px; fill: #ffffff; font-weight: 700; }
+        .label-white-sm { font-family: 'Segoe UI', sans-serif; font-size: 11px; fill: #ffffff; opacity: 0.95; font-weight: 600; }
+        .video-section { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 5px; }
+        .video-container { width: 100%; max-width: 580px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: #000; aspect-ratio: 16 / 9; }
+        .links-hub { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .video-btn { text-decoration: none; padding: 9px 14px; border-radius: 6px; font-size: 13px; font-weight: bold; color: white; display: flex; align-items: center; gap: 6px; transition: transform 0.2s, background 0.2s; cursor: pointer; border: none; }
+        .video-btn:hover { transform: translateY(-2px); }
+        .rt-btn { background: #00a877; }
+        .rt-btn:hover { background: #008f65; }
+        .stop-btn { background: #dc2626; }
+        .stop-btn:hover { background: #b91c1c; }
+        .notes-header { font-size: 17px; color: #63b3ed; font-weight: bold; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a5568; padding-bottom: 10px; }
+        .lecture-text { font-size: 14.5px; line-height: 1.65; color: #e2e8f0; text-align: justify; }
+        .lecture-text p { margin-bottom: 14px; }
+        .lecture-text h3 { color: #63b3ed; font-size: 15px; margin: 18px 0 10px; border-bottom: 1px solid #2d3748; padding-bottom: 5px; }
+        .lecture-text h4 { color: #90cdf4; font-size: 13.5px; margin: 14px 0 8px; }
+        .lecture-text ul { margin: 8px 0 14px 18px; }
+        .lecture-text li { margin-bottom: 6px; }
+        .dark-block { background: #2d3748; border: 1px solid #4a5568; border-radius: 10px; padding: 16px 18px; margin-top: 20px; }
+        .dark-block-title { font-size: 14px; font-weight: bold; color: #63b3ed; margin-bottom: 12px; border-bottom: 2px solid #4a5568; padding-bottom: 8px; }
+        .dark-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+        .dark-table th { background: #1a202c; color: #90cdf4; padding: 7px 9px; text-align: left; font-weight: 600; border-bottom: 1px solid #4a5568; }
+        .dark-table td { padding: 6px 9px; border-bottom: 1px solid #2d3748; color: #cbd5e0; vertical-align: top; line-height: 1.4; }
+        .dark-table tr:nth-child(even) td { background: #2a3242; }
+        .dark-table .term { font-weight: bold; color: #90cdf4; white-space: nowrap; }
+        .lecture-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(12px); border-top: 2px solid rgba(255, 255, 255, 0.08); padding: 12px 20px; display: flex; align-items: center; justify-content: center; gap: 12px; z-index: 9999; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25); }
+        .lecture-nav .nav-progress { position: absolute; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899); border-radius: 0 3px 3px 0; }
+        .lecture-nav .nav-btn-arrow { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); border: 1.5px solid rgba(255, 255, 255, 0.15); color: #e2e8f0; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; }
+        .lecture-nav .nav-btn-arrow:hover:not(:disabled) { background: rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.6); color: white; transform: translateY(-2px); }
+        .lecture-nav .nav-btn-arrow:disabled { opacity: 0.35; cursor: not-allowed; }
+        .lecture-nav .nav-btn-arrow .arrow-icon { font-size: 16px; line-height: 1; }
+        .lecture-nav .nav-btn-arrow .arrow-label { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+        .lecture-nav .nav-btn-arrow .arrow-label small { font-size: 9.5px; font-weight: 400; opacity: 0.7; text-transform: uppercase; }
+        .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { font-size: 12px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lecture-nav .nav-center { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 20px; color: #94a3b8; font-size: 11px; border-left: 1px solid rgba(255, 255, 255, 0.1); border-right: 1px solid rgba(255, 255, 255, 0.1); }
+        .lecture-nav .nav-counter { font-size: 15px; font-weight: 900; color: #f1f5f9; }
+        .lecture-nav .nav-counter span { color: #64748b; font-size: 12px; font-weight: 600; }
+        .lecture-nav .nav-index-link { color: #60a5fa; text-decoration: none; font-size: 11px; font-weight: 600; }
+        .lecture-nav .nav-index-link:hover { color: #93c5fd; text-decoration: underline; }
+        body { padding-bottom: 80px !important; }
+        @media (max-width: 900px) {
+            .lecture-nav { padding: 10px 12px; gap: 8px; }
+            .lecture-nav .nav-btn-arrow { padding: 8px 12px; }
+            .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { max-width: 90px; font-size: 11px; }
+            .grid-2, .grid-3, .stat-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="student-view">
+        <div class="slide-header">
+            Лекция 19. Оценка качества моделей и выбор алгоритма
+        </div>
+
+        <div class="slide-body">
+
+            <!-- HERO -->
+            <div class="chart-box" style="background: #faf5ff; border-color: #d8b4fe;">
+                <strong style="color: #6b21a8;">🎯 Главная идея</strong>
+                <p>Построить модель — это только <strong>половина задачи</strong>. Вторая половина — понять, насколько она хороша и как обобщает на новые данные. Оценка качества — это <strong>защита от самообмана</strong>: красивые цифры на обучении не значат ничего, если модель плохо работает в реальности. Главный инструмент — <strong>перекрёстная проверка</strong>.</p>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 1 -->
+            <div class="viz-card">
+                <div class="viz-title">⚠️ Почему одной метрики недостаточно</div>
+                <svg viewBox="0 0 540 240" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="240" fill="#ffffff"/>
+                    <text x="90"  y="30" text-anchor="middle" class="label-strong">Модель A</text>
+                    <text x="270" y="30" text-anchor="middle" class="label-strong">Модель B</text>
+                    <text x="450" y="30" text-anchor="middle" class="label-strong">Модель C</text>
+
+                    <!-- Model A -->
+                    <rect x="20" y="45" width="140" height="170" rx="10" fill="#fef2f2" stroke="#f87171" stroke-width="2"/>
+                    <text x="35" y="75" class="label-small">Точность:</text>
+                    <rect x="120" y="63" width="30" height="14" fill="#16a34a" rx="2"/>
+                    <text x="155" y="75" class="label-small" fill="#166534">95%</text>
+                    <text x="35" y="110" class="label-small">Полнота:</text>
+                    <rect x="120" y="98" width="5" height="14" fill="#dc2626" rx="2"/>
+                    <text x="130" y="110" class="label-small" fill="#991b1b">12%</text>
+                    <text x="35" y="145" class="label-small">F-мера:</text>
+                    <rect x="120" y="133" width="10" height="14" fill="#dc2626" rx="2"/>
+                    <text x="135" y="145" class="label-small" fill="#991b1b">21%</text>
+                    <text x="90" y="200" text-anchor="middle" class="label-small" fill="#991b1b">«Всегда большинство»</text>
+
+                    <!-- Model B -->
+                    <rect x="200" y="45" width="140" height="170" rx="10" fill="#fffbeb" stroke="#fcd34d" stroke-width="2"/>
+                    <text x="215" y="75" class="label-small">Точность:</text>
+                    <rect x="300" y="63" width="20" height="14" fill="#16a34a" rx="2"/>
+                    <text x="325" y="75" class="label-small" fill="#166534">78%</text>
+                    <text x="215" y="110" class="label-small">Полнота:</text>
+                    <rect x="300" y="98" width="5" height="14" fill="#dc2626" rx="2"/>
+                    <text x="310" y="110" class="label-small" fill="#991b1b">15%</text>
+                    <text x="215" y="145" class="label-small">F-мера:</text>
+                    <rect x="300" y="133" width="12" height="14" fill="#dc2626" rx="2"/>
+                    <text x="317" y="145" class="label-small" fill="#991b1b">25%</text>
+                    <text x="270" y="200" text-anchor="middle" class="label-small" fill="#991b1b">Осторожная</text>
+
+                    <!-- Model C -->
+                    <rect x="380" y="45" width="140" height="170" rx="10" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+                    <text x="395" y="75" class="label-small">Точность:</text>
+                    <rect x="480" y="63" width="25" height="14" fill="#16a34a" rx="2"/>
+                    <text x="510" y="75" class="label-small" fill="#166534">82%</text>
+                    <text x="395" y="110" class="label-small">Полнота:</text>
+                    <rect x="480" y="98" width="26" height="14" fill="#16a34a" rx="2"/>
+                    <text x="510" y="110" class="label-small" fill="#166534">84%</text>
+                    <text x="395" y="145" class="label-small">F-мера:</text>
+                    <rect x="480" y="133" width="26" height="14" fill="#16a34a" rx="2"/>
+                    <text x="510" y="145" class="label-small" fill="#166534">83%</text>
+                    <text x="450" y="200" text-anchor="middle" class="label-small" fill="#166534">✓ Лучшая</text>
+                </svg>
+                <div class="viz-caption">
+                    Модель A — «всегда большинство»: <strong>высокая точность, но почти нулевая полнота</strong>. Она угадывает частый класс, но не находит редкий. Модель B — осторожная: тоже плохо находит «да». Модель C — <strong>сбалансированная</strong> по всем метрикам. Если смотреть только на точность — A победит. Но это иллюзия. Нужны <strong>несколько метрик</strong> одновременно.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 2: CV -->
+            <div class="viz-card">
+                <div class="viz-title">🔄 Как работает перекрёстная проверка (5 блоков)</div>
+                <svg viewBox="0 0 540 340" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="340" fill="#ffffff"/>
+                    <text x="20" y="25" class="label-strong">Итерация</text>
+                    <text x="120" y="25" class="label-strong">Блок 1</text>
+                    <text x="200" y="25" class="label-strong">Блок 2</text>
+                    <text x="280" y="25" class="label-strong">Блок 3</text>
+                    <text x="360" y="25" class="label-strong">Блок 4</text>
+                    <text x="440" y="25" class="label-strong">Блок 5</text>
+                    <text x="510" y="25" text-anchor="middle" class="label-strong">Качество</text>
+
+                    <!-- Row 1 -->
+                    <text x="50" y="60" class="label-small">1-я</text>
+                    <rect x="110" y="42" width="70" height="30" fill="#2563eb" rx="3"/><text x="145" y="61" text-anchor="middle" class="label-white">обучение</text>
+                    <rect x="190" y="42" width="70" height="30" fill="#2563eb" rx="3"/><text x="225" y="61" text-anchor="middle" class="label-white">обучение</text>
+                    <rect x="270" y="42" width="70" height="30" fill="#2563eb" rx="3"/><text x="305" y="61" text-anchor="middle" class="label-white">обучение</text>
+                    <rect x="350" y="42" width="70" height="30" fill="#2563eb" rx="3"/><text x="385" y="61" text-anchor="middle" class="label-white">обучение</text>
+                    <rect x="430" y="42" width="70" height="30" fill="#dc2626" rx="3"/><text x="465" y="61" text-anchor="middle" class="label-white">тест</text>
+                    <text x="510" y="61" text-anchor="middle" class="label-small">0.85</text>
+
+                    <!-- Row 2 -->
+                    <text x="50" y="105" class="label-small">2-я</text>
+                    <rect x="110" y="87" width="70" height="30" fill="#2563eb" rx="3"/><text x="145" y="106" text-anchor="middle" class="label-white">обучение</text>
+                    <rect x="190" y="87" width="70" height="30" fill="#2563eb" rx="3"/><text x="225" y="106" text-anchor="middle" class="label-white">обучение</text>
+                    <rect x="270" y="87" width="70" height="30" fill="#2563eb" rx="3"/><text x="305" y="106" text-anchor="middle" class="label-white">обучение</text>
+                    <rect x="350" y="87" width="70" height="30" fill="#dc2626" rx="3"/><text x="385" y="106" text-anchor="middle" class="label-white">тест</text>
+                    <rect x="430" y="87" width="70" height="30" fill="#2563eb" rx="3"/><text x="465" y="106" text-anchor="middle" class="label-white">обучение</text>
+                    <text x="510" y="106" text-anchor="middle" class="label-small">0.82</text>
+
+                    <!-- Row 3 -->
+                    <text x="50" y="150" class="label-small">3-я</text>
+                    <rect x="110" y="132" width="70" height="30" fill="#2563eb" rx="3"/><text x="145" y="151" text-anchor="middle" class="label-white">обучение</text>
+                    <rect x="190" y="132" width="70" height="30" fill="#2563eb" rx="3"/><text x="225" y="151" text-anchor="middle" class="label-white">обучение</text>
+                    <rect x="270" y="132" width="70" height="30" fill="#dc2626" rx="3"/><text x="305" y="151" text-anchor="middle" class="label-white">тест</text>
+                    <rect x="350" y="132" width="70" height="30" fill="#2563eb" rx="3"/><text x="385" y="151" text-anchor="middle" class="label-white">обучение</text>
+                    <rect x="430" y="132" width="70" height="30" fill="#2563eb" rx="3"/><text x="465" y="151" text-anchor="middle" class="label-white">обучение</text>
+                    <text x="510" y="151" text-anchor="middle" class="label-small">0.88</text>
+
+                    <!-- Row 4 -->
+                    <text x="50" y="195" class="label-small">4-я</text>
+                    <rect x="110" y="177" width="70" height="30" fill="#2563eb" rx="3"/><text x="145" y="196" text-anchor="middle" class="label-white">обучение</text>
+                    <rect x="190" y="177" width="70" height="30" fill="#dc2626" rx="3"/><text x="225" y="196" text-anchor="middle" class="label-white">тест</text>
+                    <rect x="270" y="177" width="70" height="30" fill="#2563eb" rx="3"/><text x="305" y="196" text-anchor="middle" class="label-white">обучение</text>
+                    <rect x="350" y="177" width="70" height="30" fill="#2563eb" rx="3"/><text x="385" y="196" text-anchor="middle" class="label-white">обучение</text>
+                    <rect x="430" y="177" width="70" height="30" fill="#2563eb" rx="3"/><text x="465" y="196" text-anchor="middle" class="label-white">обучение</text>
+                    <text x="510" y="196" text-anchor="middle" class="label-small">0.84</text>
+
+                    <!-- Row 5 -->
+                    <text x="50" y="240" class="label-small">5-я</text>
+                    <rect x="110" y="222" width="70" height="30" fill="#dc2626" rx="3"/><text x="145" y="241" text-anchor="middle" class="label-white">тест</text>
+                    <rect x="190" y="222" width="70" height="30" fill="#2563eb" rx="3"/><text x="225" y="241" text-anchor="middle" class="label-white">обучение</text>
+                    <rect x="270" y="222" width="70" height="30" fill="#2563eb" rx="3"/><text x="305" y="241" text-anchor="middle" class="label-white">обучение</text>
+                    <rect x="350" y="222" width="70" height="30" fill="#2563eb" rx="3"/><text x="385" y="241" text-anchor="middle" class="label-white">обучение</text>
+                    <rect x="430" y="222" width="70" height="30" fill="#2563eb" rx="3"/><text x="465" y="241" text-anchor="middle" class="label-white">обучение</text>
+                    <text x="510" y="241" text-anchor="middle" class="label-small">0.86</text>
+
+                    <rect x="20" y="270" width="480" height="40" rx="8" fill="#16a34a"/>
+                    <text x="260" y="290" text-anchor="middle" class="label-white" style="font-size: 13px;">Среднее = (0.85 + 0.82 + 0.88 + 0.84 + 0.86) / 5 = 0.85</text>
+                    <text x="260" y="304" text-anchor="middle" class="label-white-sm">стабильная и честная оценка</text>
+
+                    <rect x="30"  y="322" width="14" height="10" fill="#2563eb" rx="2"/><text x="50"  y="330" class="label-small">обучение</text>
+                    <rect x="130" y="322" width="14" height="10" fill="#dc2626" rx="2"/><text x="150" y="330" class="label-small">тест</text>
+                </svg>
+                <div class="viz-caption">
+                    Данные делятся на <strong>5 блоков</strong>. На каждой итерации один блок становится <strong>тестовым</strong> (красный), остальные — <strong>обучающими</strong> (синие). Модель обучается 5 раз, каждый раз на новой комбинации. Итоговая оценка — <strong>среднее по 5 итерациям</strong>. Это даёт стабильную и честную оценку качества.
+                </div>
+            </div>
+
+            <!-- ТРИ ВИДА ПРОВЕРОК -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 10px;">🎯 Три вида перекрёстной проверки</div>
+                <div class="stat-grid">
+                    <div class="stat-box cv"><div class="stat-icon">🔄</div><div class="stat-number">K-Fold</div><div class="stat-label">классическая, 5 или 10 блоков</div></div>
+                    <div class="stat-box strat"><div class="stat-icon">⚖️</div><div class="stat-number">Stratified</div><div class="stat-label">с сохранением пропорции классов</div></div>
+                    <div class="stat-box ts"><div class="stat-icon">📅</div><div class="stat-number">Time Series</div><div class="stat-label">с расширяющимся окном (для временных рядов)</div></div>
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 3: STRATIFIED CV (исправлено) -->
+            <div class="viz-card">
+                <div class="viz-title">⚖️ Стратифицированная проверка: сохраняем пропорцию классов</div>
+                <div class="grid-2">
+                    <!-- Обычная CV -->
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #991b1b; margin-bottom: 8px; text-align: center;">❌ Обычная CV — пропорции разные</div>
+                        <svg viewBox="0 0 260 220" width="100%">
+                            <rect x="0" y="0" width="260" height="220" fill="#ffffff"/>
+                            <!-- Block 1: 90/10 -->
+                            <text x="20" y="30" class="label-small">Блок 1</text>
+                            <rect x="80" y="18" width="117" height="20" fill="#2563eb" rx="2"/>
+                            <rect x="197" y="18" width="13" height="20" fill="#ea580c" rx="2"/>
+                            <text x="145" y="32" text-anchor="middle" class="label-white-sm">90% A / 10% B</text>
+
+                            <!-- Block 2: 45/55 -->
+                            <text x="20" y="60" class="label-small">Блок 2</text>
+                            <rect x="80" y="48" width="59" height="20" fill="#2563eb" rx="2"/>
+                            <rect x="139" y="48" width="71" height="20" fill="#ea580c" rx="2"/>
+                            <text x="145" y="62" text-anchor="middle" class="label-white-sm">45% A / 55% B</text>
+
+                            <!-- Block 3: 100/0 -->
+                            <text x="20" y="90" class="label-small">Блок 3</text>
+                            <rect x="80" y="78" width="130" height="20" fill="#2563eb" rx="2"/>
+                            <text x="145" y="92" text-anchor="middle" class="label-white-sm">100% A</text>
+
+                            <!-- Block 4: 10/90 -->
+                            <text x="20" y="120" class="label-small">Блок 4</text>
+                            <rect x="80" y="108" width="13" height="20" fill="#2563eb" rx="2"/>
+                            <rect x="93" y="108" width="117" height="20" fill="#ea580c" rx="2"/>
+                            <text x="145" y="122" text-anchor="middle" class="label-white-sm">10% A / 90% B</text>
+
+                            <!-- Block 5: 75/25 -->
+                            <text x="20" y="150" class="label-small">Блок 5</text>
+                            <rect x="80" y="138" width="98" height="20" fill="#2563eb" rx="2"/>
+                            <rect x="178" y="138" width="32" height="20" fill="#ea580c" rx="2"/>
+                            <text x="145" y="152" text-anchor="middle" class="label-white-sm">75% A / 25% B</text>
+
+                            <text x="130" y="195" text-anchor="middle" class="label-small" fill="#991b1b">Оценки нестабильны</text>
+                        </svg>
+                    </div>
+                    <!-- Stratified CV -->
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #166534; margin-bottom: 8px; text-align: center;">✅ Стратифицированная — везде 90/10</div>
+                        <svg viewBox="0 0 260 220" width="100%">
+                            <rect x="0" y="0" width="260" height="220" fill="#ffffff"/>
+
+                            <text x="20" y="30" class="label-small">Блок 1</text>
+                            <rect x="80" y="18" width="117" height="20" fill="#2563eb" rx="2"/>
+                            <rect x="197" y="18" width="13" height="20" fill="#ea580c" rx="2"/>
+                            <text x="145" y="32" text-anchor="middle" class="label-white-sm">90% A / 10% B</text>
+
+                            <text x="20" y="60" class="label-small">Блок 2</text>
+                            <rect x="80" y="48" width="117" height="20" fill="#2563eb" rx="2"/>
+                            <rect x="197" y="48" width="13" height="20" fill="#ea580c" rx="2"/>
+                            <text x="145" y="62" text-anchor="middle" class="label-white-sm">90% A / 10% B</text>
+
+                            <text x="20" y="90" class="label-small">Блок 3</text>
+                            <rect x="80" y="78" width="117" height="20" fill="#2563eb" rx="2"/>
+                            <rect x="197" y="78" width="13" height="20" fill="#ea580c" rx="2"/>
+                            <text x="145" y="92" text-anchor="middle" class="label-white-sm">90% A / 10% B</text>
+
+                            <text x="20" y="120" class="label-small">Блок 4</text>
+                            <rect x="80" y="108" width="117" height="20" fill="#2563eb" rx="2"/>
+                            <rect x="197" y="108" width="13" height="20" fill="#ea580c" rx="2"/>
+                            <text x="145" y="122" text-anchor="middle" class="label-white-sm">90% A / 10% B</text>
+
+                            <text x="20" y="150" class="label-small">Блок 5</text>
+                            <rect x="80" y="138" width="117" height="20" fill="#2563eb" rx="2"/>
+                            <rect x="197" y="138" width="13" height="20" fill="#ea580c" rx="2"/>
+                            <text x="145" y="152" text-anchor="middle" class="label-white-sm">90% A / 10% B</text>
+
+                            <text x="130" y="195" text-anchor="middle" class="label-small" fill="#166534">Стабильная оценка</text>
+                        </svg>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    При <strong>дисбалансе классов</strong> обычная CV может дать блоки с разными пропорциями. В одном блоке может оказаться 100% класса A, в другом — 90% класса B. Оценки будут сильно различаться. <strong>Стратифицированная CV</strong> сохраняет пропорцию классов в каждом блоке. Оценка становится стабильной.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 4: TIME SERIES CV -->
+            <div class="viz-card">
+                <div class="viz-title">📅 Перекрёстная проверка для временных рядов</div>
+                <svg viewBox="0 0 540 280" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="280" fill="#ffffff"/>
+                    <text x="270" y="20" text-anchor="middle" class="label-strong">Время →</text>
+
+                    <text x="50" y="60" class="label-small">1-я</text>
+                    <rect x="90" y="45" width="150" height="30" fill="#2563eb" rx="3"/><text x="165" y="64" text-anchor="middle" class="label-white">обучение</text>
+                    <rect x="240" y="45" width="50" height="30" fill="#dc2626" rx="3"/><text x="265" y="64" text-anchor="middle" class="label-white">тест</text>
+                    <text x="500" y="64" class="label-small">прошлое → будущее</text>
+
+                    <text x="50" y="105" class="label-small">2-я</text>
+                    <rect x="90" y="90" width="200" height="30" fill="#2563eb" rx="3"/><text x="190" y="109" text-anchor="middle" class="label-white">обучение</text>
+                    <rect x="290" y="90" width="50" height="30" fill="#dc2626" rx="3"/><text x="315" y="109" text-anchor="middle" class="label-white">тест</text>
+
+                    <text x="50" y="150" class="label-small">3-я</text>
+                    <rect x="90" y="135" width="250" height="30" fill="#2563eb" rx="3"/><text x="215" y="154" text-anchor="middle" class="label-white">обучение</text>
+                    <rect x="340" y="135" width="50" height="30" fill="#dc2626" rx="3"/><text x="365" y="154" text-anchor="middle" class="label-white">тест</text>
+
+                    <text x="50" y="195" class="label-small">4-я</text>
+                    <rect x="90" y="180" width="300" height="30" fill="#2563eb" rx="3"/><text x="240" y="199" text-anchor="middle" class="label-white">обучение</text>
+                    <rect x="390" y="180" width="50" height="30" fill="#dc2626" rx="3"/><text x="415" y="199" text-anchor="middle" class="label-white">тест</text>
+
+                    <text x="50" y="240" class="label-small">5-я</text>
+                    <rect x="90" y="225" width="350" height="30" fill="#2563eb" rx="3"/><text x="265" y="244" text-anchor="middle" class="label-white">обучение</text>
+                    <rect x="440" y="225" width="50" height="30" fill="#dc2626" rx="3"/><text x="465" y="244" text-anchor="middle" class="label-white">тест</text>
+
+                    <text x="270" y="272" text-anchor="middle" class="label-small" fill="#991b1b">«Расширяющееся окно»: обучение всегда на прошлом, тест — на будущем</text>
+                </svg>
+                <div class="viz-caption">
+                    Для <strong>временных рядов</strong> обычная CV не подходит: она может использовать будущее для предсказания прошлого. Вместо этого применяют <strong>расширяющееся окно</strong>: модель обучается только на прошлом, а проверяется на следующем периоде. Постепенно окно обучения растёт. Это имитирует реальную задачу прогнозирования.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 5: КРИВЫЕ ОБУЧЕНИЯ -->
+            <div class="viz-card">
+                <div class="viz-title">📉 Кривые обучения: как распознать переобучение и недообучение</div>
+                <div class="grid-2">
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #991b1b; margin-bottom: 8px; text-align: center;">Переобучение</div>
+                        <svg viewBox="0 0 260 200" width="100%">
+                            <rect x="0" y="0" width="260" height="200" fill="#ffffff"/>
+                            <line x1="40" y1="170" x2="240" y2="170" class="axis"/>
+                            <line x1="40" y1="20" x2="40" y2="170" class="axis"/>
+                            <path d="M 50 30 Q 100 25 240 22" fill="none" stroke="#2563eb" stroke-width="3"/>
+                            <text x="180" y="35" class="label-small" fill="#1e40af">обучение</text>
+                            <path d="M 50 100 Q 100 80 240 90" fill="none" stroke="#dc2626" stroke-width="3"/>
+                            <text x="180" y="110" class="label-small" fill="#991b1b">валидация</text>
+                            <text x="130" y="145" text-anchor="middle" class="label-strong" fill="#991b1b">большой разрыв</text>
+                            <text x="140" y="190" text-anchor="middle" class="label-small">размер данных →</text>
+                            <text x="22" y="95" text-anchor="middle" class="label-small" transform="rotate(-90 22 95)">ошибка</text>
+                        </svg>
+                    </div>
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #92400e; margin-bottom: 8px; text-align: center;">Недообучение</div>
+                        <svg viewBox="0 0 260 200" width="100%">
+                            <rect x="0" y="0" width="260" height="200" fill="#ffffff"/>
+                            <line x1="40" y1="170" x2="240" y2="170" class="axis"/>
+                            <line x1="40" y1="20" x2="40" y2="170" class="axis"/>
+                            <path d="M 50 100 Q 100 90 240 80" fill="none" stroke="#2563eb" stroke-width="3"/>
+                            <text x="180" y="90" class="label-small" fill="#1e40af">обучение</text>
+                            <path d="M 50 105 Q 100 95 240 85" fill="none" stroke="#dc2626" stroke-width="3"/>
+                            <text x="180" y="115" class="label-small" fill="#991b1b">валидация</text>
+                            <text x="130" y="145" text-anchor="middle" class="label-strong" fill="#92400e">обе ошибки высоки</text>
+                            <text x="140" y="190" text-anchor="middle" class="label-small">размер данных →</text>
+                            <text x="22" y="95" text-anchor="middle" class="label-small" transform="rotate(-90 22 95)">ошибка</text>
+                        </svg>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    <strong>Переобучение</strong>: обучающая ошибка маленькая, валидационная большая — большой разрыв. Модель запомнила данные. <strong>Недообучение</strong>: обе ошибки высоки и близки — модель слишком простая. <strong>Хорошая модель</strong>: обе кривые сходятся к низкому значению.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 6: КРИВЫЕ ВАЛИДАЦИИ -->
+            <div class="viz-card">
+                <div class="viz-title">📈 Кривые валидации: как найти оптимальный гиперпараметр</div>
+                <svg viewBox="0 0 540 280" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="280" fill="#ffffff"/>
+                    <line x1="60" y1="230" x2="500" y2="230" class="axis"/>
+                    <line x1="60" y1="20"  x2="60"  y2="230" class="axis"/>
+                    <line x1="60" y1="177" x2="500" y2="177" class="grid-line"/>
+                    <line x1="60" y1="125" x2="500" y2="125" class="grid-line"/>
+                    <line x1="60" y1="72"  x2="500" y2="72"  class="grid-line"/>
+                    <line x1="170" y1="20" x2="170" y2="230" class="grid-line"/>
+                    <line x1="280" y1="20" x2="280" y2="230" class="grid-line"/>
+                    <line x1="390" y1="20" x2="390" y2="230" class="grid-line"/>
+
+                    <path d="M 70 60 Q 170 80 280 140 Q 390 200 490 225" fill="none" stroke="#2563eb" stroke-width="3"/>
+                    <text x="430" y="220" class="label-small" fill="#1e40af">обучение</text>
+                    <path d="M 70 200 Q 170 130 280 100 Q 390 130 490 210" fill="none" stroke="#dc2626" stroke-width="3.5"/>
+                    <text x="430" y="205" class="label-small" fill="#991b1b">валидация</text>
+
+                    <circle cx="280" cy="100" r="9" fill="#16a34a" stroke="#ffffff" stroke-width="2.5"/>
+                    <line x1="280" y1="100" x2="280" y2="230" stroke="#16a34a" stroke-width="2" stroke-dasharray="5 4"/>
+                    <text x="280" y="252" text-anchor="middle" class="label-strong" fill="#166534">оптимум</text>
+
+                    <text x="130" y="40" text-anchor="middle" class="label-small" fill="#991b1b">← недообучение</text>
+                    <text x="400" y="40" text-anchor="middle" class="label-small" fill="#991b1b">переобучение →</text>
+
+                    <text x="280" y="272" text-anchor="middle" class="label-strong">Значение гиперпараметра (например, max_depth)</text>
+                    <text x="25" y="125" text-anchor="middle" class="label-strong" transform="rotate(-90 25 125)">Ошибка</text>
+
+                    <text x="70"  y="225" text-anchor="middle" class="label-small">1</text>
+                    <text x="170" y="225" text-anchor="middle" class="label-small">3</text>
+                    <text x="280" y="225" text-anchor="middle" class="label-small">5</text>
+                    <text x="390" y="225" text-anchor="middle" class="label-small">7</text>
+                    <text x="490" y="225" text-anchor="middle" class="label-small">10+</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Кривая валидации</strong> показывает, как ошибка зависит от гиперпараметра. Обучающая ошибка монотонно падает. Валидационная имеет <strong>U-образную форму</strong>. Минимум — это и есть оптимальное значение гиперпараметра. Здесь — глубина дерева около 5.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 7: GRID vs RANDOM SEARCH -->
+            <div class="viz-card">
+                <div class="viz-title">🎯 Подбор гиперпараметров: Grid Search vs Random Search</div>
+                <div class="grid-2">
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #1e40af; margin-bottom: 8px; text-align: center;">Grid Search: перебираем всё</div>
+                        <svg viewBox="0 0 260 220" width="100%">
+                            <rect x="0" y="0" width="260" height="220" fill="#ffffff"/>
+                            <circle cx="40" cy="40" r="5" fill="#94a3b8"/><circle cx="80" cy="40" r="5" fill="#94a3b8"/><circle cx="120" cy="40" r="5" fill="#16a34a"/><circle cx="160" cy="40" r="5" fill="#94a3b8"/><circle cx="200" cy="40" r="5" fill="#94a3b8"/>
+                            <circle cx="40" cy="80" r="5" fill="#94a3b8"/><circle cx="80" cy="80" r="5" fill="#94a3b8"/><circle cx="120" cy="80" r="5" fill="#94a3b8"/><circle cx="160" cy="80" r="5" fill="#94a3b8"/><circle cx="200" cy="80" r="5" fill="#94a3b8"/>
+                            <circle cx="40" cy="120" r="5" fill="#16a34a"/><circle cx="80" cy="120" r="5" fill="#94a3b8"/><circle cx="120" cy="120" r="5" fill="#94a3b8"/><circle cx="160" cy="120" r="5" fill="#94a3b8"/><circle cx="200" cy="120" r="5" fill="#94a3b8"/>
+                            <circle cx="40" cy="160" r="5" fill="#94a3b8"/><circle cx="80" cy="160" r="5" fill="#94a3b8"/><circle cx="120" cy="160" r="5" fill="#94a3b8"/><circle cx="160" cy="160" r="5" fill="#94a3b8"/><circle cx="200" cy="160" r="5" fill="#94a3b8"/>
+                            <circle cx="40" cy="200" r="5" fill="#94a3b8"/><circle cx="80" cy="200" r="5" fill="#94a3b8"/><circle cx="120" cy="200" r="5" fill="#94a3b8"/><circle cx="160" cy="200" r="5" fill="#94a3b8"/><circle cx="200" cy="200" r="5" fill="#94a3b8"/>
+                            <text x="130" y="218" text-anchor="middle" class="label-small" fill="#1e40af">25 испытаний — все комбинации</text>
+                        </svg>
+                    </div>
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #166534; margin-bottom: 8px; text-align: center;">Random Search: случайные точки</div>
+                        <svg viewBox="0 0 260 220" width="100%">
+                            <rect x="0" y="0" width="260" height="220" fill="#ffffff"/>
+                            <circle cx="35"  cy="50"  r="5" fill="#94a3b8"/>
+                            <circle cx="95"  cy="30"  r="5" fill="#16a34a"/>
+                            <circle cx="160" cy="65"  r="5" fill="#94a3b8"/>
+                            <circle cx="60"  cy="95"  r="5" fill="#16a34a"/>
+                            <circle cx="140" cy="105" r="5" fill="#94a3b8"/>
+                            <circle cx="210" cy="40"  r="5" fill="#94a3b8"/>
+                            <circle cx="40"  cy="150" r="5" fill="#16a34a"/>
+                            <circle cx="105" cy="155" r="5" fill="#94a3b8"/>
+                            <circle cx="180" cy="135" r="5" fill="#94a3b8"/>
+                            <circle cx="220" cy="170" r="5" fill="#16a34a"/>
+                            <circle cx="70"  cy="195" r="5" fill="#94a3b8"/>
+                            <circle cx="150" cy="190" r="5" fill="#16a34a"/>
+                            <text x="130" y="218" text-anchor="middle" class="label-small" fill="#166534">12 испытаний — покрытие лучше</text>
+                        </svg>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    <strong>Grid Search</strong> перебирает все комбинации — это дорого. <strong>Random Search</strong> пробует случайные точки — часто <strong>эффективнее</strong>: в реальных задачах важны лишь несколько гиперпараметров, и случайный поиск чаще «попадает» в хорошие значения. Зелёные точки — найденные хорошие комбинации.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 8: УТЕЧКА ДАННЫХ -->
+            <div class="viz-card">
+                <div class="viz-title">⚠️ Утечка данных: главная ловушка оценки</div>
+                <svg viewBox="0 0 540 240" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="240" fill="#ffffff"/>
+                    <text x="270" y="25" text-anchor="middle" class="label-strong">❌ Утечка: используем информацию из будущего</text>
+
+                    <rect x="20" y="45" width="100" height="50" rx="6" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
+                    <text x="70" y="68" text-anchor="middle" class="label-small">Признаки</text>
+                    <text x="70" y="84" text-anchor="middle" class="label-small">(x)</text>
+
+                    <rect x="150" y="45" width="100" height="50" rx="6" fill="#fef2f2" stroke="#dc2626" stroke-width="2"/>
+                    <text x="200" y="65" text-anchor="middle" class="label-small" fill="#991b1b">Признак-утечка</text>
+                    <text x="200" y="82" text-anchor="middle" class="label-small" fill="#991b1b">«дата ухода»</text>
+
+                    <rect x="280" y="45" width="100" height="50" rx="6" fill="#faf5ff" stroke="#7c3aed" stroke-width="2"/>
+                    <text x="330" y="68" text-anchor="middle" class="label-small">Модель</text>
+                    <text x="330" y="84" text-anchor="middle" class="label-small">учится</text>
+
+                    <rect x="410" y="45" width="100" height="50" rx="6" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+                    <text x="460" y="65" text-anchor="middle" class="label-small">Результат</text>
+                    <text x="460" y="84" text-anchor="middle" class="label-small" fill="#166534">95% точности!</text>
+
+                    <line x1="120" y1="70" x2="150" y2="70" stroke="#3b82f6" stroke-width="2.5"/>
+                    <line x1="250" y1="70" x2="280" y2="70" stroke="#dc2626" stroke-width="2.5"/>
+                    <line x1="380" y1="70" x2="410" y2="70" stroke="#3b82f6" stroke-width="2.5"/>
+
+                    <rect x="20" y="120" width="490" height="55" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="2"/>
+                    <text x="265" y="145" text-anchor="middle" class="label-strong" fill="#991b1b">Но в реальности этого признака НЕ БУДЕТ в момент предсказания!</text>
+                    <text x="265" y="163" text-anchor="middle" class="label-small" fill="#7f1d1d">Модель выглядит идеальной на тесте, но провалится в продакшене</text>
+
+                    <rect x="20" y="190" width="490" height="40" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+                    <text x="265" y="215" text-anchor="middle" class="label-strong" fill="#166534">✅ Решение: тщательно проверять признаки, удалять содержащие будущее</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Утечка данных</strong> — это признак, который содержит информацию о будущем. Например, «дата ухода клиента» в задаче прогноза ухода. На обучении модель будет идеальной, но в реальности — бесполезной. Все преобразования (масштабирование, кодирование) должны выполняться <strong>только на обучающей выборке</strong>.
+                </div>
+            </div>
+
+            <!-- СРАВНЕНИЕ МЕТОДОВ ПОДБОРА -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 8px;">⚖️ Методы подбора гиперпараметров: сравнение</div>
+                <table class="compare-table">
+                    <thead><tr><th>Метод</th><th>Как работает</th><th>Плюсы</th><th>Минусы</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Grid Search</strong></td><td>Все комбинации</td><td>Гарантированный результат</td><td>Очень медленный</td></tr>
+                        <tr><td><strong>Random Search</strong></td><td>Случайные точки</td><td>Быстрее, часто эффективнее</td><td>Не гарантирует лучший</td></tr>
+                        <tr><td><strong>Bayesian</strong></td><td>Учится на испытаниях</td><td>Минимум испытаний, хороший результат</td><td>Сложнее, требует библиотек</td></tr>
+                    </tbody>
+                </table>
+                <div class="callout" style="margin-top: 8px;">
+                    <strong>💡 Правило выбора</strong>
+                    <p>Grid Search — когда гиперпараметров мало (2–3). Random Search — когда их много. Bayesian — когда каждое обучение модели дорого.</p>
+                </div>
+            </div>
+
+            <!-- ПРАВИЛА ОЦЕНКИ -->
+            <div class="viz-card">
+                <div class="viz-title">📋 Четыре правила честной оценки</div>
+                <div class="grid-2" style="grid-template-columns: 1fr 1fr;">
+                    <div class="callout ok">
+                        <strong>1. Не смотреть на тест во время обучения</strong>
+                        <p>Тестовая выборка — «слепая». Смотрим на неё только один раз, в самом конце. Настройка — на валидации.</p>
+                    </div>
+                    <div class="callout ok">
+                        <strong>2. Все преобразования — только на train</strong>
+                        <p>Масштабирование, кодирование, заполнение пропусков — всё настраивается на обучающей выборке, потом применяется.</p>
+                    </div>
+                    <div class="callout ok">
+                        <strong>3. Начинать с простого baseline</strong>
+                        <p>Сначала линейная регрессия или дерево. Потом сложное. Если сложное не лучше — оно не нужно.</p>
+                    </div>
+                    <div class="callout ok">
+                        <strong>4. Несколько метрик сразу</strong>
+                        <p>Точность — не единственная метрика. Смотрим на полноту, F-меру, AUC — в зависимости от задачи.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ПРИМЕНЕНИЕ ПО РОЛЯМ -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 8px;">👥 Как разные аналитики используют оценку качества</div>
+                <table class="role-table">
+                    <thead><tr><th style="width: 30%;">Роль аналитика</th><th>Как использует оценку качества</th></tr></thead>
+                    <tbody>
+                        <tr><td><span class="role-emoji">📈</span> <strong>Аналитик данных</strong></td><td>Сравнивает модели через CV, выбирает простую, если качество не хуже</td></tr>
+                        <tr><td><span class="role-emoji">💰</span> <strong>Финансовый аналитик</strong></td><td>Стратифицированная CV, полнота и AUC, проверка устойчивости на разных выборках</td></tr>
+                        <tr><td><span class="role-emoji">🚀</span> <strong>Продуктовый аналитик</strong></td><td>Оценка стабильности во времени, сравнение простых и сложных моделей</td></tr>
+                        <tr><td><span class="role-emoji">🌐</span> <strong>Веб-аналитик</strong></td><td>AUC для ранжирования, проверка утечек, оценка на разных каналах</td></tr>
+                        <tr><td><span class="role-emoji">📊</span> <strong>BI-аналитик</strong></td><td>Стабильность прогнозов на разных периодах для дашбордов</td></tr>
+                        <tr><td><span class="role-emoji">🗄️</span> <strong>Аналитик больших данных</strong></td><td>Random Search, CV для десятков моделей, кривые обучения для контроля переобучения</td></tr>
+                        <tr><td><span class="role-emoji">📣</span> <strong>Маркетинговый аналитик</strong></td><td>AUC + бизнес-эффект, оценка на разных сегментах аудитории</td></tr>
+                        <tr><td><span class="role-emoji">💼</span> <strong>Бизнес-аналитик</strong></td><td>Анализ ошибок модели, обоснование выбора перед руководством</td></tr>
+                        <tr><td><span class="role-emoji">⚙️</span> <strong>Системный аналитик</strong></td><td>Метрика полноты для нахождения сбоев, проверка на разных типах</td></tr>
+                        <tr><td><span class="role-emoji">🎨</span> <strong>UX-аналитик</strong></td><td>Анализ важности признаков, проверка справедливости на группах</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="callout warn">
+                <strong>⚠️ Главный вывод</strong>
+                <p>Оценка качества — это <strong>не формальность</strong>, а защита от самообмана. Хорошая модель — не та, что даёт красивые цифры на обучении, а та, что <strong>честно работает на новых данных</strong>. И выбор финальной модели — это компромисс между качеством, скоростью, интерпретируемостью и стоимостью.</p>
+            </div>
+
+            <!-- ВИДЕОПЛЕЕР -->
+            <div class="video-section">
+                <div class="video-container">
+                    <iframe id="lecture-player" src="https://rutube.ru" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+                </div>
+                <div class="links-hub">
+                    <button onclick="changeVideo('https://rutube.ru/')" class="video-btn stop-btn">⏹ СТОП</button>
+                    <button onclick="changeVideo('https://rutube.ru/play/embed/')" class="video-btn rt-btn">📜 Лекция 19. Оценка качества моделей</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="slide-footer">
+            Направление «Менеджмент» | Курс: Аналитика данных | Лекция 19: «Оценка качества моделей и выбор алгоритма»
+        </div>
+    </div>
+
+    <!-- ПРАВАЯ ПАНЕЛЬ (1/3): СКРИПТ ПРЕПОДАВАТЕЛЯ -->
+      <div class="speaker-notes">
+        <div style="position: sticky; top: 0; background: #1a202c; padding: 20px 20px 10px 20px; border-bottom: 1px solid #4a5568; width: 100%; z-index: 100;">
+                       <div class="notes-header" style="display: block; padding-bottom: 15px;">
+               <audio id="lecture-audio" preload="auto" controls
+                      src="https://archive.org/download/03_20261110_20261110/18.mp3"
+                      style="width: 100%; height: 32px; border-radius: 4px;"></audio>
+            </div>
+            <div style="width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+             <iframe id="right-lecture-player" src="https://archive.org/embed/20261020_20261020_0955?autoplay=true&loop=true&muted=true"  allow="clipboard-write; autoplay" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen style="border: none;"></iframe>
+                           </div>
+        </div>
+
+        <div class="lecture-text" style="margin-top: 20px;">
+
+            <h3>📌 Оценка качества моделей и выбор алгоритма</h3>
+
+            <p>Мы разобрали шесть главных алгоритмов машинного обучения. Линейную регрессию. Метод к-ближайших соседей. Логистическую регрессию. Дерево решений. Кластеризацию. И ансамбли деревьев. Но построить модель — это только половина задачи. Вторая половина — понять, насколько она хороша. И как её улучшить. Этим мы и займёмся. Тема этого блока — оценка качества моделей и выбор алгоритма.</p>
+
+            <h4>Определение и основная идея</h4>
+            <p>Начнём с определения. Оценка качества модели — это процесс измерения того, насколько хорошо модель решает поставленную задачу. И насколько её результаты можно обобщить на новые данные. Это не просто «посчитать одну цифру». Это целая методология. Она включает выбор метрик. Выбор способа проверки. И выбор финальной модели.</p>
+            <p>Поясним на примере. Представьте, что вы построили модель прогноза оттока клиентов. Она показывает точность девяносто пять процентов на обучающих данных. Можно ли ей доверять. Оказывается, нет. Потому что модель могла просто запомнить обучающие данные. И на новых данных её точность окажется гораздо ниже. Это называется переобучением. И именно поэтому нужна честная оценка.</p>
+            <p>Обратите внимание на важную мысль. Оценка качества — это не формальность. Это защита от самообмана. Специалист по данным часто хочет верить, что его модель хороша. И легко находит подтверждение этому. Но бизнесу нужны реальные результаты. А не красивые цифры на обучении. Поэтому оценка должна быть честной и независимой.</p>
+
+            <h4>Почему одной метрики недостаточно</h4>
+            <p>Теперь разберём первую проблему. Многие начинающие специалисты смотрят только на одну метрику. Чаще всего на точность. Но одной метрики почти всегда недостаточно. И вот почему.</p>
+            <p>Во-первых, разные метрики отражают разные аспекты качества. Мы уже говорили об этом в блоке про логистическую регрессию. Точность, полнота и эф-мера измеряют разные вещи. Модель может быть точной, но не полной. Или полной, но неточной. И одна метрика не покажет эту разницу.</p>
+            <p>Во-вторых, метрика зависит от задачи. В задачах регрессии используют одни метрики. В задачах классификации — другие. И нельзя сравнивать модели из разных задач по одной метрике. Это бессмысленно.</p>
+            <p>В-третьих, метрика может быть обманчива при дисбалансе классов. Мы уже говорили об этом. Модель, которая всегда предсказывает частый класс, даёт девяносто девять процентов точности. Но она бесполезна. Поэтому нужны метрики, устойчивые к дисбалансу. Например, эф-мера или площадь под рок-кривой.</p>
+            <p>Отсюда следует важный вывод. Специалист по данным должен смотреть на несколько метрик сразу. И выбирать финальную модель по совокупности. А не по одной цифре. Это требует понимания задачи. И понимания того, что важно для бизнеса.</p>
+
+            <h4>Перекрёстная проверка: главный инструмент оценки</h4>
+            <p>Теперь перейдём к главному инструменту оценки. Он называется перекрёстная проверка. По-английски это кросс-валидация. Мы уже упоминали её в предыдущих блоках. Но теперь разберём подробно.</p>
+            <p>Дадим определение. Перекрёстная проверка — это способ оценки качества модели. При котором данные разбиваются на несколько частей. Модель обучается на одних частях. И проверяется на других. Затем процедура повторяется с другим разбиением. И результаты усредняются.</p>
+            <p>Поясним на примере. Представьте, что у нас есть тысяча объектов. Мы делим их на пять частей по двести объектов. Затем обучаем модель на первых четырёх частях. И проверяем на пятой. Затем обучаем на частях один, два, три и пять. И проверяем на четвёртой. И так далее. Пять раз. Каждый раз модель проверяется на новой части. И мы получаем пять оценок качества. Затем усредняем их. Это и есть перекрёстная проверка с пятью блоками.</p>
+            <p><strong>Зачем это нужно.</strong> Простое разбиение на обучающую и тестовую выборку имеет проблему. Результат зависит от того, как именно мы разбили данные. Если разбиение случайное и удачное — оценка будет хорошей. Если неудачное — плохой. Это создаёт неопределённость.</p>
+            <p>Перекрёстная проверка решает эту проблему. Она усредняет результат по нескольким разбиениям. И даёт более стабильную оценку. Кроме того, она использует все данные. Каждый объект хотя бы раз попадает в тестовую часть. Это особенно важно на малых данных. Где каждый объект на счету.</p>
+            <p><strong>Сколько блоков использовать.</strong> Стандартные значения — это пять или десять. Пять блоков — это компромисс между скоростью и стабильностью. Десять блоков дают более точную оценку. Но требуют больше времени на обучение. Потому что модель обучается десять раз. А не пять.</p>
+            <p>На практике чаще используют пять блоков. Особенно на больших данных. Потому что десять блоков могут занять слишком много времени. И выигрыш в точности оценки невелик. На малых данных лучше использовать десять блоков. Или даже больше.</p>
+            <p><strong>Стратифицированная перекрёстная проверка.</strong> Теперь разберём важную модификацию. Она называется стратифицированная перекрёстная проверка. Дадим определение. Стратифицированная проверка — это перекрёстная проверка, при которой сохраняется пропорция классов в каждом блоке.</p>
+            <p>Поясним на примере. Представьте, что у нас есть данные с дисбалансом классов. Девяносто процентов клиентов лояльны. И десять процентов нелояльны. Если мы разобьём данные случайно — в каком-то блоке может оказаться только лояльные клиенты. И тогда оценка на этом блоке будет бессмысленной.</p>
+            <p>Стратифицированная проверка решает эту проблему. В каждом блоке сохраняется та же пропорция. Девяносто процентов лояльных. И десять процентов нелояльных. Это делает оценку более надёжной.</p>
+            <p>На практике стратифицированная проверка используется почти всегда. Особенно при дисбалансе классов. И особенно для задач классификации. Потому что она даёт более честную оценку.</p>
+            <p><strong>Перекрёстная проверка для временных рядов.</strong> Теперь разберём особый случай. Он называется перекрёстная проверка для временных рядов. Обычная перекрёстная проверка плохо работает с временными данными. Почему. Потому что она может использовать будущее для предсказания прошлого.</p>
+            <p>Поясним на примере. Представьте, что мы прогнозируем продажи по месяцам. Обычная перекрёстная проверка может обучить модель на декабре. И проверить на ноябре. Это некорректно. Потому что в реальной задаче мы прогнозируем будущее по прошлому. А не наоборот.</p>
+            <p>Для временных рядов используется другой подход. Он называется проверка с расширяющимся окном. Или проверка на будущее. Идея в том, что модель обучается только на прошлом. И проверяется только на будущем. Причём с сохранением порядка времени.</p>
+            <p>Например, обучаем на первых двух годах. Проверяем на третьем. Затем обучаем на первых трёх годах. Проверяем на четвёртом. И так далее. Это имитирует реальную задачу прогнозирования. И даёт честную оценку.</p>
+
+            <h4>Подбор гиперпараметров: как найти лучшую модель</h4>
+            <p>Теперь перейдём к подбору гиперпараметров. Мы уже говорили о гиперпараметрах в каждом блоке. Теперь разберём общий подход.</p>
+            <p>Дадим определение. Подбор гиперпараметров — это процесс поиска таких значений гиперпараметров, при которых модель показывает лучшее качество. Напомним, что гиперпараметры — это параметры, которые задаются человеком. А не настраиваются моделью. Примеры — глубина дерева, число деревьев, скорость обучения.</p>
+            <p>Проблема в том, что гиперпараметров много. И их комбинаций — ещё больше. Перебрать их все вручную невозможно. Поэтому существуют автоматические методы. Разберём три главных.</p>
+            <p><strong>Поиск по сетке.</strong> Первый метод называется поиск по сетке. По-английски это грид-сёрч. Дадим определение. Поиск по сетке — это метод, при котором задаётся список значений для каждого гиперпараметра. И перебираются все возможные комбинации.</p>
+            <p>Поясним на примере. Представьте, что мы настраиваем случайный лес. Мы задаём число деревьев: сто, двести, триста. И глубину: пять, десять, пятнадцать. Всего девять комбинаций. Для каждой комбинации обучаем модель. И оцениваем качество с помощью перекрёстной проверки. Затем выбираем лучшую.</p>
+            <p>Поиск по сетке — это простой и понятный метод. Но у него есть недостаток. Если гиперпараметров много — число комбинаций растёт очень быстро. Например, если у нас пять гиперпараметров по десять значений — это сто тысяч комбинаций. Перебрать их все невозможно. Поэтому поиск по сетке хорошо работает только с небольшим числом гиперпараметров.</p>
+            <p><strong>Случайный поиск.</strong> Второй метод называется случайный поиск. По-английски это рэндом-сёрч. Дадим определение. Случайный поиск — это метод, при котором значения гиперпараметров выбираются случайно из заданных диапазонов. А не перебираются все комбинации.</p>
+            <p>Поясним на примере. Вместо того чтобы перебирать все комбинации, мы случайно выбираем сто наборов гиперпараметров. И для каждого обучаем модель. Затем выбираем лучший. Это гораздо быстрее, чем поиск по сетке. И часто даёт не худший результат.</p>
+            <p>Интересно, что случайный поиск часто эффективнее поиска по сетке. Это может показаться странным. Но это доказано на практике. Причина в том, что в реальных задачах только несколько гиперпараметров действительно важны. А остальные мало влияют. Случайный поиск чаще «попадает» в хорошие значения важных параметров. И реже тратит время на перебор неважных.</p>
+            <p><strong>Байесовская оптимизация.</strong> Третий метод называется байесовская оптимизация. Это более сложный и более эффективный метод. Дадим определение. Байесовская оптимизация — это метод, при котором алгоритм использует результаты предыдущих испытаний для выбора следующих значений гиперпараметров.</p>
+            <p>Поясним на примере. Сначала мы пробуем несколько случайных наборов. Затем алгоритм строит модель зависимости качества от гиперпараметров. И на основе этой модели выбирает следующий набор. Тот, который с наибольшей вероятностью даст лучшее качество. И так далее. Постепенно алгоритм фокусируется на перспективных областях.</p>
+            <p>Байесовская оптимизация обычно требует меньше испытаний, чем случайный поиск. И даёт лучшее качество. Но она сложнее в реализации. И требует специальных библиотек. Поэтому её используют, когда качество модели критично. И когда время на настройку ограничено.</p>
+
+            <h4>Переобучение и недообучение: как их распознать</h4>
+            <p>Теперь вернёмся к важной теме. Мы уже говорили о переобучении и недообучении. Но теперь разберём, как их распознать на практике.</p>
+            <p>Дадим определения. Переобучение — это ситуация, когда модель хорошо работает на обучающих данных. Но плохо — на новых. Недообучение — это ситуация, когда модель плохо работает и на обучающих, и на новых данных.</p>
+            <p>Как их распознать. Есть простой способ. Нужно сравнить качество на обучающей выборке и на валидационной. Если качество на обучении высокое, а на валидации низкое — это переобучение. Если качество низкое и там, и там — это недообучение.</p>
+            <p><strong>Кривые обучения.</strong> Теперь разберём специальный инструмент для диагностики. Он называется кривые обучения. По-английски это лёрнинг-кёрвз. Дадим определение. Кривая обучения — это график зависимости качества модели от размера обучающей выборки.</p>
+            <p>Поясним на примере. Мы обучаем модель на подвыборках разного размера. Например, на десяти процентах данных. На двадцати процентах. На тридцати. И так далее. И для каждого размера измеряем качество на обучении и на валидации. Затем строим два графика. Один для обучающей выборки. Другой для валидационной.</p>
+            <p>Если кривые сходятся — модель хорошая. Обучающая и валидационная ошибки близки. Если кривые не сходятся — есть проблема. Если обучающая ошибка маленькая, а валидационная большая — переобучение. Если обе ошибки большие — недообучение.</p>
+            <p><strong>Кривые валидации.</strong> Теперь разберём второй инструмент. Он называется кривые валидации. По-английски это вэлидэйшн-кёрвз. Дадим определение. Кривая валидации — это график зависимости качества модели от значения одного гиперпараметра.</p>
+            <p>Поясним на примере. Представьте, что мы настраиваем глубину дерева. Обучаем деревья с разной глубиной. От одного до двадцати. И для каждой глубины измеряем качество на обучении и на валидации. Затем строим два графика. Обучающая ошибка будет монотонно падать с ростом глубины. А валидационная ошибка будет иметь минимум. Этот минимум и есть оптимальная глубина.</p>
+            <p>Кривые валидации очень полезны на практике. Они позволяют увидеть компромисс между сложностью модели и её обобщающей способностью. И выбрать правильное значение гиперпараметра.</p>
+
+            <h4>Утечка данных: главная ловушка оценки</h4>
+            <p>Теперь разберём важную проблему. Она называется утечка данных. По-английски это дэйта-ликидж. Дадим определение. Утечка данных — это ситуация, когда в процессе обучения модели используется информация, которая не должна быть доступна. И это приводит к завышенной оценке качества.</p>
+            <p>Приведём пример. Представьте, что мы предсказываем уход клиента. И в данных есть признак «дата ухода клиента». Этот признак содержит информацию о будущем. Если он попадёт в модель — она будет идеально предсказывать уход. Потому что уже знает ответ. Но на новых данных этого признака не будет. И модель станет бесполезной.</p>
+            <p>Утечка данных — это очень коварная проблема. Она может дать красивые цифры на обучении. И полный провал в реальной работе. Поэтому специалист должен тщательно проверять признаки. И удалять те, которые содержат информацию о будущем.</p>
+            <p><strong>Как избежать утечки.</strong> Есть несколько правил. Первое правило — все преобразования данных должны выполняться только на обучающей выборке. А затем применяться к валидационной и тестовой. Не наоборот.</p>
+            <p>Поясним на примере. Представьте, что мы стандартизируем признаки. Нельзя вычислять среднее и стандартное отклонение на всех данных. Потому что это включает информацию из тестовой выборки. Нужно вычислить их только на обучающей. И использовать для преобразования всех выборок.</p>
+            <p>Второе правило — нельзя смотреть на тестовую выборку во время обучения. Даже для настройки гиперпараметров. Для настройки используется валидационная выборка. А тестовая остаётся «слепой» до самого конца.</p>
+            <p>Третье правило — нужно тщательно проверять признаки на наличие информации о будущем. Особенно при работе с временными данными. Любой признак, который появляется после целевого события, — это потенциальная утечка.</p>
+
+            <h4>Как выбрать финальную модель</h4>
+            <p>Теперь перейдём к главному вопросу. Как выбрать финальную модель из нескольких кандидатов. Мы разберём основные принципы.</p>
+            <p>Первое правило — начинайте с простых моделей. Линейная регрессия, логистическая регрессия, одно дерево — это базовая линия. Сначала постройте их. Затем переходите к более сложным. Сравнивайте сложные модели с базовой линией. Если сложная модель не лучше — она не нужна.</p>
+            <p>Второе правило — смотрите на несколько метрик. Не выбирайте модель по одной цифре. Сравнивайте по совокупности метрик. И по их поведению на разных выборках.</p>
+            <p>Третье правило — учитывайте требования бизнеса. Иногда важна не только точность. Но и скорость предсказания. Или интерпретируемость. Или стоимость обучения. Модель, которая немного точнее, но в десять раз медленнее — не всегда лучший выбор.</p>
+            <p>Четвёртое правило — проверяйте стабильность. Модель должна показывать стабильное качество на разных разбиениях данных. Если качество сильно колеблется — это плохой знак. Особенно на малых данных.</p>
+
+            <h4>Примеры применения по ролям аналитиков</h4>
+            <p><strong>Аналитик данных</strong> использует перекрёстную проверку для сравнения нескольких моделей. Типичная задача — выбрать лучшую модель для прогноза оттока. Он строит три модели. Простую, среднюю и сложную. И сравнивает их с помощью перекрёстной проверки. Затем выбирает ту, которая показывает лучшее качество и при этом проще. Кроме того, аналитик данных использует кривые валидации для настройки гиперпараметров.</p>
+            <p><strong>Финансовый аналитик</strong> использует оценку качества моделей для кредитного скоринга. Типичная задача — проверить, насколько модель устойчива на разных выборках. Он применяет стратифицированную перекрёстную проверку. И смотрит на несколько метрик. Особенно на полноту и площадь под рок-кривой. Кроме того, финансовый аналитик использует кривые обучения для проверки, хватает ли данных.</p>
+            <p><strong>Продуктовый аналитик</strong> использует оценку качества для прогноза удержания. Типичная задача — выбрать между простой и сложной моделью. Он сравнивает их по перекрёстной проверке. И учитывает требования бизнеса. Если разница в качестве небольшая — выбирает простую. Кроме того, продуктовый аналитик использует оценку качества для проверки стабильности модели во времени.</p>
+            <p><strong>Веб-аналитик</strong> использует оценку качества для прогноза конверсии. Типичная задача — сравнить несколько моделей. Он использует перекрёстную проверку. И смотрит на площадь под рок-кривой. Потому что эта метрика не зависит от порога. Кроме того, веб-аналитик использует оценку качества для проверки утечек данных.</p>
+            <p><strong>Специалист по аналитике бизнес-данных</strong> использует оценку качества для выбора модели для дашбордов. Типичная задача — обеспечить стабильность прогнозов. Он использует перекрёстную проверку и проверку на разных периодах. И выбирает модель с самым стабильным качеством. Кроме того, такой специалист использует оценку качества для проверки аномалий.</p>
+            <p><strong>Аналитик больших данных</strong> использует оценку качества для выбора модели из нескольких кандидатов. Типичная задача — сравнить десятки моделей. Он использует случайный поиск для настройки гиперпараметров. И перекрёстную проверку для оценки. Кроме того, аналитик больших данных использует оценку качества для контроля переобучения.</p>
+            <p><strong>Маркетинговый аналитик</strong> использует оценку качества для выбора модели таргетинга. Типичная задача — выбрать модель, которая лучше всего ранжирует клиентов по вероятности покупки. Он использует площадь под рок-кривой. И оценивает не только качество, но и бизнес-эффект. Кроме того, маркетинговый аналитик использует оценку качества для проверки на разных сегментах.</p>
+            <p><strong>Бизнес-аналитик</strong> использует оценку качества для прогноза успеха проектов. Типичная задача — выбрать модель, которая даёт понятные и обоснованные прогнозы. Он использует не только метрики, но и анализ ошибок. Кроме того, бизнес-аналитик использует оценку качества для обоснования решений.</p>
+            <p><strong>Системный аналитик</strong> использует оценку качества для прогноза сбоев. Типичная задача — выбрать модель с высокой полнотой. Потому что пропустить сбой дороже, чем допустить ложную тревогу. Он использует метрику полноты и площадь под рок-кривой. Кроме того, системный аналитик использует оценку качества для проверки на разных типах сбоев.</p>
+            <p><strong>Специалист по анализу пользовательского опыта</strong> использует оценку качества для прогноза удовлетворённости. Типичная задача — выбрать модель, которая хорошо объясняет поведение пользователей. Он использует не только метрики, но и анализ важности признаков. Кроме того, такой специалист использует оценку качества для проверки на разных группах пользователей.</p>
+
+            <h4>Подведём итог блока</h4>
+            <p>Давайте соберём всё вместе. Мы разобрали оценку качества моделей и выбор алгоритма. Мы увидели, почему одной метрики недостаточно. Мы разобрали перекрёстную проверку. Это главный инструмент оценки. Она даёт стабильную и честную оценку качества. Мы разобрали стратифицированную проверку и проверку для временных рядов. Мы разобрали подбор гиперпараметров. Это поиск по сетке, случайный поиск и байесовская оптимизация. Мы разобрали, как распознать переобучение и недообучение с помощью кривых обучения и кривых валидации. Мы разобрали проблему утечки данных и способы её избежать. И наконец, увидели конкретные примеры применения в работе разных аналитиков.</p>
+            <p>Запомните главное. Оценка качества — это не формальность. Это защита от самообмана. Специалист по данным должен уметь честно оценивать свою модель. А не подгонять оценку под желаемый результат. И это требует дисциплины. И понимания методологии.</p>
+            <p>Кроме того, выбор финальной модели — это не только вопрос метрик. Это компромисс между качеством, скоростью, интерпретируемостью и стоимостью. И этот компромисс зависит от задачи. И от требований бизнеса. Специалист по данным должен уметь обосновать свой выбор. А не просто сказать «эта модель точнее».</p>
+
+            <!-- СЛОВАРЬ ТЕРМИНОВ -->
+            <div class="dark-block">
+                <div class="dark-block-title">📖 Словарь терминов и аббревиатур</div>
+                <table class="dark-table">
+                    <thead><tr><th style="width:22%;">Термин</th><th style="width:30%;">Расшифровка</th><th>Пояснение</th></tr></thead>
+                    <tbody>
+                        <tr><td class="term">Перекрёстная проверка</td><td>Cross-Validation</td><td>Оценка на нескольких разбиениях данных</td></tr>
+                        <tr><td class="term">K-Fold</td><td>K-Fold CV</td><td>Разбиение на K блоков</td></tr>
+                        <tr><td class="term">Стратифицированная CV</td><td>Stratified CV</td><td>С сохранением пропорции классов</td></tr>
+                        <tr><td class="term">Time Series CV</td><td>Time Series CV</td><td>Для временных рядов, расширяющееся окно</td></tr>
+                        <tr><td class="term">Гиперпараметр</td><td>Hyperparameter</td><td>Параметр, задаваемый человеком</td></tr>
+                        <tr><td class="term">Grid Search</td><td>Grid Search</td><td>Перебор всех комбинаций</td></tr>
+                        <tr><td class="term">Random Search</td><td>Random Search</td><td>Случайные комбинации</td></tr>
+                        <tr><td class="term">Bayesian Optimization</td><td>Bayesian Optimization</td><td>Умный поиск на основе истории</td></tr>
+                        <tr><td class="term">Кривые обучения</td><td>Learning Curves</td><td>Зависимость от размера выборки</td></tr>
+                        <tr><td class="term">Кривые валидации</td><td>Validation Curves</td><td>Зависимость от гиперпараметра</td></tr>
+                        <tr><td class="term">Переобучение</td><td>Overfitting</td><td>Хорошо на train, плохо на новых</td></tr>
+                        <tr><td class="term">Недообучение</td><td>Underfitting</td><td>Плохо и на train, и на новых</td></tr>
+                        <tr><td class="term">Утечка данных</td><td>Data Leakage</td><td>Использование информации из будущего</td></tr>
+                        <tr><td class="term">Baseline</td><td>Baseline</td><td>Простейшая модель для сравнения</td></tr>
+                        <tr><td class="term">Hold-out</td><td>Hold-out</td><td>Отложенная выборка</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function changeVideo(embedUrl) {
+            document.getElementById('lecture-player').src = embedUrl;
+        }
+    </script>
+
+   <!-- НАВИГАЦИЯ МЕЖДУ ЛЕКЦИЯМИ -->
+<nav class="lecture-nav" id="lectureNav">
+    <div class="nav-progress" id="navProgress" style="width: 0%;"></div>
+    <a href="Лекция (N-1).html" class="nav-btn-arrow" id="prevBtn">
+        <span class="arrow-icon">←</span>
+        <span class="arrow-label">
+            <small>Назад</small>
+            <span class="arrow-title" id="prevTitle">Лекция (N-1)</span>
+        </span>
+    </a>
+    <div class="nav-center">
+        <div class="nav-counter">Лекция <span id="currentNum">N</span> <span>из 21</span></div>
+        <a href="index.html" class="nav-index-link">📚 К содержанию</a>
+    </div>
+    <a href="Лекция (N+1).html" class="nav-btn-arrow" id="nextBtn">
+        <span class="arrow-label" style="align-items: flex-end;">
+            <small>Вперёд</small>
+            <span class="arrow-title" id="nextTitle">Лекция (N+1)</span>
+        </span>
+        <span class="arrow-icon">→</span>
+    </a>
+</nav>
+
+
+
+<script>
+(function () {
+    'use strict';
+
+    const TOTAL_LECTURES = 21;
+    const totalDurationMs = (28 * 60 + 30) * 1000;
+    const autoNextDelayMs = 2000;
+    const AUTOSTART_PARAM = 'autostart';
+
+    const fileName = decodeURIComponent(location.pathname.split('/').pop() || '');
+    let currentLecture = 19;
+    const match = fileName.match(/Лекция\s*(\d+)\.html/i);
+    if (match) {
+        currentLecture = parseInt(match[1], 10);
+    } else {
+        const el = document.getElementById('currentNum');
+        if (el) currentLecture = parseInt(el.textContent, 10) || 19;
+    }
+    if (isNaN(currentLecture) || currentLecture < 1) currentLecture = 1;
+    if (currentLecture > TOTAL_LECTURES) currentLecture = TOTAL_LECTURES;
+
+    const prev = currentLecture > 1 ? currentLecture - 1 : null;
+    const next = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+
+    const currentNumEl = document.getElementById('currentNum');
+    if (currentNumEl) currentNumEl.textContent = currentLecture;
+
+    const navProgress = document.getElementById('navProgress');
+    if (navProgress) {
+        navProgress.style.width = (currentLecture / TOTAL_LECTURES * 100) + '%';
+    }
+
+    const prevBtn = document.getElementById('prevBtn');
+    if (prevBtn) {
+        if (prev) {
+            prevBtn.href = 'Лекция ' + prev + '.html';
+            const t = document.getElementById('prevTitle');
+            if (t) t.textContent = 'Лекция ' + prev;
+            prevBtn.style.opacity = '1';
+            prevBtn.style.cursor = 'pointer';
+            prevBtn.onclick = null;
+        } else {
+            prevBtn.removeAttribute('href');
+            prevBtn.style.opacity = '0.35';
+            prevBtn.style.cursor = 'not-allowed';
+            prevBtn.onclick = (e) => e.preventDefault();
+            const t = document.getElementById('prevTitle');
+            if (t) t.textContent = 'Это первая лекция';
+        }
+    }
+
+    const nextBtn = document.getElementById('nextBtn');
+    if (nextBtn) {
+        if (next) {
+            nextBtn.href = 'Лекция ' + next + '.html';
+            const t = document.getElementById('nextTitle');
+            if (t) t.textContent = 'Лекция ' + next;
+            nextBtn.style.opacity = '1';
+            nextBtn.style.cursor = 'pointer';
+            nextBtn.onclick = null;
+        } else {
+            nextBtn.removeAttribute('href');
+            nextBtn.style.opacity = '0.35';
+            nextBtn.style.cursor = 'not-allowed';
+            nextBtn.onclick = (e) => e.preventDefault();
+            const t = document.getElementById('nextTitle');
+            if (t) t.textContent = 'Это последняя лекция';
+        }
+    }
+
+    document.addEventListener('keydown', (e) => {
+        const tag = e.target && e.target.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        if (e.key === 'ArrowLeft' && prev) window.location.href = 'Лекция ' + prev + '.html';
+        else if (e.key === 'ArrowRight' && next) window.location.href = 'Лекция ' + next + '.html';
+        else if (e.key === 'Home') window.location.href = 'index.html';
+    });
+
+    function initScroll() {
+        const studentBlock = document.querySelector('.student-view');
+        const speakerBlock = document.querySelector('.speaker-notes');
+        const badge = document.getElementById('scroll-status-badge');
+        const audio = document.getElementById('lecture-audio');
+        if (!studentBlock || !speakerBlock) return;
+
+        const studentBehavior = studentBlock.style.scrollBehavior;
+        const speakerBehavior = speakerBlock.style.scrollBehavior;
+        let isRunning = false, completed = false, pausedElapsed = 0, startedAt = 0, rafId = null;
+        let startS = 0, startP = 0, maxS = 0, maxP = 0;
+
+        function setBadge(text, color) { if (!badge) return; badge.style.display = 'block'; badge.textContent = text; badge.style.borderColor = color; }
+        function measure() { maxS = Math.max(studentBlock.scrollHeight - studentBlock.clientHeight, 0); maxP = Math.max(speakerBlock.scrollHeight - speakerBlock.clientHeight, 0); }
+        function fmt(ms) { const m = Math.floor(ms / 60000); const s = Math.floor((ms % 60000) / 1000); return m + ':' + String(s).padStart(2, '0'); }
+        function playAudio() { if (!audio) return; const p = audio.play(); if (p && typeof p.catch === 'function') { p.catch(err => { console.warn('[AutoAudio]', err.message); setBadge('▶ ИДЕТ ПРОКРУТКА (звук заблокирован)', '#eab308'); }); } }
+        function pauseAudio() { if (audio) try { audio.pause(); } catch (_) {} }
+        function resetAudio() { if (audio) try { audio.pause(); audio.currentTime = 0; } catch (_) {} }
+
+        function animate() {
+            if (!isRunning) return;
+            const elapsed = pausedElapsed + (performance.now() - startedAt);
+            const fraction = Math.min(elapsed / totalDurationMs, 1);
+            measure();
+            studentBlock.scrollTop = startS + (maxS - startS) * fraction;
+            speakerBlock.scrollTop = startP + (maxP - startP) * fraction;
+            if (badge) { badge.textContent = '▶ ' + fmt(elapsed) + ' / ' + fmt(totalDurationMs); badge.style.borderColor = '#16a34a'; }
+            if (fraction >= 1) { finish(); return; }
+            rafId = requestAnimationFrame(animate);
+        }
+
+        function startOrResume() {
+            if (completed) { pausedElapsed = 0; completed = false; studentBlock.scrollTop = 0; speakerBlock.scrollTop = 0; resetAudio(); }
+            measure(); startS = studentBlock.scrollTop; startP = speakerBlock.scrollTop;
+            startedAt = performance.now(); isRunning = true;
+            studentBlock.style.scrollBehavior = 'auto'; speakerBlock.style.scrollBehavior = 'auto';
+            cancelAnimationFrame(rafId); rafId = requestAnimationFrame(animate);
+            playAudio();
+        }
+        function pause() {
+            if (isRunning) pausedElapsed += performance.now() - startedAt;
+            isRunning = false; cancelAnimationFrame(rafId);
+            setBadge('⏸ ПАУЗА ' + fmt(pausedElapsed), '#dc2626');
+            studentBlock.style.scrollBehavior = studentBehavior; speakerBlock.style.scrollBehavior = speakerBehavior;
+            pauseAudio();
+        }
+        function finish() {
+            isRunning = false; completed = true; cancelAnimationFrame(rafId);
+            measure(); studentBlock.scrollTop = maxS; speakerBlock.scrollTop = maxP;
+            studentBlock.style.scrollBehavior = studentBehavior; speakerBlock.style.scrollBehavior = speakerBehavior;
+            const nextLec = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+            if (nextLec) {
+                setBadge('✅ ГОТОВО → Лекция ' + nextLec, '#16a34a');
+                setTimeout(() => { location.href = 'Лекция ' + nextLec + '.html?' + AUTOSTART_PARAM + '=1'; }, autoNextDelayMs);
+            } else {
+                setBadge('✅ КУРС ЗАВЕРШЕН', '#16a34a');
+                pauseAudio();
+            }
+        }
+        function toggle() { isRunning ? pause() : startOrResume(); }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.repeat) return;
+            const t = e.target; const tag = t && t.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+            if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); toggle(); }
+        }, true);
+
+        if (badge) badge.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+        [studentBlock, speakerBlock].forEach(el => {
+            el.addEventListener('click', (e) => {
+                if (e.target.closest('a,button,iframe,input,textarea,select,video,audio')) return;
+                if (window.getSelection().toString().length > 0) return;
+                toggle();
+            });
+        });
+
+        const params = new URLSearchParams(location.search);
+        if (params.get(AUTOSTART_PARAM) === '1') {
+            params.delete(AUTOSTART_PARAM);
+            const clean = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
+            history.replaceState(null, '', clean);
+            setTimeout(startOrResume, 500);
+        } else { setBadge('▶ ПРОБЕЛ / КЛИК — старт', '#4a5568'); }
+    }
+
+    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initScroll, { once: true }); }
+    else { initScroll(); }
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лекция 11. Сбор требований и коммуникация с бизнесом</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #ffffff; }
+
+        .student-view { width: 66.66%; height: 100vh; background: #ffffff; padding: 35px 40px; display: flex; flex-direction: column; justify-content: space-between; border-right: 2px solid #e2e8f0; overflow-y: auto; scroll-behavior: smooth; }
+        .speaker-notes { width: 33.34%; height: 100%; background: #1a202c; color: #edf2f7; padding: 30px; overflow-y: auto; }
+
+        .slide-header { font-size: 24px; color: #1a365d; font-weight: bold; line-height: 1.3; margin-bottom: 18px; border-bottom: 4px solid #3182ce; padding-bottom: 12px; }
+        .slide-body { flex-grow: 1; display: flex; flex-direction: column; gap: 18px; padding: 5px 0; }
+        .slide-footer { font-size: 13px; color: #a0aec0; text-align: right; margin-top: 12px; }
+
+        .chart-box { background: #f7fafc; border: 2.5px dashed #cbd5e0; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .chart-box strong { font-size: 16px; display: block; margin-bottom: 6px; }
+        .chart-box p { font-size: 13px; color: #4a5568; line-height: 1.45; }
+
+        .viz-card { background: #ffffff; border: 2px solid #e2e8f0; border-radius: 12px; padding: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.04); }
+        .viz-title { font-size: 14px; font-weight: bold; color: #1a365d; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .viz-caption { font-size: 11.5px; color: #4a5568; margin-top: 8px; line-height: 1.45; }
+        .viz-caption strong { color: #2d3748; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+
+        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .stat-box { border-radius: 10px; padding: 14px; text-align: center; border: 2px solid; }
+        .stat-box .stat-icon { font-size: 26px; }
+        .stat-box .stat-number { font-size: 13px; font-weight: 900; margin-top: 4px; }
+        .stat-box .stat-label { font-size: 10.5px; color: #4a5568; margin-top: 2px; line-height: 1.3; }
+        .stat-box.s1 { background: #ebf8ff; border-color: #90cdf4; }
+        .stat-box.s1 .stat-number { color: #2b6cb0; }
+        .stat-box.s2 { background: #fffaf0; border-color: #fbd38d; }
+        .stat-box.s2 .stat-number { color: #975a16; }
+        .stat-box.s3 { background: #f0fff4; border-color: #9ae6b4; }
+        .stat-box.s3 .stat-number { color: #276749; }
+        .stat-box.s4 { background: #faf5ff; border-color: #d6bcfa; }
+        .stat-box.s4 .stat-number { color: #553c9a; }
+        .stat-box.s5 { background: #fff5f5; border-color: #fc8181; }
+        .stat-box.s5 .stat-number { color: #9b2c2c; }
+
+        .formula-box { background: linear-gradient(135deg, #1a202c, #2d3748); color: #edf2f7; padding: 16px 20px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .formula-main { font-family: 'Courier New', monospace; font-size: 14px; letter-spacing: 0.5px; color: #90cdf4; }
+        .formula-example { font-size: 11.5px; color: #cbd5e0; margin-top: 8px; line-height: 1.5; }
+
+        .tag { display: inline-block; background: #ebf8ff; color: #2b6cb0; padding: 2px 7px; border-radius: 4px; font-size: 11px; margin: 2px 2px 2px 0; font-weight: 500; }
+        .tag.green { background: #f0fff4; color: #276749; }
+        .tag.red { background: #fff5f5; color: #9b2c2c; }
+        .tag.orange { background: #fffaf0; color: #975a16; }
+        .tag.purple { background: #faf5ff; color: #553c9a; }
+
+        .callout { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 6px; }
+        .callout strong { color: #92400e; font-size: 13px; }
+        .callout p { font-size: 12px; color: #78350f; margin-top: 4px; line-height: 1.45; }
+        .callout.warn { background: #fff5f5; border-left-color: #e53e3e; }
+        .callout.warn strong { color: #9b2c2c; }
+        .callout.warn p { color: #742a2a; }
+        .callout.ok { background: #f0fff4; border-left-color: #38a169; }
+        .callout.ok strong { color: #276749; }
+        .callout.ok p { color: #22543d; }
+
+        .compare-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .compare-table th { background: #1a365d; color: white; padding: 9px 11px; text-align: left; font-weight: 600; }
+        .compare-table td { padding: 8px 11px; border-bottom: 1px solid #e2e8f0; color: #2d3748; vertical-align: top; }
+        .compare-table tr:nth-child(even) td { background: #f7fafc; }
+
+        .role-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+        .role-table th { background: #1a365d; color: white; padding: 8px 10px; text-align: left; font-weight: 600; }
+        .role-table td { padding: 7px 10px; border-bottom: 1px solid #e2e8f0; color: #2d3748; vertical-align: top; }
+        .role-table tr:nth-child(even) td { background: #f7fafc; }
+        .role-table .role-emoji { font-size: 16px; }
+
+        .axis { stroke: #4a5568; stroke-width: 1.5; }
+        .grid-line { stroke: #e2e8f0; stroke-width: 0.8; }
+        .label { font-family: 'Segoe UI', sans-serif; font-size: 11px; fill: #4a5568; }
+        .label-strong { font-family: 'Segoe UI', sans-serif; font-size: 12px; font-weight: 700; fill: #1a365d; }
+        .label-small { font-family: 'Segoe UI', sans-serif; font-size: 9.5px; fill: #718096; }
+        .label-tiny { font-family: 'Segoe UI', sans-serif; font-size: 8.5px; fill: #718096; }
+        .label-white { font-family: 'Segoe UI', sans-serif; font-size: 10.5px; fill: #ffffff; font-weight: 600; }
+        .label-white-sm { font-family: 'Segoe UI', sans-serif; font-size: 8.5px; fill: #ffffff; opacity: 0.9; }
+
+        .step-card { background: #ffffff; border: 2px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; }
+        .step-card .step-num { display: inline-block; width: 26px; height: 26px; border-radius: 50%; background: #3182ce; color: white; font-weight: bold; text-align: center; line-height: 26px; font-size: 13px; margin-bottom: 6px; }
+        .step-card h5 { font-size: 12.5px; color: #1a365d; margin-bottom: 4px; }
+        .step-card p { font-size: 11px; color: #4a5568; line-height: 1.4; }
+
+        .video-section { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 5px; }
+        .video-container { width: 100%; max-width: 580px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: #000; aspect-ratio: 16 / 9; }
+        .links-hub { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .video-btn { text-decoration: none; padding: 9px 14px; border-radius: 6px; font-size: 12px; font-weight: bold; color: white; display: flex; align-items: center; gap: 6px; transition: transform 0.2s, background 0.2s; cursor: pointer; border: none; }
+        .video-btn:hover { transform: translateY(-2px); }
+        .rt-btn { background: #00a877; }
+        .rt-btn:hover { background: #008f65; }
+        .stop-btn { background: #dc143c; }
+        .stop-btn:hover { background: #b01030; }
+
+        .notes-header { font-size: 17px; color: #63b3ed; font-weight: bold; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a5568; padding-bottom: 10px; }
+        .lecture-text { font-size: 14.5px; line-height: 1.65; color: #e2e8f0; text-align: justify; }
+        .lecture-text p { margin-bottom: 14px; }
+        .lecture-text h3 { color: #63b3ed; font-size: 15px; margin: 18px 0 10px; border-bottom: 1px solid #2d3748; padding-bottom: 5px; }
+        .lecture-text h4 { color: #90cdf4; font-size: 13.5px; margin: 14px 0 8px; }
+        .lecture-text ul { margin: 8px 0 14px 18px; }
+        .lecture-text li { margin-bottom: 6px; }
+
+        .dark-block { background: #2d3748; border: 1px solid #4a5568; border-radius: 10px; padding: 16px 18px; margin-top: 20px; }
+        .dark-block-title { font-size: 14px; font-weight: bold; color: #63b3ed; margin-bottom: 12px; border-bottom: 2px solid #4a5568; padding-bottom: 8px; }
+        .dark-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+        .dark-table th { background: #1a202c; color: #90cdf4; padding: 7px 9px; text-align: left; font-weight: 600; border-bottom: 1px solid #4a5568; }
+        .dark-table td { padding: 6px 9px; border-bottom: 1px solid #2d3748; color: #cbd5e0; vertical-align: top; line-height: 1.4; }
+        .dark-table tr:nth-child(even) td { background: #2a3242; }
+        .dark-table .term { font-weight: bold; color: #90cdf4; white-space: nowrap; }
+        .dark-block ol { margin: 0 0 12px 18px; padding: 0; font-size: 12px; color: #cbd5e0; line-height: 1.5; }
+        .dark-block ol li { margin-bottom: 5px; }
+        .dark-block .src-group { font-weight: bold; color: #fbd38d; font-size: 12px; margin: 12px 0 6px; }
+
+        .lecture-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(12px); border-top: 2px solid rgba(255, 255, 255, 0.08); padding: 12px 20px; display: flex; align-items: center; justify-content: center; gap: 12px; z-index: 9999; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25); font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .lecture-nav .nav-progress { position: absolute; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899); border-radius: 0 3px 3px 0; }
+        .lecture-nav .nav-btn-arrow { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); border: 1.5px solid rgba(255, 255, 255, 0.15); color: #e2e8f0; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; font-family: inherit; }
+        .lecture-nav .nav-btn-arrow:hover:not(:disabled) { background: rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.6); color: white; transform: translateY(-2px); }
+        .lecture-nav .nav-btn-arrow:disabled { opacity: 0.35; cursor: not-allowed; }
+        .lecture-nav .nav-btn-arrow .arrow-icon { font-size: 16px; line-height: 1; }
+        .lecture-nav .nav-btn-arrow .arrow-label { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+        .lecture-nav .nav-btn-arrow .arrow-label small { font-size: 9.5px; font-weight: 400; opacity: 0.7; text-transform: uppercase; }
+        .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { font-size: 12px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lecture-nav .nav-center { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 20px; color: #94a3b8; font-size: 11px; border-left: 1px solid rgba(255, 255, 255, 0.1); border-right: 1px solid rgba(255, 255, 255, 0.1); }
+        .lecture-nav .nav-counter { font-size: 15px; font-weight: 900; color: #f1f5f9; }
+        .lecture-nav .nav-counter span { color: #64748b; font-size: 12px; font-weight: 600; }
+        .lecture-nav .nav-index-link { color: #60a5fa; text-decoration: none; font-size: 11px; font-weight: 600; }
+        .lecture-nav .nav-index-link:hover { color: #93c5fd; text-decoration: underline; }
+        body { padding-bottom: 80px !important; }
+        @media (max-width: 900px) {
+            .lecture-nav { padding: 10px 12px; gap: 8px; }
+            .lecture-nav .nav-btn-arrow { padding: 8px 12px; }
+            .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { max-width: 90px; font-size: 11px; }
+            .grid-2, .grid-3, .grid-4, .stat-grid { grid-template-columns: 1fr; }
+        }
+
+        @keyframes pulseDot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .pulse-dot { animation: pulseDot 2s ease-in-out infinite; }
+    </style>
+</head>
+<body>
+
+    <!-- ЛЕВАЯ ПАНЕЛЬ -->
+    <div class="student-view">
+        <div class="slide-header">
+            Лекция 11. Сбор требований и коммуникация с бизнесом
+        </div>
+
+        <div class="slide-body">
+
+            <!-- HERO -->
+            <div class="chart-box" style="background: #faf5ff; border-color: #d6bcfa;">
+                <strong style="color: #553c9a;">🎯 Главная идея</strong>
+                <p>Аналитик работает не в вакууме. Он решает задачи бизнеса. И если он неправильно понял задачу — даже самый лучший анализ бесполезен. <strong>Коммуникация — это не мягкий навык, а профессиональный</strong>. Такой же важный, как статистика или Python. Без неё аналитик остаётся исполнителем. С ней — становится <strong>партнёром бизнеса</strong>.</p>
+            </div>
+
+            <!-- КЛЮЧЕВЫЕ ЦИФРЫ -->
+            <div class="stat-grid">
+                <div class="stat-box s1"><div class="stat-icon">❓</div><div class="stat-number">5 почему</div><div class="stat-label">метод поиска корневой причины</div></div>
+                <div class="stat-box s2"><div class="stat-icon">🌳</div><div class="stat-number">дерево</div><div class="stat-label">проблем → декомпозиция</div></div>
+                <div class="stat-box s3"><div class="stat-icon">📊</div><div class="stat-number">5 вопросов</div><div class="stat-label">перед началом анализа</div></div>
+                <div class="stat-box s4"><div class="stat-icon">👥</div><div class="stat-number">3 стороны</div><div class="stat-label">аналитик · заказчик · команда</div></div>
+                <div class="stat-box s5"><div class="stat-icon">🎤</div><div class="stat-number">6 шагов</div><div class="stat-label">презентации результата</div></div>
+                <div class="stat-box s1"><div class="stat-icon">⚠️</div><div class="stat-number">4 конфликта</div><div class="stat-label">типичные ловушки</div></div>
+            </div>
+
+            <!-- ФОРМУЛА -->
+            <div class="formula-box">
+                <div class="formula-main">Бизнес-проблема → 5 почему → аналитическая задача → данные → результат → решение</div>
+                <div class="formula-example">Хороший анализ начинается с правильного вопроса, а не с инструмента</div>
+            </div>
+
+            <!-- БЛОК 1: 5 ПОЧЕМУ -->
+            <div class="viz-card">
+                <div class="viz-title">❓ Блок 1. Метод пяти почему: как докопаться до корневой причины</div>
+                <svg viewBox="0 0 540 340" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="340" fill="#ffffff"/>
+
+                    <!-- Level 1 -->
+                    <rect x="140" y="15" width="260" height="42" rx="8" fill="#ebf8ff" stroke="#3182ce" stroke-width="2"/>
+                    <text x="270" y="32" text-anchor="middle" class="label-strong" fill="#2b6cb0">«Упали продажи»</text>
+                    <text x="270" y="48" text-anchor="middle" class="label-tiny">симптом, а не причина</text>
+
+                    <line x1="270" y1="57" x2="270" y2="75" stroke="#3182ce" stroke-width="2"/>
+                    <polygon points="270,75 265,69 275,69" fill="#3182ce"/>
+
+                    <!-- Level 2 -->
+                    <rect x="140" y="80" width="260" height="38" rx="8" fill="#f0fff4" stroke="#38a169" stroke-width="2"/>
+                    <text x="270" y="97" text-anchor="middle" class="label-small" style="font-weight: bold;">Почему?</text>
+                    <text x="270" y="110" text-anchor="middle" class="label-small">→ стало меньше клиентов</text>
+
+                    <line x1="270" y1="118" x2="270" y2="136" stroke="#3182ce" stroke-width="2"/>
+                    <polygon points="270,136 265,130 275,130" fill="#3182ce"/>
+
+                    <!-- Level 3 -->
+                    <rect x="140" y="141" width="260" height="38" rx="8" fill="#fffaf0" stroke="#d69e2e" stroke-width="2"/>
+                    <text x="270" y="158" text-anchor="middle" class="label-small" style="font-weight: bold;">Почему?</text>
+                    <text x="270" y="171" text-anchor="middle" class="label-small">→ вырос отток клиентов</text>
+
+                    <line x1="270" y1="179" x2="270" y2="197" stroke="#3182ce" stroke-width="2"/>
+                    <polygon points="270,197 265,191 275,191" fill="#3182ce"/>
+
+                    <!-- Level 4 -->
+                    <rect x="140" y="202" width="260" height="38" rx="8" fill="#fff5f5" stroke="#e53e3e" stroke-width="2"/>
+                    <text x="270" y="219" text-anchor="middle" class="label-small" style="font-weight: bold;">Почему?</text>
+                    <text x="270" y="232" text-anchor="middle" class="label-small">→ клиенты недовольны доставкой</text>
+
+                    <line x1="270" y1="240" x2="270" y2="258" stroke="#3182ce" stroke-width="2"/>
+                    <polygon points="270,258 265,252 275,252" fill="#3182ce"/>
+
+                    <!-- Level 5 -->
+                    <rect x="140" y="263" width="260" height="38" rx="8" fill="#faf5ff" stroke="#805ad5" stroke-width="2"/>
+                    <text x="270" y="280" text-anchor="middle" class="label-small" style="font-weight: bold;">Почему?</text>
+                    <text x="270" y="293" text-anchor="middle" class="label-small">→ сменился логистический партнёр</text>
+
+                    <!-- Root cause badge -->
+                    <rect x="140" y="310" width="260" height="22" rx="6" fill="#38a169" class="pulse-dot"/>
+                    <text x="270" y="325" text-anchor="middle" class="label-white">🎯 КОРНЕВАЯ ПРИЧИНА</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>5 почему</strong> — не останавливаться на первом ответе. Задать вопрос «почему» пять раз подряд. Каждый раз углубляясь. Дойти до корневой причины. Если бы аналитик сразу начал анализировать «продажи», он бы не увидел <strong>логистического партнёра</strong>.
+                </div>
+            </div>
+
+            <!-- БЛОК 2: ДЕРЕВО ПРОБЛЕМ -->
+            <div class="viz-card">
+                <div class="viz-title">🌳 Дерево проблем: от симптома к проверяемым вопросам</div>
+                <svg viewBox="0 0 540 360" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="360" fill="#ffffff"/>
+
+                    <!-- Root -->
+                    <rect x="205" y="10" width="130" height="40" rx="8" fill="#e53e3e"/>
+                    <text x="270" y="28" text-anchor="middle" class="label-white" style="font-size: 12px;">Упала выручка</text>
+                    <text x="270" y="42" text-anchor="middle" class="label-white-sm">корень</text>
+
+                    <!-- Level 2 -->
+                    <line x1="270" y1="50" x2="90"  y2="95" stroke="#a0aec0" stroke-width="2"/>
+                    <line x1="270" y1="50" x2="270" y2="95" stroke="#a0aec0" stroke-width="2"/>
+                    <line x1="270" y1="50" x2="450" y2="95" stroke="#a0aec0" stroke-width="2"/>
+
+                    <rect x="20"  y="95" width="140" height="40" rx="6" fill="#3182ce"/>
+                    <text x="90"  y="112" text-anchor="middle" class="label-white-sm">Меньше заказов</text>
+                    <text x="90"  y="126" text-anchor="middle" class="label-white-sm">(количество)</text>
+
+                    <rect x="200" y="95" width="140" height="40" rx="6" fill="#3182ce"/>
+                    <text x="270" y="112" text-anchor="middle" class="label-white-sm">Упал средний чек</text>
+                    <text x="270" y="126" text-anchor="middle" class="label-white-sm">(сумма)</text>
+
+                    <rect x="380" y="95" width="140" height="40" rx="6" fill="#3182ce"/>
+                    <text x="450" y="112" text-anchor="middle" class="label-white-sm">Упала конверсия</text>
+                    <text x="450" y="126" text-anchor="middle" class="label-white-sm">(воронка)</text>
+
+                    <!-- Level 3 -->
+                    <line x1="90"  y1="135" x2="50"  y2="180" stroke="#a0aec0" stroke-width="1.5"/>
+                    <line x1="90"  y1="135" x2="130" y2="180" stroke="#a0aec0" stroke-width="1.5"/>
+                    <line x1="270" y1="135" x2="230" y2="180" stroke="#a0aec0" stroke-width="1.5"/>
+                    <line x1="270" y1="135" x2="310" y2="180" stroke="#a0aec0" stroke-width="1.5"/>
+                    <line x1="450" y1="135" x2="410" y2="180" stroke="#a0aec0" stroke-width="1.5"/>
+                    <line x1="450" y1="135" x2="490" y2="180" stroke="#a0aec0" stroke-width="1.5"/>
+
+                    <rect x="10"  y="180" width="80" height="34" rx="5" fill="#ebf8ff" stroke="#3182ce"/>
+                    <text x="50"  y="200" text-anchor="middle" class="label-tiny">меньше новых</text>
+
+                    <rect x="100" y="180" width="80" height="34" rx="5" fill="#ebf8ff" stroke="#3182ce"/>
+                    <text x="140" y="200" text-anchor="middle" class="label-tiny">вырос отток</text>
+
+                    <rect x="190" y="180" width="80" height="34" rx="5" fill="#ebf8ff" stroke="#3182ce"/>
+                    <text x="230" y="200" text-anchor="middle" class="label-tiny">меньше товаров</text>
+
+                    <rect x="280" y="180" width="80" height="34" rx="5" fill="#ebf8ff" stroke="#3182ce"/>
+                    <text x="320" y="200" text-anchor="middle" class="label-tiny">дешевле товары</text>
+
+                    <rect x="370" y="180" width="80" height="34" rx="5" fill="#ebf8ff" stroke="#3182ce"/>
+                    <text x="410" y="200" text-anchor="middle" class="label-tiny">упала на сайте</text>
+
+                    <rect x="460" y="180" width="70" height="34" rx="5" fill="#ebf8ff" stroke="#3182ce"/>
+                    <text x="495" y="200" text-anchor="middle" class="label-tiny">упала в прил.</text>
+
+                    <!-- Leaf level: questions -->
+                    <rect x="20" y="250" width="500" height="100" rx="10" fill="#f0fff4" stroke="#38a169" stroke-width="2" stroke-dasharray="4 3"/>
+                    <text x="270" y="272" text-anchor="middle" class="label-strong" fill="#276749">Листья = конкретные вопросы к данным</text>
+                    <text x="270" y="292" text-anchor="middle" class="label-small">• Как изменилось число новых клиентов по месяцам?</text>
+                    <text x="270" y="308" text-anchor="middle" class="label-small">• Как изменился средний чек по категориям?</text>
+                    <text x="270" y="324" text-anchor="middle" class="label-small">• Как изменилась конверсия по источникам трафика?</text>
+                    <text x="270" y="340" text-anchor="middle" class="label-small">• Какие сегменты уходят чаще?</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Дерево проблем</strong> — визуальный инструмент. Разложить большую проблему на части. От корня к ветвям. От ветвей к листьям. Каждый лист — это <strong>конкретный вопрос, на который можно ответить данными</strong>. Дерево помогает не упустить детали и объяснить бизнесу, какие данные нужны.
+                </div>
+            </div>
+
+            <!-- БЛОК 3: МОСТ -->
+            <div class="viz-card">
+                <div class="viz-title">🌉 Блок 2. От бизнес-вопроса к аналитической задаче: пять уточнений</div>
+                <svg viewBox="0 0 540 260" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="260" fill="#ffffff"/>
+
+                    <!-- Business question -->
+                    <rect x="20" y="15" width="200" height="60" rx="8" fill="#ebf8ff" stroke="#3182ce" stroke-width="2"/>
+                    <text x="120" y="35" text-anchor="middle" class="label-strong" fill="#2b6cb0">Бизнес-вопрос</text>
+                    <text x="120" y="55" text-anchor="middle" class="label-small">«Почему клиенты уходят?»</text>
+                    <text x="120" y="68" text-anchor="middle" class="label-tiny">язык бизнеса</text>
+
+                    <!-- Bridge -->
+                    <line x1="225" y1="45" x2="315" y2="45" stroke="#e53e3e" stroke-width="3"/>
+                    <polygon points="315,45 307,40 307,50" fill="#e53e3e"/>
+                    <text x="270" y="38" text-anchor="middle" class="label-tiny" fill="#9b2c2c">мост</text>
+
+                    <!-- Analytical task -->
+                    <rect x="320" y="15" width="200" height="60" rx="8" fill="#f0fff4" stroke="#38a169" stroke-width="2"/>
+                    <text x="420" y="35" text-anchor="middle" class="label-strong" fill="#276749">Аналитическая задача</text>
+                    <text x="420" y="52" text-anchor="middle" class="label-small">«Какие факторы статистически</text>
+                    <text x="420" y="65" text-anchor="middle" class="label-small">значимо связаны с уходом?»</text>
+
+                    <!-- 5 questions -->
+                    <text x="270" y="105" text-anchor="middle" class="label-strong">Пять уточнений для перехода</text>
+
+                    <rect x="30"  y="120" width="92" height="60" rx="6" fill="#fffaf0" stroke="#d69e2e"/>
+                    <text x="76"  y="138" text-anchor="middle" class="label-tiny" style="font-weight: bold;">1. Что такое</text>
+                    <text x="76"  y="150" text-anchor="middle" class="label-tiny">уход?</text>
+                    <text x="76"  y="166" text-anchor="middle" class="label-tiny">3 месяца без покупок</text>
+
+                    <rect x="130" y="120" width="92" height="60" rx="6" fill="#fffaf0" stroke="#d69e2e"/>
+                    <text x="176" y="138" text-anchor="middle" class="label-tiny" style="font-weight: bold;">2. Каких</text>
+                    <text x="176" y="150" text-anchor="middle" class="label-tiny">клиентов?</text>
+                    <text x="176" y="166" text-anchor="middle" class="label-tiny">когорта января</text>
+
+                    <rect x="230" y="120" width="92" height="60" rx="6" fill="#fffaf0" stroke="#d69e2e"/>
+                    <text x="276" y="138" text-anchor="middle" class="label-tiny" style="font-weight: bold;">3. Какой</text>
+                    <text x="276" y="150" text-anchor="middle" class="label-tiny">период?</text>
+                    <text x="276" y="166" text-anchor="middle" class="label-tiny">янв–июнь</text>
+
+                    <rect x="330" y="120" width="92" height="60" rx="6" fill="#fffaf0" stroke="#d69e2e"/>
+                    <text x="376" y="138" text-anchor="middle" class="label-tiny" style="font-weight: bold;">4. Какие</text>
+                    <text x="376" y="150" text-anchor="middle" class="label-tiny">факторы?</text>
+                    <text x="376" y="166" text-anchor="middle" class="label-tiny">цена, доставка, продукт</text>
+
+                    <rect x="430" y="120" width="92" height="60" rx="6" fill="#fffaf0" stroke="#d69e2e"/>
+                    <text x="476" y="138" text-anchor="middle" class="label-tiny" style="font-weight: bold;">5. Что</text>
+                    <text x="476" y="150" text-anchor="middle" class="label-tiny">получить?</text>
+                    <text x="476" y="166" text-anchor="middle" class="label-tiny">список причин</text>
+
+                    <!-- Result -->
+                    <rect x="60" y="200" width="420" height="45" rx="8" fill="#faf5ff" stroke="#805ad5" stroke-width="2"/>
+                    <text x="270" y="220" text-anchor="middle" class="label-strong" fill="#553c9a">✅ Формулировка задачи готова</text>
+                    <text x="270" y="237" text-anchor="middle" class="label-small">«Определить факторы ухода клиентов когорты января за январь–июнь. Уход = 3 месяца без покупок. Результат — список причин с оценкой влияния»</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Бизнес-вопрос</strong> звучит на языке бизнеса. <strong>Аналитическая задача</strong> звучит на языке данных. Мост между ними — <strong>пять уточнений</strong>: что такое «уход», каких клиентов, за какой период, какие факторы, что получить. Без этих уточнений анализ пойдёт не туда.
+                </div>
+            </div>
+
+            <!-- БЛОК 4: ТРЕБОВАНИЯ К ДАННЫМ -->
+            <div class="viz-card">
+                <div class="viz-title">📊 Блок 3. Требования к данным: что, где, как проверить</div>
+                <div class="grid-3">
+                    <!-- Что нужно -->
+                    <div class="step-card">
+                        <div class="step-num">1</div>
+                        <h5>Что нужно</h5>
+                        <p>Данные о клиентах, транзакциях, продукте, каналах. За период. В разрезе.</p>
+                        <div class="label" style="font-size: 10px; font-weight: bold; color: #4a5568; margin-top: 6px;">ПРИМЕР</div>
+                        <p style="font-size: 10.5px;">Клиенты: id, дата регистрации, канал. Транзакции: сумма, дата.</p>
+                    </div>
+
+                    <!-- Где взять -->
+                    <div class="step-card">
+                        <div class="step-num">2</div>
+                        <h5>Где взять</h5>
+                        <p>4 источника: базы данных, файлы, программные интерфейсы, ручной сбор.</p>
+                        <div class="label" style="font-size: 10px; font-weight: bold; color: #4a5568; margin-top: 6px;">ПРИМЕР</div>
+                        <p style="font-size: 10.5px;">Основное — база. Дополнение — выгрузки и API рекламных систем.</p>
+                    </div>
+
+                    <!-- Как проверить -->
+                    <div class="step-card">
+                        <div class="step-num">3</div>
+                        <h5>Как проверить</h5>
+                        <p>5 проверок: полнота, точность, согласованность, актуальность, достаточность.</p>
+                        <div class="label" style="font-size: 10px; font-weight: bold; color: #4a5568; margin-top: 6px;">ПРИМЕР</div>
+                        <p style="font-size: 10.5px;">Сколько пропусков? Совпадает ли выручка в двух системах?</p>
+                    </div>
+                </div>
+                <div class="callout warn" style="margin-top: 10px;">
+                    <strong>⚠️ Правило аналитика</strong>
+                    <p>Если данные плохие — <strong>скажите об этом бизнесу</strong>. Не пытайтесь анализировать на плохих данных. Лучше честно сказать «данных недостаточно», чем выдать красивый, но неверный отчёт.</p>
+                </div>
+            </div>
+
+            <!-- БЛОК 5: СТЕЙКХОЛДЕРЫ -->
+            <div class="viz-card">
+                <div class="viz-title">👥 Блок 4. Три стороны и четыре конфликта</div>
+                <svg viewBox="0 0 540 280" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="280" fill="#ffffff"/>
+
+                    <!-- Triangle -->
+                    <circle cx="270" cy="60" r="48" fill="#ebf8ff" stroke="#3182ce" stroke-width="2.5"/>
+                    <text x="270" y="55" text-anchor="middle" class="label-strong" fill="#2b6cb0">Аналитик</text>
+                    <text x="270" y="70" text-anchor="middle" class="label-tiny">качество, метод</text>
+
+                    <circle cx="130" cy="210" r="48" fill="#f0fff4" stroke="#38a169" stroke-width="2.5"/>
+                    <text x="130" y="205" text-anchor="middle" class="label-strong" fill="#276749">Заказчик</text>
+                    <text x="130" y="220" text-anchor="middle" class="label-tiny">решение, скорость</text>
+
+                    <circle cx="410" cy="210" r="48" fill="#fffaf0" stroke="#d69e2e" stroke-width="2.5"/>
+                    <text x="410" y="205" text-anchor="middle" class="label-strong" fill="#975a16">Команда</text>
+                    <text x="410" y="220" text-anchor="middle" class="label-tiny">внедрение</text>
+
+                    <!-- Lines -->
+                    <line x1="230" y1="95" x2="165" y2="175" stroke="#a0aec0" stroke-width="1.5" stroke-dasharray="4 3"/>
+                    <line x1="310" y1="95" x2="375" y2="175" stroke="#a0aec0" stroke-width="1.5" stroke-dasharray="4 3"/>
+                    <line x1="178" y1="210" x2="362" y2="210" stroke="#a0aec0" stroke-width="1.5" stroke-dasharray="4 3"/>
+
+                    <!-- Conflict labels -->
+                    <text x="190" y="140" text-anchor="middle" class="label-tiny" fill="#9b2c2c">скорость vs</text>
+                    <text x="190" y="150" text-anchor="middle" class="label-tiny" fill="#9b2c2c">качество</text>
+
+                    <text x="360" y="140" text-anchor="middle" class="label-tiny" fill="#9b2c2c">рекомендация vs</text>
+                    <text x="360" y="150" text-anchor="middle" class="label-tiny" fill="#9b2c2c">реальность</text>
+
+                    <text x="270" y="230" text-anchor="middle" class="label-tiny" fill="#9b2c2c">удобство vs честность</text>
+                </svg>
+                <div class="grid-2" style="margin-top: 10px;">
+                    <div class="callout warn">
+                        <strong>❌ Конфликт 1: скорость vs качество</strong>
+                        <p>Аналитик хочет идеальный анализ. Заказчик — быстрый результат. <strong>Решение:</strong> договориться о минимально достаточном уровне точности и сроках.</p>
+                    </div>
+                    <div class="callout warn">
+                        <strong>❌ Конфликт 2: честность vs удобство</strong>
+                        <p>Данные показывают проблему, но заказчик не хочет её слышать. <strong>Решение:</strong> показать данные, предложить решение, не переходить на личности.</p>
+                    </div>
+                    <div class="callout warn">
+                        <strong>❌ Конфликт 3: рекомендация vs реальность</strong>
+                        <p>Аналитик предложил, команда не хочет внедрять. <strong>Решение:</strong> вовлечь команду в обсуждение результатов на этапе анализа, а не только презентации.</p>
+                    </div>
+                    <div class="callout warn">
+                        <strong>❌ Конфликт 4: язык данных vs язык бизнеса</strong>
+                        <p>Аналитик говорит на языке данных, заказчик — на языке бизнеса. <strong>Решение:</strong> переводить цифры в бизнес-последствия.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- БЛОК 6: ПРЕЗЕНТАЦИЯ -->
+            <div class="viz-card">
+                <div class="viz-title">🎤 Блок 5. Структура презентации: 6 шагов от цифр к решению</div>
+                <div class="grid-3">
+                    <div class="step-card">
+                        <div class="step-num">1</div>
+                        <h5>Контекст</h5>
+                        <p>Напомнить задачу и почему это важно сейчас.</p>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-num">2</div>
+                        <h5>Что сделали</h5>
+                        <p>Кратко метод. Без формул. Заказчику нужен результат, а не детали.</p>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-num">3</div>
+                        <h5>Что узнали</h5>
+                        <p>Ключевые цифры и графики. Только самые важные. Не все.</p>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-num">4</div>
+                        <h5>Что это значит</h5>
+                        <p>Связь с бизнес-проблемой. Что меняется в картине мира.</p>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-num">5</div>
+                        <h5>Что делать</h5>
+                        <p>Конкретные рекомендации. Выполнимые. С оценкой эффекта.</p>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-num">6</div>
+                        <h5>Ограничения</h5>
+                        <p>Что не учли, что проверить дальше, какие риски.</p>
+                    </div>
+                </div>
+                <div class="callout ok" style="margin-top: 10px;">
+                    <strong>💡 Правило языка</strong>
+                    <p>Не «среднее значение», а «в среднем». Не «стандартное отклонение», а «разброс». Не «двадцать три целых семь десятых процента», а «около двадцати четырёх процентов». Не «выручка один миллион», а «выручка один миллион, это на десять процентов больше, чем в прошлом месяце».</p>
+                </div>
+            </div>
+
+            <!-- БЛОК 7: СПОР С БИЗНЕСОМ -->
+            <div class="viz-card">
+                <div class="viz-title">⚖️ Блок 6. Как спорить с бизнесом, когда данные противоречат интуиции</div>
+                <div class="grid-2">
+                    <div class="callout ok">
+                        <strong>✅ Как надо</strong>
+                        <p><strong>1.</strong> «Данные показывают другую картину» — а не «вы неправы».<br>
+                        <strong>2.</strong> Показать график, сравнить с прошлым периодом.<br>
+                        <strong>3.</strong> Предложить гипотезу: «возможно, кампания привлекает нецелевых».<br>
+                        <strong>4.</strong> Предложить решение: «сузить аудиторию или изменить креатив».<br>
+                        <strong>5.</strong> Признать, что можете ошибаться: «давайте проверим ещё раз».</p>
+                    </div>
+                    <div class="callout warn">
+                        <strong>❌ Как не надо</strong>
+                        <p><strong>1.</strong> Переходить на личности: «вы не понимаете данных».<br>
+                        <strong>2.</strong> Сыпать жаргоном: «корреляция не означает причинность».<br>
+                        <strong>3.</strong> Настаивать без достаточных данных.<br>
+                        <strong>4.</strong> Игнорировать бизнес-контекст: бизнес может знать то, чего не знаете вы.<br>
+                        <strong>5.</strong> Оставлять бизнес с проблемой, не предлагая решения.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ТАБЛИЦА ПО РОЛЯМ -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 8px;">👥 Как 11 ролей используют сбор требований и коммуникацию</div>
+                <table class="role-table">
+                    <thead>
+                        <tr><th style="width: 28%;">Роль</th><th>С кем работает</th><th style="width: 38%;">Главный навык</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="role-emoji">📈</span> <strong>Аналитик данных</strong></td><td>Продуктовые менеджеры, маркетологи</td><td>Переводить бизнес-вопрос в аналитическую задачу</td></tr>
+                        <tr><td><span class="role-emoji">💰</span> <strong>Финансовый аналитик</strong></td><td>Руководство, финансовый директор</td><td>Объяснять сложные финансовые показатели простыми словами</td></tr>
+                        <tr><td><span class="role-emoji">🚀</span> <strong>Продуктовый аналитик</strong></td><td>Продуктовая команда, CPO</td><td>Показывать связь между фичами и метриками</td></tr>
+                        <tr><td><span class="role-emoji">🌐</span> <strong>Веб-аналитик</strong></td><td>Маркетинг, команда сайта</td><td>Объяснять, почему одни каналы работают лучше других</td></tr>
+                        <tr><td><span class="role-emoji">📊</span> <strong>BI-аналитик</strong></td><td>Все подразделения</td><td>Собирать требования к отчётности и дашбордам</td></tr>
+                        <tr><td><span class="role-emoji">🗄️</span> <strong>Аналитик больших данных</strong></td><td>Инженеры, бизнес</td><td>Объяснять сложные модели простыми словами</td></tr>
+                        <tr><td><span class="role-emoji">📣</span> <strong>Маркетинговый аналитик</strong></td><td>Маркетинг, агентства</td><td>Показывать возврат на инвестиции в рекламу</td></tr>
+                        <tr><td><span class="role-emoji">💼</span> <strong>Бизнес-аналитик</strong></td><td>Заказчики, разработка</td><td>Находить общий язык между бизнесом и IT</td></tr>
+                        <tr><td><span class="role-emoji">⚙️</span> <strong>Системный аналитик</strong></td><td>Бизнес, разработчики</td><td>Точность формулировок, уточняющие вопросы</td></tr>
+                        <tr><td><span class="role-emoji">🗃️</span> <strong>Аналитик 1С</strong></td><td>Бухгалтеры, IT</td><td>Говорить на языке бухгалтеров, понимать учёт</td></tr>
+                        <tr><td><span class="role-emoji">🎨</span> <strong>UX-аналитик</strong></td><td>Дизайнеры, пользователи</td><td>Эмпатия и умение слушать пользователей</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- CALL-OUT -->
+            <div class="callout ok">
+                <strong>💡 Главный вывод</strong>
+                <p>Хороший аналитик умеет не только считать. Он умеет <strong>задавать вопросы</strong>. Умеет <strong>слушать</strong>. Умеет <strong>объяснять</strong>. И умеет <strong>влиять на решения</strong>. Именно это отличает профессионала от любителя. Коммуникация — это профессиональный навык, а не «мягкий».</p>
+            </div>
+
+            <!-- ВИДЕОПЛЕЕР -->
+            <div class="video-section">
+                <div class="video-container">
+                    <iframe id="lecture-player" src="https://rutube.ru" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+                </div>
+                <div class="links-hub">
+                    <button onclick="changeVideo('https://rutube.ru/')" class="video-btn stop-btn">⏹ СТОП</button>
+                    <button onclick="changeVideo('https://rutube.ru/play/embed/')" class="video-btn rt-btn">📜 Лекция 19. Сбор требований</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="slide-footer">
+            Направление «Менеджмент» | Курс: Аналитика данных | Лекция 19: «Сбор требований и коммуникация с бизнесом»
+        </div>
+    </div>
+
+    <!-- ПРАВАЯ ПАНЕЛЬ -->
+     <div class="speaker-notes">
+        <!-- Фиксированная верхняя часть с плеером -->
+        <div style="position: sticky; top: 0; background: #1a202c; padding: 20px 20px 10px 20px; border-bottom: 1px solid #4a5568; width: 100%; z-index: 100;">
+                       <div class="notes-header" style="display: block; padding-bottom: 15px;">
+               <audio id="lecture-audio" preload="auto" controls
+                      src="https://archive.org/download/03_20261110_20261110/11.mp3"
+                      style="width: 100%; height: 32px; border-radius: 4px;"></audio>
+            </div>
+            <div style="width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+             <iframe id="right-lecture-player" src="https://archive.org/embed/20261020_20261020_0955?autoplay=true&loop=true&muted=true"  allow="clipboard-write; autoplay" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen style="border: none;"></iframe>
+
+                           </div>
+        </div>
+
+        <div class="lecture-text" style="margin-top: 20px;">
+
+            <h3>📌 Введение</h3>
+
+            <p>Добрый день, коллеги. Мы начинаем одиннадцатую лекцию нашего курса. Это сбор требований и коммуникация с бизнесом.</p>
+
+            <p>Почему эта тема так важна. Потому что аналитик работает не в вакууме. Он решает задачи бизнеса. И если он неправильно понял задачу, то даже самый лучший анализ окажется бесполезным. Представьте себе ситуацию. Аналитик две недели строил сложную модель. Он использовал нейронные сети. Он добился точности девяносто пять процентов. Он приносит результат руководителю. А руководитель говорит: «Это не то, что я просил». И всё. Две недели работы потрачены зря.</p>
+
+            <p>Или другая ситуация. Аналитик сделал правильный анализ. Но объяснил его на языке цифр и формул. Руководитель не понял. И решение не было принято. Анализ остался на бумаге.</p>
+
+            <p>Обе эти ситуации возникают из-за одной проблемы. Плохая коммуникация. Аналитик не умеет задавать вопросы. Не умеет переводить бизнес-задачу на язык анализа. Не умеет объяснять результаты. И не умеет спорить с бизнесом, когда данные противоречат интуиции.</p>
+
+            <p>Сегодня мы разберём несколько важных тем. Сначала поймём, как задавать вопросы бизнесу. Разберём метод пяти почему. И метод дерева проблем. Затем увидим, как перейти от бизнес-вопроса к аналитической задаче. Поговорим о требованиях к данным. О том, что нужно, где взять и как проверить. Разберём работу с заинтересованными сторонами. Увидим разницу между аналитиком, заказчиком и командой. Научимся презентовать результаты. От цифр к решениям. И обсудим, как объяснять ограничения и неопределённость. И как спорить с бизнесом, когда данные противоречат интуиции.</p>
+
+            <p>Обратите внимание на важную мысль. Коммуникация — это не мягкий навык. Это профессиональный навык. Такой же важный, как знание статистики или языка программирования. Без него аналитик остаётся исполнителем. А с ним становится партнёром бизнеса.</p>
+
+            <p>Я желаю вам продуктивной работы. И надеюсь, что после этой лекции вы сможете не только считать, но и объяснять. И не только объяснять, но и влиять на решения. Давайте начнём.</p>
+
+            <h3>📌 Блок 1. Как задавать вопросы бизнесу</h3>
+
+            <p>Перейдём к первому вопросу. Как задавать вопросы бизнесу.</p>
+
+            <p>Начнём с главной мысли. Бизнес редко приходит к аналитику с готовой задачей. Чаще всего бизнес приходит с проблемой. Или с ощущением проблемы. Или с гипотезой. Задача аналитика — превратить это в конкретный вопрос, на который можно ответить данными.</p>
+
+            <p>Приведём пример. Руководитель говорит: «Мне кажется, что клиенты стали чаще уходить». Это не задача. Это ощущение. Аналитик не может на это ответить. Потому что непонятно, что именно проверить. За какой период. Каких клиентов. И что считать уходом.</p>
+
+            <p>Или другой пример. Руководитель говорит: «Надо увеличить продажи». Это не задача. Это цель. Аналитик не может на это ответить. Потому что непонятно, за счёт чего увеличивать. За счёт новых клиентов. Или за счёт повторных продаж. Или за счёт повышения среднего чека. Или за счёт снижения оттока. Каждое направление требует своего анализа.</p>
+
+            <p>Отсюда важное правило. Прежде чем браться за анализ, нужно задать вопросы. И не один вопрос. А несколько. Пока не станет понятно, что именно нужно.</p>
+
+            <h4>Метод пяти почему</h4>
+
+            <p>Первый метод, который помогает задавать вопросы. Он называется метод пяти почему. Его придумал Тайити Оно. Это японский инженер. Он работал в компании Тойота. И использовал этот метод для поиска корневых причин проблем.</p>
+
+            <p>Идея простая. Нужно задать вопрос «почему» пять раз подряд. Каждый раз углубляясь. И тогда вы доберётесь до корневой причины.</p>
+
+            <p>Поясним на примере. Руководитель говорит: «У нас упали продажи». Аналитик спрашивает: «Почему упали продажи?» Ответ: «Потому что стало меньше клиентов». Аналитик спрашивает: «Почему стало меньше клиентов?» Ответ: «Потому что вырос отток». Аналитик спрашивает: «Почему вырос отток?» Ответ: «Потому что клиенты недовольны доставкой». Аналитик спрашивает: «Почему клиенты недовольны доставкой?» Ответ: «Потому что сроки доставки увеличились». Аналитик спрашивает: «Почему сроки доставки увеличились?» Ответ: «Потому что сменился логистический партнёр».</p>
+
+            <p>Вот мы и добрались до корневой причины. Продажи упали не потому, что что-то не так с продуктом. А потому, что сменился логистический партнёр. И если бы аналитик сразу начал анализировать продажи, он бы не увидел эту причину. Он бы потратил время на анализ не того.</p>
+
+            <p>Метод пяти почему — это простой инструмент. Но он работает. Главное — не останавливаться на первом ответе. И задавать вопрос «почему» до тех пор, пока не станет понятно, что нужно проверить.</p>
+
+            <h4>Метод дерева проблем</h4>
+
+            <p>Второй метод. Он называется дерево проблем. Это визуальный инструмент. Он помогает разложить большую проблему на маленькие части.</p>
+
+            <p>Идея простая. Мы рисуем дерево. В корне — главная проблема. От корня отходят ветви. Это подпроблемы. От каждой ветви — ещё ветви. Это ещё более мелкие подпроблемы. И так далее. Пока не дойдём до листьев. Листья — это конкретные вопросы, на которые можно ответить данными.</p>
+
+            <p>Поясним на примере. Главная проблема — упала выручка. От корня отходят три ветви. Первая ветвь — упало количество заказов. Вторая ветвь — упал средний чек. Третья ветвь — упала конверсия.</p>
+
+            <p>От первой ветви отходят ещё две. Первая — стало меньше новых клиентов. Вторая — стало больше оттока. От второй ветви отходят ещё две. Первая — клиенты стали покупать меньше товаров. Вторая — клиенты стали покупать более дешёвые товары. От третьей ветви отходят ещё две. Первая — упала конверсия на сайте. Вторая — упала конверсия в приложении.</p>
+
+            <p>И так далее. Пока не дойдём до конкретных вопросов. Например. Как изменилось количество новых клиентов за последний месяц по сравнению с прошлым. Как изменился средний чек по категориям товаров. Как изменилась конверсия по источникам трафика.</p>
+
+            <p>Дерево проблем помогает увидеть всю картину. И не упустить важные детали. А также помогает объяснить бизнесу, какие данные нужны.</p>
+
+            <h4>Ключевые вопросы, которые нужно задать</h4>
+
+            <p>Теперь перейдём к практике. Какие вопросы нужно задать бизнесу, прежде чем начинать анализ.</p>
+
+            <p>Первый вопрос. Какую проблему мы решаем. Что именно не устраивает бизнес. И почему это важно сейчас.</p>
+
+            <p>Второй вопрос. Какое решение будет принято на основе анализа. Что бизнес сделает с результатом. Это помогает понять, какой уровень точности нужен. И какая форма результата будет полезной.</p>
+
+            <p>Третий вопрос. Какие данные у нас есть. И какие данные нужны. Это помогает оценить выполнимость задачи.</p>
+
+            <p>Четвёртый вопрос. Какие сроки. Когда нужен результат. Это помогает выбрать метод. Быстрый и приблизительный. Или медленный и точный.</p>
+
+            <p>Пятый вопрос. Кто принимает решение. Кто будет смотреть результат. Это помогает выбрать формат презентации.</p>
+
+            <p>Эти пять вопросов — минимальный набор. Но часто их нужно больше. Главное — не стесняться задавать вопросы. Лучше потратить час на вопросы, чем две недели на неправильный анализ.</p>
+
+            <h3>📌 Блок 2. От бизнес-вопроса к аналитической задаче</h3>
+
+            <p>Теперь перейдём ко второму вопросу. Как перейти от бизнес-вопроса к аналитической задаче.</p>
+
+            <p>Начнём с главной мысли. Бизнес-вопрос и аналитическая задача — это не одно и то же. Бизнес-вопрос звучит на языке бизнеса. Аналитическая задача звучит на языке данных. И между ними нужно построить мост.</p>
+
+            <p>Приведём пример. Бизнес-вопрос: «Почему клиенты уходят?» Это вопрос на языке бизнеса. Аналитик не может на него ответить напрямую. Ему нужно переформулировать.</p>
+
+            <p>Первое. Что такое уход. Нужно определить операционально. Уход — это когда клиент не совершил ни одной покупки за последние три месяца. Или когда клиент отписался от рассылки. Или когда клиент удалил приложение. Определение зависит от бизнеса.</p>
+
+            <p>Второе. Каких клиентов мы рассматриваем. Всех. Или только новых. Или только платящих. Или только из определённого сегмента. Это влияет на анализ.</p>
+
+            <p>Третье. За какой период. За последний месяц. За квартал. За год. Это влияет на объём данных и на выводы.</p>
+
+            <p>Четвёртое. Какие факторы мы проверяем. Что могло повлиять на уход. Цена. Качество продукта. Доставка. Поддержка. Конкуренты. Это помогает выбрать метод анализа.</p>
+
+            <p>Пятое. Что мы хотим получить в результате. Список причин. Или прогноз вероятности ухода для каждого клиента. Или рекомендации по удержанию. Это влияет на формат результата.</p>
+
+            <p>После ответов на эти вопросы бизнес-вопрос превращается в аналитическую задачу. Например, такая задача. «Определить, какие факторы статистически значимо связаны с уходом клиентов, пришедших в первом квартале, за период с января по июнь. Уход определяется как отсутствие покупок в течение трёх месяцев. Результат — список факторов с оценкой их влияния и рекомендации по удержанию».</p>
+
+            <p>Это уже конкретная задача. На неё можно ответить данными. И можно проверить, выполнена ли она.</p>
+
+            <h4>Типичные ошибки при переводе</h4>
+
+            <p>Теперь разберём типичные ошибки.</p>
+
+            <p>Первая ошибка. Слишком широкая задача. «Проанализировать всё». Это невозможно. Нужно сузить.</p>
+
+            <p>Вторая ошибка. Слишком узкая задача. «Посчитать средний чек за март». Это не анализ. Это одна цифра. Она не отвечает на бизнес-вопрос.</p>
+
+            <p>Третья ошибка. Задача, на которую нет данных. «Понять, почему клиенты уходят к конкурентам». Для этого нужны данные о конкурентах. А их обычно нет.</p>
+
+            <p>Четвёртая ошибка. Задача, которая не решает бизнес-проблему. «Построить модель прогноза ухода». А бизнес хотел понять причины ухода. Модель прогноза не даёт причин. Она даёт вероятность. Это разные вещи.</p>
+
+            <p>Отсюда важное правило. Прежде чем начинать анализ, убедитесь, что задача сформулирована правильно. И что бизнес с ней согласен.</p>
+
+            <h3>📌 Блок 3. Требования к данным</h3>
+
+            <p>Теперь перейдём к третьему вопросу. Требования к данным.</p>
+
+            <p>Начнём с главной мысли. Данные — это фундамент анализа. Если данные плохие, то любой анализ будет ошибочным. Поэтому прежде чем анализировать, нужно проверить данные.</p>
+
+            <h4>Что нужно</h4>
+
+            <p>Первое. Какие данные нужны. Это зависит от задачи. Если мы анализируем уход клиентов, нам нужны данные о клиентах. Их характеристики. История покупок. Обращения в поддержку. Данные о продукте.</p>
+
+            <p>Второе. За какой период. Если мы анализируем уход за последний год, нам нужны данные за последний год. И желательно за более ранний период. Чтобы сравнить.</p>
+
+            <p>Третье. В каком разрезе. По клиентам. По продуктам. По каналам. По регионам. Это влияет на структуру данных.</p>
+
+            <p>Четвёртое. Какие метрики нужны. Выручка. Количество покупок. Средний чек. Время между покупками. Это влияет на формат данных.</p>
+
+            <h4>Где взять</h4>
+
+            <p>Теперь перейдём к источникам данных.</p>
+
+            <p>Первый источник. Базы данных. Это основной источник. Там хранятся транзакции. Клиенты. Продукты.</p>
+
+            <p>Второй источник. Файлы. Выгрузки из систем. Отчёты. Логи.</p>
+
+            <p>Третий источник. Программные интерфейсы. Это способ получить данные из внешних сервисов. Например, из рекламных систем. Или из систем аналитики.</p>
+
+            <p>Четвёртый источник. Ручной сбор. Иногда данных нет в системах. Тогда их приходится собирать вручную. Например, через опросы.</p>
+
+            <h4>Как проверить</h4>
+
+            <p>Теперь перейдём к проверке данных.</p>
+
+            <p>Первое. Полнота. Все ли данные есть. Нет ли пропусков. Если есть пропуски, то сколько их. И как они распределены.</p>
+
+            <p>Второе. Точность. Соответствуют ли данные реальности. Нет ли ошибок. Нет ли дубликатов. Нет ли выбросов.</p>
+
+            <p>Третье. Согласованность. Совпадают ли данные из разных источников. Если в одном источнике выручка одна, а в другом другая — это проблема.</p>
+
+            <p>Четвёртое. Актуальность. Свежие ли данные. Если данные за прошлый год, а мы анализируем текущую ситуацию — это проблема.</p>
+
+            <p>Пятое. Достаточность. Хватает ли данных для анализа. Если данных мало, то выводы могут быть ненадёжными.</p>
+
+            <p>Отсюда важное правило. Прежде чем анализировать, проверьте данные. И если данные плохие — скажите об этом бизнесу. Не пытайтесь анализировать на плохих данных. Лучше честно сказать, что данных недостаточно.</p>
+
+            <h3>📌 Блок 4. Работа с заинтересованными сторонами</h3>
+
+            <p>Теперь перейдём к четвёртому вопросу. Работа с заинтересованными сторонами.</p>
+
+            <p>Начнём с главной мысли. У анализа есть несколько участников. И у каждого свои интересы. Аналитик должен это понимать.</p>
+
+            <h4>Аналитик</h4>
+
+            <p>Первый участник. Это аналитик. Его задача — провести анализ. И получить достоверный результат. Он отвечает за методологию. За качество данных. За интерпретацию результатов.</p>
+
+            <h4>Заказчик</h4>
+
+            <p>Второй участник. Это заказчик. Тот, кто поставил задачу. Его задача — получить результат. И принять решение на его основе. Он отвечает за бизнес-контекст. За цели. За приоритеты.</p>
+
+            <h4>Команда</h4>
+
+            <p>Третий участник. Это команда. Те, кто будет использовать результат. Или те, кто будет внедрять рекомендации. Это могут быть маркетологи. Продуктовые менеджеры. Разработчики. Их задача — применить результат на практике.</p>
+
+            <h4>Типичные конфликты</h4>
+
+            <p>Теперь разберём типичные конфликты.</p>
+
+            <p>Первый конфликт. Аналитик хочет сделать идеальный анализ. Заказчик хочет получить результат быстро. Это конфликт между качеством и скоростью.</p>
+
+            <p>Второй конфликт. Аналитик видит проблему в данных. Заказчик не хочет об этом слышать. Это конфликт между честностью и удобством.</p>
+
+            <p>Третий конфликт. Аналитик предлагает решение. Команда не хочет его внедрять. Это конфликт между рекомендацией и реальностью.</p>
+
+            <p>Четвёртый конфликт. Аналитик говорит на языке данных. Заказчик говорит на языке бизнеса. Это конфликт между языками.</p>
+
+            <h4>Как выстраивать коммуникацию</h4>
+
+            <p>Теперь перейдём к тому, как выстраивать коммуникацию.</p>
+
+            <p>Первое. Говорите на языке бизнеса. Не используйте термины, которые непонятны заказчику. Объясняйте сложные вещи простыми словами.</p>
+
+            <p>Второе. Слушайте. Не только говорите. Задавайте вопросы. Уточняйте. Это помогает понять реальную задачу.</p>
+
+            <p>Третье. Будьте честными. Если данных недостаточно — скажите. Если результат неоднозначный — скажите. Не подгоняйте результат под ожидания.</p>
+
+            <p>Четвёртое. Предлагайте решения. Не только описывайте проблему. Предлагайте, что можно сделать. Это повышает ценность аналитика.</p>
+
+            <p>Пятое. Управляйте ожиданиями. Объясняйте, что анализ может дать. И чего он не может дать. Это предотвращает разочарование.</p>
+
+            <h3>📌 Блок 5. Как презентовать результаты</h3>
+
+            <p>Теперь перейдём к пятому вопросу. Как презентовать результаты.</p>
+
+            <p>Начнём с главной мысли. Презентация — это не отчёт. Это история. История о том, что мы узнали. И что с этим делать.</p>
+
+            <h4>Структура презентации</h4>
+
+            <p>Первое. Контекст. Напомните, какую задачу вы решали. И почему это важно.</p>
+
+            <p>Второе. Что вы сделали. Кратко опишите метод. Не углубляйтесь в детали. Заказчику не нужны формулы. Ему нужен результат.</p>
+
+            <p>Третье. Что вы узнали. Это главная часть. Покажите ключевые цифры. И ключевые графики. Но не все. Только самые важные.</p>
+
+            <p>Четвёртое. Что это значит. Объясните, как результаты связаны с бизнес-проблемой. Что это меняет.</p>
+
+            <p>Пятое. Что делать. Предложите рекомендации. Конкретные. И выполнимые.</p>
+
+            <p>Шестое. Ограничения. Честно скажите, что анализ не учёл. И что нужно проверить дальше.</p>
+
+            <h4>Как говорить о цифрах</h4>
+
+            <p>Теперь перейдём к тому, как говорить о цифрах.</p>
+
+            <p>Первое. Не говорите «среднее значение». Говорите «в среднем». Не говорите «стандартное отклонение». Говорите «разброс». Не говорите «корреляция». Говорите «связь».</p>
+
+            <p>Второе. Округляйте. Не говорите «двадцать три целых семь десятых процента». Говорите «около двадцати четырёх процентов».</p>
+
+            <p>Третье. Сравнивайте. Не говорите «выручка один миллион». Говорите «выручка один миллион, это на десять процентов больше, чем в прошлом месяце».</p>
+
+            <p>Четвёртое. Показывайте на графиках. Не все цифры нужно произносить. Некоторые лучше показать.</p>
+
+            <h4>Как объяснять ограничения</h4>
+
+            <p>Теперь перейдём к тому, как объяснять ограничения.</p>
+
+            <p>Первое. Говорите о неопределённости. Не говорите «различие значимо». Говорите «различие статистически значимо, но эффект небольшой». Или «различие может быть случайным».</p>
+
+            <p>Второе. Говорите о допущениях. «Мы предполагали, что клиенты, не совершившие покупку за три месяца, ушли. Но некоторые могут вернуться».</p>
+
+            <p>Третье. Говорите о том, чего не хватает. «Для более точного анализа нужны данные о конкурентах. Но их у нас нет».</p>
+
+            <p>Четвёртое. Говорите о рисках. «Если мы внедрим эту рекомендацию, есть риск, что...»</p>
+
+            <h3>📌 Блок 6. Как спорить с бизнесом, когда данные противоречат интуиции</h3>
+
+            <p>Теперь перейдём к шестому вопросу. Как спорить с бизнесом, когда данные противоречат интуиции.</p>
+
+            <p>Начнём с главной мысли. Это самая сложная часть работы аналитика. Потому что здесь нужно не просто показать цифры. Нужно изменить мнение человека. А это требует такта и аргументов.</p>
+
+            <p>Приведём пример. Руководитель уверен, что новая рекламная кампания работает отлично. Он видит, что клики выросли. Но аналитик видит, что конверсия в покупку упала. И выручка не выросла. Данные противоречат интуиции руководителя.</p>
+
+            <h4>Как действовать</h4>
+
+            <p>Первое. Не говорите «вы неправы». Говорите «данные показывают другую картину». Это разные вещи.</p>
+
+            <p>Второе. Покажите данные. Не просто скажите «конверсия упала». Покажите график. Сравните с прошлым периодом. Покажите, что это не случайность.</p>
+
+            <p>Третье. Объясните, почему это могло произойти. Не просто констатируйте факт. Предложите гипотезу. «Возможно, кампания привлекает нецелевых пользователей. Они кликают, но не покупают».</p>
+
+            <p>Четвёртое. Предложите, что делать. Не оставляйте бизнес с проблемой. Предложите решение. «Можно сузить аудиторию. Или изменить креатив. Или проверить посадочную страницу».</p>
+
+            <p>Пятое. Признайте, что можете ошибаться. «Данные могут быть неполными. Давайте проверим ещё раз». Это повышает доверие.</p>
+
+            <h4>Как не спорить</h4>
+
+            <p>Теперь разберём, как не надо спорить.</p>
+
+            <p>Первое. Не переходите на личности. «Вы не понимаете данных». Это не аргумент.</p>
+
+            <p>Второе. Не используйте жаргон. «Корреляция не означает причинность». Это может звучать как упрёк.</p>
+
+            <p>Третье. Не настаивайте, если данных недостаточно. Если вы не уверены — скажите об этом.</p>
+
+            <p>Четвёртое. Не игнорируйте бизнес-контекст. Данные могут быть правильными. Но бизнес может знать что-то, чего не знаете вы.</p>
+
+            <h3>📌 Блок 7. Примеры применения по ролям</h3>
+
+            <p>Теперь приведём конкретные примеры. Какие аналитики и как работают с требованиями и коммуникацией.</p>
+
+            <p><strong>Аналитик данных</strong> чаще всего работает с внутренними заказчиками. Это продуктовые менеджеры. Или маркетологи. Или руководители. Он задаёт вопросы. Уточняет задачу. И презентует результаты. Его главный навык — переводить бизнес-вопрос в аналитическую задачу.</p>
+
+            <p><strong>Финансовый аналитик</strong> работает с руководством. И с финансовым директором. Он презентует результаты в виде отчётов. И рекомендаций по бюджету. Его главный навык — объяснять сложные финансовые показатели простыми словами.</p>
+
+            <p><strong>Продуктовый аналитик</strong> работает с продуктовой командой. И с руководителем продукта. Он презентует результаты сравнительных тестирований. И метрики продукта. Его главный навык — показывать связь между изменениями в продукте и метриками.</p>
+
+            <p><strong>Веб-аналитик</strong> работает с маркетингом. И с командой сайта. Он презентует результаты анализа трафика. И конверсии. Его главный навык — объяснять, почему одни каналы работают лучше других.</p>
+
+            <p><strong>Бизнес-аналитик</strong> работает с заказчиками. И с командой разработки. Он собирает требования. И описывает процессы. Его главный навык — находить общий язык между бизнесом и техническими специалистами.</p>
+
+            <p><strong>Системный аналитик</strong> работает с бизнесом. И с разработчиками. Он переводит бизнес-требования в технические. Его главный навык — точность формулировок. И умение задавать уточняющие вопросы.</p>
+
+            <p><strong>Специалист по анализу пользовательского опыта</strong> работает с дизайнерами. И с пользователями. Он презентует результаты исследований. И рекомендации по улучшению интерфейса. Его главный навык — эмпатия. И умение слушать пользователей.</p>
+
+            <p><strong>Маркетинговый аналитик</strong> работает с маркетинговой командой. И с рекламными агентствами. Он презентует результаты рекламных кампаний. И рекомендации по бюджету. Его главный навык — показывать возврат на инвестиции.</p>
+
+            <p><strong>Аналитик больших данных</strong> работает с инженерами. И с бизнесом. Он презентует результаты моделей. И рекомендации по внедрению. Его главный навык — объяснять сложные модели простыми словами.</p>
+
+            <p><strong>Аналитик учётной системы</strong> работает с бухгалтерами. И с техническими специалистами. Он собирает требования. И описывает процессы. Его главный навык — понимание учёта. И умение говорить на языке бухгалтеров.</p>
+
+            <h3>📌 Заключение</h3>
+
+            <p>Мы подошли к завершению лекции. Давайте соберём всё вместе.</p>
+
+            <p>Мы разобрали, как задавать вопросы бизнесу. Метод пяти почему. И метод дерева проблем. Мы увидели, как перейти от бизнес-вопроса к аналитической задаче. Разобрали требования к данным. Что нужно, где взять, как проверить. Поговорили о работе с заинтересованными сторонами. О типичных конфликтах. И о том, как их избежать. Научились презентовать результаты. От цифр к решениям. И обсудили, как спорить с бизнесом, когда данные противоречат интуиции.</p>
+
+            <p>Запомните главное. Коммуникация — это не мягкий навык. Это профессиональный навык. Такой же важный, как знание статистики или языка программирования. Без него аналитик остаётся исполнителем. А с ним становится партнёром бизнеса.</p>
+
+            <p>Хороший аналитик умеет не только считать. Он умеет задавать вопросы. Умеет слушать. Умеет объяснять. И умеет влиять на решения. Именно это отличает профессионала от любителя.</p>
+
+            <p>В следующей лекции мы поговорим о том, как внедрять модели в бизнес-процессы. И как следить за их качеством после внедрения. Это будет логическим продолжением всего курса.</p>
+
+            <p>А сейчас — спасибо за внимание. Я готов ответить на ваши вопросы.</p>
+
+            <!-- СЛОВАРЬ -->
+            <div class="dark-block">
+                <div class="dark-block-title">📖 Словарь терминов</div>
+                <table class="dark-table">
+                    <thead><tr><th style="width:24%;">Термин</th><th style="width:26%;">По-английски</th><th>Пояснение</th></tr></thead>
+                    <tbody>
+                        <tr><td class="term">Метод 5 почему</td><td>5 Whys</td><td>5 последовательных вопросов для поиска корневой причины</td></tr>
+                        <tr><td class="term">Дерево проблем</td><td>Problem tree</td><td>Декомпозиция проблемы до конкретных вопросов</td></tr>
+                        <tr><td class="term">Стейкхолдер</td><td>Stakeholder</td><td>Заинтересованная сторона проекта</td></tr>
+                        <tr><td class="term">Требования</td><td>Requirements</td><td>Что должна делать система или анализ</td></tr>
+                        <tr><td class="term">Валидация данных</td><td>Data validation</td><td>Проверка полноты, точности, согласованности</td></tr>
+                        <tr><td class="term">A/B-тест</td><td>A/B test</td><td>Сравнительное тестирование двух вариантов</td></tr>
+                        <tr><td class="term">Неопределённость</td><td>Uncertainty</td><td>Границы применимости результата</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function changeVideo(embedUrl) {
+            document.getElementById('lecture-player').src = embedUrl;
+        }
+    </script>
+
+    <!-- НАВИГАЦИЯ -->
+   <nav class="lecture-nav" id="lectureNav">
+    <div class="nav-progress" id="navProgress" style="width: 0%;"></div>
+    <a href="Лекция (N-1).html" class="nav-btn-arrow" id="prevBtn">
+        <span class="arrow-icon">←</span>
+        <span class="arrow-label">
+            <small>Назад</small>
+            <span class="arrow-title" id="prevTitle">Лекция (N-1)</span>
+        </span>
+    </a>
+    <div class="nav-center">
+        <div class="nav-counter">Лекция <span id="currentNum">N</span> <span>из 21</span></div>
+        <a href="index.html" class="nav-index-link">📚 К содержанию</a>
+    </div>
+    <a href="Лекция (N+1).html" class="nav-btn-arrow" id="nextBtn">
+        <span class="arrow-label" style="align-items: flex-end;">
+            <small>Вперёд</small>
+            <span class="arrow-title" id="nextTitle">Лекция (N+1)</span>
+        </span>
+        <span class="arrow-icon">→</span>
+    </a>
+</nav>
+
+    
+
+    <script>
+    (function () {
+        'use strict';
+        const TOTAL_LECTURES = 21;
+        const totalDurationMs = (26 * 60) * 1000;
+        const autoNextDelayMs = 2000;
+        const AUTOSTART_PARAM = 'autostart';
+
+        const fileName = decodeURIComponent(location.pathname.split('/').pop() || '');
+        let currentLecture = 19;
+        const match = fileName.match(/Лекция\s*(\d+)\.html/i);
+        if (match) currentLecture = parseInt(match[1], 10);
+        else { const el = document.getElementById('currentNum'); if (el) currentLecture = parseInt(el.textContent, 10) || 19; }
+        if (isNaN(currentLecture) || currentLecture < 1) currentLecture = 1;
+        if (currentLecture > TOTAL_LECTURES) currentLecture = TOTAL_LECTURES;
+
+        const prev = currentLecture > 1 ? currentLecture - 1 : null;
+        const next = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+
+        const currentNumEl = document.getElementById('currentNum');
+        if (currentNumEl) currentNumEl.textContent = currentLecture;
+        const navProgress = document.getElementById('navProgress');
+        if (navProgress) navProgress.style.width = (currentLecture / TOTAL_LECTURES * 100) + '%';
+
+        const prevBtn = document.getElementById('prevBtn');
+        if (prevBtn) {
+            if (prev) { prevBtn.href = 'Лекция ' + prev + '.html'; document.getElementById('prevTitle').textContent = 'Лекция ' + prev; prevBtn.style.opacity = '1'; prevBtn.onclick = null; }
+            else { prevBtn.removeAttribute('href'); prevBtn.style.opacity = '0.35'; prevBtn.style.cursor = 'not-allowed'; prevBtn.onclick = (e) => e.preventDefault(); document.getElementById('prevTitle').textContent = 'Это первая лекция'; }
+        }
+        const nextBtn = document.getElementById('nextBtn');
+        if (nextBtn) {
+            if (next) { nextBtn.href = 'Лекция ' + next + '.html'; document.getElementById('nextTitle').textContent = 'Лекция ' + next; nextBtn.style.opacity = '1'; nextBtn.onclick = null; }
+            else { nextBtn.removeAttribute('href'); nextBtn.style.opacity = '0.35'; nextBtn.style.cursor = 'not-allowed'; nextBtn.onclick = (e) => e.preventDefault(); document.getElementById('nextTitle').textContent = 'Это последняя лекция'; }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+            if (e.key === 'ArrowLeft' && prev) window.location.href = 'Лекция ' + prev + '.html';
+            else if (e.key === 'ArrowRight' && next) window.location.href = 'Лекция ' + next + '.html';
+            else if (e.key === 'Home') window.location.href = 'index.html';
+        });
+
+        function initScroll() {
+            const studentBlock = document.querySelector('.student-view');
+            const speakerBlock = document.querySelector('.speaker-notes');
+            const badge = document.getElementById('scroll-status-badge');
+            const audio = document.getElementById('lecture-audio');
+            if (!studentBlock || !speakerBlock) return;
+
+            const studentBehavior = studentBlock.style.scrollBehavior;
+            const speakerBehavior = speakerBlock.style.scrollBehavior;
+            let isRunning = false, completed = false, pausedElapsed = 0, startedAt = 0, rafId = null;
+            let startS = 0, startP = 0, maxS = 0, maxP = 0;
+
+            function setBadge(text, color) { if (!badge) return; badge.style.display = 'block'; badge.textContent = text; badge.style.borderColor = color; }
+            function measure() { maxS = Math.max(studentBlock.scrollHeight - studentBlock.clientHeight, 0); maxP = Math.max(speakerBlock.scrollHeight - speakerBlock.clientHeight, 0); }
+            function fmt(ms) { const m = Math.floor(ms / 60000); const s = Math.floor((ms % 60000) / 1000); return m + ':' + String(s).padStart(2, '0'); }
+            function playAudio() { if (!audio) return; const p = audio.play(); if (p && typeof p.catch === 'function') { p.catch(err => { console.warn('[AutoAudio]', err.message); setBadge('▶ ИДЕТ ПРОКРУТКА (звук заблокирован)', '#eab308'); }); } }
+            function pauseAudio() { if (audio) try { audio.pause(); } catch (_) {} }
+            function resetAudio() { if (audio) try { audio.pause(); audio.currentTime = 0; } catch (_) {} }
+
+            function animate() {
+                if (!isRunning) return;
+                const elapsed = pausedElapsed + (performance.now() - startedAt);
+                const fraction = Math.min(elapsed / totalDurationMs, 1);
+                measure();
+                studentBlock.scrollTop = startS + (maxS - startS) * fraction;
+                speakerBlock.scrollTop = startP + (maxP - startP) * fraction;
+                if (badge) { badge.textContent = '▶ ' + fmt(elapsed) + ' / 27:00'; badge.style.borderColor = '#16a34a'; }
+                if (fraction >= 1) { finish(); return; }
+                rafId = requestAnimationFrame(animate);
+            }
+
+            function startOrResume() {
+                if (completed) { pausedElapsed = 0; completed = false; studentBlock.scrollTop = 0; speakerBlock.scrollTop = 0; resetAudio(); }
+                measure(); startS = studentBlock.scrollTop; startP = speakerBlock.scrollTop;
+                startedAt = performance.now(); isRunning = true;
+                studentBlock.style.scrollBehavior = 'auto'; speakerBlock.style.scrollBehavior = 'auto';
+                cancelAnimationFrame(rafId); rafId = requestAnimationFrame(animate);
+                playAudio();
+            }
+            function pause() {
+                if (isRunning) pausedElapsed += performance.now() - startedAt;
+                isRunning = false; cancelAnimationFrame(rafId);
+                setBadge('⏸ ПАУЗА ' + fmt(pausedElapsed), '#dc2626');
+                studentBlock.style.scrollBehavior = studentBehavior; speakerBlock.style.scrollBehavior = speakerBehavior;
+                pauseAudio();
+            }
+            function finish() {
+                isRunning = false; completed = true; cancelAnimationFrame(rafId);
+                measure(); studentBlock.scrollTop = maxS; speakerBlock.scrollTop = maxP;
+                studentBlock.style.scrollBehavior = studentBehavior; speakerBlock.style.scrollBehavior = speakerBehavior;
+                const nextLec = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+                if (nextLec) {
+                    setBadge('✅ ГОТОВО → Лекция ' + nextLec, '#16a34a');
+                    setTimeout(() => { location.href = 'Лекция ' + nextLec + '.html?' + AUTOSTART_PARAM + '=1'; }, autoNextDelayMs);
+                } else {
+                    setBadge('✅ КУРС ЗАВЕРШЕН', '#16a34a');
+                    pauseAudio();
+                }
+            }
+            function toggle() { isRunning ? pause() : startOrResume(); }
+
+            window.addEventListener('keydown', (e) => {
+                if (e.repeat) return;
+                const t = e.target; const tag = t && t.tagName;
+                if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+                if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); toggle(); }
+            }, true);
+
+            if (badge) badge.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+            [studentBlock, speakerBlock].forEach(el => {
+                el.addEventListener('click', (e) => {
+                    if (e.target.closest('a,button,iframe,input,textarea,select,video,audio')) return;
+                    if (window.getSelection().toString().length > 0) return;
+                    toggle();
+                });
+            });
+
+            const params = new URLSearchParams(location.search);
+            if (params.get(AUTOSTART_PARAM) === '1') {
+                params.delete(AUTOSTART_PARAM);
+                const clean = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
+                history.replaceState(null, '', clean);
+                setTimeout(startOrResume, 500);
+            } else { setBadge('▶ ПРОБЕЛ / КЛИК — старт', '#4a5568'); }
+        }
+
+        if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initScroll, { once: true }); }
+        else { initScroll(); }
+    })();
+    </script>
+
+</body>
+</html>

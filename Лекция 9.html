@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лекция 9. Визуализация в аналитике: типы диаграмм для описательного анализа</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #ffffff; }
+
+        .student-view { width: 66.66%; height: 100vh; background: #ffffff; padding: 35px 40px; display: flex; flex-direction: column; justify-content: space-between; border-right: 2px solid #e2e8f0; overflow-y: auto; scroll-behavior: smooth; }
+        .speaker-notes { width: 33.34%; height: 100%; background: #1a202c; color: #edf2f7; padding: 30px; overflow-y: auto; }
+
+        .slide-header { font-size: 24px; color: #1a365d; font-weight: bold; line-height: 1.3; margin-bottom: 18px; border-bottom: 4px solid #3182ce; padding-bottom: 12px; }
+        .slide-body { flex-grow: 1; display: flex; flex-direction: column; gap: 18px; padding: 5px 0; }
+        .slide-footer { font-size: 13px; color: #a0aec0; text-align: right; margin-top: 12px; }
+
+        .chart-box { background: #f7fafc; border: 2.5px dashed #cbd5e0; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .chart-box strong { font-size: 16px; display: block; margin-bottom: 6px; }
+        .chart-box p { font-size: 13px; color: #4a5568; line-height: 1.45; }
+
+        .viz-card { background: #ffffff; border: 2px solid #e2e8f0; border-radius: 12px; padding: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.04); }
+        .viz-title { font-size: 14px; font-weight: bold; color: #1a365d; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .viz-caption { font-size: 11.5px; color: #4a5568; margin-top: 8px; line-height: 1.45; }
+        .viz-caption strong { color: #2d3748; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+
+        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .stat-box { border-radius: 10px; padding: 14px; text-align: center; border: 2px solid; }
+        .stat-box .stat-icon { font-size: 26px; }
+        .stat-box .stat-number { font-size: 13px; font-weight: 900; margin-top: 4px; }
+        .stat-box .stat-label { font-size: 10.5px; color: #4a5568; margin-top: 2px; line-height: 1.3; }
+        .stat-box.c1 { background: #ebf8ff; border-color: #90cdf4; }
+        .stat-box.c1 .stat-number { color: #2b6cb0; }
+        .stat-box.c2 { background: #fffaf0; border-color: #fbd38d; }
+        .stat-box.c2 .stat-number { color: #975a16; }
+        .stat-box.c3 { background: #f0fff4; border-color: #9ae6b4; }
+        .stat-box.c3 .stat-number { color: #276749; }
+        .stat-box.c4 { background: #faf5ff; border-color: #d6bcfa; }
+        .stat-box.c4 .stat-number { color: #553c9a; }
+
+        .tag { display: inline-block; background: #ebf8ff; color: #2b6cb0; padding: 2px 7px; border-radius: 4px; font-size: 11px; margin: 2px 2px 2px 0; font-weight: 500; }
+        .tag.green { background: #f0fff4; color: #276749; }
+        .tag.red { background: #fff5f5; color: #9b2c2c; }
+        .tag.orange { background: #fffaf0; color: #975a16; }
+        .tag.purple { background: #faf5ff; color: #553c9a; }
+
+        .callout { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 6px; }
+        .callout strong { color: #92400e; font-size: 13px; }
+        .callout p { font-size: 12px; color: #78350f; margin-top: 4px; line-height: 1.45; }
+
+        .callout.warn { background: #fff5f5; border-left-color: #e53e3e; }
+        .callout.warn strong { color: #9b2c2c; }
+        .callout.warn p { color: #742a2a; }
+
+        .callout.ok { background: #f0fff4; border-left-color: #38a169; }
+        .callout.ok strong { color: #276749; }
+        .callout.ok p { color: #22543d; }
+
+        .role-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+        .role-table th { background: #1a365d; color: white; padding: 8px 10px; text-align: left; font-weight: 600; }
+        .role-table td { padding: 7px 10px; border-bottom: 1px solid #e2e8f0; color: #2d3748; vertical-align: top; }
+        .role-table tr:nth-child(even) td { background: #f7fafc; }
+        .role-table .role-emoji { font-size: 16px; }
+        .role-table .chart-cell { font-size: 14px; letter-spacing: 2px; }
+
+        .compare-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .compare-table th { background: #1a365d; color: white; padding: 9px 11px; text-align: left; font-weight: 600; }
+        .compare-table td { padding: 8px 11px; border-bottom: 1px solid #e2e8f0; color: #2d3748; vertical-align: top; }
+        .compare-table tr:nth-child(even) td { background: #f7fafc; }
+        .compare-table .group-row td { background: #ebf8ff; font-weight: bold; color: #1a365d; }
+
+        .axis { stroke: #4a5568; stroke-width: 1.5; }
+        .grid-line { stroke: #e2e8f0; stroke-width: 0.8; }
+        .label { font-family: 'Segoe UI', sans-serif; font-size: 11px; fill: #4a5568; }
+        .label-strong { font-family: 'Segoe UI', sans-serif; font-size: 12px; font-weight: 700; fill: #1a365d; }
+        .label-small { font-family: 'Segoe UI', sans-serif; font-size: 9.5px; fill: #718096; }
+        .label-tiny { font-family: 'Segoe UI', sans-serif; font-size: 8.5px; fill: #718096; }
+        .label-white { font-family: 'Segoe UI', sans-serif; font-size: 10.5px; fill: #ffffff; font-weight: 600; }
+        .label-white-sm { font-family: 'Segoe UI', sans-serif; font-size: 8.5px; fill: #ffffff; opacity: 0.9; }
+
+        .video-section { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 5px; }
+        .video-container { width: 100%; max-width: 580px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: #000; aspect-ratio: 16 / 9; }
+        .links-hub { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .video-btn { text-decoration: none; padding: 9px 14px; border-radius: 6px; font-size: 12px; font-weight: bold; color: white; display: flex; align-items: center; gap: 6px; transition: transform 0.2s, background 0.2s; cursor: pointer; border: none; }
+        .video-btn:hover { transform: translateY(-2px); }
+        .rt-btn { background: #00a877; }
+        .rt-btn:hover { background: #008f65; }
+        .stop-btn { background: #dc143c; }
+        .stop-btn:hover { background: #b01030; }
+
+        .notes-header { font-size: 17px; color: #63b3ed; font-weight: bold; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a5568; padding-bottom: 10px; }
+        .lecture-text { font-size: 14.5px; line-height: 1.65; color: #e2e8f0; text-align: justify; }
+        .lecture-text p { margin-bottom: 14px; }
+        .lecture-text h3 { color: #63b3ed; font-size: 15px; margin: 18px 0 10px; border-bottom: 1px solid #2d3748; padding-bottom: 5px; }
+        .lecture-text h4 { color: #90cdf4; font-size: 13.5px; margin: 14px 0 8px; }
+        .lecture-text ul { margin: 8px 0 14px 18px; }
+        .lecture-text li { margin-bottom: 6px; }
+
+        .dark-block { background: #2d3748; border: 1px solid #4a5568; border-radius: 10px; padding: 16px 18px; margin-top: 20px; }
+        .dark-block-title { font-size: 14px; font-weight: bold; color: #63b3ed; margin-bottom: 12px; border-bottom: 2px solid #4a5568; padding-bottom: 8px; }
+        .dark-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+        .dark-table th { background: #1a202c; color: #90cdf4; padding: 7px 9px; text-align: left; font-weight: 600; border-bottom: 1px solid #4a5568; }
+        .dark-table td { padding: 6px 9px; border-bottom: 1px solid #2d3748; color: #cbd5e0; vertical-align: top; line-height: 1.4; }
+        .dark-table tr:nth-child(even) td { background: #2a3242; }
+        .dark-table .term { font-weight: bold; color: #90cdf4; white-space: nowrap; }
+        .dark-block ol { margin: 0 0 12px 18px; padding: 0; font-size: 12px; color: #cbd5e0; line-height: 1.5; }
+        .dark-block ol li { margin-bottom: 5px; }
+        .dark-block .src-group { font-weight: bold; color: #fbd38d; font-size: 12px; margin: 12px 0 6px; }
+
+        .lecture-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(12px); border-top: 2px solid rgba(255, 255, 255, 0.08); padding: 12px 20px; display: flex; align-items: center; justify-content: center; gap: 12px; z-index: 9999; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25); font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .lecture-nav .nav-progress { position: absolute; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899); border-radius: 0 3px 3px 0; }
+        .lecture-nav .nav-btn-arrow { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); border: 1.5px solid rgba(255, 255, 255, 0.15); color: #e2e8f0; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; font-family: inherit; }
+        .lecture-nav .nav-btn-arrow:hover:not(:disabled) { background: rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.6); color: white; transform: translateY(-2px); }
+        .lecture-nav .nav-btn-arrow:disabled { opacity: 0.35; cursor: not-allowed; }
+        .lecture-nav .nav-btn-arrow .arrow-icon { font-size: 16px; line-height: 1; }
+        .lecture-nav .nav-btn-arrow .arrow-label { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+        .lecture-nav .nav-btn-arrow .arrow-label small { font-size: 9.5px; font-weight: 400; opacity: 0.7; text-transform: uppercase; }
+        .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { font-size: 12px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lecture-nav .nav-center { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 20px; color: #94a3b8; font-size: 11px; border-left: 1px solid rgba(255, 255, 255, 0.1); border-right: 1px solid rgba(255, 255, 255, 0.1); }
+        .lecture-nav .nav-counter { font-size: 15px; font-weight: 900; color: #f1f5f9; }
+        .lecture-nav .nav-counter span { color: #64748b; font-size: 12px; font-weight: 600; }
+        .lecture-nav .nav-index-link { color: #60a5fa; text-decoration: none; font-size: 11px; font-weight: 600; }
+        .lecture-nav .nav-index-link:hover { color: #93c5fd; text-decoration: underline; }
+        body { padding-bottom: 80px !important; }
+        @media (max-width: 900px) {
+            .lecture-nav { padding: 10px 12px; gap: 8px; }
+            .lecture-nav .nav-btn-arrow { padding: 8px 12px; }
+            .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { max-width: 90px; font-size: 11px; }
+            .grid-2, .grid-3, .grid-4, .stat-grid { grid-template-columns: 1fr; }
+        }
+
+        @keyframes pulseBar {
+            0%, 100% { fill-opacity: 1; }
+            50% { fill-opacity: 0.7; }
+        }
+        .pulse-bar { animation: pulseBar 2s ease-in-out infinite; }
+    </style>
+</head>
+<body>
+
+    <!-- ЛЕВАЯ ПАНЕЛЬ: ЭКРАН ДЛЯ СТУДЕНТОВ -->
+    <div class="student-view">
+        <div class="slide-header">
+            Лекция 9. Визуализация в аналитике: типы диаграмм для описательного анализа
+        </div>
+
+        <div class="slide-body">
+
+            <!-- HERO -->
+            <div class="chart-box" style="background: #ebf8ff; border-color: #90cdf4;">
+                <strong style="color: #2b6cb0;">🎯 Главная идея</strong>
+                <p>Визуализация — это не украшение, а <strong>инструмент анализа и коммуникации</strong>. Хорошая диаграмма помогает увидеть закономерность за пять секунд. Плохая — скрывает её или искажает. Главное правило: <strong>для каждого вопроса — свой тип диаграммы</strong>. Не бывает «универсального графика».</p>
+            </div>
+
+            <!-- 6 ГРУПП ДИАГРАММ -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 10px;">📊 Шесть групп диаграмм для описательного анализа</div>
+                <div class="stat-grid">
+                    <div class="stat-box c1">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-number">Сравнение</div>
+                        <div class="stat-label">bar chart · сгруппированная · накопленная</div>
+                    </div>
+                    <div class="stat-box c2">
+                        <div class="stat-icon">🥧</div>
+                        <div class="stat-number">Доли</div>
+                        <div class="stat-label">pie chart · donut · treemap · waffle</div>
+                    </div>
+                    <div class="stat-box c3">
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-number">Динамика</div>
+                        <div class="stat-label">line chart · area · candlestick</div>
+                    </div>
+                    <div class="stat-box c4">
+                        <div class="stat-icon">📦</div>
+                        <div class="stat-number">Распределение</div>
+                        <div class="stat-label">histogram · box plot · violin · density</div>
+                    </div>
+                    <div class="stat-box c1">
+                        <div class="stat-icon">🔵</div>
+                        <div class="stat-number">Связь</div>
+                        <div class="stat-label">scatter · bubble · heatmap</div>
+                    </div>
+                    <div class="stat-box c2">
+                        <div class="stat-icon">🗺️</div>
+                        <div class="stat-number">Пространство</div>
+                        <div class="stat-label">choropleth · dot map · bubble map</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- БЛОК 1: СТОЛБИКОВЫЕ ДИАГРАММЫ -->
+            <div class="viz-card">
+                <div class="viz-title">📊 Блок 1. Столбиковые диаграммы: четыре разновидности</div>
+                <div class="grid-4">
+
+                    <!-- Vertical bar -->
+                    <div>
+                        <div style="font-size: 11px; font-weight: bold; color: #2b6cb0; margin-bottom: 4px; text-align: center;">Вертикальная</div>
+                        <svg viewBox="0 0 200 160" width="100%">
+                            <rect x="0" y="0" width="200" height="160" fill="#ffffff"/>
+                            <line x1="20" y1="140" x2="190" y2="140" class="axis"/>
+                            <line x1="20" y1="20" x2="20" y2="140" class="axis"/>
+                            <!-- Bars: продажи по категориям -->
+                            <rect x="30" y="60" width="20" height="80" fill="#4299e1" rx="2"/>
+                            <rect x="55" y="40" width="20" height="100" fill="#4299e1" rx="2"/>
+                            <rect x="80" y="85" width="20" height="55" fill="#4299e1" rx="2"/>
+                            <rect x="105" y="55" width="20" height="85" fill="#4299e1" rx="2"/>
+                            <rect x="130" y="95" width="20" height="45" fill="#4299e1" rx="2"/>
+                            <rect x="155" y="70" width="20" height="70" fill="#4299e1" rx="2"/>
+                            <text x="40" y="155" text-anchor="middle" class="label-tiny">А</text>
+                            <text x="65" y="155" text-anchor="middle" class="label-tiny">Б</text>
+                            <text x="90" y="155" text-anchor="middle" class="label-tiny">В</text>
+                            <text x="115" y="155" text-anchor="middle" class="label-tiny">Г</text>
+                            <text x="140" y="155" text-anchor="middle" class="label-tiny">Д</text>
+                            <text x="165" y="155" text-anchor="middle" class="label-tiny">Е</text>
+                        </svg>
+                    </div>
+
+                    <!-- Horizontal bar -->
+                    <div>
+                        <div style="font-size: 11px; font-weight: bold; color: #2b6cb0; margin-bottom: 4px; text-align: center;">Горизонтальная</div>
+                        <svg viewBox="0 0 200 160" width="100%">
+                            <rect x="0" y="0" width="200" height="160" fill="#ffffff"/>
+                            <line x1="30" y1="10" x2="30" y2="150" class="axis"/>
+                            <line x1="30" y1="150" x2="190" y2="150" class="axis"/>
+                            <rect x="30" y="20" width="120" height="16" fill="#38a169" rx="2"/>
+                            <rect x="30" y="45" width="80" height="16" fill="#38a169" rx="2"/>
+                            <rect x="30" y="70" width="140" height="16" fill="#38a169" rx="2"/>
+                            <rect x="30" y="95" width="60" height="16" fill="#38a169" rx="2"/>
+                            <rect x="30" y="120" width="100" height="16" fill="#38a169" rx="2"/>
+                            <text x="155" y="33" class="label-tiny">Канал А</text>
+                            <text x="115" y="58" class="label-tiny">Канал Б</text>
+                            <text x="175" y="83" class="label-tiny">Канал В</text>
+                            <text x="95" y="108" class="label-tiny">Канал Г</text>
+                            <text x="135" y="133" class="label-tiny">Канал Д</text>
+                        </svg>
+                    </div>
+
+                    <!-- Grouped bar -->
+                    <div>
+                        <div style="font-size: 11px; font-weight: bold; color: #2b6cb0; margin-bottom: 4px; text-align: center;">Сгруппированная</div>
+                        <svg viewBox="0 0 200 160" width="100%">
+                            <rect x="0" y="0" width="200" height="160" fill="#ffffff"/>
+                            <line x1="20" y1="140" x2="190" y2="140" class="axis"/>
+                            <line x1="20" y1="20" x2="20" y2="140" class="axis"/>
+                            <!-- 3 groups, 2 bars each -->
+                            <rect x="30" y="70" width="15" height="70" fill="#4299e1" rx="2"/>
+                            <rect x="48" y="50" width="15" height="90" fill="#ed8936" rx="2"/>
+                            <rect x="80" y="85" width="15" height="55" fill="#4299e1" rx="2"/>
+                            <rect x="98" y="65" width="15" height="75" fill="#ed8936" rx="2"/>
+                            <rect x="130" y="60" width="15" height="80" fill="#4299e1" rx="2"/>
+                            <rect x="148" y="90" width="15" height="50" fill="#ed8936" rx="2"/>
+                            <text x="46" y="155" text-anchor="middle" class="label-tiny">I кв</text>
+                            <text x="96" y="155" text-anchor="middle" class="label-tiny">II кв</text>
+                            <text x="146" y="155" text-anchor="middle" class="label-tiny">III кв</text>
+                            <rect x="120" y="15" width="8" height="8" fill="#4299e1"/>
+                            <text x="132" y="22" class="label-tiny">план</text>
+                            <rect x="155" y="15" width="8" height="8" fill="#ed8936"/>
+                            <text x="167" y="22" class="label-tiny">факт</text>
+                        </svg>
+                    </div>
+
+                    <!-- Stacked bar -->
+                    <div>
+                        <div style="font-size: 11px; font-weight: bold; color: #2b6cb0; margin-bottom: 4px; text-align: center;">С накоплением</div>
+                        <svg viewBox="0 0 200 160" width="100%">
+                            <rect x="0" y="0" width="200" height="160" fill="#ffffff"/>
+                            <line x1="20" y1="140" x2="190" y2="140" class="axis"/>
+                            <line x1="20" y1="20" x2="20" y2="140" class="axis"/>
+                            <!-- Stacked bars -->
+                            <rect x="35" y="40" width="22" height="50" fill="#4299e1"/>
+                            <rect x="35" y="90" width="22" height="30" fill="#ed8936"/>
+                            <rect x="35" y="120" width="22" height="20" fill="#38a169"/>
+                            <rect x="75" y="55" width="22" height="45" fill="#4299e1"/>
+                            <rect x="75" y="100" width="22" height="25" fill="#ed8936"/>
+                            <rect x="75" y="125" width="22" height="15" fill="#38a169"/>
+                            <rect x="115" y="70" width="22" height="35" fill="#4299e1"/>
+                            <rect x="115" y="105" width="22" height="20" fill="#ed8936"/>
+                            <rect x="115" y="125" width="22" height="15" fill="#38a169"/>
+                            <rect x="155" y="45" width="22" height="55" fill="#4299e1"/>
+                            <rect x="155" y="100" width="22" height="25" fill="#ed8936"/>
+                            <rect x="155" y="125" width="22" height="15" fill="#38a169"/>
+                            <rect x="35" y="10" width="8" height="8" fill="#4299e1"/>
+                            <text x="47" y="17" class="label-tiny">ЗП</text>
+                            <rect x="75" y="10" width="8" height="8" fill="#ed8936"/>
+                            <text x="87" y="17" class="label-tiny">аренда</text>
+                            <rect x="130" y="10" width="8" height="8" fill="#38a169"/>
+                            <text x="142" y="17" class="label-tiny">проч.</text>
+                        </svg>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    <strong>Вертикальная</strong> — классика для сравнения категорий. <strong>Горизонтальная</strong> — когда категорий много или названия длинные. <strong>Сгруппированная</strong> — сравнение по двум измерениям (например, план/факт). <strong>С накоплением</strong> — общая сумма и её состав одновременно.
+                </div>
+            </div>
+
+            <!-- БЛОК 2: КРУГОВЫЕ И АЛЬТЕРНАТИВЫ -->
+            <div class="viz-card">
+                <div class="viz-title">🥧 Блок 2. Круговые диаграммы и их альтернативы</div>
+                <div class="grid-4">
+
+                    <!-- Pie -->
+                    <div>
+                        <div style="font-size: 11px; font-weight: bold; color: #975a16; margin-bottom: 4px; text-align: center;">Круговая</div>
+                        <svg viewBox="0 0 200 160" width="100%">
+                            <rect x="0" y="0" width="200" height="160" fill="#ffffff"/>
+                            <circle cx="100" cy="80" r="55" fill="#f7fafc" stroke="#a0aec0"/>
+                            <!-- Sectors -->
+                            <path d="M 100 80 L 100 25 A 55 55 0 0 1 148 55 Z" fill="#4299e1"/>
+                            <path d="M 100 80 L 148 55 A 55 55 0 0 1 148 105 Z" fill="#ed8936"/>
+                            <path d="M 100 80 L 148 105 A 55 55 0 0 1 100 135 Z" fill="#38a169"/>
+                            <path d="M 100 80 L 100 135 A 55 55 0 0 1 52 105 Z" fill="#805ad5"/>
+                            <path d="M 100 80 L 52 105 A 55 55 0 0 1 52 55 Z" fill="#d69e2e"/>
+                            <text x="120" y="50" class="label-tiny">40%</text>
+                            <text x="140" y="85" class="label-tiny">25%</text>
+                            <text x="115" y="120" class="label-tiny">20%</text>
+                            <text x="65" y="110" class="label-tiny">10%</text>
+                            <text x="65" y="60" class="label-tiny">5%</text>
+                        </svg>
+                        <div style="font-size: 9.5px; color: #4a5568; text-align: center;">максимум 5 категорий</div>
+                    </div>
+
+                    <!-- Donut -->
+                    <div>
+                        <div style="font-size: 11px; font-weight: bold; color: #975a16; margin-bottom: 4px; text-align: center;">Кольцевая</div>
+                        <svg viewBox="0 0 200 160" width="100%">
+                            <rect x="0" y="0" width="200" height="160" fill="#ffffff"/>
+                            <circle cx="100" cy="80" r="55" fill="#f7fafc" stroke="#a0aec0"/>
+                            <path d="M 100 80 L 100 25 A 55 55 0 0 1 148 55 Z" fill="#4299e1"/>
+                            <path d="M 100 80 L 148 55 A 55 55 0 0 1 148 105 Z" fill="#ed8936"/>
+                            <path d="M 100 80 L 148 105 A 55 55 0 0 1 100 135 Z" fill="#38a169"/>
+                            <path d="M 100 80 L 100 135 A 55 55 0 0 1 52 105 Z" fill="#805ad5"/>
+                            <circle cx="100" cy="80" r="28" fill="#ffffff"/>
+                            <text x="100" y="78" text-anchor="middle" class="label-strong" style="font-size: 13px;">100%</text>
+                            <text x="100" y="92" text-anchor="middle" class="label-tiny">всего</text>
+                        </svg>
+                        <div style="font-size: 9.5px; color: #4a5568; text-align: center;">плюс метрика в центре</div>
+                    </div>
+
+                    <!-- Treemap -->
+                    <div>
+                        <div style="font-size: 11px; font-weight: bold; color: #975a16; margin-bottom: 4px; text-align: center;">Древовидная</div>
+                        <svg viewBox="0 0 200 160" width="100%">
+                            <rect x="0" y="0" width="200" height="160" fill="#ffffff"/>
+                            <rect x="10" y="10" width="80" height="90" fill="#4299e1" stroke="#ffffff" stroke-width="2"/>
+                            <text x="50" y="55" text-anchor="middle" class="label-white">40%</text>
+                            <rect x="92" y="10" width="50" height="90" fill="#ed8936" stroke="#ffffff" stroke-width="2"/>
+                            <text x="117" y="55" text-anchor="middle" class="label-white">25%</text>
+                            <rect x="144" y="10" width="46" height="50" fill="#38a169" stroke="#ffffff" stroke-width="2"/>
+                            <text x="167" y="37" text-anchor="middle" class="label-white-sm">20%</text>
+                            <rect x="144" y="62" width="46" height="38" fill="#805ad5" stroke="#ffffff" stroke-width="2"/>
+                            <text x="167" y="83" text-anchor="middle" class="label-white-sm">10%</text>
+                            <rect x="10" y="102" width="180" height="48" fill="#d69e2e" stroke="#ffffff" stroke-width="2"/>
+                            <text x="100" y="130" text-anchor="middle" class="label-white-sm">5% — категория с длинным названием</text>
+                        </svg>
+                        <div style="font-size: 9.5px; color: #4a5568; text-align: center;">для многих категорий</div>
+                    </div>
+
+                    <!-- Waffle -->
+                    <div>
+                        <div style="font-size: 11px; font-weight: bold; color: #975a16; margin-bottom: 4px; text-align: center;">Вафля</div>
+                        <svg viewBox="0 0 200 160" width="100%">
+                            <rect x="0" y="0" width="200" height="160" fill="#ffffff"/>
+                            <!-- 10x10 grid -->
+                            <g>
+                                <rect x="20" y="15" width="14" height="12" fill="#4299e1"/><rect x="36" y="15" width="14" height="12" fill="#4299e1"/><rect x="52" y="15" width="14" height="12" fill="#4299e1"/><rect x="68" y="15" width="14" height="12" fill="#4299e1"/><rect x="84" y="15" width="14" height="12" fill="#4299e1"/><rect x="100" y="15" width="14" height="12" fill="#4299e1"/><rect x="116" y="15" width="14" height="12" fill="#4299e1"/><rect x="132" y="15" width="14" height="12" fill="#4299e1"/><rect x="148" y="15" width="14" height="12" fill="#4299e1"/><rect x="164" y="15" width="14" height="12" fill="#4299e1"/>
+                                <rect x="20" y="29" width="14" height="12" fill="#4299e1"/><rect x="36" y="29" width="14" height="12" fill="#4299e1"/><rect x="52" y="29" width="14" height="12" fill="#4299e1"/><rect x="68" y="29" width="14" height="12" fill="#4299e1"/><rect x="84" y="29" width="14" height="12" fill="#4299e1"/><rect x="100" y="29" width="14" height="12" fill="#4299e1"/><rect x="116" y="29" width="14" height="12" fill="#4299e1"/><rect x="132" y="29" width="14" height="12" fill="#4299e1"/><rect x="148" y="29" width="14" height="12" fill="#4299e1"/><rect x="164" y="29" width="14" height="12" fill="#4299e1"/>
+                                <rect x="20" y="43" width="14" height="12" fill="#4299e1"/><rect x="36" y="43" width="14" height="12" fill="#4299e1"/><rect x="52" y="43" width="14" height="12" fill="#4299e1"/><rect x="68" y="43" width="14" height="12" fill="#4299e1"/><rect x="84" y="43" width="14" height="12" fill="#4299e1"/><rect x="100" y="43" width="14" height="12" fill="#4299e1"/><rect x="116" y="43" width="14" height="12" fill="#ed8936"/><rect x="132" y="43" width="14" height="12" fill="#ed8936"/><rect x="148" y="43" width="14" height="12" fill="#ed8936"/><rect x="164" y="43" width="14" height="12" fill="#ed8936"/>
+                                <rect x="20" y="57" width="14" height="12" fill="#4299e1"/><rect x="36" y="57" width="14" height="12" fill="#4299e1"/><rect x="52" y="57" width="14" height="12" fill="#4299e1"/><rect x="68" y="57" width="14" height="12" fill="#4299e1"/><rect x="84" y="57" width="14" height="12" fill="#ed8936"/><rect x="100" y="57" width="14" height="12" fill="#ed8936"/><rect x="116" y="57" width="14" height="12" fill="#ed8936"/><rect x="132" y="57" width="14" height="12" fill="#ed8936"/><rect x="148" y="57" width="14" height="12" fill="#38a169"/><rect x="164" y="57" width="14" height="12" fill="#38a169"/>
+                                <rect x="20" y="71" width="14" height="12" fill="#4299e1"/><rect x="36" y="71" width="14" height="12" fill="#4299e1"/><rect x="52" y="71" width="14" height="12" fill="#ed8936"/><rect x="68" y="71" width="14" height="12" fill="#ed8936"/><rect x="84" y="71" width="14" height="12" fill="#ed8936"/><rect x="100" y="71" width="14" height="12" fill="#38a169"/><rect x="116" y="71" width="14" height="12" fill="#38a169"/><rect x="132" y="71" width="14" height="12" fill="#805ad5"/><rect x="148" y="71" width="14" height="12" fill="#805ad5"/><rect x="164" y="71" width="14" height="12" fill="#805ad5"/>
+                                <rect x="20" y="85" width="14" height="12" fill="#ed8936"/><rect x="36" y="85" width="14" height="12" fill="#ed8936"/><rect x="52" y="85" width="14" height="12" fill="#38a169"/><rect x="68" y="85" width="14" height="12" fill="#38a169"/><rect x="84" y="85" width="14" height="12" fill="#805ad5"/><rect x="100" y="85" width="14" height="12" fill="#805ad5"/><rect x="116" y="85" width="14" height="12" fill="#d69e2e"/><rect x="132" y="85" width="14" height="12" fill="#d69e2e"/><rect x="148" y="85" width="14" height="12" fill="#d69e2e"/><rect x="164" y="85" width="14" height="12" fill="#d69e2e"/>
+                                <rect x="20" y="99" width="14" height="12" fill="#38a169"/><rect x="36" y="99" width="14" height="12" fill="#38a169"/><rect x="52" y="99" width="14" height="12" fill="#805ad5"/><rect x="68" y="99" width="14" height="12" fill="#805ad5"/><rect x="84" y="99" width="14" height="12" fill="#d69e2e"/><rect x="100" y="99" width="14" height="12" fill="#d69e2e"/><rect x="116" y="99" width="14" height="12" fill="#d69e2e"/><rect x="132" y="99" width="14" height="12" fill="#e2e8f0"/><rect x="148" y="99" width="14" height="12" fill="#e2e8f0"/><rect x="164" y="99" width="14" height="12" fill="#e2e8f0"/>
+                                <rect x="20" y="113" width="14" height="12" fill="#805ad5"/><rect x="36" y="113" width="14" height="12" fill="#d69e2e"/><rect x="52" y="113" width="14" height="12" fill="#d69e2e"/><rect x="68" y="113" width="14" height="12" fill="#e2e8f0"/><rect x="84" y="113" width="14" height="12" fill="#e2e8f0"/><rect x="100" y="113" width="14" height="12" fill="#e2e8f0"/><rect x="116" y="113" width="14" height="12" fill="#e2e8f0"/><rect x="132" y="113" width="14" height="12" fill="#e2e8f0"/><rect x="148" y="113" width="14" height="12" fill="#e2e8f0"/><rect x="164" y="113" width="14" height="12" fill="#e2e8f0"/>
+                                <rect x="20" y="127" width="14" height="12" fill="#d69e2e"/><rect x="36" y="127" width="14" height="12" fill="#e2e8f0"/><rect x="52" y="127" width="14" height="12" fill="#e2e8f0"/><rect x="68" y="127" width="14" height="12" fill="#e2e8f0"/><rect x="84" y="127" width="14" height="12" fill="#e2e8f0"/><rect x="100" y="127" width="14" height="12" fill="#e2e8f0"/><rect x="116" y="127" width="14" height="12" fill="#e2e8f0"/><rect x="132" y="127" width="14" height="12" fill="#e2e8f0"/><rect x="148" y="127" width="14" height="12" fill="#e2e8f0"/><rect x="164" y="127" width="14" height="12" fill="#e2e8f0"/>
+                            </g>
+                            <text x="100" y="153" text-anchor="middle" class="label-tiny">1 клетка = 1%</text>
+                        </svg>
+                        <div style="font-size: 9.5px; color: #4a5568; text-align: center;">честное восприятие</div>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    <strong>Круговая</strong> — только для 2–5 категорий с явно разными долями. <strong>Кольцевая</strong> — то же плюс метрика в центре. <strong>Древовидная карта</strong> — для многих категорий, площадь = значение. <strong>Вафля</strong> — точное восприятие долей, но для сложных данных не подходит. <span class="tag red">Правило</span> Более 5 категорий или близкие доли → используйте горизонтальную столбиковую диаграмму.
+                </div>
+            </div>
+
+            <!-- БЛОК 3: ЛИНЕЙНЫЕ ГРАФИКИ -->
+            <div class="viz-card">
+                <div class="viz-title">📈 Блок 3. Линейные графики: динамика во времени</div>
+                <div class="grid-3">
+
+                    <!-- Line chart -->
+                    <div>
+                        <div style="font-size: 11px; font-weight: bold; color: #276749; margin-bottom: 4px; text-align: center;">Линейный график</div>
+                        <svg viewBox="0 0 220 160" width="100%">
+                            <rect x="0" y="0" width="220" height="160" fill="#ffffff"/>
+                            <line x1="30" y1="140" x2="210" y2="140" class="axis"/>
+                            <line x1="30" y1="20" x2="30" y2="140" class="axis"/>
+                            <path d="M 40 110 L 65 90 L 90 100 L 115 60 L 140 70 L 165 45 L 190 35 L 205 30"
+                                  fill="none" stroke="#38a169" stroke-width="2.5"/>
+                            <circle cx="40" cy="110" r="3" fill="#38a169"/>
+                            <circle cx="65" cy="90" r="3" fill="#38a169"/>
+                            <circle cx="90" cy="100" r="3" fill="#38a169"/>
+                            <circle cx="115" cy="60" r="3" fill="#38a169"/>
+                            <circle cx="140" cy="70" r="3" fill="#38a169"/>
+                            <circle cx="165" cy="45" r="3" fill="#38a169"/>
+                            <circle cx="190" cy="35" r="3" fill="#38a169"/>
+                            <text x="40" y="155" text-anchor="middle" class="label-tiny">Янв</text>
+                            <text x="90" y="155" text-anchor="middle" class="label-tiny">Мар</text>
+                            <text x="140" y="155" text-anchor="middle" class="label-tiny">Май</text>
+                            <text x="190" y="155" text-anchor="middle" class="label-tiny">Июл</text>
+                        </svg>
+                    </div>
+
+                    <!-- Area -->
+                    <div>
+                        <div style="font-size: 11px; font-weight: bold; color: #276749; margin-bottom: 4px; text-align: center;">Площадная</div>
+                        <svg viewBox="0 0 220 160" width="100%">
+                            <rect x="0" y="0" width="220" height="160" fill="#ffffff"/>
+                            <line x1="30" y1="140" x2="210" y2="140" class="axis"/>
+                            <line x1="30" y1="20" x2="30" y2="140" class="axis"/>
+                            <path d="M 40 110 L 65 90 L 90 100 L 115 60 L 140 70 L 165 45 L 190 35 L 205 30 L 205 140 L 40 140 Z"
+                                  fill="#9ae6b4" fill-opacity="0.5"/>
+                            <path d="M 40 110 L 65 90 L 90 100 L 115 60 L 140 70 L 165 45 L 190 35 L 205 30"
+                                  fill="none" stroke="#38a169" stroke-width="2"/>
+                        </svg>
+                    </div>
+
+                    <!-- Candlestick -->
+                    <div>
+                        <div style="font-size: 11px; font-weight: bold; color: #276749; margin-bottom: 4px; text-align: center;">Свечной</div>
+                        <svg viewBox="0 0 220 160" width="100%">
+                            <rect x="0" y="0" width="220" height="160" fill="#ffffff"/>
+                            <line x1="30" y1="140" x2="210" y2="140" class="axis"/>
+                            <line x1="30" y1="20" x2="30" y2="140" class="axis"/>
+                            <!-- Candles: high, low, open, close -->
+                            <line x1="50" y1="40" x2="50" y2="120" stroke="#4a5568" stroke-width="1"/>
+                            <rect x="43" y="60" width="14" height="40" fill="#38a169"/>
+                            <line x1="80" y1="50" x2="80" y2="130" stroke="#4a5568" stroke-width="1"/>
+                            <rect x="73" y="70" width="14" height="30" fill="#e53e3e"/>
+                            <line x1="110" y1="35" x2="110" y2="115" stroke="#4a5568" stroke-width="1"/>
+                            <rect x="103" y="55" width="14" height="45" fill="#38a169"/>
+                            <line x1="140" y1="30" x2="140" y2="100" stroke="#4a5568" stroke-width="1"/>
+                            <rect x="133" y="50" width="14" height="30" fill="#38a169"/>
+                            <line x1="170" y1="20" x2="170" y2="90" stroke="#4a5568" stroke-width="1"/>
+                            <rect x="163" y="40" width="14" height="35" fill="#38a169"/>
+                            <text x="55" y="155" text-anchor="middle" class="label-tiny">Пн</text>
+                            <text x="85" y="155" text-anchor="middle" class="label-tiny">Вт</text>
+                            <text x="115" y="155" text-anchor="middle" class="label-tiny">Ср</text>
+                            <text x="145" y="155" text-anchor="middle" class="label-tiny">Чт</text>
+                            <text x="175" y="155" text-anchor="middle" class="label-tiny">Пт</text>
+                        </svg>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    <strong>Линейный</strong> — тренд и колебания. <strong>Площадная</strong> — акцент на объёме. <strong>Свечной</strong> — цена открытия/закрытия, максимум/минимум для финансовых данных. <span class="tag red">Ошибка</span> Больше 5 линий — «спагетти-график», читать невозможно.
+                </div>
+            </div>
+
+            <!-- БЛОК 4: РАСПРЕДЕЛЕНИЯ -->
+            <div class="viz-card">
+                <div class="viz-title">📦 Блок 4. Распределение: гистограмма, ящичная, скрипка, плотность</div>
+                <div class="grid-4">
+
+                    <!-- Histogram -->
+                    <div>
+                        <div style="font-size: 11px; font-weight: bold; color: #553c9a; margin-bottom: 4px; text-align: center;">Гистограмма</div>
+                        <svg viewBox="0 0 200 160" width="100%">
+                            <rect x="0" y="0" width="200" height="160" fill="#ffffff"/>
+                            <line x1="20" y1="140" x2="190" y2="140" class="axis"/>
+                            <line x1="20" y1="20" x2="20" y2="140" class="axis"/>
+                            <rect x="25" y="110" width="14" height="30" fill="#b794f4" stroke="#553c9a" stroke-width="0.5"/>
+                            <rect x="41" y="90" width="14" height="50" fill="#b794f4" stroke="#553c9a" stroke-width="0.5"/>
+                            <rect x="57" y="55" width="14" height="85" fill="#b794f4" stroke="#553c9a" stroke-width="0.5"/>
+                            <rect x="73" y="30" width="14" height="110" fill="#b794f4" stroke="#553c9a" stroke-width="0.5"/>
+                            <rect x="89" y="30" width="14" height="110" fill="#b794f4" stroke="#553c9a" stroke-width="0.5"/>
+                            <rect x="105" y="55" width="14" height="85" fill="#b794f4" stroke="#553c9a" stroke-width="0.5"/>
+                            <rect x="121" y="90" width="14" height="50" fill="#b794f4" stroke="#553c9a" stroke-width="0.5"/>
+                            <rect x="137" y="110" width="14" height="30" fill="#b794f4" stroke="#553c9a" stroke-width="0.5"/>
+                            <rect x="153" y="120" width="14" height="20" fill="#b794f4" stroke="#553c9a" stroke-width="0.5"/>
+                        </svg>
+                        <div style="font-size: 9.5px; color: #4a5568; text-align: center;">форма распределения</div>
+                    </div>
+
+                    <!-- Box plot -->
+                    <div>
+                        <div style="font-size: 11px; font-weight: bold; color: #553c9a; margin-bottom: 4px; text-align: center;">Ящичная</div>
+                        <svg viewBox="0 0 200 160" width="100%">
+                            <rect x="0" y="0" width="200" height="160" fill="#ffffff"/>
+                            <line x1="20" y1="140" x2="190" y2="140" class="axis"/>
+                            <line x1="20" y1="20" x2="20" y2="140" class="axis"/>
+                            <!-- Box plot A -->
+                            <rect x="45" y="55" width="35" height="60" fill="#b794f4" stroke="#553c9a" stroke-width="1.5"/>
+                            <line x1="45" y1="85" x2="80" y2="85" stroke="#553c9a" stroke-width="2"/>
+                            <line x1="62" y1="30" x2="62" y2="55" stroke="#553c9a" stroke-width="1"/>
+                            <line x1="62" y1="115" x2="62" y2="135" stroke="#553c9a" stroke-width="1"/>
+                            <line x1="52" y1="30" x2="72" y2="30" stroke="#553c9a" stroke-width="1"/>
+                            <line x1="52" y1="135" x2="72" y2="135" stroke="#553c9a" stroke-width="1"/>
+                            <circle cx="62" cy="22" r="3" fill="#ffffff" stroke="#e53e3e" stroke-width="1.5"/>
+                            <!-- Box plot B -->
+                            <rect x="110" y="70" width="35" height="45" fill="#b794f4" stroke="#553c9a" stroke-width="1.5"/>
+                            <line x1="110" y1="92" x2="145" y2="92" stroke="#553c9a" stroke-width="2"/>
+                            <line x1="127" y1="55" x2="127" y2="70" stroke="#553c9a" stroke-width="1"/>
+                            <line x1="127" y1="115" x2="127" y2="132" stroke="#553c9a" stroke-width="1"/>
+                            <line x1="117" y1="55" x2="137" y2="55" stroke="#553c9a" stroke-width="1"/>
+                            <line x1="117" y1="132" x2="137" y2="132" stroke="#553c9a" stroke-width="1"/>
+                            <text x="62" y="155" text-anchor="middle" class="label-tiny">Группа А</text>
+                            <text x="127" y="155" text-anchor="middle" class="label-tiny">Группа Б</text>
+                        </svg>
+                        <div style="font-size: 9.5px; color: #4a5568; text-align: center;">сравнение групп</div>
+                    </div>
+
+                    <!-- Violin -->
+                    <div>
+                        <div style="font-size: 11px; font-weight: bold; color: #553c9a; margin-bottom: 4px; text-align: center;">Скрипка</div>
+                        <svg viewBox="0 0 200 160" width="100%">
+                            <rect x="0" y="0" width="200" height="160" fill="#ffffff"/>
+                            <line x1="20" y1="140" x2="190" y2="140" class="axis"/>
+                            <line x1="20" y1="20" x2="20" y2="140" class="axis"/>
+                            <!-- Violin A -->
+                            <path d="M 60 30 Q 30 60 30 80 Q 30 100 60 130 Q 70 100 70 80 Q 70 60 60 30 Z"
+                                  fill="#d6bcfa" stroke="#553c9a" stroke-width="1.5"/>
+                            <rect x="55" y="60" width="10" height="40" fill="#805ad5"/>
+                            <line x1="55" y1="80" x2="65" y2="80" stroke="#ffffff" stroke-width="1.5"/>
+                            <!-- Violin B -->
+                            <path d="M 130 40 Q 100 65 100 85 Q 100 105 130 125 Q 140 100 140 82 Q 140 65 130 40 Z"
+                                  fill="#d6bcfa" stroke="#553c9a" stroke-width="1.5"/>
+                            <rect x="125" y="70" width="10" height="30" fill="#805ad5"/>
+                            <line x1="125" y1="85" x2="135" y2="85" stroke="#ffffff" stroke-width="1.5"/>
+                            <text x="60" y="155" text-anchor="middle" class="label-tiny">A</text>
+                            <text x="130" y="155" text-anchor="middle" class="label-tiny">B</text>
+                        </svg>
+                        <div style="font-size: 9.5px; color: #4a5568; text-align: center;">плотность + квартили</div>
+                    </div>
+
+                    <!-- Density -->
+                    <div>
+                        <div style="font-size: 11px; font-weight: bold; color: #553c9a; margin-bottom: 4px; text-align: center;">Плотность</div>
+                        <svg viewBox="0 0 200 160" width="100%">
+                            <rect x="0" y="0" width="200" height="160" fill="#ffffff"/>
+                            <line x1="20" y1="140" x2="190" y2="140" class="axis"/>
+                            <line x1="20" y1="20" x2="20" y2="140" class="axis"/>
+                            <path d="M 25 140 Q 50 138 70 120 Q 90 90 105 40 Q 120 90 140 120 Q 160 138 185 140"
+                                  fill="#b794f4" fill-opacity="0.5" stroke="#553c9a" stroke-width="2"/>
+                            <line x1="105" y1="40" x2="105" y2="140" stroke="#553c9a" stroke-width="1" stroke-dasharray="3 2"/>
+                        </svg>
+                        <div style="font-size: 9.5px; color: #4a5568; text-align: center;">сглаженная форма</div>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    <strong>Гистограмма</strong> — форма распределения, выбросы, провалы. <strong>Ящичная</strong> — сводка и выбросы, сравнение групп. <strong>Скрипка</strong> — плотность + квартили. <strong>Плотность</strong> — сглаженная форма без ступенек. <span class="tag red">Правило</span> Для проверки нормальности — гистограмма + ящичная диаграмма вместе (лекция 5).
+                </div>
+            </div>
+
+            <!-- БЛОК 5: СВЯЗЬ -->
+            <div class="viz-card">
+                <div class="viz-title">🔵 Блок 5. Связь между переменными: точечная диаграмма и тепловая карта</div>
+                <div class="grid-2">
+
+                    <!-- Scatter with trend -->
+                    <div>
+                        <div style="font-size: 11px; font-weight: bold; color: #2b6cb0; margin-bottom: 4px; text-align: center;">Точечная диаграмма с линией тренда</div>
+                        <svg viewBox="0 0 320 220" width="100%">
+                            <rect x="0" y="0" width="320" height="220" fill="#ffffff"/>
+                            <line x1="40" y1="190" x2="300" y2="190" class="axis"/>
+                            <line x1="40" y1="20" x2="40" y2="190" class="axis"/>
+                            <!-- Grid -->
+                            <line x1="40" y1="148" x2="300" y2="148" class="grid-line"/>
+                            <line x1="40" y1="105" x2="300" y2="105" class="grid-line"/>
+                            <line x1="40" y1="62"  x2="300" y2="62"  class="grid-line"/>
+                            <!-- Scatter points -->
+                            <circle cx="70" cy="170" r="4" fill="#4299e1"/>
+                            <circle cx="85" cy="155" r="4" fill="#4299e1"/>
+                            <circle cx="100" cy="165" r="4" fill="#4299e1"/>
+                            <circle cx="115" cy="140" r="4" fill="#4299e1"/>
+                            <circle cx="130" cy="150" r="4" fill="#4299e1"/>
+                            <circle cx="145" cy="125" r="4" fill="#4299e1"/>
+                            <circle cx="160" cy="135" r="4" fill="#4299e1"/>
+                            <circle cx="175" cy="105" r="4" fill="#4299e1"/>
+                            <circle cx="190" cy="115" r="4" fill="#4299e1"/>
+                            <circle cx="205" cy="90"  r="4" fill="#4299e1"/>
+                            <circle cx="220" cy="95"  r="4" fill="#4299e1"/>
+                            <circle cx="235" cy="75"  r="4" fill="#4299e1"/>
+                            <circle cx="250" cy="80"  r="4" fill="#4299e1"/>
+                            <circle cx="265" cy="55"  r="4" fill="#4299e1"/>
+                            <circle cx="155" cy="70"  r="5" fill="#e53e3e" class="pulse-bar"/>
+                            <text x="163" y="67" class="label-tiny" fill="#9b2c2c">выброс</text>
+                            <!-- Trend line -->
+                            <line x1="55" y1="175" x2="285" y2="45" stroke="#e53e3e" stroke-width="2" stroke-dasharray="5 3"/>
+                            <text x="170" y="210" text-anchor="middle" class="label-strong">Площадь квартиры →</text>
+                            <text x="15" y="105" text-anchor="middle" class="label-strong" transform="rotate(-90 15 105)">Цена</text>
+                        </svg>
+                    </div>
+
+                    <!-- Heatmap -->
+                    <div>
+                        <div style="font-size: 11px; font-weight: bold; color: #2b6cb0; margin-bottom: 4px; text-align: center;">Тепловая карта корреляций</div>
+                        <svg viewBox="0 0 320 220" width="100%">
+                            <rect x="0" y="0" width="320" height="220" fill="#ffffff"/>
+                            <!-- 4x4 matrix -->
+                            <!-- Headers -->
+                            <text x="85"  y="30" text-anchor="middle" class="label-tiny">Цена</text>
+                            <text x="145" y="30" text-anchor="middle" class="label-tiny">Площадь</text>
+                            <text x="205" y="30" text-anchor="middle" class="label-tiny">Этаж</text>
+                            <text x="265" y="30" text-anchor="middle" class="label-tiny">Возраст</text>
+                            <text x="55" y="60" text-anchor="end" class="label-tiny">Цена</text>
+                            <text x="55" y="105" text-anchor="end" class="label-tiny">Площадь</text>
+                            <text x="55" y="150" text-anchor="end" class="label-tiny">Этаж</text>
+                            <text x="55" y="195" text-anchor="end" class="label-tiny">Возраст</text>
+                            <!-- Cells -->
+                            <rect x="60"  y="40" width="50" height="40" fill="#e53e3e"/>
+                            <text x="85"  y="65" text-anchor="middle" class="label-white">1.0</text>
+                            <rect x="120" y="40" width="50" height="40" fill="#fc8181"/>
+                            <text x="145" y="65" text-anchor="middle" class="label-white">0.85</text>
+                            <rect x="180" y="40" width="50" height="40" fill="#fed7d7"/>
+                            <text x="205" y="65" text-anchor="middle" class="label">0.12</text>
+                            <rect x="240" y="40" width="50" height="40" fill="#bee3f8"/>
+                            <text x="265" y="65" text-anchor="middle" class="label">-0.35</text>
+
+                            <rect x="60"  y="85" width="50" height="40" fill="#fc8181"/>
+                            <text x="85"  y="110" text-anchor="middle" class="label-white">0.85</text>
+                            <rect x="120" y="85" width="50" height="40" fill="#e53e3e"/>
+                            <text x="145" y="110" text-anchor="middle" class="label-white">1.0</text>
+                            <rect x="180" y="85" width="50" height="40" fill="#f7fafc"/>
+                            <text x="205" y="110" text-anchor="middle" class="label">0.05</text>
+                            <rect x="240" y="85" width="50" height="40" fill="#bee3f8"/>
+                            <text x="265" y="110" text-anchor="middle" class="label">-0.22</text>
+
+                            <rect x="60"  y="130" width="50" height="40" fill="#fed7d7"/>
+                            <text x="85"  y="155" text-anchor="middle" class="label">0.12</text>
+                            <rect x="120" y="130" width="50" height="40" fill="#f7fafc"/>
+                            <text x="145" y="155" text-anchor="middle" class="label">0.05</text>
+                            <rect x="180" y="130" width="50" height="40" fill="#e53e3e"/>
+                            <text x="205" y="155" text-anchor="middle" class="label-white">1.0</text>
+                            <rect x="240" y="130" width="50" height="40" fill="#f7fafc"/>
+                            <text x="265" y="155" text-anchor="middle" class="label">0.02</text>
+
+                            <rect x="60"  y="175" width="50" height="40" fill="#bee3f8"/>
+                            <text x="85"  y="200" text-anchor="middle" class="label">-0.35</text>
+                            <rect x="120" y="175" width="50" height="40" fill="#bee3f8"/>
+                            <text x="145" y="200" text-anchor="middle" class="label">-0.22</text>
+                            <rect x="180" y="175" width="50" height="40" fill="#f7fafc"/>
+                            <text x="205" y="200" text-anchor="middle" class="label">0.02</text>
+                            <rect x="240" y="175" width="50" height="40" fill="#e53e3e"/>
+                            <text x="265" y="200" text-anchor="middle" class="label-white">1.0</text>
+                        </svg>
+                        <div style="font-size: 9.5px; color: #4a5568; text-align: center; margin-top: 4px;">
+                            <span class="tag red">красный</span> положительная · <span class="tag">синий</span> отрицательная
+                        </div>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    <strong>Scatter</strong> — облако точек показывает связь. Красная точка — выброс. Пунктир — линия тренда. <strong>Heatmap</strong> — матрица корреляций: тёмно-красный = сильная положительная (0.85), синий = отрицательная (−0.35), белый = нет связи.
+                </div>
+            </div>
+
+            <!-- БЛОК 6: КАРТЫ -->
+            <div class="viz-card">
+                <div class="viz-title">🗺️ Блок 6. Карты: пространственные данные</div>
+                <div class="grid-2">
+
+                    <!-- Choropleth (simplified) -->
+                    <div>
+                        <div style="font-size: 11px; font-weight: bold; color: #975a16; margin-bottom: 4px; text-align: center;">Картограмма (choropleth)</div>
+                        <svg viewBox="0 0 320 200" width="100%">
+                            <rect x="0" y="0" width="320" height="200" fill="#ffffff"/>
+                            <!-- Simplified regions -->
+                            <path d="M 30 40 L 110 30 L 130 80 L 90 130 L 40 120 Z" fill="#fc8181" stroke="#4a5568" stroke-width="1"/>
+                            <path d="M 110 30 L 200 35 L 210 90 L 130 80 Z" fill="#e53e3e" stroke="#4a5568" stroke-width="1"/>
+                            <path d="M 130 80 L 210 90 L 220 140 L 140 160 L 90 130 Z" fill="#fed7d7" stroke="#4a5568" stroke-width="1"/>
+                            <path d="M 200 35 L 290 50 L 300 110 L 210 90 Z" fill="#feb2b2" stroke="#4a5568" stroke-width="1"/>
+                            <path d="M 210 90 L 300 110 L 290 165 L 220 140 Z" fill="#f7fafc" stroke="#4a5568" stroke-width="1"/>
+                            <path d="M 140 160 L 220 140 L 290 165 L 250 190 L 160 185 Z" fill="#fff5f5" stroke="#4a5568" stroke-width="1"/>
+                            <!-- Labels -->
+                            <text x="75" y="85" text-anchor="middle" class="label-tiny">Регион 1</text>
+                            <text x="160" y="60" text-anchor="middle" class="label-white" style="font-weight: bold;">Регион 2</text>
+                            <text x="160" y="120" text-anchor="middle" class="label-tiny">Регион 3</text>
+                            <text x="250" y="75" text-anchor="middle" class="label-tiny">Регион 4</text>
+                            <text x="260" y="130" text-anchor="middle" class="label-tiny">Регион 5</text>
+                            <text x="210" y="175" text-anchor="middle" class="label-tiny">Регион 6</text>
+                            <!-- Legend -->
+                            <text x="160" y="196" text-anchor="middle" class="label-tiny">тёмный = высокие значения</text>
+                        </svg>
+                    </div>
+
+                    <!-- Bubble map -->
+                    <div>
+                        <div style="font-size: 11px; font-weight: bold; color: #975a16; margin-bottom: 4px; text-align: center;">Карта с пузырьками</div>
+                        <svg viewBox="0 0 320 200" width="100%">
+                            <rect x="0" y="0" width="320" height="200" fill="#ffffff"/>
+                            <!-- Background grid -->
+                            <line x1="20" y1="100" x2="300" y2="100" class="grid-line"/>
+                            <line x1="160" y1="20" x2="160" y2="180" class="grid-line"/>
+                            <!-- Cities -->
+                            <circle cx="80"  cy="70"  r="22" fill="#ed8936" fill-opacity="0.6" stroke="#c05621" stroke-width="1.5"/>
+                            <text x="80" y="74" text-anchor="middle" class="label-white" style="font-size: 9px;">Москва</text>
+                            <circle cx="220" cy="50"  r="14" fill="#ed8936" fill-opacity="0.6" stroke="#c05621" stroke-width="1.5"/>
+                            <text x="220" y="54" text-anchor="middle" class="label-white" style="font-size: 8px;">СПб</text>
+                            <circle cx="130" cy="130" r="10" fill="#ed8936" fill-opacity="0.6" stroke="#c05621" stroke-width="1.5"/>
+                            <text x="130" y="134" text-anchor="middle" class="label-white" style="font-size: 8px;">Воронеж</text>
+                            <circle cx="250" cy="120" r="18" fill="#ed8936" fill-opacity="0.6" stroke="#c05621" stroke-width="1.5"/>
+                            <text x="250" y="124" text-anchor="middle" class="label-white" style="font-size: 8px;">Екатеринбург</text>
+                            <circle cx="200" cy="165" r="8" fill="#ed8936" fill-opacity="0.6" stroke="#c05621" stroke-width="1.5"/>
+                            <text x="200" y="169" text-anchor="middle" class="label-white" style="font-size: 7px;">Сочи</text>
+                            <text x="160" y="196" text-anchor="middle" class="label-tiny">размер пузырька = значение</text>
+                        </svg>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    <strong>Картограмма</strong> — цвет региона = значение показателя. <strong>Пузырьковая карта</strong> — размер точки = значение. <span class="tag red">Ловушка</span> Большие регионы визуально доминируют даже при малых значениях. Поэтому карту часто дополняют столбиковой диаграммой.
+                </div>
+            </div>
+
+            <!-- МАТРИЦА: КАКАЯ ДИАГРАММА ДЛЯ КАКОГО ВОПРОСА -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 8px;">🗺️ Матрица: какой тип диаграммы отвечает на какой вопрос</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr><th>Вопрос</th><th>Тип диаграммы</th><th>Пример</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>Сколько?</strong></td><td>Столбиковая</td><td>Продажи по категориям</td></tr>
+                        <tr><td><strong>Какая доля?</strong></td><td>Круговая, накопленная, treemap</td><td>Доля каналов привлечения</td></tr>
+                        <tr><td><strong>Как меняется во времени?</strong></td><td>Линейная, площадная</td><td>Выручка по месяцам</td></tr>
+                        <tr><td><strong>Как распределено?</strong></td><td>Гистограмма, box plot, violin</td><td>Зарплаты по отделам</td></tr>
+                        <tr><td><strong>Есть ли связь?</strong></td><td>Scatter, heatmap</td><td>Цена vs площадь</td></tr>
+                        <tr><td><strong>Где находится?</strong></td><td>Картограмма, bubble map</td><td>Заболеваемость по регионам</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- РОЛЕВАЯ МАТРИЦА -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 8px;">👥 Какие диаграммы используют 11 ролей аналитиков</div>
+                <table class="role-table">
+                    <thead>
+                        <tr><th style="width: 30%;">Роль</th><th>Основные диаграммы</th><th style="width: 32%;">Типичные задачи</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="role-emoji">📈</span> <strong>Аналитик данных</strong></td>
+                            <td class="chart-cell">📊📈📦🔵</td>
+                            <td>Выручка, клиенты, средний чек — всё, что нужно сравнить, показать тренд или распределение</td>
+                        </tr>
+                        <tr>
+                            <td><span class="role-emoji">💰</span> <strong>Финансовый аналитик</strong></td>
+                            <td class="chart-cell">📊🥧📈</td>
+                            <td>Структура затрат, динамика котировок, план/факт бюджета (свечной график — для финансов)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="role-emoji">🚀</span> <strong>Продуктовый аналитик</strong></td>
+                            <td class="chart-cell">📈📦🔵</td>
+                            <td>Удержание по когортам, распределение времени в продукте, связь между метриками</td>
+                        </tr>
+                        <tr>
+                            <td><span class="role-emoji">🌐</span> <strong>Веб-аналитик</strong></td>
+                            <td class="chart-cell">📈📊🔵</td>
+                            <td>Трафик по дням, воронка по шагам (bar chart), тепловая карта кликов</td>
+                        </tr>
+                        <tr>
+                            <td><span class="role-emoji">📊</span> <strong>BI-аналитик</strong></td>
+                            <td class="chart-cell">📊📈🔵</td>
+                            <td>Дашборды: KPI по времени (line), категориям (bar), регионам (map)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="role-emoji">🗄️</span> <strong>Аналитик больших данных</strong></td>
+                            <td class="chart-cell">📈🔵📦</td>
+                            <td>Нагрузка на систему (line), связь параметров (scatter), распределение задержек (hist)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="role-emoji">📣</span> <strong>Маркетинговый аналитик</strong></td>
+                            <td class="chart-cell">📊🥧📈🔵</td>
+                            <td>Каналы (horizontal bar), бюджет (pie), динамика продаж (line), затраты vs отдача (scatter)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="role-emoji">💼</span> <strong>Бизнес-аналитик</strong></td>
+                            <td class="chart-cell">📊📈🗺️</td>
+                            <td>Время по этапам процесса (bar), тренд по месяцам, карта филиалов</td>
+                        </tr>
+                        <tr>
+                            <td><span class="role-emoji">⚙️</span> <strong>Системный аналитик</strong></td>
+                            <td class="chart-cell">📈📊</td>
+                            <td>Метрики системы (CPU, память) по часам, нагрузка по сервисам (bar)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="role-emoji">🗃️</span> <strong>Аналитик 1С</strong></td>
+                            <td class="chart-cell">📊📈</td>
+                            <td>Остатки по номенклатуре, задолженность по контрагентам (bar), динамика (line)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="role-emoji">🎨</span> <strong>UX-аналитик</strong></td>
+                            <td class="chart-cell">📦🔵🗺️</td>
+                            <td>Оценки удовлетворённости (box), тепловая карта кликов, воронка (bar)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ТИПИЧНЫЕ ОШИБКИ -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 10px;">⚠️ Типичные ошибки визуализации и как их избежать</div>
+                <div class="grid-2">
+                    <div class="callout warn">
+                        <strong>❌ Круговая для 20 категорий</strong>
+                        <p>Сектора сливаются, читать невозможно. <strong>Решение:</strong> горизонтальная столбиковая.</p>
+                    </div>
+                    <div class="callout warn">
+                        <strong>❌ Обрезанная ось Y</strong>
+                        <p>Различие визуально преувеличивается. <strong>Решение:</strong> ось Y всегда с нуля (если не оговорено).</p>
+                    </div>
+                    <div class="callout warn">
+                        <strong>❌ Спагетти-график</strong>
+                        <p>Больше 5 линий — нечитаемо. <strong>Решение:</strong> выделить 2–3 ключевые, остальные — в фон или small multiples.</p>
+                    </div>
+                    <div class="callout warn">
+                        <strong>❌ Только среднее без разброса</strong>
+                        <p>Скрывает выбросы и форму распределения. <strong>Решение:</strong> box plot или violin рядом со средним.</p>
+                    </div>
+                    <div class="callout warn">
+                        <strong>❌ 3D-эффекты в диаграммах</strong>
+                        <p>Искажают восприятие, особенно для точных данных. <strong>Решение:</strong> плоские 2D-диаграммы.</p>
+                    </div>
+                    <div class="callout warn">
+                        <strong>❌ Без подписей осей и единиц</strong>
+                        <p>Читатель не понимает, что за цифры. <strong>Решение:</strong> всегда подписывать оси, единицы и источники.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CALL-OUT -->
+            <div class="callout ok">
+                <strong>💡 Главный вывод</strong>
+                <p>Визуализация — это <strong>инструмент анализа и коммуникации</strong>. Хорошая диаграмма помогает увидеть закономерность за 5 секунд. Плохая — скрывает её или искажает. <strong>Выбирайте диаграмму под вопрос</strong>, а не под красоту. И помните: один и тот же график в разных руках решает разные задачи.</p>
+            </div>
+
+            <!-- ВИДЕОПЛЕЕР -->
+            <div class="video-section">
+                <div class="video-container">
+                    <iframe id="lecture-player" src="https://rutube.ru" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+                </div>
+                <div class="links-hub">
+                    <button onclick="changeVideo('https://rutube.ru/')" class="video-btn stop-btn">⏹ СТОП</button>
+                    <button onclick="changeVideo('https://rutube.ru/play/embed/')" class="video-btn rt-btn">📜 Лекция 8. Визуализация в аналитике</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="slide-footer">
+            Направление «Менеджмент» | Курс: Аналитика данных | Лекция 8: «Визуализация в аналитике: типы диаграмм для описательного анализа»
+        </div>
+    </div>
+
+    <!-- ПРАВАЯ ПАНЕЛЬ: СКРИПТ ПРЕПОДАВАТЕЛЯ -->
+     <div class="speaker-notes">
+        <!-- Фиксированная верхняя часть с плеером -->
+        <div style="position: sticky; top: 0; background: #1a202c; padding: 20px 20px 10px 20px; border-bottom: 1px solid #4a5568; width: 100%; z-index: 100;">
+                       <div class="notes-header" style="display: block; padding-bottom: 15px;">
+               <audio id="lecture-audio" preload="auto" controls
+                      src="https://archive.org/download/03_20261110_20261110/09.mp3"
+                      style="width: 100%; height: 32px; border-radius: 4px;"></audio>
+            </div>
+            <div style="width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+             <iframe id="right-lecture-player" src="https://archive.org/embed/20261020_20261020_0955?autoplay=true&loop=true&muted=true"  allow="clipboard-write; autoplay" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen style="border: none;"></iframe>
+
+                           </div>
+        </div>
+        <div class="lecture-text" style="margin-top: 20px;">
+
+            <h3>📌 Введение</h3>
+
+            <p>Добрый день, коллеги. Мы начинаем девятую лекцию нашего курса. В предыдущих лекциях мы разобрали много тем. Мы говорили о метриках и о разных ролях аналитиков. О статистических методах. О проверке нормальности. О критериях сравнения групп. Сегодня мы поговорим о том, как показать результаты анализа.</p>
+
+            <p>Тема нашей лекции звучит так. Визуализация в аналитике. Типы диаграмм для описательного анализа. Это первая часть большой темы. Во второй части мы разберём визуализацию для машинного обучения.</p>
+
+            <p>Давайте сразу обозначим главную мысль. Визуализация — это не украшение отчёта. Это инструмент анализа. И инструмент коммуникации. Хорошая диаграмма помогает увидеть закономерность. Плохая диаграмма скрывает её. Или, что хуже, искажает.</p>
+
+            <p>Представьте себе такую ситуацию. Аналитик посчитал ключевые метрики. Он получил десять чисел. И принёс их руководителю в виде таблицы. Руководитель смотрит на таблицу. Он видит десять цифр. И не понимает, что с ними делать. Где проблема. Где рост. Где отклонение от нормы.</p>
+
+            <p>А теперь представьте, что те же числа показаны на графике. Руководитель за пять секунд видит тренд. Видит аномалию. Видит сравнение с прошлым периодом. Одна картинка заменила десять минут объяснений. Вот в чём сила визуализации.</p>
+
+            <p>Но здесь есть важная оговорка. Не всякая диаграмма помогает. Если выбрать неправильный тип диаграммы, можно запутать ещё сильнее. Если использовать слишком много цветов, читатель устанет. Если обрезать ось значений, можно случайно преувеличить различие. Поэтому аналитик должен знать, какой тип диаграммы для какой задачи подходит.</p>
+
+            <p>Сегодня мы разберём шесть больших групп диаграмм для описательного анализа. Это диаграммы для сравнения категорий. Для показа долей и структуры. Для динамики во времени. Для распределения значений. Для связи между переменными. И для пространственных данных.</p>
+
+            <p>Для каждой группы мы разберём, какие задачи она решает. Какие ошибки бывают. И какие из одиннадцати ролей аналитиков чаще всего её используют. Напомню, что эти роли мы разбирали в первой лекции. Это аналитик данных, финансовый, продуктовый, веб, бизнес-аналитик, системный, аналитик больших данных, аналитик учётных систем, специалист по анализу пользовательского опыта, специалист по аналитике бизнес-данных и маркетинговый аналитик.</p>
+
+            <p>Обратите внимание на важную мысль. Один и тот же тип диаграммы может использоваться в разных ролях. Но задачи будут разные. Например, столбиковую диаграмму используют почти все. Но финансовый аналитик показывает на ней затраты по статьям бюджета. А маркетинговый аналитик показывает конверсию по рекламным каналам. Форма одна, содержание разное.</p>
+
+            <p>И ещё одна мысль. Хорошая визуализация всегда отвечает на конкретный вопрос. Не бывает диаграмм «на всякий случай». Прежде чем строить график, аналитик должен сформулировать вопрос. Что я хочу показать. Сравнение. Тренд. Распределение. Связь. От ответа зависит выбор диаграммы.</p>
+
+            <p>Давайте начнём.</p>
+
+            <h3>📌 Блок 1. Столбиковые диаграммы: сравнение категорий</h3>
+
+            <p>Первый тип диаграмм отвечает на вопрос «сколько?» или «какая категория больше?». Это столбиковые диаграммы. Их ещё называют линейчатыми. По-английски это бар чарт. Но мы будем использовать русское название.</p>
+
+            <p>Идея простая. По одной оси расположены категории. Например, товары, регионы, отделы, каналы. По другой оси — числовые значения. Например, сумма продаж, число клиентов, время выполнения. Каждая категория представлена столбиком. Высота столбика пропорциональна значению. Сравнивая высоту, читатель сразу видит, какая категория лидирует, а какая отстаёт.</p>
+
+            <p>У столбиковой диаграммы есть несколько разновидностей. Первая — вертикальная. Это самый частый вариант. Категории по горизонтали, значения по вертикали. Вторая — горизонтальная. Категории по вертикали, значения по горизонтали. Её используют, когда категорий много. Или когда названия категорий длинные. Тогда повёрнутая диаграмма читается лучше.</p>
+
+            <p>Третья разновидность — сгруппированная. Она показывает сразу два измерения. Например, продажи по регионам и по кварталам. Каждая категория разбита на несколько столбиков. Цветом показан второй признак. Четвёртая разновидность — с накоплением. Столбики складываются друг на друга. И показывают не только общую сумму, но и её состав.</p>
+
+            <p>Когда использовать столбиковую диаграмму. Когда нужно сравнить величины между категориями. Когда категорий не слишком много. Когда важна точность сравнения. Люди хорошо различают высоту столбиков. Гораздо лучше, чем, например, углы в круговой диаграмме.</p>
+
+            <p>Когда не использовать. Не использовать для временных рядов. Для времени есть специальный тип диаграммы, о нём позже. Не использовать для долей целого. Для долей есть круговая диаграмма. Не использовать для непрерывных данных без группировки. Например, для возраста в годах лучше подойдёт гистограмма.</p>
+
+            <h4>Кто и для каких задач использует столбиковые диаграммы</h4>
+
+            <p><strong>Аналитик данных</strong> использует столбиковые диаграммы постоянно. Типичная задача — продажи по категориям товаров. Или число клиентов по регионам. Или средний чек по каналам привлечения. Он смотрит на диаграмму и сразу видит, где сильные категории, где слабые.</p>
+
+            <p><strong>Финансовый аналитик</strong> использует их для сравнения статей бюджета. Например, затраты по подразделениям. Или выручка по видам услуг. Сгруппированная диаграмма помогает сравнить план и факт по каждой статье.</p>
+
+            <p><strong>Специалист по аналитике бизнес-данных</strong> использует столбиковые диаграммы на дашбордах. Например, выручка по филиалам компании. Или число обращений по типам проблем. На дашборде диаграмма должна читаться за секунды.</p>
+
+            <p><strong>Маркетинговый аналитик</strong> применяет их для сравнения рекламных каналов. Например, конверсия по каналам. Или стоимость привлечения по площадкам. Горизонтальная столбиковая здесь удобнее, потому что названия каналов часто длинные.</p>
+
+            <p><strong>Продуктовый аналитик</strong> использует диаграммы для сравнения платформ или сегментов. Например, число активных пользователей на мобильном, на десктопе, в приложении. Или удержание по когортам.</p>
+
+            <p><strong>Бизнес-аналитик</strong> использует столбиковые диаграммы для сравнения этапов процесса. Например, среднее время выполнения по каждому этапу. Сразу видно, где узкое место.</p>
+
+            <p><strong>Аналитик учётных систем</strong> применяет такие диаграммы для остатков на складах. Например, остатки по номенклатуре. Или задолженность по контрагентам.</p>
+
+            <p>Обратите внимание на важную мысль. Столбиковая диаграмма — универсальный инструмент сравнения. Но важно правильно её оформить. Ось значений должна начинаться с нуля. Иначе различие визуально преувеличивается. Каждый столбик должен быть подписан. Или хотя бы ось должна иметь шкалу. Иначе читатель не поймёт, где какое значение. Порядок категорий должен быть осмысленным. По алфавиту, по убыванию, по времени. Но не случайным.</p>
+
+            <h3>📌 Блок 2. Круговые диаграммы и древовидные карты: структура и доли</h3>
+
+            <p>Второй тип диаграмм отвечает на вопрос «какая доля?» или «из чего состоит целое?». Это круговые диаграммы. И их более современные альтернативы.</p>
+
+            <p>Круговая диаграмма устроена так. Круг разбит на сектора. Каждый сектор соответствует категории. Угол сектора пропорционален доле категории. В сумме все сектора дают целое. Обычно показывают либо проценты, либо абсолютные значения.</p>
+
+            <p>Круговая диаграмма проста для понимания. Но у неё есть ограничения. Люди плохо оценивают углы. Глаз легко различает высоту столбиков. Но с трудом отличает сектор в тридцать процентов от сектора в тридцать пять. Поэтому круговую диаграмму используют только для небольшого числа категорий. Максимум для пяти. И только когда доли явно различаются.</p>
+
+            <p>Если категорий много, используют другие типы. Кольцевая диаграмма — это та же круговая, но с отверстием в центре. В отверстие можно поместить дополнительную метрику. Например, общую сумму. Или среднее значение. Кольцевая читается чуть легче круговой.</p>
+
+            <p>Древовидная карта — более современная альтернатива. Это прямоугольник, разбитый на вложенные прямоугольники. Площадь каждого прямоугольника пропорциональна значению. Древовидная карта хорошо работает для многих категорий. И хорошо показывает структуру.</p>
+
+            <p>Ещё одна альтернатива — диаграмма-вафля. Это сетка маленьких квадратиков. Закрашенные квадратики показывают долю. Это визуально честно. Но для сложных данных не подходит.</p>
+
+            <p>Когда использовать круговую диаграмму. Только когда категорий немного. И когда различие между долями существенное. И когда нужно показать именно структуру целого.</p>
+
+            <p>Когда не использовать. Не использовать для сравнения категорий, которые не дают целого. Не использовать для многих категорий. Не использовать, когда доли близки. Например, если двадцать процентов, двадцать пять процентов, двадцать восемь процентов — круговая диаграмма не поможет отличить их. Лучше горизонтальная столбиковая.</p>
+
+            <h4>Кто и для каких задач использует круговые и древовидные диаграммы</h4>
+
+            <p><strong>Маркетинговый аналитик</strong> использует круговую диаграмму для показа распределения рекламного бюджета по каналам. Или для долей аудитории по площадкам. Древовидная карта удобна, когда каналов много. Например, десять каналов привлечения.</p>
+
+            <p><strong>Финансовый аналитик</strong> применяет круговую диаграмму для структуры затрат. Например, зарплата, аренда, материалы, прочее. Это классический пример. Здесь четыре-пять категорий. И доли явно различаются.</p>
+
+            <p><strong>Веб-аналитик</strong> использует круговую или кольцевую диаграмму для распределения посетителей по устройствам. Мобильные, десктоп, планшеты. Три категории. Идеальный случай для круговой.</p>
+
+            <p><strong>Продуктовый аналитик</strong> применяет диаграмму для долей пользователей по тарифам. Или по типам подписки. На бесплатном, на базовом, на премиум. Обычно три-четыре категории.</p>
+
+            <p><strong>Специалист по анализу пользовательского опыта</strong> может использовать круговую диаграмму для распределения оценок удовлетворённости. Но чаще он применяет столбиковую. Потому что важно не только распределение, но и порядок.</p>
+
+            <p>Обратите внимание на важную мысль. Круговая диаграмма — это соблазнительный инструмент. Она красиво выглядит. И её хочется использовать везде. Но на практике она часто вредит. Если категорий больше пяти, лучше столбиковая. Если доли близки, тоже лучше столбиковая. Круговую диаграмму применяют осознанно. Только когда структура целого — главный вопрос.</p>
+
+            <h3>📌 Блок 3. Линейные графики: динамика во времени</h3>
+
+            <p>Третий тип диаграмм отвечает на вопрос «как меняется?». Это линейные графики. Их ещё называют графиками динамики.</p>
+
+            <p>Устройство простое. По горизонтальной оси — время. Дни, недели, месяцы, годы. По вертикальной оси — значения показателя. Каждое наблюдение — это точка. Точки соединяются линией. Линия показывает тренд.</p>
+
+            <p>Линейный график — король временных рядов. Он лучше всего показывает тренд. Сезонность. Аномалии. Разрывы. Резкие скачки. И постепенные изменения. На линейном графике легко увидеть, как значение менялось со временем.</p>
+
+            <p>Разновидности линейных графиков. Первая — обычный линейный график с одной линией. Вторая — с несколькими линиями. Каждая линия — отдельная категория. Например, продажи по регионам. Каждый регион своей линией. Но здесь важно не переборщить. Если линий больше пяти, читать становится тяжело. Это называется «спагетти-график». Из него ничего не понятно.</p>
+
+            <p>Третья разновидность — площадная диаграмма. Это тот же линейный график, но пространство под линией закрашено. Площадь работает как акцент на объёме. Её используют, когда важен именно общий объём, а не колебания.</p>
+
+            <p>Четвёртая разновидность — линейный график с накоплением. Несколько линий складываются. И показывают общий объём и его состав одновременно.</p>
+
+            <p>Пятая — свечной график. Это специальный тип для финансовых данных. Он показывает четыре значения за период. Цену открытия. Цену закрытия. Максимум. Минимум. Свечной график используют в трейдинге. И в анализе котировок.</p>
+
+            <p>Шестая — линейный график с прогнозом. К фактическим значениям добавляется прогнозная линия. И доверительный интервал. Это уже из области машинного обучения. Но мы упомянем, потому что это важно.</p>
+
+            <p>Когда использовать линейный график. Всегда, когда есть время. Когда важен тренд, а не отдельные значения. Когда нужно показать изменение во времени.</p>
+
+            <p>Когда не использовать. Не использовать для категориальных данных. Не использовать для сравнения категорий, не связанных временем. Не соединять линией точки, если между ними нет временной связи.</p>
+
+            <h4>Кто и для каких задач использует линейные графики</h4>
+
+            <p><strong>Аналитик данных</strong> использует линейные графики постоянно. Типичная задача — выручка по месяцам. Или число пользователей по неделям. Или средний чек по дням. Он смотрит на линию и сразу видит тренд.</p>
+
+            <p><strong>Финансовый аналитик</strong> применяет линейные графики для динамики котировок, курсов валют, процентных ставок. Это его основной инструмент. Свечной график — ещё более точный инструмент для этой задачи.</p>
+
+            <p><strong>Веб-аналитик</strong> использует линейные графики для динамики посещаемости сайта. Например, число визитов по дням. Или конверсия по неделям. Он видит сезонность. Видит эффект от рекламной кампании. Видит аномалии.</p>
+
+            <p><strong>Продуктовый аналитик</strong> применяет линейные графики для динамики удержания. Например, удержание по неделям. Или число активных пользователей по месяцам. График показывает, растёт продукт или падает.</p>
+
+            <p><strong>Специалист по аналитике бизнес-данных</strong> использует линейные графики на дашбордах. Например, ключевые показатели по времени. Дашборд без графика динамики — это не дашборд. Это таблица.</p>
+
+            <p><strong>Аналитик больших данных</strong> применяет линейные графики для метрик инфраструктуры. Например, нагрузка на серверы по часам. Или объём обрабатываемых данных по дням. Это нужно для мониторинга.</p>
+
+            <p><strong>Системный аналитик</strong> использует линейные графики для метрик системы. Загрузка процессора. Использование памяти. Скорость ответа. Это основа технического мониторинга.</p>
+
+            <p><strong>Маркетинговый аналитик</strong> применяет линейные графики для динамики продаж и рекламных расходов. Или для сравнения эффективности каналов во времени. График помогает увидеть, когда реклама работала лучше.</p>
+
+            <p>Обратите внимание на важную мысль. Линейный график — это не просто картинка. Это способ увидеть закономерность. Если линии пересекаются — возможно, что-то изменилось. Если линия резко падает — возможно, была ошибка или сбой. Если линия растёт — возможно, работает стратегия. Аналитик должен не просто построить график. Он должен его прочитать.</p>
+
+            <h3>📌 Блок 4. Гистограммы и ящичные диаграммы: распределение значений</h3>
+
+            <p>Четвёртый тип диаграмм отвечает на вопрос «как распределены значения?». Это гистограммы и ящичные диаграммы. Мы уже встречались с ними в пятой лекции. Но теперь поговорим о них как о визуальном инструменте.</p>
+
+            <p>Гистограмма — это диаграмма распределения. По горизонтальной оси — значения переменной. По вертикальной — частота. Или количество наблюдений в каждом интервале. Данные разбиваются на интервалы. И для каждого интервала строится столбик. Высота столбика показывает, сколько наблюдений попало в этот интервал.</p>
+
+            <p>Гистограмма показывает форму распределения. Симметричное оно или скошенное. Однородное или смешанное. Есть ли выбросы. Есть ли провалы. Это ключевой инструмент для проверки нормальности.</p>
+
+            <p>Ящичная диаграмма — это другой инструмент распределения. Мы уже разбирали её устройство. Ящик — это центральные пятьдесят процентов. Медиана внутри. Усы — разброс без выбросов. Кружки — выбросы. Звёздочки — грубые ошибки.</p>
+
+            <p>Разница между гистограммой и ящичной диаграммой. Гистограмма показывает форму. Ящичная показывает сводку и выбросы. Гистограмма лучше для одного распределения. Ящичная лучше для сравнения нескольких групп.</p>
+
+            <p>Диаграмма плотности — это сглаженная гистограмма. Она показывает форму распределения без ступенек. Её строят через ядерную оценку плотности. Это красивее и иногда точнее.</p>
+
+            <p>Диаграмма скрипки — это гибрид ящичной диаграммы и диаграммы плотности. Она показывает и распределение, и квартили. Форма скрипки показывает плотность. Внутри скрипки — ящик с медианой и квартилями. Это очень информативный инструмент. Но требует привычки.</p>
+
+            <p>Когда использовать гистограмму. Когда нужно понять форму распределения. Когда нужно проверить нормальность. Когда нужно увидеть, есть ли выбросы.</p>
+
+            <p>Когда использовать ящичную диаграмму. Когда нужно сравнить несколько групп. Когда нужно показать сводку и выбросы. Когда важно увидеть именно медиану, а не среднее.</p>
+
+            <h4>Кто и для каких задач использует диаграммы распределения</h4>
+
+            <p><strong>Аналитик данных</strong> использует гистограммы и ящичные диаграммы постоянно. Типичная задача — распределение возраста клиентов. Или распределение суммы покупки. Или сравнение зарплат по отделам. Это основа описательного анализа.</p>
+
+            <p><strong>Финансовый аналитик</strong> применяет гистограммы для распределения сумм транзакций. Например, как распределены суммы платежей. Или для распределения времени выполнения заявок. Это помогает выявить аномалии.</p>
+
+            <p><strong>Веб-аналитик</strong> использует гистограммы для распределения времени на сайте. Или ящичные диаграммы для сравнения глубины просмотра по источникам трафика. Он видит, какие источники дают вовлечённых пользователей.</p>
+
+            <p><strong>Специалист по анализу пользовательского опыта</strong> применяет ящичные диаграммы для сравнения оценок удовлетворённости по группам. Или гистограммы для распределения оценок. Это нужно для понимания, насколько однородна аудитория.</p>
+
+            <p><strong>Аналитик больших данных</strong> использует гистограммы для распределения задержек в сети. Или для распределения нагрузки на систему. Это часть технического мониторинга.</p>
+
+            <p><strong>Продуктовый аналитик</strong> применяет ящичные диаграммы для сравнения поведения по когортам. Например, распределение времени в приложении по неделям. Или распределение числа сессий по пользователям.</p>
+
+            <p>Обратите внимание на важную мысль. Гистограмма и ящичная диаграмма — это не просто визуализации. Это инструменты проверки гипотез. Гистограмма с провалом в середине может показать, что данные смешаны из двух групп. Ящичная диаграмма с длинным усом может показать, что есть выбросы. Аналитик смотрит на диаграмму и делает выводы о качестве данных.</p>
+
+            <h3>📌 Блок 5. Точечные диаграммы и тепловые карты: связь между переменными</h3>
+
+            <p>Пятый тип диаграмм отвечает на вопрос «есть ли связь?». Это точечные диаграммы и тепловые карты.</p>
+
+            <p>Точечная диаграмма — это диаграмма рассеяния. Каждое наблюдение — это точка на плоскости. По одной оси — одна переменная. По другой оси — другая переменная. Расположение точек показывает связь. Если точки образуют облако с наклоном — связь есть. Если облако круглое — связи нет. Если точки образуют кривую — связь нелинейная.</p>
+
+            <p>Точечная диаграмма — самый мощный инструмент для обнаружения связи. На ней видно всё. И тренд. И выбросы. И нелинейность. И группы. И плотность.</p>
+
+            <p>Разновидности точечной диаграммы. Первая — обычная диаграмма рассеяния. Вторая — с линией тренда. Линия показывает направление связи. Третья — пузырьковая диаграмма. Размер точки кодирует третью переменную. Четвёртая — с цветом. Цвет кодирует категорию. Пятая — с прозрачностью. Прозрачность показывает плотность точек. Шестая — матрица точечных диаграмм. Несколько диаграмм рядом. Для быстрого обзора связей между всеми парами переменных.</p>
+
+            <p>Тепловая карта — это матрица значений, закодированных цветом. Каждая ячейка — это пара переменных или комбинация категорий. Цвет показывает значение. Например, корреляцию. Или сумму продаж. Или плотность.</p>
+
+            <p>Тепловая карта корреляций — самый частый пример. На осях — все переменные. В ячейках — коэффициенты корреляции. Красный цвет — положительная связь. Синий — отрицательная. Белый — связи нет. Аналитик сразу видит, какие переменные связаны.</p>
+
+            <p>Другой тип тепловой карты — по категориям. Например, по дням недели и часам. Цвет показывает активность. Это очень полезно для веб-аналитики.</p>
+
+            <p>Когда использовать точечную диаграмму. Когда нужно увидеть связь между двумя количественными переменными. Когда нужно найти выбросы. Когда нужно оценить нелинейность. Когда данных не слишком много. Потому что при тысяче точек облако становится плотным.</p>
+
+            <p>Когда использовать тепловую карту. Когда нужно показать много значений сразу. Когда нужно найти паттерны в матрице. Когда нужно визуализировать корреляции или агрегаты по двум измерениям.</p>
+
+            <h4>Кто и для каких задач использует диаграммы связи</h4>
+
+            <p><strong>Аналитик данных</strong> использует точечные диаграммы постоянно. Типичная задача — цена квартиры от площади. Или сумма покупки от возраста клиента. Или конверсия от времени на сайте. Он смотрит на облако и делает вывод о связи.</p>
+
+            <p><strong>Финансовый аналитик</strong> применяет точечные диаграммы для анализа риска и доходности портфеля. Каждая точка — это актив. Оси — риск и доходность. Сразу видно, какие активы эффективны. Или для анализа корреляции между разными инструментами.</p>
+
+            <p><strong>Маркетинговый аналитик</strong> использует точечные диаграммы для связи затрат на рекламу и продаж. Каждая точка — это неделя или кампания. Видно, при каких затратах отдача максимальна.</p>
+
+            <p><strong>Продуктовый аналитик</strong> применяет точечные диаграммы для анализа связи между средним доходом на пользователя и сроком его жизни в продукте. Это классический продуктовый анализ. Точки окрашены по когортам.</p>
+
+            <p><strong>Специалист по аналитике бизнес-данных</strong> использует тепловые карты для матрицы корреляций на дашборде. Или для продаж по регионам и категориям. Цвет показывает, где сильные и слабые места.</p>
+
+            <p><strong>Веб-аналитик</strong> применяет тепловые карты для активности пользователей по дням недели и часам. Это помогает выбрать лучшее время для публикации контента. Или для рекламы.</p>
+
+            <p><strong>Специалист по анализу пользовательского опыта</strong> использует тепловые карты внимания. Это специальный тип тепловой карты. Он показывает, куда смотрят пользователи. Или куда кликают. Это нужно для оптимизации интерфейса.</p>
+
+            <p><strong>Аналитик больших данных</strong> применяет точечные диаграммы для анализа больших массивов. Например, связь между параметрами системы. Или тепловые карты для больших матриц.</p>
+
+            <p>Обратите внимание на важную мысль. Точечная диаграмма и тепловая карта — это не просто картинки. Это инструменты разведки данных. Аналитик смотрит на диаграмму рассеяния и видит, что связь нелинейная. Или что есть группа выбросов. Или что данные смешаны из двух кластеров. Это подсказывает, какие методы анализа применить дальше.</p>
+
+            <h3>📌 Блок 6. Карты: пространственные данные</h3>
+
+            <p>Шестой тип диаграмм отвечает на вопрос «где?». Это карты.</p>
+
+            <p>Карта — это визуализация данных с привязкой к географии. Страны, регионы, города, районы, адреса. Карта показывает, где что происходит.</p>
+
+            <p>Разновидности карт. Первая — картограмма. Это карта, на которой регионы закрашены цветом. Цвет показывает значение показателя. Красный — высокое. Синий — низкое. Это самый частый тип карты.</p>
+
+            <p>Вторая — точечная карта. На карту наносятся точки. Каждая точка — объект. Например, клиент, магазин, происшествие. Точки можно окрашивать или менять размер.</p>
+
+            <p>Третья — карта с пузырьками. Размер пузырька показывает значение. Четвёртая — тепловая карта плотности. Она показывает, где точки концентрируются. Пятая — карта потоков. Она показывает перемещения между точками.</p>
+
+            <p>Когда использовать карту. Когда пространственная привязка важна. Когда нужно показать географическое распределение. Когда анализ связан с местоположением.</p>
+
+            <p>Когда не использовать. Когда география не важна. Например, сравнение регионов по одному показателю лучше показать на горизонтальной столбиковой диаграмме. Потому что высота столбика сравнивается точнее, чем цвет региона.</p>
+
+            <h4>Кто и для каких задач использует карты</h4>
+
+            <p><strong>Аналитик данных</strong> использует картограммы для продаж по регионам. Или для числа клиентов по городам. Сразу видно, где сильные регионы, где слабые.</p>
+
+            <p><strong>Маркетинговый аналитик</strong> применяет карты для охвата рекламы по городам. Или для географии клиентов. Это нужно для планирования рекламных кампаний.</p>
+
+            <p><strong>Веб-аналитик</strong> использует карты для географии посетителей сайта. Откуда приходят пользователи. Где конверсия выше. Где отказы чаще.</p>
+
+            <p><strong>Бизнес-аналитик</strong> применяет карты для расположения филиалов. Или для логистических маршрутов. Или для оценки доступности услуг по регионам.</p>
+
+            <p><strong>Аналитик больших данных</strong> использует карты для геолокации пользователей. Например, для анализа перемещений. Или для оценки плотности событий.</p>
+
+            <p>Обратите внимание на важную мысль. Карта — это мощный инструмент. Но у неё есть ловушка. Большие регионы визуально доминируют. Даже если значения в них небольшие. Например, огромный регион с малым населением будет занимать много места на карте. Это может исказить восприятие. Поэтому карту часто дополняют столбиковой диаграммой. Или используют картограмму с нормировкой.</p>
+
+            <h3>📌 Заключение</h3>
+
+            <p>Мы разобрали шесть типов диаграмм для описательного анализа. Давайте соберём всё вместе.</p>
+
+            <p>Столбиковые диаграммы — для сравнения категорий. Круговые диаграммы и древовидные карты — для структуры и долей. Линейные графики — для динамики во времени. Гистограммы и ящичные диаграммы — для распределения. Точечные диаграммы и тепловые карты — для связи между переменными. Карты — для пространственных данных.</p>
+
+            <p>Мы увидели, что каждый тип диаграммы отвечает на свой вопрос. И что неправильный выбор типа диаграммы может исказить вывод. Мы разобрали, какие роли аналитиков используют какие диаграммы. И с какими задачами.</p>
+
+            <p>Главный вывод лекции звучит так. Визуализация — это не украшение. Это инструмент анализа и коммуникации. Хорошая диаграмма помогает увидеть закономерность. Плохая диаграмма скрывает её. Аналитик должен выбирать диаграмму осознанно. Под задачу. Под аудиторию. Под данные.</p>
+
+            <p>В следующей лекции мы перейдём ко второй части темы. Мы разберём визуализацию для машинного обучения. Увидим, как показать процесс обучения модели. Как оценить качество модели на графике. Как показать важность признаков. И как визуализировать прогноз. Это будет логическим продолжением сегодняшней темы.</p>
+
+            <p>На этом наша лекция завершена. Спасибо за внимание. Я готов ответить на ваши вопросы.</p>
+
+            <!-- СЛОВАРЬ ТЕРМИНОВ -->
+            <div class="dark-block">
+                <div class="dark-block-title">📖 Словарь терминов и аббревиатур</div>
+                <table class="dark-table">
+                    <thead>
+                        <tr><th style="width:22%;">Термин</th><th style="width:30%;">Расшифровка</th><th>Пояснение</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="term">Bar chart</td><td>Столбиковая диаграмма</td><td>Сравнение категорий по высоте столбиков</td></tr>
+                        <tr><td class="term">Grouped bar</td><td>Сгруппированная</td><td>Два измерения на одной диаграмме</td></tr>
+                        <tr><td class="term">Stacked bar</td><td>С накоплением</td><td>Общая сумма и её состав одновременно</td></tr>
+                        <tr><td class="term">Pie chart</td><td>Круговая диаграмма</td><td>Доли целого; только для 2–5 категорий</td></tr>
+                        <tr><td class="term">Donut chart</td><td>Кольцевая</td><td>Круговая с метрикой в центре</td></tr>
+                        <tr><td class="term">Treemap</td><td>Древовидная карта</td><td>Прямоугольники = доли; для многих категорий</td></tr>
+                        <tr><td class="term">Waffle chart</td><td>Вафля</td><td>Сетка квадратиков = проценты</td></tr>
+                        <tr><td class="term">Line chart</td><td>Линейный график</td><td>Динамика во времени</td></tr>
+                        <tr><td class="term">Area chart</td><td>Площадная диаграмма</td><td>Линия с закрашенной областью</td></tr>
+                        <tr><td class="term">Candlestick</td><td>Свечной график</td><td>OHLC: открытие, макс, мин, закрытие</td></tr>
+                        <tr><td class="term">Histogram</td><td>Гистограмма</td><td>Распределение одной переменной</td></tr>
+                        <tr><td class="term">Box plot</td><td>Ящичная диаграмма</td><td>Медиана, квартили, усы, выбросы</td></tr>
+                        <tr><td class="term">Violin plot</td><td>Скрипка</td><td>Плотность + квартили</td></tr>
+                        <tr><td class="term">Density plot</td><td>Плотность</td><td>Сглаженная форма распределения</td></tr>
+                        <tr><td class="term">Scatter plot</td><td>Точечная диаграмма</td><td>Связь двух переменных</td></tr>
+                        <tr><td class="term">Bubble chart</td><td>Пузырьковая</td><td>Scatter + размер третьей переменной</td></tr>
+                        <tr><td class="term">Heatmap</td><td>Тепловая карта</td><td>Матрица значений, закодированных цветом</td></tr>
+                        <tr><td class="term">Choropleth</td><td>Картограмма</td><td>Регионы закрашены цветом по значению</td></tr>
+                        <tr><td class="term">Dot map</td><td>Точечная карта</td><td>Объекты как точки на карте</td></tr>
+                        <tr><td class="term">Bubble map</td><td>Карта с пузырьками</td><td>Размер пузырька = значение</td></tr>
+                        <tr><td class="term">Spaghetti chart</td><td>Спагетти-график</td><td>Слишком много линий на одном графике</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ИСТОЧНИКИ -->
+            <div class="dark-block">
+                <div class="dark-block-title">📚 Источники и литература</div>
+                <div class="src-group">📊 Визуализация</div>
+                <ol>
+                    <li>Документация Matplotlib, Seaborn, Plotly: базовые и продвинутые диаграммы.</li>
+                    <li>Документация Microsoft: диаграммы в Excel и Power BI.</li>
+                    <li>Документация Tableau, DataLens: типы визуализаций.</li>
+                    <li>Книги по визуализации данных: Storytelling with Data, The Visual Display of Quantitative Information.</li>
+                </ol>
+                <div class="src-group">📖 Методология</div>
+                <ol start="5">
+                    <li>ISO/IEC 5259 — качество данных для аналитики.</li>
+                    <li>BABOK — свод знаний по бизнес-анализу (раздел визуализации).</li>
+                </ol>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function changeVideo(embedUrl) {
+            document.getElementById('lecture-player').src = embedUrl;
+        }
+    </script>
+
+   <!-- НАВИГАЦИЯ МЕЖДУ ЛЕКЦИЯМИ -->
+<nav class="lecture-nav" id="lectureNav">
+    <div class="nav-progress" id="navProgress" style="width: 0%;"></div>
+    <a href="Лекция (N-1).html" class="nav-btn-arrow" id="prevBtn">
+        <span class="arrow-icon">←</span>
+        <span class="arrow-label">
+            <small>Назад</small>
+            <span class="arrow-title" id="prevTitle">Лекция (N-1)</span>
+        </span>
+    </a>
+    <div class="nav-center">
+        <div class="nav-counter">Лекция <span id="currentNum">N</span> <span>из 21</span></div>
+        <a href="index.html" class="nav-index-link">📚 К содержанию</a>
+    </div>
+    <a href="Лекция (N+1).html" class="nav-btn-arrow" id="nextBtn">
+        <span class="arrow-label" style="align-items: flex-end;">
+            <small>Вперёд</small>
+            <span class="arrow-title" id="nextTitle">Лекция (N+1)</span>
+        </span>
+        <span class="arrow-icon">→</span>
+    </a>
+</nav>
+
+
+
+<script>
+(function () {
+    'use strict';
+
+    // =========================================================
+    // НАСТРОЙКИ
+    // =========================================================
+    const TOTAL_LECTURES = 21;                         // всего лекций в курсе
+    const totalDurationMs = (32 * 60 + 30) * 1000;     // длительность автопрокрутки
+    const autoNextDelayMs = 2000;                      // задержка автоперехода
+    const AUTOSTART_PARAM = 'autostart';
+
+    // =========================================================
+    // ОПРЕДЕЛЕНИЕ НОМЕРА ТЕКУЩЕЙ ЛЕКЦИИ
+    // =========================================================
+    const fileName = decodeURIComponent(location.pathname.split('/').pop() || '');
+    let currentLecture = 1;
+
+    // 1) Пытаемся извлечь номер из имени файла "Лекция 7.html"
+    const match = fileName.match(/Лекция\s*(\d+)\.html/i);
+    if (match) {
+        currentLecture = parseInt(match[1], 10);
+    } else {
+        // 2) Fallback: берём из HTML-счётчика
+        const el = document.getElementById('currentNum');
+        if (el) currentLecture = parseInt(el.textContent, 10) || 1;
+    }
+
+    // Ограничиваем допустимым диапазоном
+    if (isNaN(currentLecture) || currentLecture < 1) currentLecture = 1;
+    if (currentLecture > TOTAL_LECTURES) currentLecture = TOTAL_LECTURES;
+
+    // =========================================================
+    // ОПРЕДЕЛЕНИЕ СОСЕДНИХ ЛЕКЦИЙ
+    // =========================================================
+    const prev = currentLecture > 1 ? currentLecture - 1 : null;
+    const next = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+
+    // =========================================================
+    // ОБНОВЛЕНИЕ СЧЁТЧИКА И ПРОГРЕСС-БАРА
+    // =========================================================
+    const currentNumEl = document.getElementById('currentNum');
+    if (currentNumEl) currentNumEl.textContent = currentLecture;
+
+    const navProgress = document.getElementById('navProgress');
+    if (navProgress) {
+        navProgress.style.width = (currentLecture / TOTAL_LECTURES * 100) + '%';
+    }
+
+    // =========================================================
+    // НАСТРОЙКА КНОПКИ "НАЗАД"
+    // =========================================================
+    const prevBtn = document.getElementById('prevBtn');
+    if (prevBtn) {
+        if (prev) {
+            prevBtn.href = 'Лекция ' + prev + '.html';
+            const t = document.getElementById('prevTitle');
+            if (t) t.textContent = 'Лекция ' + prev;
+            prevBtn.style.opacity = '1';
+            prevBtn.style.cursor = 'pointer';
+            prevBtn.onclick = null;
+        } else {
+            prevBtn.removeAttribute('href');
+            prevBtn.style.opacity = '0.35';
+            prevBtn.style.cursor = 'not-allowed';
+            prevBtn.onclick = (e) => e.preventDefault();
+            const t = document.getElementById('prevTitle');
+            if (t) t.textContent = 'Это первая лекция';
+        }
+    }
+
+    // =========================================================
+    // НАСТРОЙКА КНОПКИ "ВПЕРЁД"
+    // =========================================================
+    const nextBtn = document.getElementById('nextBtn');
+    if (nextBtn) {
+        if (next) {
+            nextBtn.href = 'Лекция ' + next + '.html';
+            const t = document.getElementById('nextTitle');
+            if (t) t.textContent = 'Лекция ' + next;
+            nextBtn.style.opacity = '1';
+            nextBtn.style.cursor = 'pointer';
+            nextBtn.onclick = null;
+        } else {
+            nextBtn.removeAttribute('href');
+            nextBtn.style.opacity = '0.35';
+            nextBtn.style.cursor = 'not-allowed';
+            nextBtn.onclick = (e) => e.preventDefault();
+            const t = document.getElementById('nextTitle');
+            if (t) t.textContent = 'Это последняя лекция';
+        }
+    }
+
+    // =========================================================
+    // КЛАВИАТУРНАЯ НАВИГАЦИЯ
+    // =========================================================
+    document.addEventListener('keydown', (e) => {
+        const tag = e.target && e.target.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+        if (e.key === 'ArrowLeft' && prev) {
+            window.location.href = 'Лекция ' + prev + '.html';
+        } else if (e.key === 'ArrowRight' && next) {
+            window.location.href = 'Лекция ' + next + '.html';
+        } else if (e.key === 'Home') {
+            window.location.href = 'index.html';
+        }
+    });
+
+    // =========================================================
+    // АВТОПРОКРУТКА И СИНХРОНИЗАЦИЯ ПАНЕЛЕЙ
+    // =========================================================
+    function initScroll() {
+        const studentBlock = document.querySelector('.student-view');
+        const speakerBlock = document.querySelector('.speaker-notes');
+        const badge = document.getElementById('scroll-status-badge');
+        const audio = document.getElementById('lecture-audio');
+        if (!studentBlock || !speakerBlock) return;
+
+        const studentBehavior = studentBlock.style.scrollBehavior;
+        const speakerBehavior = speakerBlock.style.scrollBehavior;
+        let isRunning = false, completed = false, pausedElapsed = 0, startedAt = 0, rafId = null;
+        let startS = 0, startP = 0, maxS = 0, maxP = 0;
+
+        function setBadge(text, color) {
+            if (!badge) return;
+            badge.style.display = 'block';
+            badge.textContent = text;
+            badge.style.borderColor = color;
+        }
+        function measure() {
+            maxS = Math.max(studentBlock.scrollHeight - studentBlock.clientHeight, 0);
+            maxP = Math.max(speakerBlock.scrollHeight - speakerBlock.clientHeight, 0);
+        }
+        function fmt(ms) {
+            const m = Math.floor(ms / 60000);
+            const s = Math.floor((ms % 60000) / 1000);
+            return m + ':' + String(s).padStart(2, '0');
+        }
+        function playAudio() {
+            if (!audio) return;
+            const p = audio.play();
+            if (p && typeof p.catch === 'function') {
+                p.catch(err => {
+                    console.warn('[AutoAudio]', err.message);
+                    setBadge('▶ ИДЕТ ПРОКРУТКА (звук заблокирован)', '#eab308');
+                });
+            }
+        }
+        function pauseAudio() { if (audio) try { audio.pause(); } catch (_) {} }
+        function resetAudio() { if (audio) try { audio.pause(); audio.currentTime = 0; } catch (_) {} }
+
+        function animate() {
+            if (!isRunning) return;
+            const elapsed = pausedElapsed + (performance.now() - startedAt);
+            const fraction = Math.min(elapsed / totalDurationMs, 1);
+            measure();
+            studentBlock.scrollTop = startS + (maxS - startS) * fraction;
+            speakerBlock.scrollTop = startP + (maxP - startP) * fraction;
+            if (badge) {
+                badge.textContent = '▶ ' + fmt(elapsed) + ' / 25:00';
+                badge.style.borderColor = '#16a34a';
+            }
+            if (fraction >= 1) { finish(); return; }
+            rafId = requestAnimationFrame(animate);
+        }
+
+        function startOrResume() {
+            if (completed) {
+                pausedElapsed = 0; completed = false;
+                studentBlock.scrollTop = 0; speakerBlock.scrollTop = 0;
+                resetAudio();
+            }
+            measure();
+            startS = studentBlock.scrollTop;
+            startP = speakerBlock.scrollTop;
+            startedAt = performance.now();
+            isRunning = true;
+            studentBlock.style.scrollBehavior = 'auto';
+            speakerBlock.style.scrollBehavior = 'auto';
+            cancelAnimationFrame(rafId);
+            rafId = requestAnimationFrame(animate);
+            playAudio();
+        }
+        function pause() {
+            if (isRunning) pausedElapsed += performance.now() - startedAt;
+            isRunning = false;
+            cancelAnimationFrame(rafId);
+            setBadge('⏸ ПАУЗА ' + fmt(pausedElapsed), '#dc2626');
+            studentBlock.style.scrollBehavior = studentBehavior;
+            speakerBlock.style.scrollBehavior = speakerBehavior;
+            pauseAudio();
+        }
+        function finish() {
+            isRunning = false; completed = true;
+            cancelAnimationFrame(rafId);
+            measure();
+            studentBlock.scrollTop = maxS;
+            speakerBlock.scrollTop = maxP;
+            studentBlock.style.scrollBehavior = studentBehavior;
+            speakerBlock.style.scrollBehavior = speakerBehavior;
+
+            const nextLec = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+            if (nextLec) {
+                setBadge('✅ ГОТОВО → Лекция ' + nextLec, '#16a34a');
+                setTimeout(() => {
+                    location.href = 'Лекция ' + nextLec + '.html?' + AUTOSTART_PARAM + '=1';
+                }, autoNextDelayMs);
+            } else {
+                setBadge('✅ КУРС ЗАВЕРШЕН', '#16a34a');
+                pauseAudio();
+            }
+        }
+        function toggle() { isRunning ? pause() : startOrResume(); }
+
+        // Пробел — старт/пауза
+        window.addEventListener('keydown', (e) => {
+            if (e.repeat) return;
+            const t = e.target; const tag = t && t.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+            if (e.code === 'Space' || e.key === ' ') {
+                e.preventDefault();
+                toggle();
+            }
+        }, true);
+
+        if (badge) badge.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+        [studentBlock, speakerBlock].forEach(el => {
+            el.addEventListener('click', (e) => {
+                if (e.target.closest('a,button,iframe,input,textarea,select,video,audio')) return;
+                if (window.getSelection().toString().length > 0) return;
+                toggle();
+            });
+        });
+
+        // Автостарт при переходе с предыдущей лекции
+        const params = new URLSearchParams(location.search);
+        if (params.get(AUTOSTART_PARAM) === '1') {
+            params.delete(AUTOSTART_PARAM);
+            const clean = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
+            history.replaceState(null, '', clean);
+            setTimeout(startOrResume, 500);
+        } else {
+            setBadge('▶ ПРОБЕЛ / КЛИК — старт', '#4a5568');
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initScroll, { once: true });
+    } else {
+        initScroll();
+    }
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лекция 17. Кластеризация: как найти группы в данных без учителя</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #ffffff; }
+
+        .student-view { width: 66.66%; height: 100vh; background: #ffffff; padding: 35px 40px; display: flex; flex-direction: column; justify-content: space-between; border-right: 2px solid #e2e8f0; overflow-y: auto; scroll-behavior: smooth; }
+        .speaker-notes { width: 33.34%; height: 100%; background: #1a202c; color: #edf2f7; padding: 30px; overflow-y: auto; }
+
+        .slide-header { font-size: 24px; color: #1a365d; font-weight: bold; line-height: 1.3; margin-bottom: 18px; border-bottom: 4px solid #3182ce; padding-bottom: 12px; }
+        .slide-body { flex-grow: 1; display: flex; flex-direction: column; gap: 18px; padding: 5px 0; }
+        .slide-footer { font-size: 13px; color: #a0aec0; text-align: right; margin-top: 12px; }
+
+        .chart-box { background: #f7fafc; border: 2.5px dashed #cbd5e0; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .chart-box strong { font-size: 16px; display: block; margin-bottom: 6px; }
+        .chart-box p { font-size: 13px; color: #4a5568; line-height: 1.45; }
+
+        .viz-card { background: #ffffff; border: 2px solid #e2e8f0; border-radius: 12px; padding: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.04); }
+        .viz-title { font-size: 14px; font-weight: bold; color: #1a365d; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .viz-caption { font-size: 11.5px; color: #4a5568; margin-top: 8px; line-height: 1.45; }
+        .viz-caption strong { color: #2d3748; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+
+        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .stat-box { border-radius: 10px; padding: 14px; text-align: center; border: 2px solid; }
+        .stat-box .stat-icon { font-size: 26px; }
+        .stat-box .stat-number { font-size: 13px; font-weight: 900; margin-top: 4px; }
+        .stat-box .stat-label { font-size: 10.5px; color: #4a5568; margin-top: 2px; line-height: 1.3; }
+        .stat-box.s1 { background: #ebf8ff; border-color: #90cdf4; }
+        .stat-box.s1 .stat-number { color: #2b6cb0; }
+        .stat-box.s2 { background: #fffaf0; border-color: #fbd38d; }
+        .stat-box.s2 .stat-number { color: #975a16; }
+        .stat-box.s3 { background: #f0fff4; border-color: #9ae6b4; }
+        .stat-box.s3 .stat-number { color: #276749; }
+        .stat-box.s4 { background: #faf5ff; border-color: #d6bcfa; }
+        .stat-box.s4 .stat-number { color: #553c9a; }
+        .stat-box.s5 { background: #fff5f5; border-color: #fc8181; }
+        .stat-box.s5 .stat-number { color: #9b2c2c; }
+
+        .formula-box { background: linear-gradient(135deg, #1a202c, #2d3748, #1a365d); background-size: 200% 200%; color: #edf2f7; padding: 16px 20px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .formula-main { font-family: 'Courier New', monospace; font-size: 13.5px; letter-spacing: 0.5px; color: #90cdf4; }
+        .formula-example { font-size: 11.5px; color: #cbd5e0; margin-top: 8px; line-height: 1.5; }
+
+        .tag { display: inline-block; background: #ebf8ff; color: #2b6cb0; padding: 2px 7px; border-radius: 4px; font-size: 11px; margin: 2px 2px 2px 0; font-weight: 500; }
+        .tag.green { background: #f0fff4; color: #276749; }
+        .tag.red { background: #fff5f5; color: #9b2c2c; }
+        .tag.orange { background: #fffaf0; color: #975a16; }
+        .tag.purple { background: #faf5ff; color: #553c9a; }
+
+        .callout { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 6px; }
+        .callout strong { color: #92400e; font-size: 13px; }
+        .callout p { font-size: 12px; color: #78350f; margin-top: 4px; line-height: 1.45; }
+        .callout.warn { background: #fff5f5; border-left-color: #e53e3e; }
+        .callout.warn strong { color: #9b2c2c; }
+        .callout.warn p { color: #742a2a; }
+        .callout.ok { background: #f0fff4; border-left-color: #38a169; }
+        .callout.ok strong { color: #276749; }
+        .callout.ok p { color: #22543d; }
+
+        .compare-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .compare-table th { background: #1a365d; color: white; padding: 9px 11px; text-align: left; font-weight: 600; }
+        .compare-table td { padding: 8px 11px; border-bottom: 1px solid #e2e8f0; color: #2d3748; vertical-align: top; }
+        .compare-table tr:nth-child(even) td { background: #f7fafc; }
+
+        .role-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+        .role-table th { background: #1a365d; color: white; padding: 8px 10px; text-align: left; font-weight: 600; }
+        .role-table td { padding: 7px 10px; border-bottom: 1px solid #e2e8f0; color: #2d3748; vertical-align: top; }
+        .role-table tr:nth-child(even) td { background: #f7fafc; }
+        .role-table .role-emoji { font-size: 16px; }
+
+        .axis { stroke: #4a5568; stroke-width: 1.5; }
+        .grid-line { stroke: #e2e8f0; stroke-width: 0.8; }
+        .label { font-family: 'Segoe UI', sans-serif; font-size: 11px; fill: #4a5568; }
+        .label-strong { font-family: 'Segoe UI', sans-serif; font-size: 12px; font-weight: 700; fill: #1a365d; }
+        .label-small { font-family: 'Segoe UI', sans-serif; font-size: 9.5px; fill: #718096; }
+        .label-tiny { font-family: 'Segoe UI', sans-serif; font-size: 8.5px; fill: #718096; }
+        .label-white { font-family: 'Segoe UI', sans-serif; font-size: 10.5px; fill: #ffffff; font-weight: 600; }
+        .label-white-sm { font-family: 'Segoe UI', sans-serif; font-size: 8.5px; fill: #ffffff; opacity: 0.9; }
+
+        .step-card { background: #ffffff; border: 2px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; }
+        .step-card .step-num { display: inline-block; width: 26px; height: 26px; border-radius: 50%; background: #3182ce; color: white; font-weight: bold; text-align: center; line-height: 26px; font-size: 13px; margin-bottom: 6px; }
+        .step-card h5 { font-size: 12.5px; color: #1a365d; margin-bottom: 4px; }
+        .step-card p { font-size: 11px; color: #4a5568; line-height: 1.4; }
+
+        .video-section { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 5px; }
+        .video-container { width: 100%; max-width: 580px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: #000; aspect-ratio: 16 / 9; }
+        .links-hub { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .video-btn { text-decoration: none; padding: 9px 14px; border-radius: 6px; font-size: 12px; font-weight: bold; color: white; display: flex; align-items: center; gap: 6px; transition: transform 0.2s, background 0.2s; cursor: pointer; border: none; }
+        .video-btn:hover { transform: translateY(-2px); }
+        .rt-btn { background: #00a877; }
+        .rt-btn:hover { background: #008f65; }
+        .stop-btn { background: #dc143c; }
+        .stop-btn:hover { background: #b01030; }
+
+        .notes-header { font-size: 17px; color: #63b3ed; font-weight: bold; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a5568; padding-bottom: 10px; }
+        .lecture-text { font-size: 14.5px; line-height: 1.65; color: #e2e8f0; text-align: justify; }
+        .lecture-text p { margin-bottom: 14px; }
+        .lecture-text h3 { color: #63b3ed; font-size: 15px; margin: 18px 0 10px; border-bottom: 1px solid #2d3748; padding-bottom: 5px; }
+        .lecture-text h4 { color: #90cdf4; font-size: 13.5px; margin: 14px 0 8px; }
+        .lecture-text ul { margin: 8px 0 14px 18px; }
+        .lecture-text li { margin-bottom: 6px; }
+
+        .dark-block { background: #2d3748; border: 1px solid #4a5568; border-radius: 10px; padding: 16px 18px; margin-top: 20px; }
+        .dark-block-title { font-size: 14px; font-weight: bold; color: #63b3ed; margin-bottom: 12px; border-bottom: 2px solid #4a5568; padding-bottom: 8px; }
+        .dark-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+        .dark-table th { background: #1a202c; color: #90cdf4; padding: 7px 9px; text-align: left; font-weight: 600; border-bottom: 1px solid #4a5568; }
+        .dark-table td { padding: 6px 9px; border-bottom: 1px solid #2d3748; color: #cbd5e0; vertical-align: top; line-height: 1.4; }
+        .dark-table tr:nth-child(even) td { background: #2a3242; }
+        .dark-table .term { font-weight: bold; color: #90cdf4; white-space: nowrap; }
+        .dark-block ol { margin: 0 0 12px 18px; padding: 0; font-size: 12px; color: #cbd5e0; line-height: 1.5; }
+        .dark-block ol li { margin-bottom: 5px; }
+        .dark-block .src-group { font-weight: bold; color: #fbd38d; font-size: 12px; margin: 12px 0 6px; }
+        .dark-block a { color: #63b3ed; text-decoration: none; }
+
+        .lecture-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(12px); border-top: 2px solid rgba(255, 255, 255, 0.08); padding: 12px 20px; display: flex; align-items: center; justify-content: center; gap: 12px; z-index: 9999; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25); font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .lecture-nav .nav-progress { position: absolute; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899); border-radius: 0 3px 3px 0; }
+        .lecture-nav .nav-btn-arrow { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); border: 1.5px solid rgba(255, 255, 255, 0.15); color: #e2e8f0; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; font-family: inherit; }
+        .lecture-nav .nav-btn-arrow:hover:not(:disabled) { background: rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.6); color: white; transform: translateY(-2px); }
+        .lecture-nav .nav-btn-arrow .arrow-icon { font-size: 16px; line-height: 1; }
+        .lecture-nav .nav-btn-arrow .arrow-label { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+        .lecture-nav .nav-btn-arrow .arrow-label small { font-size: 9.5px; font-weight: 400; opacity: 0.7; text-transform: uppercase; }
+        .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { font-size: 12px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lecture-nav .nav-center { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 20px; color: #94a3b8; font-size: 11px; border-left: 1px solid rgba(255, 255, 255, 0.1); border-right: 1px solid rgba(255, 255, 255, 0.1); }
+        .lecture-nav .nav-counter { font-size: 15px; font-weight: 900; color: #f1f5f9; }
+        .lecture-nav .nav-counter span { color: #64748b; font-size: 12px; font-weight: 600; }
+        .lecture-nav .nav-index-link { color: #60a5fa; text-decoration: none; font-size: 11px; font-weight: 600; }
+        .lecture-nav .nav-index-link:hover { color: #93c5fd; text-decoration: underline; }
+        body { padding-bottom: 80px !important; }
+        @media (max-width: 900px) {
+            .lecture-nav { padding: 10px 12px; gap: 8px; }
+            .lecture-nav .nav-btn-arrow { padding: 8px 12px; }
+            .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { max-width: 90px; font-size: 11px; }
+            .grid-2, .grid-3, .grid-4, .stat-grid { grid-template-columns: 1fr; }
+        }
+
+        @keyframes pulseDot { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .pulse-dot { animation: pulseDot 2s ease-in-out infinite; }
+
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes gradientMove { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        @keyframes softGlow { 0%, 100% { box-shadow: 0 0 0 rgba(49,130,206,0); } 50% { box-shadow: 0 0 16px rgba(49,130,206,0.45); } }
+
+        .slide-body > * { opacity: 0; animation: fadeInUp 0.7s ease forwards; }
+        .slide-body > *:nth-child(1)  { animation-delay: 0.03s; }
+        .slide-body > *:nth-child(2)  { animation-delay: 0.09s; }
+        .slide-body > *:nth-child(3)  { animation-delay: 0.15s; }
+        .slide-body > *:nth-child(4)  { animation-delay: 0.21s; }
+        .slide-body > *:nth-child(5)  { animation-delay: 0.27s; }
+        .slide-body > *:nth-child(6)  { animation-delay: 0.33s; }
+        .slide-body > *:nth-child(7)  { animation-delay: 0.39s; }
+        .slide-body > *:nth-child(8)  { animation-delay: 0.45s; }
+        .slide-body > *:nth-child(9)  { animation-delay: 0.51s; }
+        .slide-body > *:nth-child(10) { animation-delay: 0.57s; }
+        .slide-body > *:nth-child(11) { animation-delay: 0.63s; }
+        .slide-body > *:nth-child(12) { animation-delay: 0.69s; }
+        .slide-body > *:nth-child(13) { animation-delay: 0.75s; }
+        .slide-body > *:nth-child(14) { animation-delay: 0.81s; }
+
+        .stat-box { transition: transform 0.25s ease, box-shadow 0.25s ease; }
+        .stat-box:hover { transform: translateY(-4px); box-shadow: 0 10px 22px rgba(0,0,0,0.10); }
+        .viz-card, .step-card, .chart-box { transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease; }
+        .viz-card:hover { transform: translateY(-3px); box-shadow: 0 12px 26px rgba(0,0,0,0.09); }
+        .step-card:hover { transform: translateY(-3px); box-shadow: 0 8px 18px rgba(0,0,0,0.08); border-color: #90cdf4; }
+        .formula-box { animation: gradientMove 9s ease infinite, softGlow 4s ease-in-out infinite; }
+        .formula-main { animation: fadeIn 1.2s ease both 0.5s; }
+        .formula-example { animation: fadeIn 1.2s ease both 0.9s; }
+
+        .lecture-text h3, .lecture-text h4 { animation: fadeIn 0.6s ease both; }
+        .lecture-text p { animation: fadeIn 0.6s ease both; }
+        .role-table tbody tr, .compare-table tbody tr, .dark-table tbody tr { animation: fadeIn 0.5s ease both; }
+    </style>
+</head>
+<body>
+
+    <!-- ЛЕВАЯ ПАНЕЛЬ -->
+    <div class="student-view">
+        <div class="slide-header">
+            Лекция 17. Кластеризация: как найти группы в данных без учителя
+        </div>
+
+        <div class="slide-body">
+
+            <!-- HERO -->
+            <div class="chart-box" style="background: #faf5ff; border-color: #d6bcfa;">
+                <strong style="color: #553c9a;">🎯 Главная идея</strong>
+                <p><strong>Кластеризация — это обучение без учителя</strong>: у нас нет правильных ответов, но мы хотим найти <strong>скрытые группы похожих объектов</strong>. Это как разложить носки по парам, не зная заранее, сколько пар и какого цвета. Главное отличие от классификации: классы не заданы заранее. Цель — <strong>открыть структуру</strong>, а не угадать ярлык.</p>
+            </div>
+
+            <!-- КЛЮЧЕВЫЕ ЦИФРЫ -->
+            <div class="stat-grid">
+                <div class="stat-box s1"><div class="stat-icon">🧩</div><div class="stat-number">4 алгоритма</div><div class="stat-label">K-means, DBSCAN, GMM, иерархический</div></div>
+                <div class="stat-box s2"><div class="stat-icon">📏</div><div class="stat-number">3 метрики</div><div class="stat-label">Silhouette, Davies-Bouldin, Calinski-Harabasz</div></div>
+                <div class="stat-box s3"><div class="stat-icon">🎯</div><div class="stat-number">1 проблема</div><div class="stat-label">сколько кластеров?</div></div>
+                <div class="stat-box s4"><div class="stat-icon">📐</div><div class="stat-number">3 проекции</div><div class="stat-label">PCA, t-SNE, UMAP</div></div>
+                <div class="stat-box s5"><div class="stat-icon">⚠️</div><div class="stat-number">4 ловушки</div><div class="stat-label">масштаб, k, форма, шум</div></div>
+                <div class="stat-box s1"><div class="stat-icon">🛍️</div><div class="stat-number">RFM</div><div class="stat-label">главный кейс в бизнесе</div></div>
+            </div>
+
+            <!-- ФОРМУЛА -->
+            <div class="formula-box">
+                <div class="formula-main">J = Σₖ Σₓ∈Cₖ ‖x − μₖ‖² → min</div>
+                <div class="formula-example">K-means минимизирует сумму квадратов расстояний от точек до центров своих кластеров</div>
+            </div>
+
+            <!-- БЛОК 1: ОБУЧЕНИЕ БЕЗ УЧИТЕЛЯ -->
+            <div class="viz-card">
+                <div class="viz-title">🧩 Блок 1. Обучение без учителя: три типа задач</div>
+                <svg viewBox="0 0 540 220" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="220" fill="#ffffff"/>
+
+                    <rect x="15" y="20" width="160" height="180" rx="10" fill="#ebf8ff" stroke="#3182ce" stroke-width="2"/>
+                    <text x="95" y="45" text-anchor="middle" class="label-strong" fill="#2b6cb0">С учителем</text>
+                    <text x="95" y="65" text-anchor="middle" class="label-small">есть правильные ответы</text>
+                    <circle cx="50" cy="100" r="6" fill="#3182ce"/>
+                    <text x="65" y="105" class="label-tiny">A</text>
+                    <circle cx="50" cy="130" r="6" fill="#dd6b20"/>
+                    <text x="65" y="135" class="label-tiny">B</text>
+                    <circle cx="50" cy="160" r="6" fill="#3182ce"/>
+                    <text x="65" y="165" class="label-tiny">A</text>
+                    <text x="95" y="192" text-anchor="middle" class="label-tiny">знаем метки → классификация</text>
+
+                    <rect x="190" y="20" width="160" height="180" rx="10" fill="#f0fff4" stroke="#38a169" stroke-width="3"/>
+                    <text x="270" y="45" text-anchor="middle" class="label-strong" fill="#276749">Без учителя</text>
+                    <text x="270" y="65" text-anchor="middle" class="label-small">правильных ответов нет</text>
+                    <circle cx="225" cy="100" r="6" fill="#718096"/>
+                    <text x="240" y="105" class="label-tiny">?</text>
+                    <circle cx="225" cy="130" r="6" fill="#718096"/>
+                    <text x="240" y="135" class="label-tiny">?</text>
+                    <circle cx="225" cy="160" r="6" fill="#718096"/>
+                    <text x="240" y="165" class="label-tiny">?</text>
+                    <text x="270" y="192" text-anchor="middle" class="label-tiny" fill="#276749">ищем структуру → кластеризация</text>
+
+                    <rect x="365" y="20" width="160" height="180" rx="10" fill="#faf5ff" stroke="#805ad5" stroke-width="2"/>
+                    <text x="445" y="45" text-anchor="middle" class="label-strong" fill="#553c9a">С подкреплением</text>
+                    <text x="445" y="65" text-anchor="middle" class="label-small">награды и штрафы</text>
+                    <text x="445" y="105" text-anchor="middle" style="font-size: 32px;">🎮</text>
+                    <text x="445" y="160" text-anchor="middle" class="label-tiny">агент учится через опыт</text>
+                    <text x="445" y="192" text-anchor="middle" class="label-tiny">игры, роботы</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Кластеризация</strong> — часть обучения без учителя. У нас есть только признаки объектов, но нет ярлыков. Мы хотим найти группы похожих. Это принципиально другая задача: не «угадать правильный ответ», а <strong>«обнаружить структуру»</strong>.
+                </div>
+            </div>
+
+            <!-- БЛОК 2: K-MEANS ПОШАГОВО (ИСПРАВЛЕНО) -->
+            <div class="viz-card">
+                <div class="viz-title">🎯 Блок 2. K-means: алгоритм шаг за шагом</div>
+                <svg viewBox="0 0 540 400" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="400" fill="#ffffff"/>
+
+                    <!-- Фаза 1 -->
+                    <text x="90" y="20" text-anchor="middle" class="label-strong">1. Инициализация</text>
+                    <rect x="15" y="30" width="150" height="150" rx="6" fill="#f7fafc" stroke="#e2e8f0"/>
+                    <circle cx="45" cy="70" r="4" fill="#3182ce"/>
+                    <circle cx="60" cy="85" r="4" fill="#3182ce"/>
+                    <circle cx="55" cy="60" r="4" fill="#3182ce"/>
+                    <circle cx="75" cy="75" r="4" fill="#3182ce"/>
+                    <circle cx="120" cy="140" r="4" fill="#3182ce"/>
+                    <circle cx="135" cy="155" r="4" fill="#3182ce"/>
+                    <circle cx="110" cy="155" r="4" fill="#3182ce"/>
+                    <circle cx="130" cy="130" r="4" fill="#3182ce"/>
+                    <circle cx="140" cy="70" r="4" fill="#3182ce"/>
+                    <circle cx="120" cy="60" r="4" fill="#3182ce"/>
+                    <circle cx="70" cy="60" r="8" fill="#e53e3e" stroke="#fff" stroke-width="2"/>
+                    <text x="70" y="64" text-anchor="middle" class="label-white" style="font-size: 9px;">1</text>
+                    <circle cx="100" cy="130" r="8" fill="#d69e2e" stroke="#fff" stroke-width="2"/>
+                    <text x="100" y="134" text-anchor="middle" class="label-white" style="font-size: 9px;">2</text>
+                    <circle cx="140" cy="90" r="8" fill="#38a169" stroke="#fff" stroke-width="2"/>
+                    <text x="140" y="94" text-anchor="middle" class="label-white" style="font-size: 9px;">3</text>
+
+                    <!-- Фаза 2 -->
+                    <text x="270" y="20" text-anchor="middle" class="label-strong">2. Назначение точек</text>
+                    <rect x="195" y="30" width="150" height="150" rx="6" fill="#f7fafc" stroke="#e2e8f0"/>
+                    <circle cx="225" cy="70" r="4" fill="#e53e3e"/>
+                    <circle cx="240" cy="85" r="4" fill="#e53e3e"/>
+                    <circle cx="235" cy="60" r="4" fill="#e53e3e"/>
+                    <circle cx="255" cy="75" r="4" fill="#e53e3e"/>
+                    <circle cx="300" cy="140" r="4" fill="#d69e2e"/>
+                    <circle cx="315" cy="155" r="4" fill="#d69e2e"/>
+                    <circle cx="290" cy="155" r="4" fill="#d69e2e"/>
+                    <circle cx="310" cy="130" r="4" fill="#d69e2e"/>
+                    <circle cx="320" cy="70" r="4" fill="#38a169"/>
+                    <circle cx="300" cy="60" r="4" fill="#38a169"/>
+                    <circle cx="250" cy="60" r="8" fill="#e53e3e" stroke="#fff" stroke-width="2"/>
+                    <text x="250" y="64" text-anchor="middle" class="label-white" style="font-size: 9px;">1</text>
+                    <circle cx="280" cy="130" r="8" fill="#d69e2e" stroke="#fff" stroke-width="2"/>
+                    <text x="280" y="134" text-anchor="middle" class="label-white" style="font-size: 9px;">2</text>
+                    <circle cx="320" cy="90" r="8" fill="#38a169" stroke="#fff" stroke-width="2"/>
+                    <text x="320" y="94" text-anchor="middle" class="label-white" style="font-size: 9px;">3</text>
+
+                    <!-- Фаза 3 -->
+                    <text x="450" y="20" text-anchor="middle" class="label-strong">3. Пересчёт центров</text>
+                    <rect x="375" y="30" width="150" height="150" rx="6" fill="#f7fafc" stroke="#e2e8f0"/>
+                    <circle cx="405" cy="70" r="4" fill="#e53e3e"/>
+                    <circle cx="420" cy="85" r="4" fill="#e53e3e"/>
+                    <circle cx="415" cy="60" r="4" fill="#e53e3e"/>
+                    <circle cx="435" cy="75" r="4" fill="#e53e3e"/>
+                    <circle cx="480" cy="140" r="4" fill="#d69e2e"/>
+                    <circle cx="495" cy="155" r="4" fill="#d69e2e"/>
+                    <circle cx="470" cy="155" r="4" fill="#d69e2e"/>
+                    <circle cx="490" cy="130" r="4" fill="#d69e2e"/>
+                    <circle cx="500" cy="70" r="4" fill="#38a169"/>
+                    <circle cx="480" cy="60" r="4" fill="#38a169"/>
+                    <circle cx="420" cy="72" r="8" fill="#e53e3e" stroke="#fff" stroke-width="2"/>
+                    <text x="420" y="76" text-anchor="middle" class="label-white" style="font-size: 9px;">1</text>
+                    <circle cx="483" cy="145" r="8" fill="#d69e2e" stroke="#fff" stroke-width="2"/>
+                    <text x="483" y="149" text-anchor="middle" class="label-white" style="font-size: 9px;">2</text>
+                    <circle cx="490" cy="65" r="8" fill="#38a169" stroke="#fff" stroke-width="2"/>
+                    <text x="490" y="69" text-anchor="middle" class="label-white" style="font-size: 9px;">3</text>
+                    <line x1="430" y1="60" x2="420" y2="72" stroke="#4a5568" stroke-width="1" stroke-dasharray="2 2"/>
+                    <line x1="460" y1="130" x2="483" y2="145" stroke="#4a5568" stroke-width="1" stroke-dasharray="2 2"/>
+                    <line x1="500" y1="90" x2="490" y2="65" stroke="#4a5568" stroke-width="1" stroke-dasharray="2 2"/>
+
+                    <!-- Фаза 4 -->
+                    <text x="270" y="215" text-anchor="middle" class="label-strong">4. Сходимость — центры стабильны</text>
+                    <rect x="195" y="225" width="150" height="150" rx="6" fill="#f7fafc" stroke="#e2e8f0"/>
+                    <circle cx="225" cy="260" r="4" fill="#e53e3e"/>
+                    <circle cx="240" cy="275" r="4" fill="#e53e3e"/>
+                    <circle cx="235" cy="250" r="4" fill="#e53e3e"/>
+                    <circle cx="255" cy="265" r="4" fill="#e53e3e"/>
+                    <circle cx="300" cy="330" r="4" fill="#d69e2e"/>
+                    <circle cx="315" cy="345" r="4" fill="#d69e2e"/>
+                    <circle cx="290" cy="345" r="4" fill="#d69e2e"/>
+                    <circle cx="310" cy="320" r="4" fill="#d69e2e"/>
+                    <circle cx="320" cy="260" r="4" fill="#38a169"/>
+                    <circle cx="300" cy="250" r="4" fill="#38a169"/>
+                    <circle cx="240" cy="262" r="8" fill="#e53e3e" stroke="#fff" stroke-width="2"/>
+                    <text x="240" y="266" text-anchor="middle" class="label-white" style="font-size: 9px;">1</text>
+                    <circle cx="303" cy="335" r="8" fill="#d69e2e" stroke="#fff" stroke-width="2"/>
+                    <text x="303" y="339" text-anchor="middle" class="label-white" style="font-size: 9px;">2</text>
+                    <circle cx="310" cy="255" r="8" fill="#38a169" stroke="#fff" stroke-width="2"/>
+                    <text x="310" y="259" text-anchor="middle" class="label-white" style="font-size: 9px;">3</text>
+
+                    <text x="90"  y="195" text-anchor="middle" class="label-tiny">центры — случайно</text>
+                    <text x="270" y="195" text-anchor="middle" class="label-tiny">точки → к ближайшему центру</text>
+                    <text x="450" y="195" text-anchor="middle" class="label-tiny">центры → центр масс</text>
+                    <text x="270" y="395" text-anchor="middle" class="label-tiny">повторяем 2-3 пока не сойдётся</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>K-means — итеративный алгоритм.</strong> Начинаем со случайных центров. Каждая точка приписывается к ближайшему. Затем центры пересчитываются как среднее своих точек. Шаги повторяются до сходимости — обычно 5–20 итераций. Это <strong>локальный, а не глобальный</strong> оптимум: результат зависит от инициализации.
+                </div>
+            </div>
+
+            <!-- БЛОК 3: ELBOW METHOD (ИСПРАВЛЕНО) -->
+            <div class="viz-card">
+                <div class="viz-title">📐 Блок 3. Elbow method: как выбрать число кластеров</div>
+                <svg viewBox="0 0 540 280" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="280" fill="#ffffff"/>
+
+                    <line x1="60" y1="230" x2="500" y2="230" class="axis"/>
+                    <line x1="60" y1="20"  x2="60"  y2="230" class="axis"/>
+
+                    <line x1="60" y1="180" x2="500" y2="180" class="grid-line"/>
+                    <line x1="60" y1="130" x2="500" y2="130" class="grid-line"/>
+                    <line x1="60" y1="80"  x2="500" y2="80"  class="grid-line"/>
+                    <line x1="60" y1="30"  x2="500" y2="30"  class="grid-line"/>
+
+                    <!-- Кривая проходит через все точки данных -->
+                    <path d="M 100 40 Q 160 175 220 190 Q 280 205 340 215 Q 400 220 460 222"
+                          fill="none" stroke="#3182ce" stroke-width="3"/>
+
+                    <circle cx="100" cy="40"  r="5" fill="#3182ce"/>
+                    <circle cx="160" cy="145" r="5" fill="#3182ce"/>
+                    <circle cx="220" cy="190" r="5" fill="#e53e3e" class="pulse-dot"/>
+                    <circle cx="280" cy="205" r="5" fill="#3182ce"/>
+                    <circle cx="340" cy="215" r="5" fill="#3182ce"/>
+                    <circle cx="400" cy="220" r="5" fill="#3182ce"/>
+                    <circle cx="460" cy="222" r="5" fill="#3182ce"/>
+
+                    <line x1="220" y1="20" x2="220" y2="230" stroke="#e53e3e" stroke-width="1.5" stroke-dasharray="4 3"/>
+                    <text x="220" y="15" text-anchor="middle" class="label-small" fill="#9b2c2c" style="font-weight: bold;">elbow</text>
+
+                    <text x="280" y="265" text-anchor="middle" class="label-strong">Число кластеров k →</text>
+                    <text x="25" y="125" text-anchor="middle" class="label-strong" transform="rotate(-90 25 125)">Inertia (сумма квадратов расстояний)</text>
+
+                    <text x="100" y="248" text-anchor="middle" class="label-small">1</text>
+                    <text x="160" y="248" text-anchor="middle" class="label-small">2</text>
+                    <text x="220" y="248" text-anchor="middle" class="label-small" style="font-weight: bold; fill:#9b2c2c;">3</text>
+                    <text x="280" y="248" text-anchor="middle" class="label-small">4</text>
+                    <text x="340" y="248" text-anchor="middle" class="label-small">5</text>
+                    <text x="400" y="248" text-anchor="middle" class="label-small">6</text>
+                    <text x="460" y="248" text-anchor="middle" class="label-small">7</text>
+
+                    <rect x="270" y="150" width="220" height="55" rx="6" fill="#fff5f5" stroke="#e53e3e" stroke-width="1.5"/>
+                    <text x="380" y="172" text-anchor="middle" class="label-small" fill="#742a2a">После k=3 кривая</text>
+                    <text x="380" y="188" text-anchor="middle" class="label-small" fill="#742a2a">выравнивается → оптимум</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Elbow method</strong>: строим график inertia — суммы квадратов расстояний от точек до центров. С ростом k она падает. Ищем <strong>точку перегиба («локоть»)</strong>, где падение замедляется. Это эвристика — иногда локоть неявный, тогда пробуем другие методы.
+                </div>
+            </div>
+
+            <!-- БЛОК 4: SILHOUETTE (ИСПРАВЛЕНО) -->
+            <div class="viz-card">
+                <div class="viz-title">📊 Блок 4. Silhouette: оценка качества кластеров</div>
+                <div class="grid-2">
+                    <div>
+                        <div style="font-size: 12px; font-weight: bold; color: #2b6cb0; margin-bottom: 6px; text-align: center;">Silhouette coefficient</div>
+                        <svg viewBox="0 0 260 200" width="100%">
+                            <rect x="0" y="0" width="260" height="200" fill="#ffffff"/>
+                            <circle cx="70"  cy="100" r="40" fill="#ebf8ff" stroke="#3182ce" stroke-width="1.5" stroke-dasharray="3 2"/>
+                            <circle cx="190" cy="100" r="40" fill="#f0fff4" stroke="#38a169" stroke-width="1.5" stroke-dasharray="3 2"/>
+                            <circle cx="60" cy="85" r="4" fill="#3182ce"/>
+                            <circle cx="80" cy="110" r="4" fill="#3182ce"/>
+                            <circle cx="55" cy="115" r="4" fill="#3182ce"/>
+                            <circle cx="70" cy="100" r="6" fill="#e53e3e" stroke="#fff" stroke-width="2"/>
+                            <line x1="70" y1="100" x2="60" y2="85" stroke="#e53e3e" stroke-width="1.5"/>
+                            <line x1="70" y1="100" x2="80" y2="110" stroke="#e53e3e" stroke-width="1.5"/>
+                            <line x1="70" y1="100" x2="55" y2="115" stroke="#e53e3e" stroke-width="1.5"/>
+                            <text x="70" y="70" text-anchor="middle" class="label-tiny" fill="#9b2c2c">a = 10</text>
+                            <line x1="70" y1="100" x2="190" y2="100" stroke="#38a169" stroke-width="2" stroke-dasharray="3 2"/>
+                            <text x="130" y="90" text-anchor="middle" class="label-tiny" fill="#276749">b = 60</text>
+                            <circle cx="180" cy="85"  r="4" fill="#38a169"/>
+                            <circle cx="200" cy="105" r="4" fill="#38a169"/>
+                            <circle cx="185" cy="120" r="4" fill="#38a169"/>
+                            <text x="130" y="175" text-anchor="middle" class="label-small" style="font-weight: bold;">s = (b − a) / max(a, b) = (60 − 10) / 60 = 0.83</text>
+                        </svg>
+                    </div>
+                    <div>
+                        <div style="font-size: 12px; font-weight: bold; color: #38a169; margin-bottom: 6px; text-align: center;">Silhouette plot</div>
+                        <svg viewBox="0 0 260 200" width="100%">
+                            <rect x="0" y="0" width="260" height="200" fill="#ffffff"/>
+                            <line x1="60" y1="20" x2="60" y2="180" stroke="#4a5568" stroke-width="1"/>
+                            <!-- Кластер 1 -->
+                            <rect x="60" y="25"  width="115" height="8" fill="#3182ce"/>
+                            <rect x="60" y="35"  width="125" height="8" fill="#3182ce"/>
+                            <rect x="60" y="45"  width="120" height="8" fill="#3182ce"/>
+                            <rect x="60" y="55"  width="105" height="8" fill="#3182ce"/>
+                            <rect x="60" y="65"  width="135" height="8" fill="#3182ce"/>
+                            <rect x="60" y="75"  width="95"  height="8" fill="#3182ce"/>
+                            <!-- Кластер 2 -->
+                            <rect x="60" y="95"  width="130" height="8" fill="#38a169"/>
+                            <rect x="60" y="105" width="140" height="8" fill="#38a169"/>
+                            <rect x="60" y="115" width="125" height="8" fill="#38a169"/>
+                            <rect x="60" y="125" width="115" height="8" fill="#38a169"/>
+                            <rect x="60" y="135" width="145" height="8" fill="#38a169"/>
+                            <rect x="60" y="145" width="135" height="8" fill="#38a169"/>
+                            <rect x="60" y="155" width="120" height="8" fill="#38a169"/>
+                            <text x="30" y="70"  text-anchor="middle" class="label-tiny" fill="#2b6cb0">кластер 1</text>
+                            <text x="30" y="130" text-anchor="middle" class="label-tiny" fill="#276749">кластер 2</text>
+                            <line x1="60" y1="180" x2="240" y2="180" stroke="#4a5568" stroke-width="1"/>
+                            <line x1="183" y1="20" x2="183" y2="180" stroke="#e53e3e" stroke-width="1.5" stroke-dasharray="3 2"/>
+                            <text x="183" y="195" text-anchor="middle" class="label-tiny" fill="#9b2c2c">avg 0.68</text>
+                        </svg>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    <strong>Silhouette</strong> считает для каждой точки: <strong>a</strong> — среднее расстояние до своей группы, <strong>b</strong> — до ближайшей чужой. <strong>s = (b−a)/max(a,b)</strong> ∈ [−1, 1]. Чем ближе к 1 — тем лучше. Справа — silhouette plot: каждая полоска — точка. Средний silhouette ≈ 0.68 — хорошее качество.
+                </div>
+            </div>
+
+            <!-- БЛОК 5: ИЕРАРХИЧЕСКАЯ КЛАСТЕРИЗАЦИЯ (ИСПРАВЛЕНО) -->
+            <div class="viz-card">
+                <div class="viz-title">🌳 Блок 5. Иерархическая кластеризация: дендрограмма</div>
+                <svg viewBox="0 0 540 380" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="380" fill="#ffffff"/>
+
+                    <!-- Базовая ось -->
+                    <line x1="40" y1="310" x2="510" y2="310" class="axis"/>
+
+                    <!-- Вертикали от листьев до первого уровня слияния -->
+                    <line x1="60"  y1="310" x2="60"  y2="250" stroke="#4a5568" stroke-width="1.5"/>
+                    <line x1="110" y1="310" x2="110" y2="250" stroke="#4a5568" stroke-width="1.5"/>
+                    <line x1="160" y1="310" x2="160" y2="270" stroke="#4a5568" stroke-width="1.5"/>
+                    <line x1="210" y1="310" x2="210" y2="270" stroke="#4a5568" stroke-width="1.5"/>
+                    <line x1="260" y1="310" x2="260" y2="230" stroke="#4a5568" stroke-width="1.5"/>
+                    <line x1="310" y1="310" x2="310" y2="230" stroke="#4a5568" stroke-width="1.5"/>
+                    <line x1="360" y1="310" x2="360" y2="270" stroke="#4a5568" stroke-width="1.5"/>
+                    <line x1="410" y1="310" x2="410" y2="270" stroke="#4a5568" stroke-width="1.5"/>
+                    <line x1="460" y1="310" x2="460" y2="190" stroke="#4a5568" stroke-width="1.5"/>
+                    <line x1="500" y1="310" x2="500" y2="190" stroke="#4a5568" stroke-width="1.5"/>
+
+                    <!-- Уровень 1: слияние пар -->
+                    <line x1="60"  y1="250" x2="110" y2="250" stroke="#3182ce" stroke-width="2"/>
+                    <line x1="160" y1="270" x2="210" y2="270" stroke="#3182ce" stroke-width="2"/>
+                    <line x1="260" y1="230" x2="310" y2="230" stroke="#3182ce" stroke-width="2"/>
+                    <line x1="360" y1="270" x2="410" y2="270" stroke="#3182ce" stroke-width="2"/>
+                    <line x1="460" y1="190" x2="500" y2="190" stroke="#3182ce" stroke-width="2"/>
+
+                    <!-- Уровень 2: центроиды пар -->
+                    <line x1="85"  y1="250" x2="85"  y2="190" stroke="#3182ce" stroke-width="2"/>
+                    <line x1="185" y1="270" x2="185" y2="190" stroke="#3182ce" stroke-width="2"/>
+                    <line x1="285" y1="230" x2="285" y2="110" stroke="#3182ce" stroke-width="2"/>
+                    <line x1="385" y1="270" x2="385" y2="70"  stroke="#3182ce" stroke-width="2"/>
+                    <line x1="480" y1="190" x2="480" y2="70"  stroke="#3182ce" stroke-width="2"/>
+
+                    <!-- Уровень 3: слияние [1-4] и [7-10] -->
+                    <line x1="85"  y1="190" x2="185" y2="190" stroke="#3182ce" stroke-width="2"/>
+                    <line x1="385" y1="70"  x2="480" y2="70"  stroke="#3182ce" stroke-width="2"/>
+
+                    <!-- Уровень 4: [1-4] + [5-6] -->
+                    <line x1="135" y1="190" x2="135" y2="110" stroke="#3182ce" stroke-width="2"/>
+                    <line x1="135" y1="110" x2="285" y2="110" stroke="#3182ce" stroke-width="2"/>
+
+                    <!-- Уровень 5: корень -->
+                    <line x1="210" y1="110" x2="210" y2="50"  stroke="#3182ce" stroke-width="2"/>
+                    <line x1="432.5" y1="70" x2="432.5" y2="50" stroke="#3182ce" stroke-width="2"/>
+                    <line x1="210" y1="50"  x2="432.5" y2="50" stroke="#3182ce" stroke-width="2"/>
+
+                    <!-- Линия разреза на y=150: пересекает 4 ветви → 4 кластера -->
+                    <line x1="30" y1="150" x2="510" y2="150" stroke="#e53e3e" stroke-width="2" stroke-dasharray="6 4"/>
+                    <text x="518" y="154" class="label-small" fill="#9b2c2c" style="font-weight: bold;">cut</text>
+
+                    <!-- Точки пересечения разреза с ветвями -->
+                    <circle cx="135" cy="150" r="5" fill="#e53e3e"/>
+                    <circle cx="285" cy="150" r="5" fill="#d69e2e"/>
+                    <circle cx="385" cy="150" r="5" fill="#38a169"/>
+                    <circle cx="480" cy="150" r="5" fill="#805ad5"/>
+
+                    <!-- Подписи осей -->
+                    <text x="20" y="55"  text-anchor="end" class="label-tiny">далеко</text>
+                    <text x="20" y="310" text-anchor="end" class="label-tiny">близко</text>
+
+                    <!-- Подписи листьев -->
+                    <text x="60"  y="328" text-anchor="middle" class="label-tiny">1</text>
+                    <text x="110" y="328" text-anchor="middle" class="label-tiny">2</text>
+                    <text x="160" y="328" text-anchor="middle" class="label-tiny">3</text>
+                    <text x="210" y="328" text-anchor="middle" class="label-tiny">4</text>
+                    <text x="260" y="328" text-anchor="middle" class="label-tiny">5</text>
+                    <text x="310" y="328" text-anchor="middle" class="label-tiny">6</text>
+                    <text x="360" y="328" text-anchor="middle" class="label-tiny">7</text>
+                    <text x="410" y="328" text-anchor="middle" class="label-tiny">8</text>
+                    <text x="460" y="328" text-anchor="middle" class="label-tiny">9</text>
+                    <text x="500" y="328" text-anchor="middle" class="label-tiny">10</text>
+
+                    <!-- Результат -->
+                    <text x="270" y="360" text-anchor="middle" class="label-strong">Разрезаем на уровне → получаем 4 кластера</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Иерархическая кластеризация</strong> строит дерево (дендрограмму) от отдельных точек к корню. Высота — расстояние слияния. <strong>Разрезаем дерево на нужном уровне</strong> — получаем кластеры. На выбранном уровне линия пересекает <strong>4 ветви → 4 кластера</strong>: [1-4], [5-6], [7-8], [9-10]. Чтобы получить 2 кластера, нужно поднять разрез выше — до уровня корня. Не нужно задавать k заранее, но нужно решить, где резать. Формы кластеров — любые, но алгоритм медленный на больших данных (O(n²) или O(n³)).
+                </div>
+            </div>
+
+            <!-- БЛОК 6: DBSCAN -->
+            <div class="viz-card">
+                <div class="viz-title">🔵 Блок 6. DBSCAN: кластеры на основе плотности</div>
+                <div class="grid-2">
+                    <div>
+                        <div style="font-size: 12px; font-weight: bold; color: #2b6cb0; margin-bottom: 6px; text-align: center;">Плотность и шум</div>
+                        <svg viewBox="0 0 260 200" width="100%">
+                            <rect x="0" y="0" width="260" height="200" fill="#ffffff"/>
+                            <circle cx="60"  cy="60"  r="5" fill="#3182ce"/>
+                            <circle cx="80"  cy="70"  r="5" fill="#3182ce"/>
+                            <circle cx="55"  cy="85"  r="5" fill="#3182ce"/>
+                            <circle cx="75"  cy="95"  r="5" fill="#3182ce"/>
+                            <circle cx="100" cy="80"  r="5" fill="#3182ce"/>
+                            <circle cx="90"  cy="60"  r="5" fill="#3182ce"/>
+                            <circle cx="75" cy="75" r="30" fill="none" stroke="#3182ce" stroke-width="1.5" stroke-dasharray="3 2"/>
+                            <text x="75" y="40" text-anchor="middle" class="label-tiny" fill="#2b6cb0">eps</text>
+                            <circle cx="180" cy="130" r="5" fill="#38a169"/>
+                            <circle cx="195" cy="145" r="5" fill="#38a169"/>
+                            <circle cx="165" cy="150" r="5" fill="#38a169"/>
+                            <circle cx="175" cy="165" r="5" fill="#38a169"/>
+                            <circle cx="200" cy="155" r="5" fill="#38a169"/>
+                            <circle cx="155" cy="135" r="5" fill="#38a169"/>
+                            <circle cx="215" cy="140" r="5" fill="#38a169"/>
+                            <circle cx="140" cy="150" r="5" fill="none" stroke="#38a169" stroke-width="2"/>
+                            <text x="140" y="175" text-anchor="middle" class="label-tiny" fill="#276749">border</text>
+                            <text x="220" y="60" text-anchor="middle" style="font-size: 14px; fill: #e53e3e;">✕</text>
+                            <text x="40" y="160" text-anchor="middle" style="font-size: 14px; fill: #e53e3e;">✕</text>
+                            <text x="230" y="190" text-anchor="middle" style="font-size: 14px; fill: #e53e3e;">✕</text>
+                            <text x="105" y="30" text-anchor="middle" style="font-size: 14px; fill: #e53e3e;">✕</text>
+                        </svg>
+                        <div style="font-size: 10.5px; color: #4a5568; text-align: center; margin-top: 4px;">Заполненные — core, контур — border, крестики — noise</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 12px; font-weight: bold; color: #975a16; margin-bottom: 6px; text-align: center;">DBSCAN vs K-means</div>
+                        <svg viewBox="0 0 260 200" width="100%">
+                            <rect x="0" y="0" width="260" height="200" fill="#ffffff"/>
+                            <text x="60" y="20" text-anchor="middle" class="label-tiny" fill="#9b2c2c">K-means</text>
+                            <path d="M 20 90 Q 60 50 100 90 Q 60 130 20 90" fill="none" stroke="#e2e8f0" stroke-width="2"/>
+                            <circle cx="30"  cy="80" r="4" fill="#3182ce"/>
+                            <circle cx="50"  cy="70" r="4" fill="#3182ce"/>
+                            <circle cx="70"  cy="75" r="4" fill="#3182ce"/>
+                            <circle cx="40"  cy="100" r="4" fill="#38a169"/>
+                            <circle cx="60"  cy="105" r="4" fill="#38a169"/>
+                            <circle cx="80"  cy="100" r="4" fill="#38a169"/>
+                            <line x1="20" y1="90" x2="100" y2="90" stroke="#e53e3e" stroke-width="1.5" stroke-dasharray="3 2"/>
+                            <text x="60" y="140" text-anchor="middle" class="label-tiny" fill="#9b2c2c">✗ режет пополам</text>
+                            <text x="190" y="20" text-anchor="middle" class="label-tiny" fill="#276749">DBSCAN</text>
+                            <path d="M 150 90 Q 190 50 230 90 Q 190 130 150 90" fill="none" stroke="#e2e8f0" stroke-width="2"/>
+                            <circle cx="160" cy="80" r="4" fill="#3182ce"/>
+                            <circle cx="180" cy="70" r="4" fill="#3182ce"/>
+                            <circle cx="200" cy="70" r="4" fill="#3182ce"/>
+                            <circle cx="220" cy="80" r="4" fill="#3182ce"/>
+                            <circle cx="170" cy="110" r="4" fill="#38a169"/>
+                            <circle cx="190" cy="115" r="4" fill="#38a169"/>
+                            <circle cx="210" cy="110" r="4" fill="#38a169"/>
+                            <text x="190" y="140" text-anchor="middle" class="label-tiny" fill="#276749">✓ находит форму</text>
+                        </svg>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    <strong>DBSCAN</strong> ищет области высокой плотности. Параметры: <strong>eps</strong> (радиус) и <strong>min_samples</strong> (минимум точек). Находит кластеры <strong>любой формы</strong>, помечает выбросы как шум. Справа — классический пример: K-means режет «полумесяц» пополам, DBSCAN — правильно находит форму.
+                </div>
+            </div>
+
+            <!-- БЛОК 7: GMM -->
+            <div class="viz-card">
+                <div class="viz-title">🌀 Блок 7. Gaussian Mixture Models (GMM): мягкая кластеризация</div>
+                <div class="grid-2">
+                    <div>
+                        <div style="font-size: 12px; font-weight: bold; color: #9b2c2c; margin-bottom: 6px; text-align: center;">K-means: жёсткие границы</div>
+                        <svg viewBox="0 0 260 200" width="100%">
+                            <rect x="0" y="0" width="260" height="200" fill="#ffffff"/>
+                            <circle cx="80"  cy="100" r="50" fill="#ebf8ff" stroke="#3182ce" stroke-width="2"/>
+                            <circle cx="160" cy="100" r="50" fill="#f0fff4" stroke="#38a169" stroke-width="2"/>
+                            <circle cx="60"  cy="80"  r="4" fill="#3182ce"/>
+                            <circle cx="90"  cy="100" r="4" fill="#3182ce"/>
+                            <circle cx="70"  cy="120" r="4" fill="#3182ce"/>
+                            <circle cx="150" cy="80"  r="4" fill="#38a169"/>
+                            <circle cx="170" cy="100" r="4" fill="#38a169"/>
+                            <circle cx="155" cy="120" r="4" fill="#38a169"/>
+                            <line x1="120" y1="30" x2="120" y2="170" stroke="#4a5568" stroke-width="2" stroke-dasharray="4 3"/>
+                            <text x="130" y="40" text-anchor="middle" class="label-tiny">жёсткая граница</text>
+                        </svg>
+                    </div>
+                    <div>
+                        <div style="font-size: 12px; font-weight: bold; color: #276749; margin-bottom: 6px; text-align: center;">GMM: мягкие вероятности</div>
+                        <svg viewBox="0 0 260 200" width="100%">
+                            <rect x="0" y="0" width="260" height="200" fill="#ffffff"/>
+                            <ellipse cx="80"  cy="100" rx="55" ry="40" fill="#ebf8ff" fill-opacity="0.5" stroke="#3182ce" stroke-width="1.5" stroke-dasharray="3 2"/>
+                            <ellipse cx="80"  cy="100" rx="35" ry="25" fill="#ebf8ff" fill-opacity="0.5" stroke="#3182ce" stroke-width="1.5" stroke-dasharray="3 2"/>
+                            <ellipse cx="170" cy="100" rx="55" ry="40" fill="#f0fff4" fill-opacity="0.5" stroke="#38a169" stroke-width="1.5" stroke-dasharray="3 2"/>
+                            <ellipse cx="170" cy="100" rx="35" ry="25" fill="#f0fff4" fill-opacity="0.5" stroke="#38a169" stroke-width="1.5" stroke-dasharray="3 2"/>
+                            <circle cx="125" cy="100" r="4" fill="#805ad5"/>
+                            <text x="125" y="80" text-anchor="middle" class="label-tiny" fill="#553c9a">60/40</text>
+                            <circle cx="60"  cy="80"  r="4" fill="#3182ce"/>
+                            <circle cx="90"  cy="100" r="4" fill="#3182ce"/>
+                            <circle cx="70"  cy="120" r="4" fill="#3182ce"/>
+                            <circle cx="150" cy="80"  r="4" fill="#38a169"/>
+                            <circle cx="170" cy="100" r="4" fill="#38a169"/>
+                            <circle cx="155" cy="120" r="4" fill="#38a169"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    <strong>K-means</strong> жёстко приписывает точку к одному кластеру. <strong>GMM</strong> предполагает, что кластеры — это гауссовы распределения, и возвращает <strong>вероятности принадлежности</strong>. Точка в зоне пересечения может быть на 60% в кластере A и на 40% в B. Плюс — мягкие границы и учёт формы (эллипсы).
+                </div>
+            </div>
+
+            <!-- БЛОК 8: МЕТРИКИ КАЧЕСТВА -->
+            <div class="viz-card">
+                <div class="viz-title">📏 Блок 8. Три метрики качества кластеризации</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr><th>Метрика</th><th>Диапазон</th><th>Интерпретация</th><th>Плюсы</th><th>Минусы</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>Silhouette</strong></td><td>−1 … +1</td><td>Чем ближе к +1, тем лучше. &gt; 0.5 — хорошее, &gt; 0.7 — отличное.</td><td>Понятная, учитывает компактность и отделённость</td><td>Медленная на больших данных (O(n²))</td></tr>
+                        <tr><td><strong>Davies-Bouldin</strong></td><td>0 … +∞</td><td>Чем меньше, тем лучше. 0 — идеал.</td><td>Быстрая, простая</td><td>Чувствительна к форме</td></tr>
+                        <tr><td><strong>Calinski-Harabasz</strong></td><td>0 … +∞</td><td>Чем больше, тем лучше.</td><td>Быстрая</td><td>Зависит от масштаба</td></tr>
+                        <tr><td><strong>Elbow (inertia)</strong></td><td>0 … +∞</td><td>Ищем перегиб кривой — «локоть».</td><td>Интуитивная</td><td>Не всегда явный локоть</td></tr>
+                    </tbody>
+                </table>
+                <div class="callout warn" style="margin-top: 10px;">
+                    <strong>⚠️ Осторожно</strong>
+                    <p>Метрики кластеризации не всегда согласованы. Низкий Davies-Bouldin и высокий Silhouette указывают на хорошее качество. Но идеального алгоритма нет. Всегда проверяйте результат <strong>глазами</strong> на 2D-проекции (PCA/t-SNE).</p>
+                </div>
+            </div>
+
+            <!-- БЛОК 9: PCA / t-SNE / UMAP -->
+            <div class="viz-card">
+                <div class="viz-title">📐 Блок 9. Понижение размерности: PCA, t-SNE, UMAP</div>
+                <svg viewBox="0 0 540 260" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="260" fill="#ffffff"/>
+
+                    <text x="90" y="20" text-anchor="middle" class="label-strong">PCA</text>
+                    <rect x="20" y="30" width="140" height="150" rx="6" fill="#f7fafc" stroke="#e2e8f0"/>
+                    <line x1="30" y1="170" x2="150" y2="170" class="axis"/>
+                    <line x1="30" y1="40" x2="30" y2="170" class="axis"/>
+                    <circle cx="50"  cy="150" r="4" fill="#3182ce"/>
+                    <circle cx="70"  cy="130" r="4" fill="#3182ce"/>
+                    <circle cx="90"  cy="110" r="4" fill="#3182ce"/>
+                    <circle cx="110" cy="90" r="4" fill="#3182ce"/>
+                    <circle cx="130" cy="70" r="4" fill="#3182ce"/>
+                    <circle cx="60"  cy="140" r="4" fill="#38a169"/>
+                    <circle cx="80"  cy="120" r="4" fill="#38a169"/>
+                    <circle cx="100" cy="100" r="4" fill="#38a169"/>
+                    <circle cx="120" cy="80" r="4" fill="#38a169"/>
+                    <circle cx="140" cy="60" r="4" fill="#38a169"/>
+                    <line x1="40" y1="160" x2="145" y2="55" stroke="#e53e3e" stroke-width="2" stroke-dasharray="4 3"/>
+                    <text x="90" y="200" text-anchor="middle" class="label-tiny">линейная проекция</text>
+                    <text x="90" y="215" text-anchor="middle" class="label-tiny">максимум дисперсии</text>
+
+                    <text x="270" y="20" text-anchor="middle" class="label-strong">t-SNE</text>
+                    <rect x="200" y="30" width="140" height="150" rx="6" fill="#f7fafc" stroke="#e2e8f0"/>
+                    <line x1="210" y1="170" x2="330" y2="170" class="axis"/>
+                    <line x1="210" y1="40" x2="210" y2="170" class="axis"/>
+                    <circle cx="240" cy="100" r="4" fill="#3182ce"/>
+                    <circle cx="255" cy="90" r="4" fill="#3182ce"/>
+                    <circle cx="245" cy="115" r="4" fill="#3182ce"/>
+                    <circle cx="260" cy="105" r="4" fill="#3182ce"/>
+                    <circle cx="290" cy="120" r="4" fill="#38a169"/>
+                    <circle cx="305" cy="130" r="4" fill="#38a169"/>
+                    <circle cx="295" cy="140" r="4" fill="#38a169"/>
+                    <circle cx="310" cy="145" r="4" fill="#38a169"/>
+                    <text x="270" y="200" text-anchor="middle" class="label-tiny">сохраняет локальные</text>
+                    <text x="270" y="215" text-anchor="middle" class="label-tiny">соседства, нелинейно</text>
+
+                    <text x="450" y="20" text-anchor="middle" class="label-strong">UMAP</text>
+                    <rect x="380" y="30" width="140" height="150" rx="6" fill="#f7fafc" stroke="#e2e8f0"/>
+                    <line x1="390" y1="170" x2="510" y2="170" class="axis"/>
+                    <line x1="390" y1="40" x2="390" y2="170" class="axis"/>
+                    <circle cx="420" cy="70" r="4" fill="#3182ce"/>
+                    <circle cx="440" cy="65" r="4" fill="#3182ce"/>
+                    <circle cx="455" cy="80" r="4" fill="#3182ce"/>
+                    <circle cx="430" cy="85" r="4" fill="#3182ce"/>
+                    <circle cx="450" cy="140" r="4" fill="#38a169"/>
+                    <circle cx="470" cy="145" r="4" fill="#38a169"/>
+                    <circle cx="485" cy="135" r="4" fill="#38a169"/>
+                    <circle cx="475" cy="155" r="4" fill="#38a169"/>
+                    <text x="450" y="200" text-anchor="middle" class="label-tiny">быстрее, чем t-SNE,</text>
+                    <text x="450" y="215" text-anchor="middle" class="label-tiny">сохраняет глобально</text>
+
+                    <text x="270" y="248" text-anchor="middle" class="label-small" fill="#4a5568">Все три метода нужны для визуализации многомерных данных на 2D</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>PCA</strong> — линейное понижение размерности, быстрое, сохраняет глобальные расстояния. <strong>t-SNE</strong> — нелинейное, сохраняет локальные соседства, медленнее. <strong>UMAP</strong> — быстрее t-SNE, сохраняет и локальное, и глобальное. Используются для визуализации кластеров и как шаг перед кластеризацией.
+                </div>
+            </div>
+
+            <!-- БЛОК 10: RFM-КЕЙС (ИСПРАВЛЕНО) -->
+            <div class="viz-card">
+                <div class="viz-title">🛍️ Блок 10. Практический кейс: RFM-сегментация клиентов</div>
+                <svg viewBox="0 0 540 280" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="280" fill="#ffffff"/>
+
+                    <!-- Блок 1: RFM -->
+                    <rect x="15" y="30" width="110" height="90" rx="8" fill="#ebf8ff" stroke="#3182ce" stroke-width="2"/>
+                    <text x="70" y="55" text-anchor="middle" class="label-strong" fill="#2b6cb0">1. RFM</text>
+                    <text x="70" y="75" text-anchor="middle" class="label-small">Recency</text>
+                    <text x="70" y="90" text-anchor="middle" class="label-small">Frequency</text>
+                    <text x="70" y="105" text-anchor="middle" class="label-small">Monetary</text>
+
+                    <!-- SVG-стрелка 1 -->
+                    <line x1="130" y1="75" x2="148" y2="75" stroke="#4a5568" stroke-width="2.5"/>
+                    <polygon points="155,75 147,71 147,79" fill="#4a5568"/>
+
+                    <!-- Блок 2: Кластер -->
+                    <rect x="160" y="30" width="110" height="90" rx="8" fill="#fffaf0" stroke="#d69e2e" stroke-width="2"/>
+                    <text x="215" y="55" text-anchor="middle" class="label-strong" fill="#975a16">2. Кластер</text>
+                    <text x="215" y="75" text-anchor="middle" class="label-small">K-means</text>
+                    <text x="215" y="90" text-anchor="middle" class="label-small">k = 4</text>
+                    <text x="215" y="105" text-anchor="middle" class="label-small">стандартизация</text>
+
+                    <!-- SVG-стрелка 2 -->
+                    <line x1="275" y1="75" x2="293" y2="75" stroke="#4a5568" stroke-width="2.5"/>
+                    <polygon points="300,75 292,71 292,79" fill="#4a5568"/>
+
+                    <!-- Блок 3: Интерпретация -->
+                    <rect x="305" y="30" width="110" height="90" rx="8" fill="#f0fff4" stroke="#38a169" stroke-width="2"/>
+                    <text x="360" y="55" text-anchor="middle" class="label-strong" fill="#276749">3. Интерпретация</text>
+                    <text x="360" y="75" text-anchor="middle" class="label-small">профили</text>
+                    <text x="360" y="90" text-anchor="middle" class="label-small">средние</text>
+                    <text x="360" y="105" text-anchor="middle" class="label-small">доли</text>
+
+                    <!-- SVG-стрелка 3 -->
+                    <line x1="420" y1="75" x2="438" y2="75" stroke="#4a5568" stroke-width="2.5"/>
+                    <polygon points="445,75 437,71 437,79" fill="#4a5568"/>
+
+                    <!-- Блок 4: Действия -->
+                    <rect x="450" y="30" width="80" height="90" rx="8" fill="#faf5ff" stroke="#805ad5" stroke-width="2"/>
+                    <text x="490" y="55" text-anchor="middle" class="label-strong" fill="#553c9a">4. Действия</text>
+                    <text x="490" y="75" text-anchor="middle" class="label-small">VIP</text>
+                    <text x="490" y="90" text-anchor="middle" class="label-small">реактив.</text>
+                    <text x="490" y="105" text-anchor="middle" class="label-small">онбординг</text>
+
+                    <!-- Детали -->
+                    <rect x="15" y="140" width="510" height="125" rx="8" fill="#f7fafc" stroke="#e2e8f0"/>
+                    <text x="270" y="162" text-anchor="middle" class="label-strong">Что показали 4 кластера</text>
+
+                    <text x="35" y="190" class="label-small"><strong>🏆 Чемпионы</strong> (R высокий, F часто, M много) → VIP-программа</text>
+                    <text x="35" y="210" class="label-small"><strong>💙 Лояльные</strong> (R средний, F регулярно) → апсейл</text>
+                    <text x="35" y="230" class="label-small"><strong>🌱 Новички</strong> (R недавно, F мало) → онбординг</text>
+                    <text x="35" y="250" class="label-small"><strong>😴 Спящие</strong> (R давно, F мало) → реактивация или отказ</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>RFM + K-means</strong> — классический кейс сегментации. Считаем три метрики на клиента. Стандартизуем. Кластеризуем на 4 группы. Интерпретируем профили. Для каждой группы — <strong>своя стратегия</strong>. Это даёт бизнесу конкретные действия, а не абстрактные «сегменты».
+                </div>
+            </div>
+
+            <!-- БЛОК 11: ЛОВУШКИ -->
+            <div class="viz-card">
+                <div class="viz-title">⚠️ Блок 11. Четыре главные ловушки</div>
+                <div class="grid-2">
+                    <div class="callout warn">
+                        <strong>1. Нестандартизованные признаки</strong>
+                        <p>Возраст в годах (20–80) и доход в рублях (30 000–300 000) — доход доминирует. <strong>Решение:</strong> StandardScaler или MinMaxScaler перед кластеризацией.</p>
+                    </div>
+                    <div class="callout warn">
+                        <strong>2. Случайный выбор k</strong>
+                        <p>Взяли k = 5, потому что «круглое». А в данных 3 кластера. <strong>Решение:</strong> elbow + silhouette + визуализация.</p>
+                    </div>
+                    <div class="callout warn">
+                        <strong>3. K-means для сложных форм</strong>
+                        <p>K-means режет «полумесяц» пополам. <strong>Решение:</strong> DBSCAN или GMM для нелинейных кластеров.</p>
+                    </div>
+                    <div class="callout warn">
+                        <strong>4. Игнорирование выбросов</strong>
+                        <p>Один супер-клиент в RFM перетягивает центр кластера. <strong>Решение:</strong> удалить выбросы или использовать DBSCAN.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- СРАВНЕНИЕ АЛГОРИТМОВ -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 8px;">⚖️ Сравнение четырёх алгоритмов: что выбрать</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr><th>Алгоритм</th><th>Форма кластеров</th><th>Задаём k?</th><th>Устойчив к шуму?</th><th>Скорость</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>K-means</strong></td><td>Сферические</td><td>Да</td><td>Нет</td><td>Быстрый</td></tr>
+                        <tr><td><strong>Иерархический</strong></td><td>Любая</td><td>Нет (режем дерево)</td><td>Средне</td><td>Медленный</td></tr>
+                        <tr><td><strong>DBSCAN</strong></td><td>Любая</td><td>Нет (eps, min_samples)</td><td>Да (шум — отдельно)</td><td>Средний</td></tr>
+                        <tr><td><strong>GMM</strong></td><td>Эллипсы</td><td>Да</td><td>Средне</td><td>Средний</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- РОЛИ -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 8px;">👥 Как 11 ролей используют кластеризацию</div>
+                <table class="role-table">
+                    <thead>
+                        <tr><th style="width: 28%;">Роль</th><th>Что кластеризует</th><th style="width: 30%;">Типичная задача</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="role-emoji">📈</span> <strong>Аналитик данных</strong></td><td>Клиентов, транзакции</td><td>Сегментация по поведению</td></tr>
+                        <tr><td><span class="role-emoji">💰</span> <strong>Финансовый аналитик</strong></td><td>Заёмщиков, транзакции</td><td>Группы риска, поиск аномалий</td></tr>
+                        <tr><td><span class="role-emoji">🚀</span> <strong>Продуктовый аналитик</strong></td><td>Пользователей</td><td>Портреты пользователей, персонализация</td></tr>
+                        <tr><td><span class="role-emoji">🌐</span> <strong>Веб-аналитик</strong></td><td>Сессии, страницы</td><td>Типы поведения на сайте</td></tr>
+                        <tr><td><span class="role-emoji">📊</span> <strong>BI-аналитик</strong></td><td>Магазины, товары</td><td>Автоматические группы на дашбордах</td></tr>
+                        <tr><td><span class="role-emoji">🗄️</span> <strong>Аналитик больших данных</strong></td><td>Документы, эмбеддинги</td><td>Тематическое моделирование, поиск похожих</td></tr>
+                        <tr><td><span class="role-emoji">📣</span> <strong>Маркетинговый аналитик</strong></td><td>Клиентов по RFM</td><td>Таргетинг по сегментам</td></tr>
+                        <tr><td><span class="role-emoji">💼</span> <strong>Бизнес-аналитик</strong></td><td>Проекты, процессы</td><td>Группы схожих процессов</td></tr>
+                        <tr><td><span class="role-emoji">⚙️</span> <strong>Системный аналитик</strong></td><td>Логи, инциденты</td><td>Кластеры ошибок</td></tr>
+                        <tr><td><span class="role-emoji">🎨</span> <strong>UX-аналитик</strong></td><td>Пользователей по опыту</td><td>Портреты для дизайна</td></tr>
+                        <tr><td><span class="role-emoji">📊</span> <strong>Data Scientist</strong></td><td>Данные для ансамблей</td><td>Feature engineering, снижение размерности</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- CALL-OUT -->
+            <div class="callout ok">
+                <strong>💡 Главный вывод</strong>
+                <p>Кластеризация — это <strong>инструмент обнаружения структуры</strong>, а не «угадывания правильного ответа». Здесь нет объективно верного ответа: разные алгоритмы и разные k дают разные результаты. Задача — найти <strong>интерпретируемые и полезные для бизнеса группы</strong>. Всегда проверяйте результат глазами на 2D-проекции и через метрики качества.</p>
+            </div>
+
+            <!-- ВИДЕОПЛЕЕР -->
+            <div class="video-section">
+                <div class="video-container">
+                    <iframe id="lecture-player" src="https://rutube.ru" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+                </div>
+                <div class="links-hub">
+                    <button onclick="changeVideo('https://rutube.ru/')" class="video-btn stop-btn">⏹ СТОП</button>
+                    <button onclick="changeVideo('https://rutube.ru/play/embed/')" class="video-btn rt-btn">📜 Лекция 23. Кластеризация</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="slide-footer">
+            Направление «Менеджмент» | Курс: Аналитика данных | Лекция 17: «Кластеризация: как найти группы в данных без учителя»
+        </div>
+    </div>
+
+    <!-- ПРАВАЯ ПАНЕЛЬ -->
+   <div class="speaker-notes">
+        <!-- Фиксированная верхняя часть с плеером -->
+        <div style="position: sticky; top: 0; background: #1a202c; padding: 20px 20px 10px 20px; border-bottom: 1px solid #4a5568; width: 100%; z-index: 100;">
+                       <div class="notes-header" style="display: block; padding-bottom: 15px;">
+               <audio id="lecture-audio" preload="auto" controls
+                      src="https://archive.org/download/03_20261110_20261110/17.1.mp3"
+                      style="width: 100%; height: 32px; border-radius: 4px;"></audio>
+            </div>
+            <div style="width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+             <iframe id="right-lecture-player" src="https://archive.org/embed/20261020_20261020_0955?autoplay=true&loop=true&muted=true"  allow="clipboard-write; autoplay" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen style="border: none;"></iframe>
+
+                           </div>
+        </div>
+
+        <div class="lecture-text" style="margin-top: 20px;">
+
+            <h3>📌 Введение</h3>
+
+            <p>Добрый день, коллеги. Мы начинаем семнадцатую лекцию нашего курса. Она называется «Кластеризация: как найти группы в данных без учителя».</p>
+
+            <p>В предыдущих лекциях мы разобрали обучение с учителем. Линейную регрессию. K-NN. Логистическую регрессию. Деревья решений. Ансамбли. Во всех этих алгоритмах у нас были правильные ответы. Мы знали, к какому классу относится каждый объект. Или какое значение нужно предсказать.</p>
+
+            <p>А что, если правильных ответов нет. Если мы даже не знаем, какие группы искать. Именно с такой задачей работает кластеризация. Это часть обучения без учителя. Мы даём алгоритму данные без ярлыков. И просим найти структуру. Найти группы похожих объектов. Найти закономерности, о которых мы даже не подозревали.</p>
+
+            <p>Представьте себе такой пример. Маркетинговая команда хочет понять свою аудиторию. У неё есть данные о клиентах. Возраст. Доход. Частота покупок. Средний чек. Но нет готового разделения на сегменты. Кластеризация поможет найти эти сегменты автоматически. И для каждого сегмента можно придумать свою стратегию.</p>
+
+            <p>Или другой пример. Врач хочет понять типы пациентов. У него есть анализы, возраст, история болезней. Кластеризация может выявить подтипы заболевания. Которые не видны при обычном осмотре. И для каждого подтипа можно подобрать своё лечение.</p>
+
+            <p>Кластеризация — это мощный инструмент разведки данных. Она помогает обнаружить скрытую структуру. Но у неё есть особенности. Нет объективно верного ответа. Разные алгоритмы дают разные результаты. И даже один алгоритм с разными параметрами может дать совсем разное разделение. Поэтому кластеризация — это скорее искусство, чем точная наука.</p>
+
+            <p>Сегодня мы разберём, как работают основные алгоритмы кластеризации. K-means. Иерархическая кластеризация. DBSCAN. GMM. Мы увидим, как выбирать число кластеров. Как оценивать качество. Какие бывают ловушки. И как применять кластеризацию в бизнесе.</p>
+
+            <p>Обратите внимание на важную мысль. Кластеризация — это не «угадывание правильного ответа». Это <strong>исследование</strong>. Мы ищем структуру, которая имеет смысл. Имеет смысл для бизнеса. Имеет смысл для понимания данных. Имеет смысл для дальнейших действий. Если найденные кластеры не интерпретируются — значит, что-то пошло не так.</p>
+
+            <p>Я желаю вам продуктивной работы. И надеюсь, что после этой лекции вы будете уверенно применять кластеризацию в своей работе.</p>
+
+            <h3>📌 Блок 1. Обучение без учителя</h3>
+
+            <p>Начнём с определения. Кластеризация — это задача машинного обучения без учителя. В которой нужно разбить объекты на группы схожих между собой. Эти группы называются кластерами.</p>
+
+            <p>Ключевое отличие от классификации. В классификации мы заранее знаем, какие классы существуют. И у нас есть примеры с правильными ответами. В кластеризации мы ничего не знаем. Ни сколько кластеров. Ни какие они. Мы хотим, чтобы алгоритм сам нашёл структуру в данных.</p>
+
+            <p>Приведём пример. Представьте, что у нас есть данные о клиентах интернет-магазина. Возраст. Пол. Средний чек. Частота покупок. Мы хотим понять, какие типы клиентов у нас есть. В классификации мы бы сказали: «вот VIP-клиенты, вот обычные, вот уходящие». И нашли бы модель, которая относит каждого нового клиента к одной из этих групп.</p>
+
+            <p>В кластеризации мы говорим: «раздели клиентов на группы по схожести». И алгоритм сам находит группы. Может, две. Может, пять. Может, десять. И мы уже потом интерпретируем эти группы. Называем их. И решаем, что с ними делать.</p>
+
+            <h4>Три типа обучения</h4>
+
+            <p>Давайте уточним место кластеризации среди других типов обучения.</p>
+
+            <p><strong>Обучение с учителем.</strong> Есть данные с правильными ответами. Алгоритм учится предсказывать ответ для новых объектов. Задачи — регрессия и классификация.</p>
+
+            <p><strong>Обучение без учителя.</strong> Правильных ответов нет. Алгоритм ищет структуру в данных. Основная задача — кластеризация. Другие задачи — понижение размерности, поиск аномалий.</p>
+
+            <p><strong>Обучение с подкреплением.</strong> Агент взаимодействует со средой. Получает награды и штрафы. Учится через опыт. Пример — игра в шахматы или управление роботом.</p>
+
+            <p>Кластеризация — это обучение без учителя. У нас нет правильных ответов. Но мы хотим найти что-то полезное.</p>
+
+            <h3>📌 Блок 2. K-means: главный алгоритм кластеризации</h3>
+
+            <p>Теперь перейдём к главному алгоритму. Он называется K-means. Это самый популярный алгоритм кластеризации. Простой, быстрый, понятный.</p>
+
+            <p>Дадим определение. K-means разбивает объекты на K кластеров. Идея в том, чтобы найти такие центры кластеров, при которых сумма квадратов расстояний от точек до своих центров минимальна. Это можно записать как: J равно сумме по всем кластерам, суммы по всем точкам кластера, квадратов расстояний от точки до центра.</p>
+
+            <h4>Как работает алгоритм</h4>
+
+            <p>Алгоритм итеративный. Состоит из нескольких шагов.</p>
+
+            <p><strong>Шаг 1. Инициализация.</strong> Мы выбираем K случайных точек в пространстве. Это начальные центры. Или другой способ — выбрать K случайных объектов из данных как центры.</p>
+
+            <p><strong>Шаг 2. Назначение.</strong> Для каждой точки данных вычисляем расстояние до каждого центра. И приписываем точку к ближайшему центру. Получаем K групп.</p>
+
+            <p><strong>Шаг 3. Пересчёт.</strong> Для каждого кластера пересчитываем центр. Новый центр — это среднее всех точек кластера. То есть координата центра — это среднее арифметическое координат точек.</p>
+
+            <p><strong>Шаг 4. Повтор.</strong> Повторяем шаги два и три, пока центры не перестанут двигаться. Или пока не достигнем максимального числа итераций.</p>
+
+            <p>Обычно алгоритм сходится за 5–20 итераций. Это быстро. Но у него есть особенность: результат зависит от начальной инициализации. Если начальные центры неудачные — можно попасть в локальный оптимум. Поэтому на практике K-means запускают несколько раз с разной инициализацией и выбирают лучший результат.</p>
+
+            <h4>Преимущества и ограничения</h4>
+
+            <p>Преимущества K-means. Он быстрый. Простой. Работает на больших данных. Легко интерпретируется.</p>
+
+            <p>Ограничения. Во-первых, нужно заранее задать K. Во-вторых, он предполагает, что кластеры сферические. Если кластеры имеют форму полумесяца или другой сложной формы — K-means ошибётся. В-третьих, он чувствителен к выбросам. Один экстремальный объект может перетянуть центр кластера. В-четвёртых, результат зависит от инициализации.</p>
+
+            <h3>📌 Блок 3. Как выбрать число кластеров</h3>
+
+            <p>Одна из главных проблем кластеризации — сколько кластеров должно быть. Для K-means это гиперпараметр, который нужно задать до запуска. И неправильный выбор даёт бессмысленные результаты.</p>
+
+            <p>Есть несколько способов выбора K. Разберём основные.</p>
+
+            <h4>Elbow method</h4>
+
+            <p>Первый способ — Elbow method. Идея в следующем. Мы запускаем K-means для разных K. Например, от одного до десяти. Для каждого K считаем метрику — сумму квадратов расстояний от точек до центров. Эта метрика называется инерцией.</p>
+
+            <p>С ростом K инерция падает. Естественно: больше кластеров — меньше расстояние до центра. Но с какого-то момента падение замедляется. Мы получаем кривую, похожую на букву L. Или на руку, согнутую в локте. Точка перегиба — это и есть оптимальное K. Она показывает, что добавление новых кластеров уже не даёт значительного улучшения.</p>
+
+            <p>Ограничение метода в том, что локоть не всегда явный. Иногда кривая гладкая. И точку перегиба сложно определить. Тогда используют другие методы.</p>
+
+            <h4>Silhouette</h4>
+
+            <p>Второй способ — Silhouette. Silhouette — это метрика качества кластеризации. Для каждой точки считается коэффициент от минус единицы до плюс единицы. Считается так. Первое — a, среднее расстояние до точек своего кластера. Второе — b, среднее расстояние до точек ближайшего чужого кластера. Затем силуэт равен b минус a, делить на максимум из a и b.</p>
+
+            <p>Если силуэт близок к единице — точка хорошо вписана в свой кластер. Если близок к нулю — точка на границе. Если отрицательный — точка скорее принадлежит другому кластеру.</p>
+
+            <p>Средний силуэт по всем точкам — это оценка качества кластеризации. Чем выше — тем лучше. Хорошее качество — больше ноль целых пяти десятых. Отличное — больше ноль целых семи десятых.</p>
+
+            <p>Метод выбора K через силуэт. Запускаем K-means для разных K. Для каждого считаем средний силуэт. Выбираем то K, где силуэт максимальный.</p>
+
+            <h4>Davies-Bouldin и Calinski-Harabasz</h4>
+
+            <p>Третий и четвёртый способы — это метрики Davies-Bouldin и Calinski-Harabasz. Они похожи по смыслу на силуэт. Davies-Bouldin измеряет среднее соотношение внутрикластерного и межкластерного расстояний. Чем меньше — тем лучше. Calinski-Harabasz — отношение межкластерной дисперсии к внутрикластерной. Чем больше — тем лучше.</p>
+
+            <p>Все эти метрики — эвристики. Они не гарантируют оптимальный результат. Но они помогают.</p>
+
+            <p>И ещё один важный момент. Иногда выбор K определяется не метриками, а <strong>бизнес-логикой</strong>. Например, если маркетинг может работать только с четырьмя сегментами — значит, K равно четырём. Или если бизнес привык к пяти группам клиентов — используем пять.</p>
+
+            <h3>📌 Блок 4. Иерархическая кластеризация</h3>
+
+            <p>Теперь разберём другой алгоритм. Он называется иерархическая кластеризация. Или агломеративная кластеризация.</p>
+
+            <p>Идея в следующем. Сначала каждая точка — это отдельный кластер. Затем мы находим две ближайшие точки и объединяем их в один кластер. Затем находим два ближайших кластера и объединяем. И так далее, пока все точки не объединятся в один большой кластер.</p>
+
+            <p>Результат — это дерево. Оно называется дендрограмма. По горизонтальной оси — объекты. По вертикальной — расстояние объединения. Чем выше сливаются кластеры — тем они дальше друг от друга.</p>
+
+            <p>Чтобы получить кластеры, мы разрезаем дендрограмму на нужном уровне. Например, если резать на высоте десять — получим три кластера. Если резать на высоте двадцать — получим два кластера. И так далее.</p>
+
+            <h4>Виды связи</h4>
+
+            <p>При объединении кластеров важно, какое расстояние считать. Есть несколько видов связи.</p>
+
+            <p><strong>Single linkage (одиночная связь).</strong> Расстояние между двумя кластерами — это минимум расстояний между их точками. То есть расстояние между двумя ближайшими точками кластеров. Даёт вытянутые кластеры.</p>
+
+            <p><strong>Complete linkage (полная связь).</strong> Расстояние — это максимум. То есть между двумя самыми дальними точками. Даёт компактные кластеры.</p>
+
+            <p><strong>Average linkage (средняя связь).</strong> Расстояние — среднее по всем парам точек. Компромисс.</p>
+
+            <p><strong>Ward's method (метод Уорда).</strong> Самый популярный. На каждом шаге выбирается такое объединение, при котором внутрикластерная дисперсия растёт минимально. Даёт сбалансированные кластеры.</p>
+
+            <h4>Преимущества и ограничения</h4>
+
+            <p>Преимущества. Не нужно задавать K заранее — можно посмотреть на дендрограмму и решить. Форма кластеров может быть любой. Результат наглядный — дерево легко интерпретировать.</p>
+
+            <p>Ограничения. Медленный. Сложность растёт квадратично или кубично с числом точек. На больших данных работать не будет. Чувствителен к шуму и выбросам. После объединения нельзя разделить — это необратимый процесс.</p>
+
+            <h3>📌 Блок 5. DBSCAN</h3>
+
+            <p>Третий алгоритм называется DBSCAN. Density-Based Spatial Clustering of Applications with Noise. Кластеризация на основе плотности.</p>
+
+            <p>Идея. Кластер — это область высокой плотности. Области низкой плотности — это шум или границы между кластерами.</p>
+
+            <h4>Как работает</h4>
+
+            <p>Параметры DBSCAN. Первый — eps. Радиус окрестности. Второй — min_samples. Минимальное число точек в окрестности, чтобы считаться плотной.</p>
+
+            <p>Типы точек.</p>
+
+            <p><strong>Core points (корневые точки).</strong> В их окрестности радиуса eps находится не менее min_samples точек. Они находятся в глубине кластера.</p>
+
+            <p><strong>Border points (граничные точки).</strong> В их окрестности меньше min_samples точек. Но они находятся в окрестности core points. Поэтому они принадлежат кластеру.</p>
+
+            <p><strong>Noise (шумовые точки).</strong> Не core и не border. Это выбросы.</p>
+
+            <p>Алгоритм. Начинаем с случайной точки. Если она core — начинаем новый кластер. Затем добавляем к нему все точки, достижимые по плотности. То есть соседей core, соседей соседей, и так далее. Продолжаем, пока не исчерпаем кластер. Затем переходим к следующей необработанной точке.</p>
+
+            <h4>Преимущества и ограничения</h4>
+
+            <p>Преимущества. Находит кластеры любой формы. Автоматически определяет число кластеров. Устойчив к шуму — выбросы помечаются отдельно. Не нужно задавать K.</p>
+
+            <p>Ограничения. Не работает, если у кластеров разная плотность. Плохо работает в многомерном пространстве. Чувствителен к параметрам eps и min_samples. При неправильных параметрах всё сводится в один кластер или всё превращается в шум.</p>
+
+            <h3>📌 Блок 6. GMM</h3>
+
+            <p>Четвёртый алгоритм — это Gaussian Mixture Models. GMM. Смесь гауссовых распределений.</p>
+
+            <p>Идея. Каждый кластер — это гауссово распределение в многомерном пространстве. Или эллипс. Данные — это смесь нескольких таких распределений. Задача — найти параметры этих распределений: центры, ковариационные матрицы, веса.</p>
+
+            <p>Отличие от K-means. K-means жёстко приписывает точку к одному кластеру. GMM даёт <strong>вероятности</strong>. Точка может быть на 60% в кластере A и на 40% в кластере B. Это более реалистично для многих задач.</p>
+
+            <p>Алгоритм — EM-алгоритм. Expectation-Maximization. Ожидание-максимизация. Состоит из двух шагов.</p>
+
+            <p><strong>E-step.</strong> Ожидание. Для каждой точки считаем вероятность принадлежности к каждому кластеру при текущих параметрах.</p>
+
+            <p><strong>M-step.</strong> Максимизация. Обновляем параметры каждого кластера на основе этих вероятностей.</p>
+
+            <p>Повторяем до сходимости.</p>
+
+            <p>Преимущества. Мягкая кластеризация. Учитывает форму — эллипсы, а не сферы. Даёт вероятности.</p>
+
+            <p>Ограничения. Нужно задавать K. Чувствителен к инициализации. Может сходиться к локальному оптимуму.</p>
+
+            <h3>📌 Блок 7. Метрики качества</h3>
+
+            <p>Как понять, хорошая ли кластеризация. Есть несколько метрик.</p>
+
+            <p><strong>Silhouette.</strong> Мы уже разобрали. От минус единицы до плюс единицы. Чем ближе к единице — тем лучше. Учитывает компактность кластеров и их отделённость.</p>
+
+            <p><strong>Davies-Bouldin.</strong> От нуля до плюс бесконечности. Чем меньше — тем лучше. Идеал — ноль.</p>
+
+            <p><strong>Calinski-Harabasz.</strong> От нуля до плюс бесконечности. Чем больше — тем лучше.</p>
+
+            <p><strong>Inertia для K-means.</strong> Сумма квадратов расстояний до центров. Используется для Elbow method.</p>
+
+            <p>Обратите внимание. Метрики кластеризации не всегда согласованы. Низкий Davies-Bouldin и высокий Silhouette могут указывать на разные вещи. Поэтому метрики — это лишь один из сигналов. Второй сигнал — это <strong>визуализация</strong>. Постройте двумерную проекцию с помощью PCA, t-SNE или UMAP и посмотрите глазами. Если кластеры визуально разделяются — это хороший знак. Если нет — что-то не так.</p>
+
+            <h3>📌 Блок 8. Понижение размерности</h3>
+
+            <p>Отдельно поговорим о понижении размерности. Оно нужно для визуализации кластеров.</p>
+
+            <p><strong>PCA.</strong> Principal Component Analysis. Метод главных компонент. Линейное понижение размерности. Ищет направления максимальной дисперсии. Быстрый. Сохраняет глобальные расстояния. Но не работает для нелинейных структур.</p>
+
+            <p><strong>t-SNE.</strong> t-distributed Stochastic Neighbor Embedding. Нелинейное понижение размерности. Сохраняет локальные соседства. То есть точки, которые были близко в исходном пространстве, останутся близко в проекции. Хорошо работает для визуализации. Но медленный и нестабильный — при разных запусках могут получиться разные картинки.</p>
+
+            <p><strong>UMAP.</strong> Uniform Manifold Approximation and Projection. Более современный метод. Быстрее, чем t-SNE. Сохраняет и локальные, и глобальные расстояния. Стабильнее. Стал стандартом для визуализации кластеров в последние годы.</p>
+
+            <p>Все три метода — это инструменты для визуализации. Не для кластеризации. Их можно использовать как шаг перед кластеризацией — сначала понизить размерность, потом кластеризовать. Но это требует аккуратности.</p>
+
+            <h3>📌 Блок 9. Практический кейс: RFM-сегментация</h3>
+
+            <p>Разберём классический кейс применения кластеризации в бизнесе. Это RFM-сегментация клиентов.</p>
+
+            <p>RFM — это три метрики. Recency — давность последней покупки. Frequency — частота покупок. Monetary — сумма покупок.</p>
+
+            <p>Идея. Каждый клиент описывается тремя числами. Recency показывает, насколько свежий клиент. Frequency — насколько часто покупает. Monetary — насколько дорого покупает.</p>
+
+            <p>Проблема с RFM в том, что каждую метрику надо как-то перевести в баллы. Например, от одного до пяти. И потом скомбинировать. Получается двадцать пять возможных групп. Это сложно интерпретировать.</p>
+
+            <p>Кластеризация решает эту проблему. Мы берём три метрики. Стандартизуем их. Запускаем K-means с K равным четырём. И получаем четыре группы.</p>
+
+            <p>Что это даёт.</p>
+
+            <p><strong>Кластер 1 — чемпионы.</strong> Высокий Recency. Высокий Frequency. Высокий Monetary. Покупают недавно, часто и дорого. Для них — VIP-программа, персональный менеджер, ранний доступ к новинкам.</p>
+
+            <p><strong>Кластер 2 — лояльные.</strong> Средний Recency. Высокий Frequency. Средний Monetary. Покупают регулярно. Для них — апсейл, кросс-сейл, программа лояльности.</p>
+
+            <p><strong>Кластер 3 — новички.</strong> Высокий Recency. Низкий Frequency. Низкий Monetary. Только что пришли. Для них — онбординг, welcome-серия, специальные предложения на первую покупку.</p>
+
+            <p><strong>Кластер 4 — спящие.</strong> Низкий Recency. Низкий Frequency. Низкий Monetary. Покупали давно и мало. Для них — реактивация: «мы скучаем», специальные скидки. Или отказ — если реактивация не работает.</p>
+
+            <p>Это классический пример того, как кластеризация даёт <strong>интерпретируемые и полезные</strong> для бизнеса группы. Не «кластер 0, 1, 2, 3». А «чемпионы, лояльные, новички, спящие». С конкретными действиями для каждой группы.</p>
+
+            <h3>📌 Блок 10. Ловушки</h3>
+
+            <p>Теперь разберём главные ловушки кластеризации.</p>
+
+            <p><strong>Нестандартизованные признаки.</strong> Самая частая ошибка. Если признаки имеют разный масштаб — большие значения доминируют. Например, возраст от двадцати до восьмидесяти лет. Доход от тридцати до трёхсот тысяч рублей. Расстояние будет определяться почти только доходом. Возраст почти не повлияет.</p>
+
+            <p>Решение — стандартизация. Для каждого признака вычитаем среднее и делим на стандартное отклонение. Все признаки становятся в одном масштабе. И влияют на расстояние одинаково.</p>
+
+            <p><strong>Случайный выбор K.</strong> Вторая ошибка. Взяли K равным пяти, потому что круглое. А в данных три кластера. Или семь. Используйте Elbow method, Silhouette, визуализацию. Или бизнес-логику.</p>
+
+            <p><strong>K-means для сложных форм.</strong> Третья ошибка. K-means предполагает сферические кластеры. Если кластеры имеют форму полумесяца — K-means разрежет их пополам. Используйте DBSCAN или GMM.</p>
+
+            <p><strong>Игнорирование выбросов.</strong> Четвёртая ошибка. Один супер-клиент с огромным доходом перетягивает центр кластера. Все остальные клиенты попадают в другой кластер. Результат теряет смысл. Решение — удалить выбросы или использовать DBSCAN, который автоматически помечает их как шум.</p>
+
+            <p><strong>Ещё несколько ловушек.</strong> Случайная инициализация K-means — запускайте несколько раз. Многомерное пространство — проклятие размерности, снижайте размерность. Слишком много кластеров — интерпретировать сложно. Слишком мало — теряется информация.</p>
+
+            <h3>📌 Блок 11. Роли и применение</h3>
+
+            <p>Теперь разберём, как кластеризация используется в работе разных аналитиков.</p>
+
+            <p><strong>Аналитик данных</strong> использует кластеризацию для сегментации клиентов и транзакций. Он отвечает за выбор алгоритма и интерпретацию кластеров.</p>
+
+            <p><strong>Финансовый аналитик</strong> кластеризует заёмщиков и транзакции. Ищет группы риска. Обнаруживает аномалии.</p>
+
+            <p><strong>Продуктовый аналитик</strong> кластеризует пользователей. Строит портреты для персонализации.</p>
+
+            <p><strong>Веб-аналитик</strong> кластеризует сессии и страницы. Находит типы поведения на сайте.</p>
+
+            <p><strong>BI-аналитик</strong> кластеризует магазины и товары. Строит автоматические группы на дашбордах.</p>
+
+            <p><strong>Аналитик больших данных</strong> кластеризует документы и эмбеддинги. Занимается тематическим моделированием, поиском похожих.</p>
+
+            <p><strong>Маркетинговый аналитик</strong> кластеризует клиентов по RFM. Строит таргетинг по сегментам.</p>
+
+            <p><strong>Бизнес-аналитик</strong> кластеризует проекты и процессы. Находит группы схожих процессов.</p>
+
+            <p><strong>Системный аналитик</strong> кластеризует логи и инциденты. Находит кластеры ошибок.</p>
+
+            <p><strong>Специалист по анализу пользовательского опыта</strong> кластеризует пользователей по опыту. Строит портреты для дизайна.</p>
+
+            <p><strong>Data Scientist</strong> использует кластеризацию как шаг в ансамблях. Для конструирования признаков. Для снижения размерности.</p>
+
+            <h3>📌 Заключение</h3>
+
+            <p>Мы подошли к завершению лекции. Давайте соберём всё вместе.</p>
+
+            <p>Мы разобрали, что такое кластеризация. Это обучение без учителя. Где мы ищем скрытые группы в данных.</p>
+
+            <p>Мы разобрали четыре алгоритма. K-means — самый популярный, для сферических кластеров. Иерархическая кластеризация — для интерпретируемых деревьев. DBSCAN — для сложных форм и шума. GMM — для мягкой кластеризации.</p>
+
+            <p>Мы разобрали, как выбирать число кластеров. Elbow method. Silhouette. Davies-Bouldin. Calinski-Harabasz. Бизнес-логика.</p>
+
+            <p>Мы разобрали метрики качества. И понижение размерности — PCA, t-SNE, UMAP.</p>
+
+            <p>Мы разобрали практический кейс — RFM-сегментацию. И увидели, как кластеризация даёт интерпретируемые и полезные для бизнеса группы.</p>
+
+            <p>Мы разобрали главные ловушки. Нестандартизованные признаки. Случайный выбор K. K-means для сложных форм. Игнорирование выбросов.</p>
+
+            <p>Главный вывод лекции звучит так. Кластеризация — это инструмент обнаружения структуры. А не угадывания правильного ответа. Здесь нет объективно верного ответа. Разные алгоритмы и разные K дают разные результаты. Задача — найти интерпретируемые и полезные группы. Всегда проверяйте результат глазами на двумерной проекции и через метрики качества.</p>
+
+            <p>В следующей лекции мы поговорим об оценке качества моделей. Это будет логическим продолжением: как понять, что модель хорошая. Какие метрики использовать. Как избежать переобучения. И как выбрать финальную модель.</p>
+
+            <p>А сейчас — спасибо за внимание. Я готов ответить на ваши вопросы.</p>
+
+            <!-- СЛОВАРЬ -->
+            <div class="dark-block">
+                <div class="dark-block-title">📖 Словарь терминов и аббревиатур</div>
+                <table class="dark-table">
+                    <thead><tr><th style="width:26%;">Термин</th><th style="width:30%;">Расшифровка</th><th>Пояснение</th></tr></thead>
+                    <tbody>
+                        <tr><td class="term">Clustering</td><td>Кластеризация</td><td>Разбиение объектов на группы схожих без правильных ответов</td></tr>
+                        <tr><td class="term">Cluster</td><td>Кластер</td><td>Группа похожих объектов</td></tr>
+                        <tr><td class="term">K-means</td><td>K-средних</td><td>Алгоритм с K центрами, минимизирует инерцию</td></tr>
+                        <tr><td class="term">Inertia</td><td>Инерция</td><td>Сумма квадратов расстояний до центров кластеров</td></tr>
+                        <tr><td class="term">Elbow method</td><td>Метод локтя</td><td>Выбор K по точке перегиба кривой инерции</td></tr>
+                        <tr><td class="term">Silhouette</td><td>Силуэт</td><td>Метрика от −1 до +1, оценивает компактность и отделённость</td></tr>
+                        <tr><td class="term">Davies-Bouldin</td><td>Дэвис-Боулдин</td><td>Метрика, чем меньше — тем лучше</td></tr>
+                        <tr><td class="term">Calinski-Harabasz</td><td>Калински-Харабас</td><td>Метрика, чем больше — тем лучше</td></tr>
+                        <tr><td class="term">Dendrogram</td><td>Дендрограмма</td><td>Дерево иерархической кластеризации</td></tr>
+                        <tr><td class="term">Single linkage</td><td>Одиночная связь</td><td>Расстояние между кластерами = минимум</td></tr>
+                        <tr><td class="term">Complete linkage</td><td>Полная связь</td><td>Расстояние между кластерами = максимум</td></tr>
+                        <tr><td class="term">Average linkage</td><td>Средняя связь</td><td>Расстояние между кластерами = среднее</td></tr>
+                        <tr><td class="term">Ward's method</td><td>Метод Уорда</td><td>Минимизирует рост внутрикластерной дисперсии</td></tr>
+                        <tr><td class="term">DBSCAN</td><td>Density-Based Spatial Clustering</td><td>Кластеризация на основе плотности</td></tr>
+                        <tr><td class="term">eps</td><td>Epsilon</td><td>Радиус окрестности в DBSCAN</td></tr>
+                        <tr><td class="term">min_samples</td><td>Минимальное число точек</td><td>Минимум точек в окрестности в DBSCAN</td></tr>
+                        <tr><td class="term">Core point</td><td>Корневая точка</td><td>Точка с плотной окрестностью в DBSCAN</td></tr>
+                        <tr><td class="term">Border point</td><td>Граничная точка</td><td>Точка на границе кластера в DBSCAN</td></tr>
+                        <tr><td class="term">Noise</td><td>Шум</td><td>Точки, не принадлежащие ни одному кластеру</td></tr>
+                        <tr><td class="term">GMM</td><td>Gaussian Mixture Models</td><td>Смесь гауссовых распределений</td></tr>
+                        <tr><td class="term">EM algorithm</td><td>Expectation-Maximization</td><td>Ожидание-максимизация для GMM</td></tr>
+                        <tr><td class="term">E-step / M-step</td><td>E-шаг / M-шаг</td><td>Фазы EM-алгоритма</td></tr>
+                        <tr><td class="term">PCA</td><td>Principal Component Analysis</td><td>Метод главных компонент, линейное понижение размерности</td></tr>
+                        <tr><td class="term">t-SNE</td><td>t-distributed SNE</td><td>Нелинейное понижение размерности для визуализации</td></tr>
+                        <tr><td class="term">UMAP</td><td>Uniform Manifold Approximation</td><td>Современный метод понижения размерности</td></tr>
+                        <tr><td class="term">RFM</td><td>Recency, Frequency, Monetary</td><td>Три метрики клиента</td></tr>
+                        <tr><td class="term">StandardScaler</td><td>Стандартизация</td><td>Приведение признаков к единому масштабу</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ИСТОЧНИКИ -->
+            <div class="dark-block">
+                <div class="dark-block-title">📚 Источники и литература</div>
+                <div class="src-group">📊 Книги и статьи</div>
+                <ol>
+                    <li>MacQueen J. <em>Some Methods for Classification and Analysis of Multivariate Observations</em>. 1967 — оригинальная статья K-means.</li>
+                    <li>Ester M., Kriegel H.-P., Sander J., Xu X. <em>A Density-Based Algorithm for Discovering Clusters in Large Spatial Databases with Noise</em> (DBSCAN). KDD 1996.</li>
+                    <li>Rousseeuw P. <em>Silhouettes: a graphical aid to the interpretation and validation of cluster analysis</em>. 1987 — метрика силуэта.</li>
+                    <li>Ward J. H. <em>Hierarchical Grouping to Optimize an Objective Function</em>. 1963 — метод Уорда.</li>
+                    <li>van der Maaten L., Hinton G. <em>Visualizing Data using t-SNE</em>. JMLR 2008.</li>
+                    <li>McInnes L., Healy J., Melville J. <em>UMAP: Uniform Manifold Approximation and Projection for Dimension Reduction</em>. 2018.</li>
+                </ol>
+                <div class="src-group">📖 Документация</div>
+                <ol start="7">
+                    <li>Документация Scikit-learn: KMeans, DBSCAN, AgglomerativeClustering, GaussianMixture, silhouette_score.</li>
+                    <li>Документация Yellowbrick: визуализация кластеризации.</li>
+                    <li>Документация HDBSCAN: иерархический DBSCAN.</li>
+                </ol>
+                <div class="src-group">📐 Методология</div>
+                <ol start="10">
+                    <li>Hastie T., Tibshirani R., Friedman J. <em>The Elements of Statistical Learning</em>. Springer, 2009 (глава 14).</li>
+                    <li>Bishop C. <em>Pattern Recognition and Machine Learning</em>. Springer, 2006 (глава 9).</li>
+                    <li>ISO/IEC 5259 — качество данных для аналитики.</li>
+                </ol>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function changeVideo(embedUrl) {
+            document.getElementById('lecture-player').src = embedUrl;
+        }
+    </script>
+
+    <!-- НАВИГАЦИЯ -->
+  <nav class="lecture-nav" id="lectureNav">
+    <div class="nav-progress" id="navProgress" style="width: 0%;"></div>
+    <a href="Лекция (N-1).html" class="nav-btn-arrow" id="prevBtn">
+        <span class="arrow-icon">←</span>
+        <span class="arrow-label">
+            <small>Назад</small>
+            <span class="arrow-title" id="prevTitle">Лекция (N-1)</span>
+        </span>
+    </a>
+    <div class="nav-center">
+        <div class="nav-counter">Лекция <span id="currentNum">N</span> <span>из 21</span></div>
+        <a href="index.html" class="nav-index-link">📚 К содержанию</a>
+    </div>
+    <a href="Лекция (N+1).html" class="nav-btn-arrow" id="nextBtn">
+        <span class="arrow-label" style="align-items: flex-end;">
+            <small>Вперёд</small>
+            <span class="arrow-title" id="nextTitle">Лекция (N+1)</span>
+        </span>
+        <span class="arrow-icon">→</span>
+    </a>
+</nav>
+
+  
+
+    <script>
+    (function () {
+        'use strict';
+        const TOTAL_LECTURES = 26;
+        const totalDurationMs = (32 * 60) * 1000;
+        const autoNextDelayMs = 2000;
+        const AUTOSTART_PARAM = 'autostart';
+
+        const fileName = decodeURIComponent(location.pathname.split('/').pop() || '');
+        let currentLecture = 23;
+        const match = fileName.match(/Лекция\s*(\d+)\.html/i);
+        if (match) currentLecture = parseInt(match[1], 10);
+        else { const el = document.getElementById('currentNum'); if (el) currentLecture = parseInt(el.textContent, 10) || 23; }
+        if (isNaN(currentLecture) || currentLecture < 1) currentLecture = 1;
+        if (currentLecture > TOTAL_LECTURES) currentLecture = TOTAL_LECTURES;
+
+        const prev = currentLecture > 1 ? currentLecture - 1 : null;
+        const next = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+
+        const currentNumEl = document.getElementById('currentNum');
+        if (currentNumEl) currentNumEl.textContent = currentLecture;
+        const navProgress = document.getElementById('navProgress');
+        if (navProgress) navProgress.style.width = (currentLecture / TOTAL_LECTURES * 100) + '%';
+
+        const prevBtn = document.getElementById('prevBtn');
+        if (prevBtn) {
+            if (prev) { prevBtn.href = 'Лекция ' + prev + '.html'; document.getElementById('prevTitle').textContent = 'Лекция ' + prev; prevBtn.style.opacity = '1'; prevBtn.onclick = null; }
+            else { prevBtn.removeAttribute('href'); prevBtn.style.opacity = '0.35'; prevBtn.style.cursor = 'not-allowed'; prevBtn.onclick = (e) => e.preventDefault(); document.getElementById('prevTitle').textContent = 'Это первая лекция'; }
+        }
+        const nextBtn = document.getElementById('nextBtn');
+        if (nextBtn) {
+            if (next) { nextBtn.href = 'Лекция ' + next + '.html'; document.getElementById('nextTitle').textContent = 'Лекция ' + next; nextBtn.style.opacity = '1'; nextBtn.onclick = null; }
+            else { nextBtn.removeAttribute('href'); nextBtn.style.opacity = '0.35'; nextBtn.style.cursor = 'not-allowed'; nextBtn.onclick = (e) => e.preventDefault(); document.getElementById('nextTitle').textContent = 'Это последняя лекция'; }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+            if (e.key === 'ArrowLeft' && prev) window.location.href = 'Лекция ' + prev + '.html';
+            else if (e.key === 'ArrowRight' && next) window.location.href = 'Лекция ' + next + '.html';
+            else if (e.key === 'Home') window.location.href = 'index.html';
+        });
+
+        function initScroll() {
+            const studentBlock = document.querySelector('.student-view');
+            const speakerBlock = document.querySelector('.speaker-notes');
+            const badge = document.getElementById('scroll-status-badge');
+            const audio = document.getElementById('lecture-audio');
+            if (!studentBlock || !speakerBlock) return;
+
+            const studentBehavior = studentBlock.style.scrollBehavior;
+            const speakerBehavior = speakerBlock.style.scrollBehavior;
+            let isRunning = false, completed = false, pausedElapsed = 0, startedAt = 0, rafId = null;
+            let startS = 0, startP = 0, maxS = 0, maxP = 0;
+
+            function setBadge(text, color) { if (!badge) return; badge.style.display = 'block'; badge.textContent = text; badge.style.borderColor = color; }
+            function measure() { maxS = Math.max(studentBlock.scrollHeight - studentBlock.clientHeight, 0); maxP = Math.max(speakerBlock.scrollHeight - speakerBlock.clientHeight, 0); }
+            function fmt(ms) { const m = Math.floor(ms / 60000); const s = Math.floor((ms % 60000) / 1000); return m + ':' + String(s).padStart(2, '0'); }
+            function playAudio() { if (!audio) return; const p = audio.play(); if (p && typeof p.catch === 'function') { p.catch(err => { console.warn('[AutoAudio]', err.message); setBadge('▶ ИДЕТ ПРОКРУТКА (звук заблокирован)', '#eab308'); }); } }
+            function pauseAudio() { if (audio) try { audio.pause(); } catch (_) {} }
+            function resetAudio() { if (audio) try { audio.pause(); audio.currentTime = 0; } catch (_) {} }
+
+            function animate() {
+                if (!isRunning) return;
+                const elapsed = pausedElapsed + (performance.now() - startedAt);
+                const fraction = Math.min(elapsed / totalDurationMs, 1);
+                measure();
+                studentBlock.scrollTop = startS + (maxS - startS) * fraction;
+                speakerBlock.scrollTop = startP + (maxP - startP) * fraction;
+                if (badge) { badge.textContent = '▶ ' + fmt(elapsed) + ' / 30:00'; badge.style.borderColor = '#16a34a'; }
+                if (fraction >= 1) { finish(); return; }
+                rafId = requestAnimationFrame(animate);
+            }
+
+            function startOrResume() {
+                if (completed) { pausedElapsed = 0; completed = false; studentBlock.scrollTop = 0; speakerBlock.scrollTop = 0; resetAudio(); }
+                measure(); startS = studentBlock.scrollTop; startP = speakerBlock.scrollTop;
+                startedAt = performance.now(); isRunning = true;
+                studentBlock.style.scrollBehavior = 'auto'; speakerBlock.style.scrollBehavior = 'auto';
+                cancelAnimationFrame(rafId); rafId = requestAnimationFrame(animate);
+                playAudio();
+            }
+            function pause() {
+                if (isRunning) pausedElapsed += performance.now() - startedAt;
+                isRunning = false; cancelAnimationFrame(rafId);
+                setBadge('⏸ ПАУЗА ' + fmt(pausedElapsed), '#dc2626');
+                studentBlock.style.scrollBehavior = studentBehavior; speakerBlock.style.scrollBehavior = speakerBehavior;
+                pauseAudio();
+            }
+            function finish() {
+                isRunning = false; completed = true; cancelAnimationFrame(rafId);
+                measure(); studentBlock.scrollTop = maxS; speakerBlock.scrollTop = maxP;
+                studentBlock.style.scrollBehavior = studentBehavior; speakerBlock.style.scrollBehavior = speakerBehavior;
+                const nextLec = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+                if (nextLec) {
+                    setBadge('✅ ГОТОВО → Лекция ' + nextLec, '#16a34a');
+                    setTimeout(() => { location.href = 'Лекция ' + nextLec + '.html?' + AUTOSTART_PARAM + '=1'; }, autoNextDelayMs);
+                } else {
+                    setBadge('✅ КУРС ЗАВЕРШЕН', '#16a34a');
+                    pauseAudio();
+                }
+            }
+            function toggle() { isRunning ? pause() : startOrResume(); }
+
+            window.addEventListener('keydown', (e) => {
+                if (e.repeat) return;
+                const t = e.target; const tag = t && t.tagName;
+                if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+                if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); toggle(); }
+            }, true);
+
+            if (badge) badge.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+            [studentBlock, speakerBlock].forEach(el => {
+                el.addEventListener('click', (e) => {
+                    if (e.target.closest('a,button,iframe,input,textarea,select,video,audio')) return;
+                    if (window.getSelection().toString().length > 0) return;
+                    toggle();
+                });
+            });
+
+            const params = new URLSearchParams(location.search);
+            if (params.get(AUTOSTART_PARAM) === '1') {
+                params.delete(AUTOSTART_PARAM);
+                const clean = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
+                history.replaceState(null, '', clean);
+                setTimeout(startOrResume, 500);
+            } else { setBadge('▶ ПРОБЕЛ / КЛИК — старт', '#4a5568'); }
+        }
+
+        if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initScroll, { once: true }); }
+        else { initScroll(); }
+    })();
+    </script>
+
+</body>
+</html>

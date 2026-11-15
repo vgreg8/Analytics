@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лекция 5. Базовые инструменты аналитика</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #ffffff; }
+
+        .student-view { width: 66.66%; height: 100vh; background: #ffffff; padding: 35px 40px; display: flex; flex-direction: column; justify-content: space-between; border-right: 2px solid #e2e8f0; overflow-y: auto; scroll-behavior: smooth; }
+        .speaker-notes { width: 33.34%; height: 100%; background: #1a202c; color: #edf2f7; padding: 30px; overflow-y: auto; }
+
+        .slide-header { font-size: 26px; color: #1a365d; font-weight: bold; line-height: 1.3; margin-bottom: 18px; border-bottom: 4px solid #3182ce; padding-bottom: 12px; }
+        .slide-body { flex-grow: 1; display: flex; flex-direction: column; gap: 18px; padding: 5px 0; }
+        .slide-footer { font-size: 13px; color: #a0aec0; text-align: right; margin-top: 12px; }
+
+        .chart-box { background: #f7fafc; border: 2.5px dashed #cbd5e0; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .chart-box strong { font-size: 16px; display: block; margin-bottom: 6px; }
+        .chart-box p { font-size: 13px; color: #4a5568; line-height: 1.45; }
+
+        .cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .cat-card { border-radius: 10px; padding: 14px 16px; border: 2px solid #e2e8f0; }
+        .cat-card.ms { background: #ebf8ff; border-color: #90cdf4; }
+        .cat-card.google { background: #f0fff4; border-color: #9ae6b4; }
+        .cat-card.yandex { background: #fffaf0; border-color: #fbd38d; }
+        .cat-card.loginom { background: #faf5ff; border-color: #d6bcfa; }
+        .cat-card h4 { font-size: 14px; margin-bottom: 8px; color: #1a365d; display: flex; align-items: center; gap: 8px; }
+        .cat-card .label { font-size: 10px; font-weight: bold; color: #4a5568; margin-top: 7px; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.3px; }
+        .cat-card ul { margin: 0; padding-left: 14px; font-size: 11.5px; color: #2d3748; line-height: 1.45; }
+        .cat-card .stack-icon { font-size: 24px; }
+
+        .tag { display: inline-block; background: #ebf8ff; color: #2b6cb0; padding: 2px 7px; border-radius: 4px; font-size: 11px; margin: 2px 2px 2px 0; font-weight: 500; }
+        .tag.ru { background: #f0fff4; color: #276749; }
+        .tag.intl { background: #ebf8ff; color: #2b6cb0; }
+        .tag.strong { background: #fef3c7; color: #92400e; }
+        .tag.limit { background: #fed7d7; color: #9b2c2c; }
+
+        .compare-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .compare-table th { background: #1a365d; color: white; padding: 9px 11px; text-align: left; font-weight: 600; }
+        .compare-table td { padding: 8px 11px; border-bottom: 1px solid #e2e8f0; color: #2d3748; vertical-align: top; }
+        .compare-table tr:nth-child(even) td { background: #f7fafc; }
+        .compare-table .group-row td { background: #ebf8ff; font-weight: bold; color: #1a365d; font-size: 12.5px; }
+        .compare-table .col-ms { color: #2b6cb0; font-weight: bold; }
+        .compare-table .col-google { color: #276749; font-weight: bold; }
+        .compare-table .col-yandex { color: #975a16; font-weight: bold; }
+        .compare-table .col-loginom { color: #553c9a; font-weight: bold; }
+
+        .criteria-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .criteria-card { background: #f7fafc; border-left: 4px solid #3182ce; padding: 10px 12px; border-radius: 6px; }
+        .criteria-card h5 { font-size: 12px; color: #1a365d; margin-bottom: 4px; }
+        .criteria-card p { font-size: 11px; color: #4a5568; line-height: 1.4; }
+
+        .video-section { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 5px; }
+        .video-container { width: 100%; max-width: 580px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: #000; aspect-ratio: 16 / 9; }
+        .links-hub { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .video-btn { text-decoration: none; padding: 9px 14px; border-radius: 6px; font-size: 12px; font-weight: bold; color: white; display: flex; align-items: center; gap: 6px; transition: transform 0.2s, background 0.2s; cursor: pointer; border: none; }
+        .video-btn:hover { transform: translateY(-2px); }
+        .rt-btn { background: #00a877; }
+        .rt-btn:hover { background: #008f65; }
+        .stop-btn { background: #dc143c; }
+        .stop-btn:hover { background: #b01030; }
+
+        .notes-header { font-size: 17px; color: #63b3ed; font-weight: bold; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a5568; padding-bottom: 10px; }
+        .lecture-text { font-size: 14.5px; line-height: 1.65; color: #e2e8f0; text-align: justify; }
+        .lecture-text p { margin-bottom: 14px; }
+        .lecture-text h3 { color: #63b3ed; font-size: 15px; margin: 18px 0 10px; border-bottom: 1px solid #2d3748; padding-bottom: 5px; }
+        .lecture-text ul { margin: 8px 0 14px 18px; }
+        .lecture-text li { margin-bottom: 6px; }
+
+        .highlight-box { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 6px; }
+        .highlight-box strong { color: #92400e; font-size: 13px; }
+        .highlight-box p { font-size: 12px; color: #78350f; margin-top: 4px; line-height: 1.4; }
+
+        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .stat-box { background: #ebf8ff; border-radius: 10px; padding: 14px; text-align: center; border: 2px solid #90cdf4; }
+        .stat-box .stat-icon { font-size: 28px; }
+        .stat-box .stat-number { font-size: 18px; font-weight: 900; color: #2b6cb0; margin-top: 4px; }
+        .stat-box .stat-label { font-size: 11px; color: #4a5568; margin-top: 2px; }
+
+        .flow-diagram { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 14px; background: #f7fafc; border-radius: 12px; border: 2px dashed #cbd5e0; flex-wrap: wrap; }
+        .flow-step { flex: 1; min-width: 100px; text-align: center; padding: 8px 6px; background: white; border-radius: 8px; border: 2px solid #e2e8f0; }
+        .flow-step .flow-icon { font-size: 20px; }
+        .flow-step .flow-title { font-size: 11px; font-weight: bold; color: #1a365d; margin-top: 3px; }
+        .flow-step .flow-sub { font-size: 9.5px; color: #718096; }
+        .flow-arrow { font-size: 18px; color: #3182ce; font-weight: bold; }
+
+        .dark-block { background: #2d3748; border: 1px solid #4a5568; border-radius: 10px; padding: 16px 18px; margin-top: 20px; }
+        .dark-block-title { font-size: 14px; font-weight: bold; color: #63b3ed; margin-bottom: 12px; border-bottom: 2px solid #4a5568; padding-bottom: 8px; }
+        .dark-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+        .dark-table th { background: #1a202c; color: #90cdf4; padding: 7px 9px; text-align: left; font-weight: 600; border-bottom: 1px solid #4a5568; }
+        .dark-table td { padding: 6px 9px; border-bottom: 1px solid #2d3748; color: #cbd5e0; vertical-align: top; line-height: 1.4; }
+        .dark-table tr:nth-child(even) td { background: #2a3242; }
+        .dark-table .term { font-weight: bold; color: #90cdf4; white-space: nowrap; }
+        .dark-block ol { margin: 0 0 12px 18px; padding: 0; font-size: 12px; color: #cbd5e0; line-height: 1.5; }
+        .dark-block ol li { margin-bottom: 5px; }
+        .dark-block .src-group { font-weight: bold; color: #fbd38d; font-size: 12px; margin: 12px 0 6px; }
+        .dark-block a { color: #63b3ed; text-decoration: none; }
+        .dark-block a:hover { text-decoration: underline; }
+
+        .lecture-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(12px); border-top: 2px solid rgba(255, 255, 255, 0.08); padding: 12px 20px; display: flex; align-items: center; justify-content: center; gap: 12px; z-index: 9999; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25); font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .lecture-nav .nav-progress { position: absolute; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899); border-radius: 0 3px 3px 0; }
+        .lecture-nav .nav-btn-arrow { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); border: 1.5px solid rgba(255, 255, 255, 0.15); color: #e2e8f0; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; font-family: inherit; }
+        .lecture-nav .nav-btn-arrow:hover:not(:disabled) { background: rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.6); color: white; transform: translateY(-2px); }
+        .lecture-nav .nav-btn-arrow:disabled { opacity: 0.35; cursor: not-allowed; }
+        .lecture-nav .nav-btn-arrow .arrow-icon { font-size: 16px; line-height: 1; }
+        .lecture-nav .nav-btn-arrow .arrow-label { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+        .lecture-nav .nav-btn-arrow .arrow-label small { font-size: 9.5px; font-weight: 400; opacity: 0.7; text-transform: uppercase; }
+        .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { font-size: 12px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lecture-nav .nav-center { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 20px; color: #94a3b8; font-size: 11px; border-left: 1px solid rgba(255, 255, 255, 0.1); border-right: 1px solid rgba(255, 255, 255, 0.1); }
+        .lecture-nav .nav-counter { font-size: 15px; font-weight: 900; color: #f1f5f9; }
+        .lecture-nav .nav-counter span { color: #64748b; font-size: 12px; font-weight: 600; }
+        .lecture-nav .nav-index-link { color: #60a5fa; text-decoration: none; font-size: 11px; font-weight: 600; }
+        .lecture-nav .nav-index-link:hover { color: #93c5fd; text-decoration: underline; }
+        body { padding-bottom: 80px !important; }
+        @media (max-width: 900px) {
+            .lecture-nav { padding: 10px 12px; gap: 8px; }
+            .lecture-nav .nav-btn-arrow { padding: 8px 12px; }
+            .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { max-width: 90px; font-size: 11px; }
+            .cat-grid, .criteria-grid, .stat-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ЛЕВАЯ ПАНЕЛЬ (2/3): ЭКРАН ДЛЯ СТУДЕНТОВ -->
+    <div class="student-view">
+        <div class="slide-header">
+            Лекция 5. Базовые инструменты аналитика
+        </div>
+
+        <div class="slide-body">
+
+            <!-- ВВЕДЕНИЕ -->
+            <div class="chart-box" style="background: #ebf8ff; border-color: #90cdf4;">
+                <strong style="color: #2b6cb0;">🎯 Зачем аналитику экосистема инструментов?</strong>
+                <p>Современный аналитик почти никогда не работает в одной программе. Его рабочий день состоит из переключений между разными средами. И всё это должно быть связано в единую цепочку. <strong>Бесшовность</strong> означает: результат работы одного инструмента становится входом для другого без ручного копирования, переформатирования и потери логики.</p>
+            </div>
+
+            <!-- КЛЮЧЕВЫЕ ЦИФРЫ -->
+            <div class="stat-grid">
+                <div class="stat-box" style="background:#ebf8ff; border-color:#90cdf4;">
+                    <div class="stat-icon">🪟</div>
+                    <div class="stat-number">Microsoft</div>
+                    <div class="stat-label">Эксель + Пауэр Би Ай</div>
+                </div>
+                <div class="stat-box" style="background:#f0fff4; border-color:#9ae6b4;">
+                    <div class="stat-icon">🔵</div>
+                    <div class="stat-number">Google</div>
+                    <div class="stat-label">Биг Кверри + Колаб</div>
+                </div>
+                <div class="stat-box" style="background:#fffaf0; border-color:#fbd38d;">
+                    <div class="stat-icon">🟡</div>
+                    <div class="stat-number">Yandex</div>
+                    <div class="stat-label">Кликхаус + ДетаЛенс</div>
+                </div>
+                <div class="stat-box" style="background:#faf5ff; border-color:#d6bcfa;">
+                    <div class="stat-icon">🟣</div>
+                    <div class="stat-number">Loginom</div>
+                    <div class="stat-label">Сценарии обработки</div>
+                </div>
+            </div>
+
+            <!-- 4 СТЕКА -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 10px;">📦 Четыре экосистемы инструментов</div>
+                <div class="cat-grid">
+
+                    <div class="cat-card ms">
+                        <h4><span class="stack-icon">🪟</span> 1. Стек Microsoft</h4>
+                        <div class="label">Компоненты</div>
+                        <ul>
+                            <li><strong>Эксель</strong> — табличная среда</li>
+                            <li><strong>Пауэр Кверри</strong> — подготовка данных, язык Эм</li>
+                            <li><strong>Пауэр Пивот</strong> — модель данных, язык Дакс</li>
+                            <li><strong>Пауэр Би Ай</strong> — публикация и визуализация</li>
+                        </ul>
+                        <div class="label">Сильная сторона</div>
+                        <span class="tag strong">Бесшовность в один клик</span>
+                        <span class="tag strong">Двусторонний мост</span>
+                        <div class="label">Ограничение</div>
+                        <span class="tag limit">Лицензирование в РФ</span>
+                        <span class="tag limit">Совместная работа</span>
+                    </div>
+
+                    <div class="cat-card google">
+                        <h4><span class="stack-icon">🔵</span> 2. Стек Google</h4>
+                        <div class="label">Компоненты</div>
+                        <ul>
+                            <li><strong>Биг Кверри</strong> — облачное хранилище и движок</li>
+                            <li><strong>Колаб</strong> — блокнотная среда, язык Питон</li>
+                            <li><strong>Лукер Студио</strong> — визуализация</li>
+                            <li><strong>Таблицы Гугл</strong> — лёгкий источник</li>
+                        </ul>
+                        <div class="label">Сильная сторона</div>
+                        <span class="tag strong">Облачная интеграция</span>
+                        <span class="tag strong">Совместная работа</span>
+                        <div class="label">Ограничение</div>
+                        <span class="tag limit">Требует SQL и Python</span>
+                        <span class="tag limit">Регуляторика в РФ</span>
+                    </div>
+
+                    <div class="cat-card yandex">
+                        <h4><span class="stack-icon">🟡</span> 3. Стек Яндекс</h4>
+                        <div class="label">Компоненты</div>
+                        <ul>
+                            <li><strong>Кликхаус</strong> — колоночная база данных</li>
+                            <li><strong>ДетаЛенс</strong> — визуализация и дашборды</li>
+                            <li><strong>Нативная связка</strong> — созданы вместе</li>
+                        </ul>
+                        <div class="label">Сильная сторона</div>
+                        <span class="tag strong">Нативная скорость</span>
+                        <span class="tag strong">Бесплатный ДетаЛенс</span>
+                        <div class="label">Ограничение</div>
+                        <span class="tag limit">Подготовка вне ДетаЛенс</span>
+                        <span class="tag limit">Привязка к облаку Яндекса</span>
+                    </div>
+
+                    <div class="cat-card loginom">
+                        <h4><span class="stack-icon">🟣</span> 4. Платформа Логином</h4>
+                        <div class="label">Компоненты</div>
+                        <ul>
+                            <li><strong>Логином Десктоп</strong> — персональная аналитика</li>
+                            <li><strong>Логином Сервер</strong> — коллективная работа</li>
+                            <li><strong>Интегратор</strong> — публикация как веб-сервис</li>
+                        </ul>
+                        <div class="label">Сильная сторона</div>
+                        <span class="tag strong">Воспроизводимость</span>
+                        <span class="tag strong">Сложная подготовка</span>
+                        <div class="label">Ограничение</div>
+                        <span class="tag limit">Совместная работа только на сервере</span>
+                        <span class="tag limit">Порог входа</span>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- СХЕМА ПОТОКА ДАННЫХ -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 10px;">🔄 Поток данных в аналитике</div>
+                <div class="flow-diagram">
+                    <div class="flow-step">
+                        <div class="flow-icon">🗄️</div>
+                        <div class="flow-title">Источник</div>
+                        <div class="flow-sub">БД, файлы, API</div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-icon">🧹</div>
+                        <div class="flow-title">Подготовка</div>
+                        <div class="flow-sub">Пауэр Кверри, Логином, SQL</div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-icon">📊</div>
+                        <div class="flow-title">Модель</div>
+                        <div class="flow-sub">Пауэр Пивот, Колаб</div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-icon">📈</div>
+                        <div class="flow-title">Визуализация</div>
+                        <div class="flow-sub">Пауэр Би Ай, ДетаЛенс</div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-icon">👥</div>
+                        <div class="flow-title">Совместный доступ</div>
+                        <div class="flow-sub">Облако, права</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3 КРИТЕРИЯ СРАВНЕНИЯ -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 10px;">⚖️ Три критерия сравнения</div>
+                <div class="criteria-grid">
+                    <div class="criteria-card">
+                        <h5>1. Интеграция</h5>
+                        <p>Какие источники подключаются из коробки. Насколько глубоко. Насколько просто настроить.</p>
+                    </div>
+                    <div class="criteria-card">
+                        <h5>2. Совместная работа</h5>
+                        <p>Могут ли несколько аналитиков работать над одним артефактом. Как разграничиваются права.</p>
+                    </div>
+                    <div class="criteria-card" style="grid-column: span 2;">
+                        <h5>3. Бесшовность для аналитика</h5>
+                        <p>Сколько ручной склейки требуется при переходе с одного этапа на другой: подготовка → анализ → визуализация → публикация.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- СРАВНИТЕЛЬНАЯ ТАБЛИЦА -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 8px;">📋 Сравнение четырёх стеков по трём критериям</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr>
+                            <th style="width:16%;">Критерий</th>
+                            <th class="col-ms" style="width:21%;">🪟 Microsoft</th>
+                            <th class="col-google" style="width:21%;">🔵 Google</th>
+                            <th class="col-yandex" style="width:21%;">🟡 Yandex</th>
+                            <th class="col-loginom" style="width:21%;">🟣 Loginom</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Интеграция</strong></td>
+                            <td>Самая широкая на уровне аналитика. Эксель + Пауэр Кверри — почти любой источник</td>
+                            <td>Самая глубокая на уровне облака. Биг Кверри — единый источник правды</td>
+                            <td>Самая быстрая нативная связка. Кликхаус + ДетаЛенс созданы вместе</td>
+                            <td>Гибкая интеграция через сценарии. Не в один клик, а через проектирование</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Совместная работа</strong></td>
+                            <td>Возможна, но уступает в управлении версиями</td>
+                            <td>Самая сильная. Встроена в ДНК продуктов (Колаб, Лукер)</td>
+                            <td>Через воркбуки и коллекции. Слабее совместное редактирование данных</td>
+                            <td>Только в серверной редакции. Десктоп — для одного</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Бесшовность</strong></td>
+                            <td>Самый короткий путь: Эксель → Пауэр Би Ай в один клик + обратный мост</td>
+                            <td>Самый короткий путь: SQL → Python → визуализация в одном облаке</td>
+                            <td>Самый короткий путь: Кликхаус → ДетаЛенс. Быстрые дашборды</td>
+                            <td>Самый контролируемый путь через спроектированный сценарий</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Идеальный сценарий</strong></td>
+                            <td>Аналитик начинает в Эксель и хочет публиковать дашборды</td>
+                            <td>Команда работает с большими данными в облаке</td>
+                            <td>Быстрые дашборды на больших объёмах в России</td>
+                            <td>Фабрика данных со строгой логикой и воспроизводимостью</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 4 ВОПРОСА О ГРАНИЦАХ ПЕРЕДАЧИ -->
+            <div class="chart-box" style="background: #f0fff4; border-color: #9ae6b4;">
+                <strong style="color: #276749;">🔑 Четыре вопроса о границах передачи данных</strong>
+                <p><strong>1.</strong> Что является <strong>источником правды</strong>? Где самые актуальные и полные данные?<br>
+                <strong>2.</strong> Где происходит <strong>подготовка</strong>? Где данные очищаются и приводятся в нужный вид?<br>
+                <strong>3.</strong> Где происходит <strong>анализ</strong>? Где строятся модели и проверяются гипотезы?<br>
+                <strong>4.</strong> Где происходит <strong>публикация</strong>? Где создаются дашборды и отчёты?</p>
+            </div>
+
+            <!-- 3 ВОПРОСА ДЛЯ ВЫБОРА СТЕКА -->
+            <div class="chart-box" style="background: #faf5ff; border-color: #d6bcfa;">
+                <strong style="color: #553c9a;">🎯 Три вопроса перед выбором стека</strong>
+                <p><strong>1. Объём и скорость данных.</strong> Данные помещаются в файл или требуют облачного хранилища?<br>
+                <strong>2. Совместная работа.</strong> Один аналитик или команда с разными ролями?<br>
+                <strong>3. Регуляторика.</strong> Есть ли требования к хранению данных внутри РФ?</p>
+            </div>
+
+            <!-- КЛЮЧЕВЫЕ ВЫВОДЫ -->
+            <div class="highlight-box">
+                <strong>💡 Главные выводы лекции</strong>
+                <p>1. Инструменты аналитика — это экосистемы, а не набор отдельных программ.<br>
+                2. Бесшовность — это отсутствие потерь при переключении: логики, версий, времени.<br>
+                3. Не «или-или», а «и»: реальная работа использует несколько стеков одновременно.<br>
+                4. Главный навык — понимание модели данных, а не знание кнопок.<br>
+                5. Инструменты — это средство. Цель — качественные решения на основе данных.</p>
+            </div>
+
+            <!-- СЛОВАРЬ -->
+            <div style="font-size: 13px; color: #4a5568; line-height: 1.6;">
+                <strong style="color:#1a365d;">Ключевые термины:</strong>
+                <span class="tag">Бесшовность</span>
+                <span class="tag">Интеграция</span>
+                <span class="tag">Совместная работа</span>
+                <span class="tag">Пауэр Кверри</span>
+                <span class="tag">Язык Эм</span>
+                <span class="tag">Пауэр Пивот</span>
+                <span class="tag">Язык Дакс</span>
+                <span class="tag">Биг Кверри</span>
+                <span class="tag">Колаб</span>
+                <span class="tag">Лукер Студио</span>
+                <span class="tag">Кликхаус</span>
+                <span class="tag">ДетаЛенс</span>
+                <span class="tag">Логином</span>
+                <span class="tag">Сценарий</span>
+                <span class="tag">Интегратор</span>
+                <span class="tag">Веб-сервис</span>
+            </div>
+
+            <!-- ВИДЕОПЛЕЕР -->
+            <div class="video-section">
+                <div class="video-container">
+                    <iframe id="lecture-player" src="https://rutube.ru" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+                </div>
+                <div class="links-hub">
+                    <button onclick="changeVideo('https://rutube.ru/')" class="video-btn stop-btn">⏹ СТОП</button>
+                    <button onclick="changeVideo('https://rutube.ru/play/embed/')" class="video-btn rt-btn">📜 Лекция 4. Базовые инструменты аналитика</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="slide-footer">
+            Направление «Менеджмент» | Курс: Аналитика данных | Лекция 4: «Базовые инструменты аналитика»
+        </div>
+    </div>
+
+    <!-- ПРАВАЯ ПАНЕЛЬ (1/3): СКРИПТ ПРЕПОДАВАТЕЛЯ -->
+    <div class="speaker-notes">
+        <!-- Фиксированная верхняя часть с плеером -->
+        <div style="position: sticky; top: 0; background: #1a202c; padding: 20px 20px 10px 20px; border-bottom: 1px solid #4a5568; width: 100%; z-index: 100;">
+                       <div class="notes-header" style="display: block; padding-bottom: 15px;">
+               <audio id="lecture-audio" preload="auto" controls
+                      src="https://archive.org/download/03_20261110_20261110/05.mp3"
+                      style="width: 100%; height: 32px; border-radius: 4px;"></audio>
+            </div>
+            <div style="width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+             <iframe id="right-lecture-player" src="https://archive.org/embed/20261020_20261020_0955?autoplay=true&loop=true&muted=true"  allow="clipboard-write; autoplay" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen style="border: none;"></iframe>
+
+                           </div>
+        </div>
+
+        <div class="lecture-text" style="margin-top: 20px;">
+
+            <h3>📌 Введение</h3>
+
+            <p>Добрый день, коллеги. Мы начинаем пятую лекцию нашего курса. Сегодня мы поговорим о базовых инструментах аналитика. Тема эта очень практическая. Она отвечает на простой вопрос. В чём именно работает аналитик каждый день. И как эти инструменты соединяются между собой.</p>
+
+            <p>Давайте сразу обозначим главную мысль. Современный аналитик почти никогда не работает в одной программе. Его рабочий день состоит из переключений между разными средами. Утром он может выгружать данные в таблицу. Днём он пишет запрос к большой базе данных. Вечером он публикует дашборд для руководителя. И всё это должно быть связано в единую цепочку. Иначе работа превращается в ручное перекладывание цифр из одного файла в другой.</p>
+
+            <p>Именно поэтому наша лекция называется не просто «инструменты аналитика». Она называется «базовые инструменты аналитика». Слово «базовые» здесь ключевое. Мы не будем разбирать экзотические или узкоспециализированные программы. Мы возьмём те инструменты, с которыми сталкивается почти каждый специалист. И посмотрим, как они работают вместе.</p>
+
+            <p>Теперь давайте разберёмся с понятием бесшовности. Это слово часто звучит в разговорах об аналитике. Но не все понимают его одинаково. Для нас бесшовность означает следующее. Результат работы одного инструмента становится входом для другого без ручного копирования. Без переформатирования. Без потери логики расчётов. Если аналитик выгрузил данные, а потом вручную вставил их в другую программу, это не бесшовно. Если же он нажал одну кнопку, и данные сами пришли в нужную модель, это уже ближе к бесшовности.</p>
+
+            <p>Почему это так важно. Потому что каждая ручная операция — это источник ошибок. Человек может случайно удалить строку. Может перепутать столбцы. Может забыть обновить формулу. И тогда весь анализ окажется неверным. Бесшовность снижает количество таких ошибок. Она экономит время. И она делает работу аналитика воспроизводимой. А воспроизводимость — это главное требование к качественной аналитике.</p>
+
+            <p>Обратите внимание на ещё одну важную вещь. Инструменты аналитика — это не просто набор программ. Это экосистемы. Каждая крупная компания строит свою экосистему. Внутри неё инструменты связаны особенно тесно. И аналитик должен понимать, как устроены эти связи. Иначе он будет работать вслепую.</p>
+
+            <p>Сегодня мы сравним между собой четыре экосистемы. Первая — это стек компании Майкрософт. В него входят таблицы Эксель. Внутри них работают два мощных инструмента подготовки и моделирования данных. Первый называется Пауэр Кверри. Второй называется Пауэр Пивот. А завершает стек платформа бизнес-аналитики Пауэр Би Ай. Этот стек знаком очень многим. Именно с него начинается путь большинства аналитиков.</p>
+
+            <p>Вторая экосистема — это стек компании Гугл. Здесь центральное место занимает облачное хранилище данных Биг Кверри. К нему подключаются среда для анализа на языке программирования Колаб. И сервис визуализации Лукер Студио. Этот стек построен вокруг облака. И он особенно удобен для совместной работы.</p>
+
+            <p>Третья экосистема — это стек компании Яндекс. Его ядро — это база данных Кликхаус. Она создана для очень быстрых аналитических запросов. А инструмент визуализации называется ДетаЛенс. Эта связка широко используется в российских компаниях. И она изначально проектировалась как единое целое.</p>
+
+            <p>Четвёртая экосистема — это платформа Логином. Она занимает особое место. Логином — это не просто ещё один инструмент визуализации. Это среда для построения воспроизводимых сценариев обработки данных. Она позволяет собрать сложную логику подготовки данных в единый конвейер. И опубликовать результат как готовый сервис.</p>
+
+            <p>Теперь давайте определимся с критериями сравнения. Просто перечислить функции каждого инструмента было бы недостаточно. Нам нужны практические критерии. Такие, которые помогают аналитику принять решение. Мы будем оценивать каждый стек по трём измерениям.</p>
+
+            <p>Первое измерение — это интеграция. Здесь мы смотрим, какие источники данных подключаются из коробки. И насколько глубоко они подключаются. Может ли инструмент работать с базой данных напрямую. Может ли он забрать данные из файла. Может ли он обратиться к веб-сервису. И насколько просто это настроить.</p>
+
+            <p>Второе измерение — это совместная работа. Здесь мы смотрим, могут ли несколько аналитиков работать над одним артефактом одновременно. Под артефактом мы понимаем модель данных, отчёт, сценарий обработки. И как в этой среде разграничиваются права доступа. Может ли один сотрудник видеть только свою часть работы. Может ли руководитель видеть всё. И насколько строго ведутся версии.</p>
+
+            <p>Третье измерение — это бесшовность для аналитика. Здесь мы смотрим, сколько ручной склейки требуется при переходе с одного этапа на другой. Этапы такие. Подготовка данных. Анализ. Визуализация. Публикация. Чем меньше ручных операций между этапами, тем выше бесшовность. И тем меньше риск ошибки.</p>
+
+            <p>Эти три критерия не случайны. Они отражают реальные вопросы, которые задаёт себе аналитик. Первый вопрос — смогу ли я подключиться к нужным данным. Второй вопрос — смогу ли я работать вместе с коллегами. Третий вопрос — не потеряю ли я логику при переходе между инструментами. Ответы на эти вопросы важнее, чем длина списка функций.</p>
+
+            <p>Обратите внимание на ещё один момент. Мы будем сравнивать не только инструменты между собой. Мы будем сравнивать целые сценарии работы. Один и тот же аналитик может утром работать в Эксель. Днём писать запрос в Биг Кверри. А вечером публиковать дашборд в ДетаЛенс. И это нормально. Современная аналитика не требует выбрать один инструмент навсегда. Она требует понимать, какой инструмент лучше подходит для конкретной задачи.</p>
+
+            <p>Поэтому наша цель — не найти самый лучший инструмент. Наша цель — научиться видеть границы между инструментами. И научиться выстраивать бесшовные переходы между ними. Это и есть настоящая зрелость аналитика.</p>
+
+            <p>Давайте подведём итог вводной части. Мы выяснили, что инструменты аналитика образуют экосистемы. Мы определили, что такое бесшовность. Мы назвали четыре экосистемы, которые будем сравнивать. И мы сформулировали три критерия сравнения. Это интеграция, совместная работа и бесшовность для аналитика.</p>
+
+            <p>В следующих разделах мы подробно разберём каждый стек. Мы начнём со стека компании Майкрософт. И увидим, как устроена связка между таблицами Эксель и платформой Пауэр Би Ай. А затем перейдём к остальным экосистемам.</p>
+
+            <h3>📌 Стек компании Майкрософт</h3>
+
+            <p>Теперь перейдём к первому стеку. Это стек компании Майкрософт. Его хорошо знают почти все аналитики. И именно с него начинается путь большинства специалистов. Давайте разберём его подробно. Мы посмотрим, из каких частей он состоит. И как эти части связаны между собой.</p>
+
+            <p>Начнём с таблиц Эксель. Долгое время Эксель воспринимался как простая программа для расчётов. Но это представление устарело. Современный Эксель — это полноценная аналитическая среда. Внутри неё работают несколько мощных инструментов. И эти инструменты превращают обычные таблицы в настоящий аналитический конвейер.</p>
+
+            <p>Первый такой инструмент называется Пауэр Кверри. По-русски это можно назвать средством подготовки данных. Давайте разберёмся, что он делает. Пауэр Кверри позволяет аналитику подключиться к источнику данных. Источником может быть файл. Может быть база данных. Может быть веб-сервис. Или даже папка с множеством файлов.</p>
+
+            <p>После подключения аналитик начинает преобразовывать данные. Он удаляет лишние столбцы. Он переименовывает поля. Он меняет типы данных. Он объединяет несколько таблиц в одну. И самое важное. Пауэр Кверри записывает каждое действие аналитика. Записывает в виде пошагового сценария.</p>
+
+            <p>Этот сценарий хранится вместе с файлом. И его можно применить повторно. Представьте, что данные обновились. Аналитику не нужно заново делать все преобразования вручную. Он просто нажимает кнопку обновления. И Пауэр Кверри выполняет весь сценарий заново. От начала до конца. Это и есть воспроизводимость. Это и есть бесшовность подготовки данных.</p>
+
+            <p>У этого сценария есть свой язык. Он называется языком Эм. Это язык формул для описания преобразований. Аналитику не обязательно писать на нём вручную. Пауэр Кверри создаёт код автоматически. Но знание языка Эм открывает дополнительные возможности. Можно создавать собственные функции. Можно управлять сложными запросами. Можно строить конвейеры обработки данных любой сложности.</p>
+
+            <p>Перейдём ко второму инструменту. Он называется Пауэр Пивот. По-русски это можно назвать надстройкой для моделирования данных. Давайте разберёмся, зачем он нужен. Обычные сводные таблицы в Эксель работают с одним плоским набором данных. Это удобно для простых задач. Но для сложного анализа этого недостаточно.</p>
+
+            <p>Пауэр Пивот добавляет в Эксель полноценную реляционную модель. Что это значит. Это значит, что аналитик может связать между собой несколько таблиц. Связать по общим полям. Например, таблицу продаж связать с таблицей товаров. А таблицу товаров связать с таблицей категорий. И тогда сводные таблицы строятся уже не по одной таблице. А по всей модели целиком.</p>
+
+            <p>Для вычислений в этой модели используется специальный язык. Он называется языком выражений для анализа данных. Его сокращённое название звучит как Дакс. Этот язык похож на обычные формулы Эксель. Но у него есть важное отличие. Он умеет работать с реляционными связями. И он умеет создавать так называемые меры.</p>
+
+            <p>Мера — это особый вид вычисления. Она пересчитывается в зависимости от контекста фильтрации. Давайте поясним на примере. Представьте, что у нас есть мера под названием «доля продаж». Она показывает, какую долю занимает выбранный товар в общих продажах. Если аналитик выберет один товар, мера покажет его долю. Если выберет регион, мера покажет долю региона. Если выберет категорию, мера покажет долю категории. Одна и та же мера. Но результат разный в зависимости от контекста.</p>
+
+            <p>Именно язык Дакс позволяет отвечать на сложные аналитические вопросы. Например, такой вопрос. Какова доля продаж этого товара в общем объёме продаж по региону за выбранный период. Простая формула Эксель на такой вопрос не ответит. А мера на языке Дакс ответит. И это принципиальное различие между обычными таблицами и аналитической моделью.</p>
+
+            <p>Теперь перейдём к третьему инструменту. Он называется Пауэр Би Ай. Это самостоятельная платформа бизнес-аналитики. Она вобрала в себя всё лучшее из двух предыдущих инструментов. И добавила мощные средства визуализации и публикации отчётов.</p>
+
+            <p>Давайте разберёмся, что умеет Пауэр Би Ай. Во-первых, она подключается к тем же источникам данных, что и Пауэр Кверри. Во-вторых, она строит те же модели данных, что и Пауэр Пивот. В-третьих, она позволяет создавать интерактивные дашборды. И в-четвёртых, она позволяет делиться этими дашбордами с коллегами. Через облачный сервис. С разграничением прав доступа. И с автоматическим обновлением данных по расписанию.</p>
+
+            <p>Обратите внимание на важную особенность. В современной литературе по анализу данных эти три инструмента рассматриваются как единая экосистема. Первый инструмент отвечает за подготовку данных. Второй инструмент отвечает за моделирование. Третий инструмент отвечает за визуализацию и распространение результатов. И все три инструмента работают вместе.</p>
+
+            <p>Теперь давайте посмотрим, как эта экосистема обеспечивает бесшовность. Представьте себе типичный сценарий работы аналитика. Аналитик открывает Эксель. Подключается к базе данных через Пауэр Кверри. Очищает данные. Приводит их в нужный вид. Затем он загружает очищенные данные в модель Пауэр Пивот. Строит связи между таблицами. Создаёт меры на языке Дакс. Затем он строит сводные таблицы и диаграммы прямо в Эксель. И наконец, он публикует всю эту модель в Пауэр Би Ай. Одной кнопкой. Без экспорта файлов. Без ручного копирования. Вся логика подготовки данных и моделирования сохраняется.</p>
+
+            <p>Это и есть бесшовность в один клик. Именно так работает стек компании Майкрософт. Аналитик не покидает свою привычную среду. Он не переписывает логику заново. Он просто переносит её из Эксель в облако. И получает готовый дашборд для руководителя.</p>
+
+            <p>Но есть и обратный мост. Это очень важная особенность. В платформе Пауэр Би Ай есть специальная кнопка. Она называется «Анализ в Эксель». Что она делает. Она подключает модель данных из облака обратно к Эксель. Аналитик открывает Эксель. И видит ту же модель, которая опубликована в облаке. Он может строить по ней сводные таблицы. Может углубляться в детали. Может делать дополнительный анализ.</p>
+
+            <p>Это значит, что аналитик не запирается ни в одном из инструментов. Он может свободно перемещаться между ними. Из Эксель в облако. И из облака обратно в Эксель. Это и есть настоящая двусторонняя бесшовность. И это главное преимущество стека компании Майкрософт.</p>
+
+            <p>Теперь давайте поговорим об ограничениях. У этого стека есть несколько практических ограничений. Первое ограничение — это лицензирование. Облачные сервисы компании Майкрософт ограничены на территории Российской Федерации. Это не отменяет функциональность самих инструментов. Но это влияет на выбор в корпоративной среде. Многие российские компании ищут альтернативы.</p>
+
+            <p>Второе ограничение — это совместная работа. В Эксель совместная работа возможна. Но она уступает по строгости управления версиями специализированным платформам. Несколько аналитиков могут работать над одним файлом. Но если файлов много, становится сложно отслеживать, какая версия актуальна. В облачной версии Эксель эта проблема решается частично. Но всё равно остаётся.</p>
+
+            <p>Третье ограничение — это масштаб. Эксель плохо работает с очень большими объёмами данных. Если в таблице миллионы строк, программа начинает тормозить. Для больших данных нужны другие инструменты. И это нормально. Стек компании Майкрософт не претендует на работу с петабайтами. Для этого есть другие экосистемы.</p>
+
+            <p>Итак, давайте подведём итог. Стек компании Майкрософт — это самый зрелый стек с точки зрения интеграции между таблицами и платформой бизнес-аналитики. Он обеспечивает бесшовность в один клик. Он позволяет публиковать модели в облако. И он позволяет возвращаться из облака обратно в таблицы. Его главные ограничения — это лицензирование, совместная работа и масштаб. Но для большинства типовых задач аналитика этих возможностей более чем достаточно.</p>
+
+            <p>Запомните главное. Стек компании Майкрософт — это не набор отдельных программ. Это единый конвейер. От подключения к источнику. Через очистку данных. Через моделирование. Через визуализацию. До публикации готового отчёта. И этот конвейер работает бесшовно.</p>
+
+            <h3>📌 Стек компании Гугл</h3>
+
+            <p>Теперь перейдём ко второму стеку. Это стек компании Гугл. Он устроен принципиально иначе, чем стек компании Майкрософт. И это различие важно понять. Стек компании Майкрософт начинается с рабочего стола аналитика. А стек компании Гугл начинается с облака. Именно облако здесь является центром всей экосистемы.</p>
+
+            <p>Давайте разберёмся, из каких частей состоит этот стек. Первая и главная часть — это облачное хранилище данных. Оно называется Биг Кверри. По-русски это можно назвать большим запросом. Но давайте не переводить название. Давайте просто разберёмся, что этот инструмент делает.</p>
+
+            <p>Биг Кверри — это облачное хранилище данных и вычислительный движок одновременно. Что это значит. Это значит, что данные хранятся в облаке. И там же они обрабатываются. Аналитику не нужно управлять собственной инфраструктурой. Не нужно покупать серверы. Не нужно настраивать кластеры. Он просто пишет запрос. И получает результат.</p>
+
+            <p>Главное преимущество Биг Кверри — это масштаб. Этот инструмент снимает ограничение на объём данных, которое характерно для Эксель. Аналитик может написать запрос к петабайтам данных. И получить ответ за приемлемое время. При этом он не заботится о том, как устроено хранилище. Биг Кверри делает это автоматически.</p>
+
+            <p>Второе преимущество — это язык запросов. Биг Кверри использует стандартный язык структурированных запросов. Это значит, что аналитик, знакомый с этим языком, может работать с Биг Кверри без дополнительного обучения. Он пишет обычный запрос. И получает результат. Это очень важно для бесшовности. Потому что язык запросов одинаковый в разных системах.</p>
+
+            <p>Теперь давайте посмотрим, как данные попадают в Биг Кверри. Есть несколько способов. Первый способ — это загрузка файлов. Аналитик может загрузить файл с локального компьютера. Или из облачного хранилища. Второй способ — это потоковая загрузка. Данные поступают в Биг Кверри непрерывно. Например, из журналов событий. Третий способ — это подключение к внешним источникам. Биг Кверри может напрямую обращаться к данным, которые хранятся в других системах. Без их копирования.</p>
+
+            <p>Обратите внимание на важную особенность. Биг Кверри — это не просто хранилище. Это ещё и единый источник правды для всей компании. Все данные стекаются сюда. И все инструменты анализа обращаются именно к этому источнику. Это устраняет проблему, когда в разных системах хранятся разные версии одних и тех же данных.</p>
+
+            <p>Перейдём ко второй части стека. Это среда для анализа на языке программирования. Она называется Колаб. По-русски это можно назвать совместной лабораторией. Давайте разберёмся, что она делает.</p>
+
+            <p>Колаб — это блокнотная среда. Она работает в браузере. Аналитику не нужно ничего устанавливать на компьютер. Он открывает браузер. Заходит в Колаб. И начинает работать. Внутри блокнота он может писать код. Может вставлять текст. Может строить графики. Может добавлять формулы. Всё это хранится в одном документе. И этот документ можно передать коллеге.</p>
+
+            <p>Главное преимущество Колаб — это прямая связь с Биг Кверри. Аналитик может написать запрос к Биг Кверри прямо внутри блокнота. Результат запроса автоматически превращается в таблицу данных. И дальше аналитик работает с этой таблицей. Строит модели. Проверяет гипотезы. Визуализирует результаты.</p>
+
+            <p>Это и есть бесшовный переход от языка запросов к языку программирования. Без экспорта файлов. Без ручного копирования. Аналитик пишет запрос. Получает данные. И сразу же продолжает анализ на языке программирования. Всё в одном окне.</p>
+
+            <p>Обратите внимание на ещё одну важную особенность. Колаб — это среда для совместной работы. Несколько аналитиков могут одновременно работать над одним блокнотом. Они видят изменения друг друга в реальном времени. Они могут оставлять комментарии. Они могут предлагать правки. Это очень удобно для командной работы.</p>
+
+            <p>Теперь перейдём к третьей части стека. Это сервис визуализации. Он называется Лукер Студио. Раньше он назывался Дата Студио. Но название изменилось. А суть осталась прежней.</p>
+
+            <p>Лукер Студио — это сервис для создания дашбордов и отчётов. Он работает в браузере. Он подключается к Биг Кверри напрямую. Это очень важная особенность. Аналитик создаёт дашборд. И этот дашборд автоматически обновляется при изменении данных в хранилище. Ему не нужно ничего делать вручную.</p>
+
+            <p>Давайте посмотрим, как это работает на практике. Аналитик пишет запрос в Биг Кверри. Сохраняет результат в виде представления. Представление — это как бы сохранённый запрос, который всегда возвращает актуальные данные. Затем аналитик открывает Лукер Студио. Подключается к этому представлению. И строит дашборд. Когда данные в Биг Кверри обновляются, дашборд тоже обновляется. Автоматически.</p>
+
+            <p>Это и есть бесшовность в связке «Биг Кверри — Лукер Студио». Один из самых простых сценариев в современной аналитике. Аналитик не пишет код для визуализации. Не настраивает серверы. Не управляет обновлениями. Он просто строит дашборд. И система делает всё остальное сама.</p>
+
+            <p>Обратите внимание на ещё одну часть экосистемы Гугл. Это таблицы Гугл. Они играют роль лёгкого источника данных. И роль промежуточного слоя. Если у аналитика есть небольшая таблица, он может загрузить её в таблицы Гугл. А затем подключить к Биг Кверри или к Лукер Студио. Это удобно для быстрых задач. Но для больших объёмов данных таблицы Гугл не подходят.</p>
+
+            <p>Теперь давайте поговорим о совместной работе. Это сильная сторона всей экосистемы Гугл. Вся экосистема построена вокруг облака. И вокруг совместного доступа. Несколько аналитиков могут одновременно работать в одном блокноте Колаб. Могут редактировать один дашборд в Лукер Студио. Могут работать с одними и теми же данными в Биг Кверри.</p>
+
+            <p>Права доступа разграничиваются на разных уровнях. Можно дать доступ ко всему проекту. Можно дать доступ к отдельному набору данных. Можно дать доступ только на просмотр. Или на редактирование. Это очень гибко. И это соответствует современным требованиям к безопасности.</p>
+
+            <p>Теперь давайте поговорим об ограничениях. У стека компании Гугл есть несколько практических ограничений. Первое ограничение — это требования к навыкам. Биг Кверри требует знания языка структурированных запросов. Колаб требует знания языка программирования. Это значит, что аналитик должен обладать более широким набором навыков, чем в стеке компании Майкрософт. Для кого-то это плюс. Для кого-то это минус.</p>
+
+            <p>Второе ограничение — это глубина аналитики в Лукер Студио. Лукер Студио — это хороший инструмент визуализации. Но он уступает по возможностям сложного моделирования платформе Пауэр Би Ай. В Лукер Студио меньше возможностей для создания сложных вычисляемых полей. Меньше возможностей для тонкой настройки моделей данных. Это не значит, что Лукер Студио плохой. Это значит, что он решает другой класс задач.</p>
+
+            <p>Третье ограничение — это зависимость от облака. Вся экосистема Гугл работает в облаке. Если нет доступа к интернету, аналитик не может работать. Это не проблема для большинства современных компаний. Но для некоторых сценариев это может быть ограничением.</p>
+
+            <p>Четвёртое ограничение — это регуляторные требования. Как и в случае со стеком компании Майкрософт, облачные сервисы компании Гугл имеют ограничения на территории Российской Федерации. Это влияет на выбор в корпоративной среде. Многие российские компании ищут альтернативы.</p>
+
+            <p>Итак, давайте подведём итог. Стек компании Гугл — это самый цельный облачный стек. Он обеспечивает бесшовный переход от языка запросов к языку программирования. И от языка программирования к визуализации. Всё в одном облаке. Всё связано между собой. Всё доступно для совместной работы.</p>
+
+            <p>Главные преимущества этого стека — это масштаб, совместная работа и бесшовность внутри облака. Главные ограничения — это требования к навыкам, глубина аналитики в инструменте визуализации и регуляторные требования.</p>
+
+            <p>Запомните главное. Стек компании Гугл — это не набор отдельных программ. Это единая облачная цепочка. От хранилища данных. Через анализ на языке программирования. До готового дашборда. И эта цепочка работает бесшовно. При условии, что аналитик владеет нужными навыками.</p>
+
+            <h3>📌 Стек компании Яндекс</h3>
+
+            <p>Теперь перейдём к третьему стеку. Это стек компании Яндекс. Он занимает особое место на российском рынке. И он устроен иначе, чем два предыдущих стека. Давайте разберёмся, в чём его особенность.</p>
+
+            <p>Главная особенность этого стека в том, что он изначально проектировался как единое целое. Два инструмента создавались вместе. И это чувствуется в каждой детали. Первый инструмент — это база данных Кликхаус. Второй инструмент — это сервис визуализации ДетаЛенс.</p>
+
+            <p>Начнём с Кликхаус. Это колоночная база данных. Что значит колоночная. Обычная база данных хранит информацию по строкам. Сначала первая строка целиком. Потом вторая строка целиком. И так далее. Колоночная база данных устроена наоборот. Она хранит информацию по столбцам. Сначала все значения первого столбца. Потом все значения второго столбца. И так далее.</p>
+
+            <p>Зачем это нужно. Дело в том, что аналитические запросы обычно работают не со всеми столбцами сразу. Они выбирают несколько столбцов. И агрегируют данные по этим столбцам. Например, считают сумму продаж по регионам. Или средний чек по месяцам. При колоночном хранении такие запросы выполняются гораздо быстрее. Потому что система читает только нужные столбцы. А не всю таблицу целиком.</p>
+
+            <p>Именно поэтому Кликхаус считается одной из самых быстрых аналитических баз данных в мире. Он создавался в России. И получил мировое признание. Многие крупные компании используют его для анализа больших объёмов данных. И это не случайно. Скорость выполнения запросов в Кликхаус может быть в десятки раз выше, чем в традиционных базах данных.</p>
+
+            <p>Теперь перейдём ко второму инструменту. Это сервис визуализации ДетаЛенс. Он создавался в компании Яндекс. Сначала для внутренних задач. А затем стал доступен широкой аудитории. ДетаЛенс — это облачный сервис. Он работает в браузере. И он напрямую подключается к Кликхаус.</p>
+
+            <p>Связка «Кликхаус — ДетаЛенс» — это одна из самых глубоких нативных интеграций на рынке. Что значит нативная. Это значит, что инструменты создавались с учётом особенностей друг друга. Разработчики ДетаЛенс знали, как устроен Кликхаус. И использовали его возможности по максимуму. А разработчики Кликхаус знали, что их база будет работать с ДетаЛенс.</p>
+
+            <p>Давайте посмотрим, как это работает на практике. Аналитик открывает ДетаЛенс. Создаёт подключение к кластеру Кликхаус. Выбирает нужные таблицы. Или выбирает представления. Представление — это сохранённый запрос. Он всегда возвращает актуальные данные. Затем аналитик строит датасет. Датасет — это набор полей и метрик. На основе датасета он строит дашборд. И публикует его для коллег.</p>
+
+            <p>Вся эта цепочка работает очень быстро. Потому что Кликхаус выполняет запросы за доли секунды. А ДетаЛенс умеет эффективно использовать эту скорость. Он отправляет запросы к базе. И получает результаты. Без задержек. Без промежуточных слоёв. Без ручного копирования данных.</p>
+
+            <p>Это и есть бесшовность в связке «Кликхаус — ДетаЛенс». Один из самых коротких путей от данных до готового дашборда. Аналитик не пишет код для визуализации. Не настраивает серверы. Не управляет обновлениями. Он просто строит дашборд. И система делает всё остальное сама.</p>
+
+            <p>Обратите внимание на важную особенность. В ДетаЛенс есть поддержка представлений с объединениями. Это значит, что аналитик может строить сложные модели данных. Может связывать несколько таблиц. Может создавать вычисляемые поля. И всё это работает напрямую с Кликхаус.</p>
+
+            <p>Теперь давайте поговорим о совместной работе. ДетаЛенс поддерживает совместную работу через воркбуки и коллекции. Воркбук — это рабочее пространство. В нём могут работать несколько аналитиков. Коллекция — это набор объектов. Подключений, датасетов, дашбордов. Права доступа разграничиваются на уровне этих объектов. Можно дать доступ к одному воркбуку. Можно дать доступ к одной коллекции. Можно дать доступ только на просмотр. Или на редактирование.</p>
+
+            <p>Это достаточно гибко. Но есть важное отличие от стека компании Гугл. В ДетаЛенс совместное редактирование логики подготовки данных развито слабее. Если несколько аналитиков работают над одним датасетом, могут возникать конфликты. Нужно координировать действия вручную. Это не проблема для небольших команд. Но для больших команд это может быть ограничением.</p>
+
+            <p>Теперь давайте поговорим о подготовке данных. И здесь мы подходим к главному ограничению этого стека. ДетаЛенс — это в первую очередь инструмент визуализации. А не среда для сложной подготовки данных. Очистка данных. Приведение типов. Удаление дублей. Обогащение данными из других источников. Всё это часто остаётся на стороне Кликхаус. Или на стороне внешних инструментов.</p>
+
+            <p>Что это значит на практике. Аналитик должен уметь писать запросы на языке структурированных запросов. Он должен уметь создавать представления в Кликхаус. Он должен уметь выполнять очистку данных средствами самой базы. Только после этого он приходит в ДетаЛенс. И строит дашборд по уже подготовленным данным.</p>
+
+            <p>Это не значит, что ДетаЛенс плохой инструмент. Это значит, что он решает другой класс задач. Он не пытается заменить собой весь конвейер подготовки данных. Он концентрируется на визуализации. И делает это очень хорошо.</p>
+
+            <p>Теперь давайте поговорим о других ограничениях. Первое ограничение — это привязка к облаку Яндекса. ДетаЛенс работает в облаке Яндекса. И лучше всего он работает с кластерами Кликхаус, которые тоже находятся в облаке Яндекса. Это обеспечивает максимальную скорость и надёжность. Но это же создаёт зависимость от одного поставщика услуг.</p>
+
+            <p>Второе ограничение — это язык интерфейса. Интерфейс ДетаЛенс полностью на русском языке. Это плюс для российских пользователей. Но это может быть минусом для международных команд. Впрочем, для российского рынка это скорее преимущество.</p>
+
+            <p>Третье ограничение — это экосистема. Вокруг ДетаЛенс меньше готовых коннекторов и расширений, чем вокруг международных платформ. Это связано с тем, что рынок моложе. Но ситуация быстро меняется. Появляются новые возможности. И экосистема растёт.</p>
+
+            <p>Итак, давайте подведём итог. Стек компании Яндекс — это самый быстрый стек для работы с большими объёмами данных. Он обеспечивает нативную интеграцию между базой данных и инструментом визуализации. Он изначально проектировался как единое целое. И он показывает очень высокую скорость работы.</p>
+
+            <p>Главные преимущества этого стека — это скорость, нативная интеграция и бесплатность ДетаЛенс. Главные ограничения — это подготовка данных вне ДетаЛенс, привязка к облаку Яндекса и меньшая экосистема.</p>
+
+            <p>Запомните главное. Стек компании Яндекс — это не просто набор инструментов. Это специализированное решение для быстрой аналитики на больших данных. Он не пытается заменить собой все инструменты аналитика. Он концентрируется на своей сильной стороне. На скорости. И на визуализации.</p>
+
+            <h3>📌 Платформа Логином</h3>
+
+            <p>Теперь перейдём к четвёртому стеку. Это платформа Логином. Она занимает особое место среди всех инструментов, которые мы разбираем. И это место нужно понять правильно. Логином — это не ещё один инструмент визуализации. И это не ещё одна база данных. Логином — это среда для построения воспроизводимых сценариев обработки данных.</p>
+
+            <p>Давайте сразу определим проблему, которую решает Логином. Представьте себе типичную ситуацию. Аналитик получает данные из разных источников. Эти данные грязные. В них есть пропуски. В них есть дубликаты. В них есть разные форматы записи одной и той же информации. И всё это нужно привести в порядок. А потом построить модель. А потом проверить модель. А потом опубликовать результат.</p>
+
+            <p>В Эксель это можно сделать. Но когда процесс разрастается, он становится хрупким. Одна неверная формула ломает всю цепочку. В инструментах визуализации это тоже можно сделать. Но инструменты визуализации плохо подходят для сложной подготовки данных. Они хорошо показывают результат. Но они не предназначены для построения конвейеров обработки.</p>
+
+            <p>И вот здесь появляется Логином. Его главная идея очень простая. Подготовка данных — это не разовая операция. Это процесс. И этот процесс нужно построить один раз. А потом запускать много раз. С разными данными. В разное время. Без ручной работы.</p>
+
+            <p>Давайте посмотрим, как устроен Логином. В основе платформы лежит понятие сценария. Сценарий — это последовательность шагов обработки данных. Каждый шаг — это отдельный узел на схеме. Узлы соединяются между собой стрелками. Данные проходят от одного узла к другому. И на каждом узле с ними что-то происходит.</p>
+
+            <p>Узлы бывают разными. Есть узлы для подключения к источникам данных. Есть узлы для очистки данных. Есть узлы для преобразования данных. Есть узлы для статистического анализа. Есть узлы для построения моделей машинного обучения. Есть узлы для визуализации. И есть узлы для публикации результатов.</p>
+
+            <p>Аналитик собирает сценарий из этих узлов. Как конструктор. Он соединяет узлы стрелками. Он настраивает параметры каждого узла. И получает готовый конвейер обработки данных. Этот конвейер можно запустить. Можно проверить. Можно изменить. Можно запустить снова.</p>
+
+            <p>Это и есть главное преимущество Логином. Воспроизводимость. Сценарий сохраняется как артефакт. Его можно передать коллеге. Его можно версионировать. Его можно запускать по расписанию. И каждый раз он будет работать одинаково. Без ручных операций. Без случайных ошибок.</p>
+
+            <p>Теперь давайте разберёмся с двумя редакциями Логином. Это очень важно для понимания совместной работы. Первая редакция называется Логином Десктоп. Это персональная аналитика на рабочей станции. Аналитик устанавливает программу на свой компьютер. И работает с ней локально.</p>
+
+            <p>В редакции Десктоп есть все возможности для построения сценариев. Можно подключаться к источникам. Можно очищать данные. Можно строить модели. Можно визуализировать результаты. Но есть важное ограничение. В редакции Десктоп нет встроенных механизмов совместной работы. Нет разграничения прав доступа. Нет публикации веб-сервисов. Это инструмент для одного аналитика.</p>
+
+            <p>Вторая редакция называется Логином Сервер. И есть ещё Логином Студио — это клиентское приложение для работы с сервером. В серверной редакции появляются все возможности для командной работы. Несколько пользователей могут работать со сценариями с разных рабочих мест. Права доступа разграничиваются. Сценарии хранятся централизованно. И самое главное. Появляется компонент под названием Интегратор.</p>
+
+            <p>Что делает Интегратор. Он позволяет публиковать сценарии как веб-сервисы. Что это значит. Это значит, что готовый сценарий обработки данных становится доступен другим системам. Другая система может обратиться к этому сценарию. Передать ему данные. И получить результат. Всё это происходит автоматически. Без участия аналитика.</p>
+
+            <p>Это очень важная возможность. Она превращает Логином из инструмента аналитика в инструмент всей компании. Аналитик строит сценарий один раз. А потом этот сценарий используется в бизнес-процессах. Например, в системе кредитного скоринга. Или в системе прогнозирования спроса. Или в системе обнаружения мошенничества.</p>
+
+            <p>Обратите внимание на важное различие. В стеке компании Майкрософт бесшовность достигается в один клик. В стеке компании Гугл бесшовность достигается внутри облака. В стеке компании Яндекс бесшовность достигается за счёт нативной интеграции. А в Логином бесшовность достигается через спроектированный сценарий.</p>
+
+            <p>Это не бесшовность в один клик. Это бесшовность через проектирование. Аналитик сначала думает. Как должен быть устроен процесс. Какие шаги нужны. В каком порядке. Какие проверки добавить. А потом собирает сценарий. И этот сценарий работает бесшовно. Потому что в нём нет ручных операций.</p>
+
+            <p>Теперь давайте поговорим об интеграции. Логином подключается к множеству источников данных. Это и реляционные базы данных. Это и файлы разных форматов. Это и веб-сервисы. Это и облачные хранилища. И это очень важно. Потому что Логином часто играет роль связующего звена между разными системами.</p>
+
+            <p>Давайте посмотрим на типичный сценарий. Данные лежат в базе данных. Но они грязные. Аналитик строит сценарий в Логином. Сценарий подключается к базе. Забирает данные. Очищает их. Обогащает данными из другого источника. Проверяет на ошибки. Строит модель. И отдаёт результат обратно в базу. Или в инструмент визуализации. Или в бизнес-приложение.</p>
+
+            <p>Вся эта цепочка работает автоматически. Аналитик настроил её один раз. И теперь она работает без его участия. Это и есть настоящая промышленная аналитика. Не разовые отчёты. А воспроизводимые процессы.</p>
+
+            <p>Обратите внимание на ещё одну важную особенность. Логином умеет запускать внешние программы через узлы интеграции. Это значит, что сценарий может обратиться к скрипту на языке программирования. Может вызвать внешний сервис. Может выполнить команду в операционной системе. Это делает Логином очень гибким инструментом. Он не пытается заменить собой всё. Он соединяет разные инструменты в единый конвейер.</p>
+
+            <p>Теперь давайте поговорим об ограничениях. У Логином есть несколько практических ограничений. Первое ограничение — это совместная работа. Она доступна только в серверной редакции. В редакции Десктоп совместной работы нет. Это значит, что для небольшой команды нужно покупать серверную лицензию. Это дополнительные затраты.</p>
+
+            <p>Второе ограничение — это порог входа. Логином требует от аналитика понимания принципов обработки данных. Нужно уметь проектировать сценарии. Нужно понимать, какие узлы за что отвечают. Нужно уметь отлаживать сценарии. Это не так просто, как нажать кнопку в Эксель. Но это и не программирование с нуля. Это визуальное проектирование. И для многих аналитиков это удобнее, чем писать код.</p>
+
+            <p>Третье ограничение — это экосистема. Вокруг Логином меньше готовых решений, чем вокруг международных платформ. Меньше обучающих материалов. Меньше сообществ пользователей. Но ситуация меняется. Появляются новые курсы. Появляются новые примеры. И сообщество растёт.</p>
+
+            <p>Четвёртое ограничение — это визуализация. Логином умеет строить графики и отчёты. Но это не его главная сила. Для сложных дашбордов лучше использовать специализированные инструменты. Например, ДетаЛенс или Пауэр Би Ай. Логином хорошо готовит данные. А визуализацию лучше делать в других инструментах.</p>
+
+            <p>Итак, давайте подведём итог. Логином — это платформа для построения воспроизводимых сценариев обработки данных. Она занимает нишу, которую плохо закрывают другие инструменты. Эксель гибок, но хрупок при разрастании процесса. Инструменты визуализации хороши для показа результатов, но плохо подходят для сложной подготовки данных. А Логином позволяет собрать сложную логику в единый сценарий. И запускать этот сценарий много раз.</p>
+
+            <p>Главные преимущества Логином — это воспроизводимость, гибкость интеграции и возможность публикации сценариев как веб-сервисов. Главные ограничения — это совместная работа только в серверной редакции, порог входа и меньшая экосистема.</p>
+
+            <p>Запомните главное. Логином — это не инструмент для быстрых отчётов. Это инструмент для построения аналитических конвейеров. Он требует проектирования. Но он даёт контроль. И он превращает разовую аналитику в промышленный процесс.</p>
+
+            <p>Мы разобрали все четыре стека. Теперь давайте сведём всё вместе. И сравним их по трём критериям. Это интеграция, совместная работа и бесшовность для аналитика.</p>
+
+            <h3>📌 Сравнительный анализ четырёх стеков</h3>
+
+            <p>Теперь давайте сведём всё вместе. Мы разобрали четыре стека. Каждый из них устроен по-своему. И каждый решает свою задачу. Пришло время сравнить их между собой. Мы будем сравнивать по трём критериям. Это интеграция, совместная работа и бесшовность для аналитика. Давайте разберём каждый критерий отдельно.</p>
+
+            <p>Начнём с интеграции. Здесь мы смотрим, насколько широко и насколько глубоко инструмент подключается к источникам данных. И насколько просто это настроить.</p>
+
+            <p>Стек компании Майкрософт даёт самую широкую интеграцию на уровне отдельного аналитика. Пауэр Кверри подключается почти к любому источнику. Это файлы. Это базы данных. Это веб-сервисы. Это папки с множеством файлов. И всё это настраивается в одном окне. Без программирования. Без сложных настроек. Аналитик просто выбирает источник. И начинает работать. Это очень удобно для быстрого старта.</p>
+
+            <p>Но есть важная особенность. Глубина интеграции в стеке Майкрософт ограничена рамками одного файла. Аналитик может подключиться к источнику. Может очистить данные. Может построить модель. Но всё это хранится в одном файле Эксель. Или в одной модели Пауэр Би Ай. Если источников много, файл становится тяжёлым. И работать с ним становится неудобно.</p>
+
+            <p>Стек компании Гугл даёт самую глубокую интеграцию на уровне облачных данных. Биг Кверри — это центральное хранилище. И все инструменты анализа обращаются именно к нему. Это значит, что данные не дублируются. Не копируются. Не пересылаются. Они хранятся в одном месте. И все инструменты работают с этим местом напрямую.</p>
+
+            <p>Это очень важное преимущество. Оно устраняет проблему разных версий данных. Когда в одной системе одни цифры. А в другой — другие. В стеке Гугл такой проблемы нет. Потому что источник правды один. И это Биг Кверри.</p>
+
+            <p>Стек компании Яндекс даёт самую глубокую нативную связку. Кликхаус и ДетаЛенс создавались вместе. И это чувствуется. ДетаЛенс напрямую подключается к кластеру Кликхаус. Без промежуточных слоёв. Без сложных настроек. Аналитик выбирает кластер. Выбирает таблицы. И строит дашборд.</p>
+
+            <p>Эта интеграция очень быстрая. Потому что Кликхаус выполняет запросы за доли секунды. А ДетаЛенс умеет эффективно использовать эту скорость. Но есть ограничение. Эта интеграция лучше всего работает в облаке Яндекса. Если база данных находится в другом месте, скорость может быть ниже.</p>
+
+            <p>Логином даёт гибкую интеграцию через сценарии. Он подключается к множеству источников. Это базы данных. Это файлы. Это веб-сервисы. Но главное отличие в том, что Логином не просто подключается. Он выстраивает процесс обработки. Каждый шаг этого процесса настраивается отдельно. И весь процесс сохраняется как артефакт.</p>
+
+            <p>Это не интеграция в один клик. Это интеграция через проектирование. Аналитик сначала думает. Какие данные нужны. Откуда они придут. Как их очистить. Как их преобразовать. А потом собирает сценарий. И этот сценарий работает автоматически.</p>
+
+            <p>Давайте подведём итог по первому критерию. Стек Майкрософт — самый широкий охват на уровне аналитика. Стек Гугл — самая глубокая интеграция на уровне облака. Стек Яндекс — самая быстрая нативная связка. Логином — самая гибкая интеграция через сценарии. У каждого стека своя сильная сторона. И выбор зависит от задачи.</p>
+
+            <p>Теперь перейдём ко второму критерию. Это совместная работа. Здесь мы смотрим, могут ли несколько аналитиков работать над одним артефактом одновременно. И как разграничиваются права доступа.</p>
+
+            <p>В стеке компании Майкрософт совместная работа возможна. Но она уступает по строгости управления версиями специализированным платформам. В облачной версии Эксель несколько аналитиков могут работать над одним файлом. Они видят изменения друг друга. Они могут оставлять комментарии. Но если файлов много, становится сложно отслеживать, какая версия актуальна.</p>
+
+            <p>В Пауэр Би Ай совместная работа устроена лучше. Дашборды публикуются в облаке. Права доступа разграничиваются. Можно дать доступ на просмотр. Можно дать доступ на редактирование. Но всё равно есть ограничения. Например, нельзя работать над одной моделью данных одновременно нескольким аналитикам. Модель нужно редактировать по очереди.</p>
+
+            <p>В стеке компании Гугл совместная работа встроена в саму ДНК продуктов. Несколько аналитиков могут одновременно работать в одном блокноте Колаб. Они видят изменения друг друга в реальном времени. Они могут оставлять комментарии. Они могут предлагать правки. Это очень удобно для командной работы.</p>
+
+            <p>В Лукер Студио совместная работа тоже устроена хорошо. Несколько аналитиков могут редактировать один дашборд. Могут работать с одними и теми же данными. Права доступа разграничиваются на разных уровнях. Можно дать доступ ко всему проекту. Можно дать доступ к отдельному набору данных. Это очень гибко.</p>
+
+            <p>В стеке компании Яндекс совместная работа поддерживается через воркбуки и коллекции. Воркбук — это рабочее пространство. В нём могут работать несколько аналитиков. Коллекция — это набор объектов. Подключений, датасетов, дашбордов. Права доступа разграничиваются на уровне этих объектов.</p>
+
+            <p>Но есть важное отличие от стека Гугл. В ДетаЛенс совместное редактирование логики подготовки данных развито слабее. Если несколько аналитиков работают над одним датасетом, могут возникать конфликты. Нужно координировать действия вручную. Это не проблема для небольших команд. Но для больших команд это может быть ограничением.</p>
+
+            <p>В Логином совместная работа доступна только в серверной редакции. В редакции Десктоп совместной работы нет. Это инструмент для одного аналитика. А в серверной редакции появляются все возможности. Несколько пользователей могут работать со сценариями с разных рабочих мест. Права доступа разграничиваются. Сценарии хранятся централизованно.</p>
+
+            <p>Это очень важное различие. Если команда небольшая, можно использовать Десктоп. Если команда большая, нужна серверная редакция. Это дополнительные затраты. Но это и дополнительные возможности.</p>
+
+            <p>Давайте подведём итог по второму критерию. Стек Гугл — самый сильный в совместной работе. Стек Яндекс — хорош, но уступает в совместном редактировании данных. Стек Майкрософт — хорош для небольших команд, но уступает в управлении версиями. Логином — требует серверной редакции для совместной работы. У каждого стека свои особенности. И выбор зависит от размера команды и от требований к совместной работе.</p>
+
+            <p>Теперь перейдём к третьему критерию. Это бесшовность для аналитика. Здесь мы смотрим, сколько ручной склейки требуется при переходе с одного этапа на другой. Этапы такие. Подготовка данных. Анализ. Визуализация. Публикация.</p>
+
+            <p>В стеке компании Майкрософт самый короткий путь «подготовка — модель — публикация». Аналитик работает в Эксель. Подключается к источнику через Пауэр Кверри. Очищает данные. Загружает их в модель Пауэр Пивот. Строит связи и меры. Затем публикует модель в Пауэр Би Ай одной кнопкой.</p>
+
+            <p>Вся логика подготовки данных и моделирования сохраняется. Без экспорта файлов. Без ручного копирования. Без переписывания кода. Это и есть бесшовность в один клик. И это главное преимущество стека Майкрософт.</p>
+
+            <p>Но есть важная особенность. Эта бесшовность работает в одном направлении. Из Эксель в облако. А обратный мост есть. Это кнопка «Анализ в Эксель». Она подключает модель из облака обратно к Эксель. Но это работает не для всех сценариев. И не для всех типов моделей.</p>
+
+            <p>В стеке компании Гугл самый короткий путь «язык запросов — язык программирования — визуализация». Аналитик пишет запрос в Биг Кверри. Результат автоматически превращается в таблицу данных. Затем он открывает Колаб. Пишет код на языке программирования. Строит модель. Проверяет гипотезу. Затем открывает Лукер Студио. Строит дашборд по тем же данным.</p>
+
+            <p>Всё это происходит в одном облаке. Без экспорта файлов. Без ручного копирования. Без переписывания кода. Это и есть бесшовность внутри облака. И это главное преимущество стека Гугл.</p>
+
+            <p>Но есть важная особенность. Эта бесшовность требует навыков. Аналитик должен знать язык запросов. Должен знать язык программирования. Должен уметь работать в разных средах. Это не так просто. Но зато это даёт гибкость.</p>
+
+            <p>В стеке компании Яндекс самый короткий путь «быстрый дашборд на больших данных». Аналитик пишет запрос в Кликхаус. Создаёт представление. Открывает ДетаЛенс. Подключается к этому представлению. Строит дашборд. Публикует его.</p>
+
+            <p>Всё это происходит очень быстро. Потому что Кликхаус выполняет запросы за доли секунды. А ДетаЛенс умеет эффективно использовать эту скорость. Это и есть бесшовность за счёт нативной интеграции. И это главное преимущество стека Яндекс.</p>
+
+            <p>Но есть важная особенность. Подготовка данных часто остаётся на стороне Кликхаус. Или на стороне внешних инструментов. ДетаЛенс не пытается заменить собой весь конвейер подготовки данных. Он концентрируется на визуализации. Это не плохо. Это просто другой подход.</p>
+
+            <p>В Логином самый короткий путь «сложная подготовка — модель — публикация». Но этот путь требует проектирования. Аналитик собирает сценарий из узлов. Настраивает каждый узел. Проверяет сценарий. Запускает его. И только потом публикует результат.</p>
+
+            <p>Это не бесшовность в один клик. Это бесшовность через проектирование. Аналитик сначала думает. Как должен быть устроен процесс. А потом собирает его. И этот процесс работает автоматически. Без ручных операций. Без случайных ошибок.</p>
+
+            <p>Это требует больше времени на старте. Но это даёт больше контроля. И это даёт воспроизводимость. Сценарий можно запускать много раз. С разными данными. В разное время. И каждый раз он будет работать одинаково.</p>
+
+            <p>Давайте подведём итог по третьему критерию. Стек Майкрософт — самый короткий путь от подготовки до публикации. Стек Гугл — самый короткий путь от запроса до визуализации. Стек Яндекс — самый короткий путь от данных до быстрого дашборда. Логином — самый контролируемый путь от сложной подготовки до публикации. У каждого стека своя сильная сторона. И выбор зависит от задачи.</p>
+
+            <h3>📌 Практический вывод: как аналитику работать во всех стеках сразу</h3>
+
+            <p>Теперь давайте перейдём к самому важному. Как аналитику работать в реальной жизни. Ведь в реальной жизни редко бывает так, что компания использует только один стек. Чаще всего инструменты смешиваются. И это нормально. Давайте разберёмся, как выстраивать работу в такой среде.</p>
+
+            <p>Начнём с главного принципа. Не «или-или», а «и». Это значит, что не нужно выбирать один инструмент и отказываться от всех остальных. Нужно научиться использовать сильные стороны каждого инструмента. И соединять их в единую цепочку.</p>
+
+            <p>Давайте посмотрим на типичный сценарий работы аналитика в современной компании. Данные лежат в базе данных. Это может быть Кликхаус. Или Биг Кверри. Или обычная реляционная база. Аналитик подключается к этой базе. Забирает нужные данные. Проводит первичную очистку. Это может быть сделано средствами самой базы. Или в Логином. Или в Пауэр Кверри.</p>
+
+            <p>Затем аналитик проверяет гипотезу. Это может быть сделано в Колаб на языке программирования. Или в Эксель с помощью сводных таблиц. Или в самом инструменте визуализации. Всё зависит от сложности гипотезы и от навыков аналитика.</p>
+
+            <p>Затем аналитик строит модель. Это может быть сделано в Пауэр Пивот. Или в Логином. Или непосредственно в базе данных. Опять же, всё зависит от задачи.</p>
+
+            <p>И наконец, аналитик публикует результат. Это может быть дашборд в Пауэр Би Ай. Или в ДетаЛенс. Или в Лукер Студио. Или отчёт в Эксель. Всё зависит от того, кто будет пользоваться результатом.</p>
+
+            <p>Вся эта цепочка работает вместе. Но только при одном условии. Аналитик должен понимать границы передачи. Что является источником правды. Где происходит подготовка данных. Где происходит анализ. Где происходит публикация. И как данные переходят из одного этапа в другой.</p>
+
+            <p>Давайте сформулируем это более чётко. Есть четыре вопроса, на которые аналитик должен ответить перед началом работы. Первый вопрос. Что является источником правды. То есть, где хранятся самые актуальные и самые полные данные. Второй вопрос. Где происходит подготовка. То есть, где данные очищаются и приводятся в нужный вид. Третий вопрос. Где происходит анализ. То есть, где строятся модели и проверяются гипотезы. Четвёртый вопрос. Где происходит публикация. То есть, где создаются дашборды и отчёты для конечных пользователей.</p>
+
+            <p>Ответы на эти вопросы определяют архитектуру работы. И если аналитик понимает эту архитектуру, он может работать бесшовно в любой среде. Потому что он знает, где заканчивается один инструмент и начинается другой. И он знает, как передать результат из одного инструмента в другой без потери логики.</p>
+
+            <p>Теперь давайте поговорим о навыках. Главный навык аналитика — это не знание кнопок. Это понимание модели данных. Инструменты различаются интерфейсом. Различаются языками формул. Различаются способами визуализации. Но все они подчиняются общей логике. Подключение. Преобразование. Модель. Визуализация. Совместный доступ.</p>
+
+            <p>Аналитик, который понимает эту логику, сможет перейти из Эксель в Колаб. Сможет перейти из ДетаЛенс в Пауэр Би Ай. Сможет перейти из Логином в любой другой инструмент. Потому что он переносит не привычку нажимать кнопки. Он переносит понимание того, как устроен поток данных.</p>
+
+            <p>Это очень важная мысль. Давайте её запомним. Инструменты меняются. Интерфейсы обновляются. Названия кнопок переименовываются. Но логика работы с данными остаётся неизменной. И если аналитик освоил эту логику, он сможет работать в любой среде. Он не будет привязан к одному стеку. Он будет гибким. И он будет востребованным.</p>
+
+            <p>Теперь давайте поговорим о трёх вопросах, которые помогают выбрать стек. Эти вопросы важнее, чем сравнительные таблицы функций. Потому что они помогают принять решение в конкретной ситуации.</p>
+
+            <p>Первый вопрос. Каков объём и скорость данных. Если данные помещаются в файл, можно использовать Эксель. Если данные требуют облачного хранилища, нужно смотреть в сторону Биг Кверри или Кликхаус. Если данные поступают очень быстро и их нужно обрабатывать в реальном времени, нужны специализированные инструменты. Ответ на этот вопрос определяет базовый уровень инструментов.</p>
+
+            <p>Второй вопрос. Как организована совместная работа. Если аналитик работает один, можно использовать Десктоп-версии. Если работает команда, нужны серверные версии с разграничением прав. Если команда распределённая и работает из разных мест, нужны облачные решения. Ответ на этот вопрос определяет требования к инфраструктуре.</p>
+
+            <p>Третий вопрос. Какие требования предъявляет регулятор. Если данные должны храниться на территории Российской Федерации, нужно смотреть в сторону российских решений. Если требования к персональным данным строгие, нужны инструменты с сертификацией. Ответ на этот вопрос определяет выбор в пользу отечественных или международных инструментов.</p>
+
+            <p>Эти три вопроса часто важнее, чем сравнительные таблицы функций. Потому что они отражают реальные ограничения. И реальные требования. И если аналитик отвечает на эти вопросы до начала работы, он избегает многих проблем в будущем.</p>
+
+            <h3>📌 Заключение</h3>
+
+            <p>Мы подошли к завершению лекции. Давайте вспомним, что мы разобрали. И сформулируем главные выводы. Это поможет закрепить материал. И поможет вам применять его на практике.</p>
+
+            <p>Мы начали с определения. Инструменты аналитика — это не просто набор программ. Это экосистемы. Каждая крупная компания строит свою экосистему. И внутри неё инструменты связаны особенно тесно.</p>
+
+            <p>Мы определили, что такое бесшовность. Это когда результат работы одного инструмента становится входом для другого без ручного копирования. Без переформатирования. Без потери логики расчётов. Бесшовность снижает количество ошибок. Она экономит время. И она делает работу аналитика воспроизводимой.</p>
+
+            <p>Мы назвали четыре экосистемы. И разобрали каждую подробно. Стек компании Майкрософт — бесшовность в один клик. Стек компании Гугл — облачная интеграция и совместная работа. Стек компании Яндекс — нативная скорость. Платформа Логином — воспроизводимые сценарии.</p>
+
+            <p>Мы сравнили все четыре стека по трём критериям. Это интеграция, совместная работа и бесшовность для аналитика. И увидели, что у каждого стека своя сильная сторона. И своё ограничение.</p>
+
+            <p>Из этого сравнения мы сделали главный вывод. Не нужно искать самый лучший инструмент. Нужно научиться видеть границы между инструментами. И научиться выстраивать бесшовные переходы между ними.</p>
+
+            <p>Мы сформулировали практический вывод. Реальная работа редко ограничивается одним стеком. Чаще всего аналитик использует несколько инструментов. И это нормально. Главное — понимать, что является источником правды. Где происходит подготовка данных. Где происходит анализ. И где происходит публикация.</p>
+
+            <p>Мы назвали главный навык аналитика. Это не знание кнопок. Это понимание модели данных. Инструменты меняются. Интерфейсы обновляются. Названия кнопок переименовываются. Но логика работы с данными остаётся неизменной. И если аналитик освоил эту логику, он сможет работать в любой среде.</p>
+
+            <p>Мы сформулировали три вопроса для выбора стека. Первый вопрос. Каков объём и скорость данных. Второй вопрос. Как организована совместная работа. Третий вопрос. Какие требования предъявляет регулятор. Эти три вопроса часто важнее, чем сравнительные таблицы функций.</p>
+
+            <p>Теперь давайте поговорим о перспективах. Что будет меняться в мире инструментов аналитика. Первое. Роль облака будет расти. Всё больше данных будет храниться в облаке. Всё больше инструментов будет работать в браузере. Это уже видно по стекам Гугл и Яндекс. И стек Майкрософт тоже движется в эту сторону.</p>
+
+            <p>Второе. Роль совместной работы будет расти. Аналитика перестаёт быть одиночной профессией. Всё чаще над одним проектом работают несколько специалистов. И инструменты должны поддерживать эту работу. Не только на уровне просмотра. Но и на уровне совместного редактирования. Это уже видно по Колаб и Лукер Студио. И другие стеки догоняют.</p>
+
+            <p>Третье. Роль воспроизводимости будет расти. Всё больше компаний понимают, что разовые отчёты — это не аналитика. Аналитика — это процесс. И этот процесс должен быть воспроизводимым. Инструменты вроде Логином становятся всё более востребованными. Потому что они дают контроль над процессом.</p>
+
+            <p>Четвёртое. Роль российских инструментов будет расти. В условиях импортозамещения компании ищут отечественные решения. И эти решения становятся всё более зрелыми. Кликхаус уже признан во всём мире. ДетаЛенс активно развивается. Логином занимает свою нишу. И это создаёт новые возможности для аналитиков.</p>
+
+            <p>Теперь давайте вспомним, что вы уносите с этой лекции. Вы уносите понимание того, что инструменты аналитика — это экосистемы. Вы уносите знание о четырёх стеках. И о том, как они устроены. Вы уносите понимание того, что такое бесшовность. И как её достичь. Вы уносите умение видеть границы между инструментами. И вы уносите главное. Инструменты — это средство. А не цель. Цель — это качественная аналитика. И качественные решения на основе данных.</p>
+
+            <p>На этом наша лекция завершена. Спасибо за внимание. Я готов ответить на ваши вопросы.</p>
+
+            <!-- СЛОВАРЬ ТЕРМИНОВ -->
+            <div class="dark-block">
+                <div class="dark-block-title">📖 Словарь терминов и аббревиатур</div>
+                <table class="dark-table">
+                    <thead>
+                        <tr><th style="width:18%;">Термин</th><th style="width:34%;">Расшифровка</th><th>Пояснение</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="term">Бесшовность</td><td>Seamless integration</td><td>Переход между инструментами без ручного копирования и потери логики</td></tr>
+                        <tr><td class="term">Пауэр Кверри</td><td>Power Query</td><td>Инструмент подготовки данных в Эксель, язык Эм</td></tr>
+                        <tr><td class="term">Язык Эм</td><td>M language</td><td>Язык формул для описания преобразований в Пауэр Кверри</td></tr>
+                        <tr><td class="term">Пауэр Пивот</td><td>Power Pivot</td><td>Надстройка для реляционного моделирования данных</td></tr>
+                        <tr><td class="term">Язык Дакс</td><td>DAX</td><td>Язык выражений для анализа данных в Пауэр Пивот и Пауэр Би Ай</td></tr>
+                        <tr><td class="term">Мера</td><td>Measure</td><td>Вычисление, пересчитываемое в зависимости от контекста фильтрации</td></tr>
+                        <tr><td class="term">Пауэр Би Ай</td><td>Power BI</td><td>Платформа бизнес-аналитики и визуализации</td></tr>
+                        <tr><td class="term">Биг Кверри</td><td>BigQuery</td><td>Облачное хранилище данных и вычислительный движок от Гугл</td></tr>
+                        <tr><td class="term">Колаб</td><td>Colab</td><td>Блокнотная среда для анализа на языке Питон</td></tr>
+                        <tr><td class="term">Лукер Студио</td><td>Looker Studio</td><td>Сервис визуализации от Гугл (ранее Дата Студио)</td></tr>
+                        <tr><td class="term">Кликхаус</td><td>ClickHouse</td><td>Колоночная база данных для быстрой аналитики</td></tr>
+                        <tr><td class="term">ДетаЛенс</td><td>DataLens</td><td>Сервис визуализации от Яндекса</td></tr>
+                        <tr><td class="term">Логином</td><td>Loginom</td><td>Платформа для построения воспроизводимых сценариев</td></tr>
+                        <tr><td class="term">Сценарий</td><td>Scenario</td><td>Последовательность узлов обработки данных в Логином</td></tr>
+                        <tr><td class="term">Интегратор</td><td>Integrator</td><td>Компонент Логином для публикации сценариев как веб-сервисов</td></tr>
+                        <tr><td class="term">Веб-сервис</td><td>Web service</td><td>Программный интерфейс для автоматического обращения к сценарию</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ИСТОЧНИКИ -->
+            <div class="dark-block">
+                <div class="dark-block-title">📚 Источники и литература</div>
+                <div class="src-group">📊 Документация вендоров</div>
+                <ol>
+                    <li>Документация Microsoft: Power Query, Power Pivot, Power BI, языки M и DAX.</li>
+                    <li>Документация Google: BigQuery, Colab, Looker Studio.</li>
+                    <li>Документация Яндекс: ClickHouse, DataLens.</li>
+                    <li>Документация Логином: Десктоп, Сервер, Студио, Интегратор.</li>
+                </ol>
+                <div class="src-group">📖 Учебная литература и обзоры</div>
+                <ol start="5">
+                    <li>Обзоры рынка BI и аналитических платформ: TAdviser, CNews.</li>
+                    <li>Практические руководства по сравнительному анализу инструментов аналитика.</li>
+                    <li>Статьи и кейсы по внедрению инструментов аналитики в российских компаниях.</li>
+                </ol>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function changeVideo(embedUrl) {
+            document.getElementById('lecture-player').src = embedUrl;
+        }
+    </script>
+
+    <!-- НАВИГАЦИЯ МЕЖДУ ЛЕКЦИЯМИ -->
+<nav class="lecture-nav" id="lectureNav">
+    <div class="nav-progress" id="navProgress" style="width: 0%;"></div>
+    <a href="Лекция (N-1).html" class="nav-btn-arrow" id="prevBtn">
+        <span class="arrow-icon">←</span>
+        <span class="arrow-label">
+            <small>Назад</small>
+            <span class="arrow-title" id="prevTitle">Лекция (N-1)</span>
+        </span>
+    </a>
+    <div class="nav-center">
+        <div class="nav-counter">Лекция <span id="currentNum">N</span> <span>из 21</span></div>
+        <a href="index.html" class="nav-index-link">📚 К содержанию</a>
+    </div>
+    <a href="Лекция (N+1).html" class="nav-btn-arrow" id="nextBtn">
+        <span class="arrow-label" style="align-items: flex-end;">
+            <small>Вперёд</small>
+            <span class="arrow-title" id="nextTitle">Лекция (N+1)</span>
+        </span>
+        <span class="arrow-icon">→</span>
+    </a>
+</nav>
+
+
+
+<script>
+(function () {
+    'use strict';
+
+    // =========================================================
+    // НАСТРОЙКИ
+    // =========================================================
+    const TOTAL_LECTURES = 21;                         // всего лекций в курсе
+    const totalDurationMs = (77 * 60 + 30) * 1000;     // длительность автопрокрутки
+    const autoNextDelayMs = 2000;                      // задержка автоперехода
+    const AUTOSTART_PARAM = 'autostart';
+
+    // =========================================================
+    // ОПРЕДЕЛЕНИЕ НОМЕРА ТЕКУЩЕЙ ЛЕКЦИИ
+    // =========================================================
+    const fileName = decodeURIComponent(location.pathname.split('/').pop() || '');
+    let currentLecture = 1;
+
+    // 1) Пытаемся извлечь номер из имени файла "Лекция 7.html"
+    const match = fileName.match(/Лекция\s*(\d+)\.html/i);
+    if (match) {
+        currentLecture = parseInt(match[1], 10);
+    } else {
+        // 2) Fallback: берём из HTML-счётчика
+        const el = document.getElementById('currentNum');
+        if (el) currentLecture = parseInt(el.textContent, 10) || 1;
+    }
+
+    // Ограничиваем допустимым диапазоном
+    if (isNaN(currentLecture) || currentLecture < 1) currentLecture = 1;
+    if (currentLecture > TOTAL_LECTURES) currentLecture = TOTAL_LECTURES;
+
+    // =========================================================
+    // ОПРЕДЕЛЕНИЕ СОСЕДНИХ ЛЕКЦИЙ
+    // =========================================================
+    const prev = currentLecture > 1 ? currentLecture - 1 : null;
+    const next = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+
+    // =========================================================
+    // ОБНОВЛЕНИЕ СЧЁТЧИКА И ПРОГРЕСС-БАРА
+    // =========================================================
+    const currentNumEl = document.getElementById('currentNum');
+    if (currentNumEl) currentNumEl.textContent = currentLecture;
+
+    const navProgress = document.getElementById('navProgress');
+    if (navProgress) {
+        navProgress.style.width = (currentLecture / TOTAL_LECTURES * 100) + '%';
+    }
+
+    // =========================================================
+    // НАСТРОЙКА КНОПКИ "НАЗАД"
+    // =========================================================
+    const prevBtn = document.getElementById('prevBtn');
+    if (prevBtn) {
+        if (prev) {
+            prevBtn.href = 'Лекция ' + prev + '.html';
+            const t = document.getElementById('prevTitle');
+            if (t) t.textContent = 'Лекция ' + prev;
+            prevBtn.style.opacity = '1';
+            prevBtn.style.cursor = 'pointer';
+            prevBtn.onclick = null;
+        } else {
+            prevBtn.removeAttribute('href');
+            prevBtn.style.opacity = '0.35';
+            prevBtn.style.cursor = 'not-allowed';
+            prevBtn.onclick = (e) => e.preventDefault();
+            const t = document.getElementById('prevTitle');
+            if (t) t.textContent = 'Это первая лекция';
+        }
+    }
+
+    // =========================================================
+    // НАСТРОЙКА КНОПКИ "ВПЕРЁД"
+    // =========================================================
+    const nextBtn = document.getElementById('nextBtn');
+    if (nextBtn) {
+        if (next) {
+            nextBtn.href = 'Лекция ' + next + '.html';
+            const t = document.getElementById('nextTitle');
+            if (t) t.textContent = 'Лекция ' + next;
+            nextBtn.style.opacity = '1';
+            nextBtn.style.cursor = 'pointer';
+            nextBtn.onclick = null;
+        } else {
+            nextBtn.removeAttribute('href');
+            nextBtn.style.opacity = '0.35';
+            nextBtn.style.cursor = 'not-allowed';
+            nextBtn.onclick = (e) => e.preventDefault();
+            const t = document.getElementById('nextTitle');
+            if (t) t.textContent = 'Это последняя лекция';
+        }
+    }
+
+    // =========================================================
+    // КЛАВИАТУРНАЯ НАВИГАЦИЯ
+    // =========================================================
+    document.addEventListener('keydown', (e) => {
+        const tag = e.target && e.target.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+        if (e.key === 'ArrowLeft' && prev) {
+            window.location.href = 'Лекция ' + prev + '.html';
+        } else if (e.key === 'ArrowRight' && next) {
+            window.location.href = 'Лекция ' + next + '.html';
+        } else if (e.key === 'Home') {
+            window.location.href = 'index.html';
+        }
+    });
+
+    // =========================================================
+    // АВТОПРОКРУТКА И СИНХРОНИЗАЦИЯ ПАНЕЛЕЙ
+    // =========================================================
+    function initScroll() {
+        const studentBlock = document.querySelector('.student-view');
+        const speakerBlock = document.querySelector('.speaker-notes');
+        const badge = document.getElementById('scroll-status-badge');
+        const audio = document.getElementById('lecture-audio');
+        if (!studentBlock || !speakerBlock) return;
+
+        const studentBehavior = studentBlock.style.scrollBehavior;
+        const speakerBehavior = speakerBlock.style.scrollBehavior;
+        let isRunning = false, completed = false, pausedElapsed = 0, startedAt = 0, rafId = null;
+        let startS = 0, startP = 0, maxS = 0, maxP = 0;
+
+        function setBadge(text, color) {
+            if (!badge) return;
+            badge.style.display = 'block';
+            badge.textContent = text;
+            badge.style.borderColor = color;
+        }
+        function measure() {
+            maxS = Math.max(studentBlock.scrollHeight - studentBlock.clientHeight, 0);
+            maxP = Math.max(speakerBlock.scrollHeight - speakerBlock.clientHeight, 0);
+        }
+        function fmt(ms) {
+            const m = Math.floor(ms / 60000);
+            const s = Math.floor((ms % 60000) / 1000);
+            return m + ':' + String(s).padStart(2, '0');
+        }
+        function playAudio() {
+            if (!audio) return;
+            const p = audio.play();
+            if (p && typeof p.catch === 'function') {
+                p.catch(err => {
+                    console.warn('[AutoAudio]', err.message);
+                    setBadge('▶ ИДЕТ ПРОКРУТКА (звук заблокирован)', '#eab308');
+                });
+            }
+        }
+        function pauseAudio() { if (audio) try { audio.pause(); } catch (_) {} }
+        function resetAudio() { if (audio) try { audio.pause(); audio.currentTime = 0; } catch (_) {} }
+
+        function animate() {
+            if (!isRunning) return;
+            const elapsed = pausedElapsed + (performance.now() - startedAt);
+            const fraction = Math.min(elapsed / totalDurationMs, 1);
+            measure();
+            studentBlock.scrollTop = startS + (maxS - startS) * fraction;
+            speakerBlock.scrollTop = startP + (maxP - startP) * fraction;
+            if (badge) {
+                badge.textContent = '▶ ' + fmt(elapsed) + ' / 25:00';
+                badge.style.borderColor = '#16a34a';
+            }
+            if (fraction >= 1) { finish(); return; }
+            rafId = requestAnimationFrame(animate);
+        }
+
+        function startOrResume() {
+            if (completed) {
+                pausedElapsed = 0; completed = false;
+                studentBlock.scrollTop = 0; speakerBlock.scrollTop = 0;
+                resetAudio();
+            }
+            measure();
+            startS = studentBlock.scrollTop;
+            startP = speakerBlock.scrollTop;
+            startedAt = performance.now();
+            isRunning = true;
+            studentBlock.style.scrollBehavior = 'auto';
+            speakerBlock.style.scrollBehavior = 'auto';
+            cancelAnimationFrame(rafId);
+            rafId = requestAnimationFrame(animate);
+            playAudio();
+        }
+        function pause() {
+            if (isRunning) pausedElapsed += performance.now() - startedAt;
+            isRunning = false;
+            cancelAnimationFrame(rafId);
+            setBadge('⏸ ПАУЗА ' + fmt(pausedElapsed), '#dc2626');
+            studentBlock.style.scrollBehavior = studentBehavior;
+            speakerBlock.style.scrollBehavior = speakerBehavior;
+            pauseAudio();
+        }
+        function finish() {
+            isRunning = false; completed = true;
+            cancelAnimationFrame(rafId);
+            measure();
+            studentBlock.scrollTop = maxS;
+            speakerBlock.scrollTop = maxP;
+            studentBlock.style.scrollBehavior = studentBehavior;
+            speakerBlock.style.scrollBehavior = speakerBehavior;
+
+            const nextLec = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+            if (nextLec) {
+                setBadge('✅ ГОТОВО → Лекция ' + nextLec, '#16a34a');
+                setTimeout(() => {
+                    location.href = 'Лекция ' + nextLec + '.html?' + AUTOSTART_PARAM + '=1';
+                }, autoNextDelayMs);
+            } else {
+                setBadge('✅ КУРС ЗАВЕРШЕН', '#16a34a');
+                pauseAudio();
+            }
+        }
+        function toggle() { isRunning ? pause() : startOrResume(); }
+
+        // Пробел — старт/пауза
+        window.addEventListener('keydown', (e) => {
+            if (e.repeat) return;
+            const t = e.target; const tag = t && t.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+            if (e.code === 'Space' || e.key === ' ') {
+                e.preventDefault();
+                toggle();
+            }
+        }, true);
+
+        if (badge) badge.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+        [studentBlock, speakerBlock].forEach(el => {
+            el.addEventListener('click', (e) => {
+                if (e.target.closest('a,button,iframe,input,textarea,select,video,audio')) return;
+                if (window.getSelection().toString().length > 0) return;
+                toggle();
+            });
+        });
+
+        // Автостарт при переходе с предыдущей лекции
+        const params = new URLSearchParams(location.search);
+        if (params.get(AUTOSTART_PARAM) === '1') {
+            params.delete(AUTOSTART_PARAM);
+            const clean = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
+            history.replaceState(null, '', clean);
+            setTimeout(startOrResume, 500);
+        } else {
+            setBadge('▶ ПРОБЕЛ / КЛИК — старт', '#4a5568');
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initScroll, { once: true });
+    } else {
+        initScroll();
+    }
+})();
+</script>
+
+</body>
+</html>

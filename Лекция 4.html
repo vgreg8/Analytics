@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лекция 4. Unit-экономика и когортный анализ: как понять, зарабатывает ли бизнес</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #ffffff; }
+
+        .student-view { width: 66.66%; height: 100vh; background: #ffffff; padding: 35px 40px; display: flex; flex-direction: column; justify-content: space-between; border-right: 2px solid #e2e8f0; overflow-y: auto; scroll-behavior: smooth; }
+        .speaker-notes { width: 33.34%; height: 100%; background: #1a202c; color: #edf2f7; padding: 30px; overflow-y: auto; }
+
+        .slide-header { font-size: 24px; color: #1a365d; font-weight: bold; line-height: 1.3; margin-bottom: 18px; border-bottom: 4px solid #3182ce; padding-bottom: 12px; }
+        .slide-body { flex-grow: 1; display: flex; flex-direction: column; gap: 18px; padding: 5px 0; }
+        .slide-footer { font-size: 13px; color: #a0aec0; text-align: right; margin-top: 12px; }
+
+        .chart-box { background: #f7fafc; border: 2.5px dashed #cbd5e0; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .chart-box strong { font-size: 16px; display: block; margin-bottom: 6px; }
+        .chart-box p { font-size: 13px; color: #4a5568; line-height: 1.45; }
+
+        .viz-card { background: #ffffff; border: 2px solid #e2e8f0; border-radius: 12px; padding: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.04); }
+        .viz-title { font-size: 14px; font-weight: bold; color: #1a365d; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .viz-caption { font-size: 11.5px; color: #4a5568; margin-top: 8px; line-height: 1.45; }
+        .viz-caption strong { color: #2d3748; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+
+        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .stat-box { border-radius: 10px; padding: 14px; text-align: center; border: 2px solid; }
+        .stat-box .stat-icon { font-size: 26px; }
+        .stat-box .stat-number { font-size: 13px; font-weight: 900; margin-top: 4px; }
+        .stat-box .stat-label { font-size: 10.5px; color: #4a5568; margin-top: 2px; line-height: 1.3; }
+        .stat-box.s1 { background: #ebf8ff; border-color: #90cdf4; }
+        .stat-box.s1 .stat-number { color: #2b6cb0; }
+        .stat-box.s2 { background: #fffaf0; border-color: #fbd38d; }
+        .stat-box.s2 .stat-number { color: #975a16; }
+        .stat-box.s3 { background: #f0fff4; border-color: #9ae6b4; }
+        .stat-box.s3 .stat-number { color: #276749; }
+        .stat-box.s4 { background: #faf5ff; border-color: #d6bcfa; }
+        .stat-box.s4 .stat-number { color: #553c9a; }
+        .stat-box.s5 { background: #fff5f5; border-color: #fc8181; }
+        .stat-box.s5 .stat-number { color: #9b2c2c; }
+
+        .formula-box { background: linear-gradient(135deg, #1a202c, #2d3748); color: #edf2f7; padding: 16px 20px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .formula-main { font-family: 'Courier New', monospace; font-size: 14px; letter-spacing: 0.5px; color: #90cdf4; }
+        .formula-example { font-size: 11.5px; color: #cbd5e0; margin-top: 8px; line-height: 1.5; }
+
+        .tag { display: inline-block; background: #ebf8ff; color: #2b6cb0; padding: 2px 7px; border-radius: 4px; font-size: 11px; margin: 2px 2px 2px 0; font-weight: 500; }
+        .tag.green { background: #f0fff4; color: #276749; }
+        .tag.red { background: #fff5f5; color: #9b2c2c; }
+        .tag.orange { background: #fffaf0; color: #975a16; }
+        .tag.purple { background: #faf5ff; color: #553c9a; }
+
+        .callout { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 6px; }
+        .callout strong { color: #92400e; font-size: 13px; }
+        .callout p { font-size: 12px; color: #78350f; margin-top: 4px; line-height: 1.45; }
+
+        .callout.warn { background: #fff5f5; border-left-color: #e53e3e; }
+        .callout.warn strong { color: #9b2c2c; }
+        .callout.warn p { color: #742a2a; }
+
+        .callout.ok { background: #f0fff4; border-left-color: #38a169; }
+        .callout.ok strong { color: #276749; }
+        .callout.ok p { color: #22543d; }
+
+        .compare-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .compare-table th { background: #1a365d; color: white; padding: 9px 11px; text-align: left; font-weight: 600; }
+        .compare-table td { padding: 8px 11px; border-bottom: 1px solid #e2e8f0; color: #2d3748; vertical-align: top; }
+        .compare-table tr:nth-child(even) td { background: #f7fafc; }
+        .compare-table .winner td { background: #f0fff4 !important; }
+
+        .metric-card { border-radius: 10px; padding: 14px 16px; border: 2px solid #e2e8f0; }
+        .metric-card h4 { font-size: 14px; margin-bottom: 6px; color: #1a365d; }
+        .metric-card .formula-small { font-family: 'Courier New', monospace; font-size: 11px; background: #f7fafc; padding: 4px 8px; border-radius: 4px; color: #2b6cb0; margin: 4px 0; display: inline-block; }
+        .metric-card p { font-size: 11.5px; color: #4a5568; line-height: 1.45; margin-top: 4px; }
+        .metric-card.m-arpu { background: #ebf8ff; border-color: #90cdf4; }
+        .metric-card.m-arppu { background: #ebf8ff; border-color: #63b3ed; }
+        .metric-card.m-ltv { background: #f0fff4; border-color: #9ae6b4; }
+        .metric-card.m-cac { background: #fff5f5; border-color: #fc8181; }
+        .metric-card.m-payback { background: #fffaf0; border-color: #fbd38d; }
+        .metric-card.m-ltv-cac { background: #faf5ff; border-color: #d6bcfa; }
+        .metric-card.m-cm { background: #fffaf0; border-color: #f6ad55; }
+
+        .axis { stroke: #4a5568; stroke-width: 1.5; }
+        .grid-line { stroke: #e2e8f0; stroke-width: 0.8; }
+        .label { font-family: 'Segoe UI', sans-serif; font-size: 11px; fill: #4a5568; }
+        .label-strong { font-family: 'Segoe UI', sans-serif; font-size: 12px; font-weight: 700; fill: #1a365d; }
+        .label-small { font-family: 'Segoe UI', sans-serif; font-size: 9.5px; fill: #718096; }
+        .label-tiny { font-family: 'Segoe UI', sans-serif; font-size: 8.5px; fill: #718096; }
+        .label-white { font-family: 'Segoe UI', sans-serif; font-size: 10.5px; fill: #ffffff; font-weight: 600; }
+        .label-white-sm { font-family: 'Segoe UI', sans-serif; font-size: 8.5px; fill: #ffffff; opacity: 0.9; }
+
+        .video-section { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 5px; }
+        .video-container { width: 100%; max-width: 580px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: #000; aspect-ratio: 16 / 9; }
+        .links-hub { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .video-btn { text-decoration: none; padding: 9px 14px; border-radius: 6px; font-size: 12px; font-weight: bold; color: white; display: flex; align-items: center; gap: 6px; transition: transform 0.2s, background 0.2s; cursor: pointer; border: none; }
+        .video-btn:hover { transform: translateY(-2px); }
+        .rt-btn { background: #00a877; }
+        .rt-btn:hover { background: #008f65; }
+        .stop-btn { background: #dc143c; }
+        .stop-btn:hover { background: #b01030; }
+
+        .notes-header { font-size: 17px; color: #63b3ed; font-weight: bold; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a5568; padding-bottom: 10px; }
+        .lecture-text { font-size: 14.5px; line-height: 1.65; color: #e2e8f0; text-align: justify; }
+        .lecture-text p { margin-bottom: 14px; }
+        .lecture-text h3 { color: #63b3ed; font-size: 15px; margin: 18px 0 10px; border-bottom: 1px solid #2d3748; padding-bottom: 5px; }
+        .lecture-text h4 { color: #90cdf4; font-size: 13.5px; margin: 14px 0 8px; }
+        .lecture-text ul { margin: 8px 0 14px 18px; }
+        .lecture-text li { margin-bottom: 6px; }
+
+        .dark-block { background: #2d3748; border: 1px solid #4a5568; border-radius: 10px; padding: 16px 18px; margin-top: 20px; }
+        .dark-block-title { font-size: 14px; font-weight: bold; color: #63b3ed; margin-bottom: 12px; border-bottom: 2px solid #4a5568; padding-bottom: 8px; }
+        .dark-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+        .dark-table th { background: #1a202c; color: #90cdf4; padding: 7px 9px; text-align: left; font-weight: 600; border-bottom: 1px solid #4a5568; }
+        .dark-table td { padding: 6px 9px; border-bottom: 1px solid #2d3748; color: #cbd5e0; vertical-align: top; line-height: 1.4; }
+        .dark-table tr:nth-child(even) td { background: #2a3242; }
+        .dark-table .term { font-weight: bold; color: #90cdf4; white-space: nowrap; }
+        .dark-block ol { margin: 0 0 12px 18px; padding: 0; font-size: 12px; color: #cbd5e0; line-height: 1.5; }
+        .dark-block ol li { margin-bottom: 5px; }
+        .dark-block .src-group { font-weight: bold; color: #fbd38d; font-size: 12px; margin: 12px 0 6px; }
+
+        .lecture-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(12px); border-top: 2px solid rgba(255, 255, 255, 0.08); padding: 12px 20px; display: flex; align-items: center; justify-content: center; gap: 12px; z-index: 9999; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25); font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .lecture-nav .nav-progress { position: absolute; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899); border-radius: 0 3px 3px 0; }
+        .lecture-nav .nav-btn-arrow { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); border: 1.5px solid rgba(255, 255, 255, 0.15); color: #e2e8f0; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; font-family: inherit; }
+        .lecture-nav .nav-btn-arrow:hover:not(:disabled) { background: rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.6); color: white; transform: translateY(-2px); }
+        .lecture-nav .nav-btn-arrow:disabled { opacity: 0.35; cursor: not-allowed; }
+        .lecture-nav .nav-btn-arrow .arrow-icon { font-size: 16px; line-height: 1; }
+        .lecture-nav .nav-btn-arrow .arrow-label { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+        .lecture-nav .nav-btn-arrow .arrow-label small { font-size: 9.5px; font-weight: 400; opacity: 0.7; text-transform: uppercase; }
+        .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { font-size: 12px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lecture-nav .nav-center { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 20px; color: #94a3b8; font-size: 11px; border-left: 1px solid rgba(255, 255, 255, 0.1); border-right: 1px solid rgba(255, 255, 255, 0.1); }
+        .lecture-nav .nav-counter { font-size: 15px; font-weight: 900; color: #f1f5f9; }
+        .lecture-nav .nav-counter span { color: #64748b; font-size: 12px; font-weight: 600; }
+        .lecture-nav .nav-index-link { color: #60a5fa; text-decoration: none; font-size: 11px; font-weight: 600; }
+        .lecture-nav .nav-index-link:hover { color: #93c5fd; text-decoration: underline; }
+        body { padding-bottom: 80px !important; }
+        @media (max-width: 900px) {
+            .lecture-nav { padding: 10px 12px; gap: 8px; }
+            .lecture-nav .nav-btn-arrow { padding: 8px 12px; }
+            .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { max-width: 90px; font-size: 11px; }
+            .grid-2, .grid-3, .grid-4, .stat-grid { grid-template-columns: 1fr; }
+        }
+
+        @keyframes pulseBadge {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+        .pulse-badge { animation: pulseBadge 2s ease-in-out infinite; }
+    </style>
+</head>
+<body>
+
+    <!-- ЛЕВАЯ ПАНЕЛЬ -->
+    <div class="student-view">
+        <div class="slide-header">
+            Лекция 4. Unit-экономика и когортный анализ: как понять, зарабатывает ли бизнес
+        </div>
+
+        <div class="slide-body">
+
+            <!-- HERO -->
+            <div class="chart-box" style="background: #faf5ff; border-color: #d6bcfa;">
+                <strong style="color: #553c9a;">🎯 Главная идея</strong>
+                <p><strong>Выручка — это не прибыль. Клиенты — это не успех.</strong> Unit-экономика и когортный анализ показывают реальную экономику бизнеса: окупается ли привлечение клиента, держится ли он в продукте, зарабатывает ли компания на каждом конкретном человеке.</p>
+            </div>
+
+            <!-- КЛЮЧЕВЫЕ МЕТРИКИ -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 10px;">📊 Семь ключевых метрик unit-экономики</div>
+                <div class="stat-grid">
+                    <div class="stat-box s1"><div class="stat-icon">📈</div><div class="stat-number">ARPU</div><div class="stat-label">доход на пользователя</div></div>
+                    <div class="stat-box s1"><div class="stat-icon">💳</div><div class="stat-number">ARPPU</div><div class="stat-label">доход на платящего</div></div>
+                    <div class="stat-box s3"><div class="stat-icon">💰</div><div class="stat-number">LTV</div><div class="stat-label">ценность клиента</div></div>
+                    <div class="stat-box s5"><div class="stat-icon">🎯</div><div class="stat-number">CAC</div><div class="stat-label">стоимость привлечения</div></div>
+                    <div class="stat-box s2"><div class="stat-icon">⏱️</div><div class="stat-number">Payback</div><div class="stat-label">срок окупаемости</div></div>
+                    <div class="stat-box s4"><div class="stat-icon">⚖️</div><div class="stat-number">LTV/CAC</div><div class="stat-label">здоровье бизнеса</div></div>
+                    <div class="stat-box s2"><div class="stat-icon">💵</div><div class="stat-number">CM</div><div class="stat-label">маржинальная прибыль</div></div>
+                    <div class="stat-box s3"><div class="stat-icon">✅</div><div class="stat-number">≥ 3</div><div class="stat-label">норма LTV/CAC</div></div>
+                    <div class="stat-box s2"><div class="stat-icon">📅</div><div class="stat-number">≤ 12</div><div class="stat-label">мес — норма payback</div></div>
+                </div>
+            </div>
+
+            <!-- ФОРМУЛЫ -->
+            <div class="formula-box">
+                <div class="formula-main">LTV / CAC ≥ 3 · Payback ≤ 12 мес · LTV по марже, CAC по всем затратам</div>
+                <div class="formula-example">LTV = ARPU × Retention / (1 + Дисконт − Retention) · CAC = (Маркетинг + Продажи) / Клиенты</div>
+            </div>
+
+            <!-- БЛОК 1: КАРТОЧКИ МЕТРИК -->
+            <div class="viz-card">
+                <div class="viz-title">📐 Блок 1. Как считать каждую метрику — с примерами</div>
+                <div class="grid-2">
+
+                    <div class="metric-card m-arpu">
+                        <h4>📈 ARPU — доход на пользователя</h4>
+                        <div class="formula-small">ARPU = Выручка / Активные пользователи</div>
+                        <p><strong>Пример:</strong> 1 млн ₽ / 10 000 = <strong>100 ₽/мес</strong></p>
+                        <p>Показывает средний доход на всех пользователей, включая бесплатных.</p>
+                    </div>
+
+                    <div class="metric-card m-arppu">
+                        <h4>💳 ARPPU — доход на платящего</h4>
+                        <div class="formula-small">ARPPU = Выручка / Платящие пользователи</div>
+                        <p><strong>Пример:</strong> 1 млн ₽ / 2 000 = <strong>500 ₽/мес</strong></p>
+                        <p>Разница ARPU и ARPPU = доля бесплатных пользователей.</p>
+                    </div>
+
+                    <div class="metric-card m-ltv">
+                        <h4>💰 LTV — пожизненная ценность</h4>
+                        <div class="formula-small">LTV (простой) = ARPU × Срок жизни</div>
+                        <p><strong>Пример:</strong> 500 ₽ × 24 мес = <strong>12 000 ₽</strong></p>
+                        <p>Три способа: простой, когортный (точный), прогнозный (формула).</p>
+                    </div>
+
+                    <div class="metric-card m-cac">
+                        <h4>🎯 CAC — стоимость привлечения</h4>
+                        <div class="formula-small">CAC = Затраты / Привлечённые клиенты</div>
+                        <p><strong>Пример:</strong> 200 000 ₽ / 100 = <strong>2 000 ₽</strong></p>
+                        <p>Три вида: общий, paid CAC, organic CAC. Считать по каналам.</p>
+                    </div>
+
+                    <div class="metric-card m-payback">
+                        <h4>⏱️ Payback period — окупаемость</h4>
+                        <div class="formula-small">Payback = CAC / Средний доход на клиента в месяц (по марже)</div>
+                        <p><strong>Пример:</strong> 2 000 ₽ / 500 ₽ = <strong>4 мес</strong></p>
+                        <p>Если больше 12 мес — деньги замораживаются надолго.</p>
+                    </div>
+
+                    <div class="metric-card m-ltv-cac">
+                        <h4>⚖️ LTV / CAC — здоровье</h4>
+                        <div class="formula-small">LTV / CAC = LTV / CAC</div>
+                        <p><strong>Пример:</strong> 6 000 / 2 000 = <strong>3</strong></p>
+                        <p>≥ 3 — здоров; 1–3 — на грани; &lt; 1 — убыточен.</p>
+                    </div>
+
+                    <div class="metric-card m-cm" style="grid-column: span 2;">
+                        <h4>💵 Contribution Margin — маржинальная прибыль</h4>
+                        <div class="formula-small">CM = Выручка − Переменные затраты</div>
+                        <p><strong>Пример:</strong> 500 ₽ − 100 ₽ = <strong>400 ₽</strong></p>
+                        <p><strong>Правило:</strong> LTV нужно считать по марже, а не по выручке. Иначе сравнение с CAC некорректно.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ LTV/CAC (ИСПРАВЛЕНО: пропорции баров) -->
+            <div class="viz-card">
+                <div class="viz-title">⚖️ LTV/CAC: как читать ключевое соотношение</div>
+                <svg viewBox="0 0 540 240" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="240" fill="#ffffff"/>
+
+                    <!-- Case 1: healthy. CAC=2000→30px, LTV=6000→90px -->
+                    <rect x="20" y="30" width="160" height="190" rx="10" fill="#f0fff4" stroke="#38a169" stroke-width="2"/>
+                    <text x="100" y="55" text-anchor="middle" class="label-strong" fill="#276749">✅ Здоров</text>
+                    <text x="100" y="75" text-anchor="middle" class="label-small">LTV/CAC ≥ 3</text>
+                    <text x="50" y="125" text-anchor="middle" class="label-tiny">CAC</text>
+                    <rect x="35" y="145" width="30" height="30" fill="#fc8181" rx="2"/>
+                    <text x="50" y="195" text-anchor="middle" class="label-tiny">2 000 ₽</text>
+                    <text x="130" y="125" text-anchor="middle" class="label-tiny">LTV</text>
+                    <rect x="115" y="85" width="30" height="90" fill="#38a169" rx="2"/>
+                    <text x="130" y="195" text-anchor="middle" class="label-tiny">6 000 ₽</text>
+                    <text x="100" y="215" text-anchor="middle" class="label-strong" fill="#276749">= 3.0</text>
+
+                    <!-- Case 2: on the edge. CAC=2500→37.5px, LTV=3500→52.5px -->
+                    <rect x="190" y="30" width="160" height="190" rx="10" fill="#fffaf0" stroke="#d69e2e" stroke-width="2"/>
+                    <text x="270" y="55" text-anchor="middle" class="label-strong" fill="#975a16">⚠️ На грани</text>
+                    <text x="270" y="75" text-anchor="middle" class="label-small">1 ≤ LTV/CAC &lt; 3</text>
+                    <text x="220" y="125" text-anchor="middle" class="label-tiny">CAC</text>
+                    <rect x="205" y="137.5" width="30" height="37.5" fill="#fc8181" rx="2"/>
+                    <text x="220" y="195" text-anchor="middle" class="label-tiny">2 500 ₽</text>
+                    <text x="300" y="125" text-anchor="middle" class="label-tiny">LTV</text>
+                    <rect x="285" y="122.5" width="30" height="52.5" fill="#f6ad55" rx="2"/>
+                    <text x="300" y="195" text-anchor="middle" class="label-tiny">3 500 ₽</text>
+                    <text x="270" y="215" text-anchor="middle" class="label-strong" fill="#975a16">= 1.4</text>
+
+                    <!-- Case 3: loss. CAC=3000→45px, LTV=2000→30px -->
+                    <rect x="360" y="30" width="160" height="190" rx="10" fill="#fff5f5" stroke="#e53e3e" stroke-width="2"/>
+                    <text x="440" y="55" text-anchor="middle" class="label-strong" fill="#9b2c2c">❌ Убыточен</text>
+                    <text x="440" y="75" text-anchor="middle" class="label-small">LTV/CAC &lt; 1</text>
+                    <text x="390" y="125" text-anchor="middle" class="label-tiny">CAC</text>
+                    <rect x="375" y="130" width="30" height="45" fill="#fc8181" rx="2"/>
+                    <text x="390" y="195" text-anchor="middle" class="label-tiny">3 000 ₽</text>
+                    <text x="470" y="125" text-anchor="middle" class="label-tiny">LTV</text>
+                    <rect x="455" y="145" width="30" height="30" fill="#e53e3e" rx="2"/>
+                    <text x="470" y="195" text-anchor="middle" class="label-tiny">2 000 ₽</text>
+                    <text x="440" y="215" text-anchor="middle" class="label-strong" fill="#9b2c2c">= 0.67</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Слева</strong> — здоровый бизнес: на каждый рубль привлечения — 3 рубля дохода (LTV в 3 раза выше CAC). <strong>В центре</strong> — на грани: 1.4 рубля (LTV немного выше CAC). <strong>Справа</strong> — убыточен: 0.67 рубля (CAC выше LTV), каждый новый клиент увеличивает убыток. Высота баров пропорциональна числам.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ PAYBACK (ИСПРАВЛЕНО: пересечение в точке payback) -->
+            <div class="viz-card">
+                <div class="viz-title">⏱️ Payback period: когда клиент окупит привлечение</div>
+                <svg viewBox="0 0 540 240" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="240" fill="#ffffff"/>
+                    <line x1="60" y1="200" x2="500" y2="200" class="axis"/>
+                    <line x1="60" y1="20" x2="60" y2="200" class="axis"/>
+
+                    <!-- CAC line -->
+                    <line x1="60" y1="150" x2="500" y2="150" stroke="#e53e3e" stroke-width="2" stroke-dasharray="6 3"/>
+                    <text x="505" y="154" class="label-small" fill="#9b2c2c" style="font-weight: bold;">CAC</text>
+
+                    <!-- Accumulated revenue: проходит через (240, 150) — точку payback -->
+                    <path d="M 60 190 L 120 178 L 180 166 L 240 150 L 300 132 L 360 114 L 420 96 L 480 78" fill="none" stroke="#38a169" stroke-width="3"/>
+                    <text x="490" y="73" class="label-small" fill="#276749" style="font-weight: bold;">доход</text>
+
+                    <!-- Payback point (пересечение) -->
+                    <circle cx="240" cy="150" r="7" fill="#38a169" stroke="#ffffff" stroke-width="2"/>
+                    <line x1="240" y1="150" x2="240" y2="200" stroke="#38a169" stroke-width="1.5" stroke-dasharray="4 3"/>
+                    <text x="240" y="220" text-anchor="middle" class="label-strong" fill="#276749">payback = 4 мес</text>
+
+                    <!-- Axis labels -->
+                    <text x="280" y="235" text-anchor="middle" class="label-strong">Месяцы с момента привлечения →</text>
+                    <text x="22" y="110" text-anchor="middle" class="label-strong" transform="rotate(-90 22 110)">Накопленная сумма</text>
+
+                    <!-- X ticks: равномерно 0→12 -->
+                    <text x="60"  y="215" text-anchor="middle" class="label-small">0</text>
+                    <text x="120" y="215" text-anchor="middle" class="label-small">1</text>
+                    <text x="180" y="215" text-anchor="middle" class="label-small">2</text>
+                    <text x="240" y="215" text-anchor="middle" class="label-small" style="font-weight: bold;">4</text>
+                    <text x="300" y="215" text-anchor="middle" class="label-small">6</text>
+                    <text x="360" y="215" text-anchor="middle" class="label-small">8</text>
+                    <text x="420" y="215" text-anchor="middle" class="label-small">10</text>
+                    <text x="480" y="215" text-anchor="middle" class="label-small">12</text>
+                </svg>
+                <div class="viz-caption">
+                    Красная линия — <strong>CAC</strong> (сколько вложили в клиента). Зелёная — <strong>накопленный доход</strong>. Точка пересечения — <strong>payback</strong>, момент окупаемости. Всё, что дальше — чистая прибыль. На графике доход в точке x = 240 (4-й месяц) равен CAC — это и есть момент окупаемости.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ КОГОРТ (ИСПРАВЛЕНО: цвета по значениям) -->
+            <div class="viz-card">
+                <div class="viz-title">📊 Блок 2. Когортная матрица: retention по месяцам жизни</div>
+                <svg viewBox="0 0 540 340" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="340" fill="#ffffff"/>
+
+                    <!-- Header -->
+                    <text x="120" y="25" text-anchor="middle" class="label-strong">Когорта</text>
+                    <text x="200" y="25" text-anchor="middle" class="label-strong">M0</text>
+                    <text x="260" y="25" text-anchor="middle" class="label-strong">M1</text>
+                    <text x="320" y="25" text-anchor="middle" class="label-strong">M2</text>
+                    <text x="380" y="25" text-anchor="middle" class="label-strong">M3</text>
+                    <text x="440" y="25" text-anchor="middle" class="label-strong">M4</text>
+                    <text x="500" y="25" text-anchor="middle" class="label-strong">M5</text>
+
+                    <!-- Row 1: Янв. M1=45(#48bb78), M2=32(#9ae6b4), M3=25(#c6f6d5), M4=22(#e6fffa), M5=20(#f0fff4) -->
+                    <rect x="35" y="35" width="170" height="42" rx="4" fill="#f7fafc" stroke="#e2e8f0"/>
+                    <text x="120" y="61" text-anchor="middle" class="label-small" style="font-weight: bold;">Янв 2024</text>
+                    <rect x="175" y="35" width="50" height="42" rx="3" fill="#22543d"/><text x="200" y="61" text-anchor="middle" class="label-white">100%</text>
+                    <rect x="235" y="35" width="50" height="42" rx="3" fill="#48bb78"/><text x="260" y="61" text-anchor="middle" class="label-white">45%</text>
+                    <rect x="295" y="35" width="50" height="42" rx="3" fill="#9ae6b4"/><text x="320" y="61" text-anchor="middle" class="label-strong" fill="#22543d">32%</text>
+                    <rect x="355" y="35" width="50" height="42" rx="3" fill="#c6f6d5"/><text x="380" y="61" text-anchor="middle" class="label-strong" fill="#22543d">25%</text>
+                    <rect x="415" y="35" width="50" height="42" rx="3" fill="#e6fffa"/><text x="440" y="61" text-anchor="middle" class="label-strong" fill="#22543d">22%</text>
+                    <rect x="475" y="35" width="50" height="42" rx="3" fill="#f0fff4"/><text x="500" y="61" text-anchor="middle" class="label-strong" fill="#22543d">20%</text>
+
+                    <!-- Row 2: Фев. M1=48(#38a169 темнее), M2=35(#9ae6b4), M3=28(#c6f6d5), M4=24(#e6fffa) -->
+                    <rect x="35" y="82" width="170" height="42" rx="4" fill="#f7fafc" stroke="#e2e8f0"/>
+                    <text x="120" y="108" text-anchor="middle" class="label-small" style="font-weight: bold;">Фев 2024</text>
+                    <rect x="175" y="82" width="50" height="42" rx="3" fill="#22543d"/><text x="200" y="108" text-anchor="middle" class="label-white">100%</text>
+                    <rect x="235" y="82" width="50" height="42" rx="3" fill="#38a169"/><text x="260" y="108" text-anchor="middle" class="label-white">48%</text>
+                    <rect x="295" y="82" width="50" height="42" rx="3" fill="#9ae6b4"/><text x="320" y="108" text-anchor="middle" class="label-strong" fill="#22543d">35%</text>
+                    <rect x="355" y="82" width="50" height="42" rx="3" fill="#c6f6d5"/><text x="380" y="108" text-anchor="middle" class="label-strong" fill="#22543d">28%</text>
+                    <rect x="415" y="82" width="50" height="42" rx="3" fill="#e6fffa"/><text x="440" y="108" text-anchor="middle" class="label-strong" fill="#22543d">24%</text>
+                    <rect x="475" y="82" width="50" height="42" rx="3" fill="#f7fafc"/><text x="500" y="108" text-anchor="middle" class="label-tiny">—</text>
+
+                    <!-- Row 3: Мар. M1=52(#38a169), M2=38(#68d391 темнее) -->
+                    <rect x="35" y="129" width="170" height="42" rx="4" fill="#f7fafc" stroke="#e2e8f0"/>
+                    <text x="120" y="155" text-anchor="middle" class="label-small" style="font-weight: bold;">Мар 2024</text>
+                    <rect x="175" y="129" width="50" height="42" rx="3" fill="#22543d"/><text x="200" y="155" text-anchor="middle" class="label-white">100%</text>
+                    <rect x="235" y="129" width="50" height="42" rx="3" fill="#38a169"/><text x="260" y="155" text-anchor="middle" class="label-white">52%</text>
+                    <rect x="295" y="129" width="50" height="42" rx="3" fill="#68d391"/><text x="320" y="155" text-anchor="middle" class="label-strong" fill="#22543d">38%</text>
+                    <rect x="355" y="129" width="50" height="42" rx="3" fill="#f7fafc"/><text x="380" y="155" text-anchor="middle" class="label-tiny">—</text>
+                    <rect x="415" y="129" width="50" height="42" rx="3" fill="#f7fafc"/><text x="440" y="155" text-anchor="middle" class="label-tiny">—</text>
+                    <rect x="475" y="129" width="50" height="42" rx="3" fill="#f7fafc"/><text x="500" y="155" text-anchor="middle" class="label-tiny">—</text>
+
+                    <!-- Row 4: Апр. M1=50(#38a169) -->
+                    <rect x="35" y="176" width="170" height="42" rx="4" fill="#f7fafc" stroke="#e2e8f0"/>
+                    <text x="120" y="202" text-anchor="middle" class="label-small" style="font-weight: bold;">Апр 2024</text>
+                    <rect x="175" y="176" width="50" height="42" rx="3" fill="#22543d"/><text x="200" y="202" text-anchor="middle" class="label-white">100%</text>
+                    <rect x="235" y="176" width="50" height="42" rx="3" fill="#38a169"/><text x="260" y="202" text-anchor="middle" class="label-white">50%</text>
+                    <rect x="295" y="176" width="50" height="42" rx="3" fill="#f7fafc"/><text x="320" y="202" text-anchor="middle" class="label-tiny">—</text>
+                    <rect x="355" y="176" width="50" height="42" rx="3" fill="#f7fafc"/><text x="380" y="202" text-anchor="middle" class="label-tiny">—</text>
+                    <rect x="415" y="176" width="50" height="42" rx="3" fill="#f7fafc"/><text x="440" y="202" text-anchor="middle" class="label-tiny">—</text>
+                    <rect x="475" y="176" width="50" height="42" rx="3" fill="#f7fafc"/><text x="500" y="202" text-anchor="middle" class="label-tiny">—</text>
+
+                    <!-- Row 5: Май. M1=55(#2f855a ещё темнее) -->
+                    <rect x="35" y="223" width="170" height="42" rx="4" fill="#f7fafc" stroke="#e2e8f0"/>
+                    <text x="120" y="249" text-anchor="middle" class="label-small" style="font-weight: bold;">Май 2024</text>
+                    <rect x="175" y="223" width="50" height="42" rx="3" fill="#22543d"/><text x="200" y="249" text-anchor="middle" class="label-white">100%</text>
+                    <rect x="235" y="223" width="50" height="42" rx="3" fill="#2f855a"/><text x="260" y="249" text-anchor="middle" class="label-white">55%</text>
+                    <rect x="295" y="223" width="50" height="42" rx="3" fill="#f7fafc"/><text x="320" y="249" text-anchor="middle" class="label-tiny">—</text>
+                    <rect x="355" y="223" width="50" height="42" rx="3" fill="#f7fafc"/><text x="380" y="249" text-anchor="middle" class="label-tiny">—</text>
+                    <rect x="415" y="223" width="50" height="42" rx="3" fill="#f7fafc"/><text x="440" y="249" text-anchor="middle" class="label-tiny">—</text>
+                    <rect x="475" y="223" width="50" height="42" rx="3" fill="#f7fafc"/><text x="500" y="249" text-anchor="middle" class="label-tiny">—</text>
+
+                    <!-- Interpretation -->
+                    <rect x="35" y="285" width="490" height="45" rx="8" fill="#f0fff4" stroke="#38a169" stroke-width="1.5"/>
+                    <text x="280" y="305" text-anchor="middle" class="label-strong" fill="#276749">✅ Вывод: новые когорты держатся лучше → продукт улучшается</text>
+                    <text x="280" y="322" text-anchor="middle" class="label-small" fill="#276749">M1: 45 → 48 → 52 → 50 → 55 (тренд на рост). M2: 32 → 35 → 38 (уверенный рост).</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Когортная матрица</strong> — строки = когорты по месяцу привлечения, столбцы = месяцы жизни (M0–M5). В ячейках — retention rate. Цвет заливки отражает значение: чем выше — тем темнее. Если новые когорты <strong>темнее сверху вниз</strong> → продукт улучшается. M1: 45→48→52→50→55, M2: 32→35→38 — тренд на рост (небольшой откат в апреле в пределах нормы).
+                </div>
+            </div>
+
+            <!-- RETENTION CURVES (ИСПРАВЛЕНО: равномерная ось X) -->
+            <div class="viz-card">
+                <div class="viz-title">📉 Retention curve: форма кривой удержания</div>
+                <svg viewBox="0 0 540 240" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="240" fill="#ffffff"/>
+                    <line x1="50" y1="210" x2="510" y2="210" class="axis"/>
+                    <line x1="50" y1="20" x2="50" y2="210" class="axis"/>
+                    <line x1="50" y1="162" x2="510" y2="162" class="grid-line"/>
+                    <line x1="50" y1="114" x2="510" y2="114" class="grid-line"/>
+                    <line x1="50" y1="66" x2="510" y2="66" class="grid-line"/>
+
+                    <!-- Good retention curve -->
+                    <path d="M 50 30 Q 80 100 130 130 Q 200 148 290 152 Q 380 155 470 156"
+                          fill="none" stroke="#38a169" stroke-width="3"/>
+                    <text x="480" y="152" class="label-small" fill="#276749" style="font-weight: bold;">здоровое</text>
+
+                    <!-- Problem curve -->
+                    <path d="M 50 30 Q 80 130 130 165 Q 200 190 290 200 Q 380 205 470 207"
+                          fill="none" stroke="#e53e3e" stroke-width="3" stroke-dasharray="6 3"/>
+                    <text x="480" y="203" class="label-small" fill="#9b2c2c" style="font-weight: bold;">проблемное</text>
+
+                    <!-- Axis labels -->
+                    <text x="280" y="235" text-anchor="middle" class="label-strong">Месяцы с момента привлечения →</text>
+                    <text x="20" y="115" text-anchor="middle" class="label-strong" transform="rotate(-90 20 115)">Retention, %</text>
+
+                    <!-- Y ticks -->
+                    <text x="42" y="213" text-anchor="end" class="label-small">0%</text>
+                    <text x="42" y="166" text-anchor="end" class="label-small">25%</text>
+                    <text x="42" y="118" text-anchor="end" class="label-small">50%</text>
+                    <text x="42" y="70" text-anchor="end" class="label-small">75%</text>
+
+                    <!-- X ticks: равномерные 0, 2, 4, 6, 8, 10, 12 -->
+                    <text x="50"  y="225" text-anchor="middle" class="label-small">0</text>
+                    <text x="125" y="225" text-anchor="middle" class="label-small">2</text>
+                    <text x="200" y="225" text-anchor="middle" class="label-small">4</text>
+                    <text x="275" y="225" text-anchor="middle" class="label-small">6</text>
+                    <text x="350" y="225" text-anchor="middle" class="label-small">8</text>
+                    <text x="425" y="225" text-anchor="middle" class="label-small">10</text>
+                    <text x="500" y="225" text-anchor="middle" class="label-small">12</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Здоровая кривая</strong> (зелёная) — падает, но <strong>выравнивается на плато</strong> примерно на уровне 30%. Есть «ядро» лояльных клиентов. <strong>Проблемная</strong> (красная) — продолжает падать почти до нуля. Продукт не создаёт привычку, все клиенты постепенно уходят.
+                </div>
+            </div>
+
+            <!-- RFM (ИСПРАВЛЕНО: «Лояльные» → «Требуют внимания») -->
+            <div class="viz-card">
+                <div class="viz-title">🎯 Блок 4. RFM-анализ: сегментация клиентов по ценности</div>
+                <svg viewBox="0 0 540 320" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="320" fill="#ffffff"/>
+
+                    <!-- Axes -->
+                    <line x1="60" y1="270" x2="500" y2="270" class="axis"/>
+                    <line x1="60" y1="30" x2="60" y2="270" class="axis"/>
+                    <text x="280" y="295" text-anchor="middle" class="label-strong">Recency (давность покупки) →</text>
+                    <text x="22" y="150" text-anchor="middle" class="label-strong" transform="rotate(-90 22 150)">Frequency (частота) →</text>
+                    <text x="60" y="285" text-anchor="middle" class="label-tiny">давно</text>
+                    <text x="500" y="285" text-anchor="middle" class="label-tiny">недавно</text>
+                    <text x="50" y="265" text-anchor="end" class="label-tiny">редко</text>
+                    <text x="50" y="35" text-anchor="end" class="label-tiny">часто</text>
+
+                    <!-- Quadrants -->
+                    <!-- Champions (top-right) -->
+                    <rect x="280" y="30" width="220" height="120" fill="#f0fff4" stroke="#38a169" stroke-width="1" stroke-dasharray="3 2"/>
+                    <text x="390" y="55" text-anchor="middle" class="label-strong" fill="#276749">🏆 Чемпионы (555)</text>
+                    <text x="390" y="70" text-anchor="middle" class="label-tiny">покупают часто и дорого</text>
+                    <circle cx="320" cy="100" r="10" fill="#38a169"/>
+                    <circle cx="360" cy="95" r="8" fill="#38a169"/>
+                    <circle cx="410" cy="105" r="12" fill="#38a169"/>
+                    <circle cx="450" cy="90" r="9" fill="#38a169"/>
+                    <circle cx="480" cy="115" r="7" fill="#38a169"/>
+
+                    <!-- Under threat (top-left) — бывшие лояльные, давно не покупали -->
+                    <rect x="60" y="30" width="220" height="120" fill="#fff5f5" stroke="#e53e3e" stroke-width="1" stroke-dasharray="3 2"/>
+                    <text x="170" y="55" text-anchor="middle" class="label-strong" fill="#9b2c2c">⚠️ Требуют внимания (444)</text>
+                    <text x="170" y="70" text-anchor="middle" class="label-tiny">были лояльными, но давно не покупали</text>
+                    <circle cx="100" cy="100" r="7" fill="#e53e3e"/>
+                    <circle cx="140" cy="95" r="8" fill="#e53e3e"/>
+                    <circle cx="180" cy="105" r="6" fill="#e53e3e"/>
+                    <circle cx="220" cy="110" r="7" fill="#e53e3e"/>
+
+                    <!-- Newcomers (bottom-right) -->
+                    <rect x="280" y="150" width="220" height="120" fill="#fffaf0" stroke="#d69e2e" stroke-width="1" stroke-dasharray="3 2"/>
+                    <text x="390" y="175" text-anchor="middle" class="label-strong" fill="#975a16">🌱 Новички (511)</text>
+                    <text x="390" y="190" text-anchor="middle" class="label-tiny">только пришли, ещё не разобрались</text>
+                    <circle cx="320" cy="220" r="5" fill="#d69e2e"/>
+                    <circle cx="360" cy="215" r="5" fill="#d69e2e"/>
+                    <circle cx="410" cy="225" r="5" fill="#d69e2e"/>
+                    <circle cx="450" cy="230" r="5" fill="#d69e2e"/>
+                    <circle cx="480" cy="220" r="5" fill="#d69e2e"/>
+
+                    <!-- Sleeping (bottom-left) -->
+                    <rect x="60" y="150" width="220" height="120" fill="#faf5ff" stroke="#805ad5" stroke-width="1" stroke-dasharray="3 2"/>
+                    <text x="170" y="175" text-anchor="middle" class="label-strong" fill="#553c9a">😴 Спящие (211)</text>
+                    <text x="170" y="190" text-anchor="middle" class="label-tiny">покупали, но давно</text>
+                    <circle cx="100" cy="225" r="5" fill="#805ad5"/>
+                    <circle cx="140" cy="220" r="4" fill="#805ad5"/>
+                    <circle cx="180" cy="230" r="5" fill="#805ad5"/>
+                    <circle cx="220" cy="225" r="4" fill="#805ad5"/>
+                    <circle cx="250" cy="235" r="4" fill="#805ad5"/>
+                </svg>
+                <div class="viz-caption">
+                    <strong>RFM</strong> раскладывает клиентов по трём осям: Recency (давность), Frequency (частота), Monetary (деньги). Получаем 4 основных сегмента: <strong>чемпионы</strong> (покупают часто и дорого), <strong>требуют внимания</strong> (были лояльными, но давно не покупали — риск ухода), <strong>новички</strong>, <strong>спящие</strong> (рискуют уйти). Стратегии для каждого — разные: чемпионам — VIP-программы, требуют внимания — реактивация, новичкам — онбординг, спящим — скидки или отказ.
+                </div>
+            </div>
+
+            <!-- ПРАКТИЧЕСКИЙ КЕЙС -->
+            <div class="viz-card">
+                <div class="viz-title">💼 Блок 6. Практический кейс: подписочный сервис</div>
+                <svg viewBox="0 0 540 260" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="260" fill="#ffffff"/>
+
+                    <!-- Problem -->
+                    <rect x="20" y="20" width="150" height="100" rx="8" fill="#fff5f5" stroke="#e53e3e" stroke-width="2"/>
+                    <text x="95" y="45" text-anchor="middle" class="label-strong" fill="#9b2c2c">Проблема</text>
+                    <text x="95" y="65" text-anchor="middle" class="label-small">выручка +15%/мес</text>
+                    <text x="95" y="82" text-anchor="middle" class="label-small">но LTV/CAC = 1.8</text>
+                    <text x="95" y="99" text-anchor="middle" class="label-small">payback = 24 мес</text>
+
+                    <!-- Arrow -->
+                    <text x="185" y="75" text-anchor="middle" class="label-strong" fill="#4a5568" style="font-size: 22px;">→</text>
+
+                    <!-- Analysis -->
+                    <rect x="200" y="20" width="150" height="100" rx="8" fill="#fffaf0" stroke="#d69e2e" stroke-width="2"/>
+                    <text x="275" y="45" text-anchor="middle" class="label-strong" fill="#975a16">Анализ</text>
+                    <text x="275" y="65" text-anchor="middle" class="label-small">когорты хуже</text>
+                    <text x="275" y="82" text-anchor="middle" class="label-small">M1: 40% → 35% → 28%</text>
+                    <text x="275" y="99" text-anchor="middle" class="label-small">paid retention 15%</text>
+
+                    <!-- Arrow -->
+                    <text x="365" y="75" text-anchor="middle" class="label-strong" fill="#4a5568" style="font-size: 22px;">→</text>
+
+                    <!-- Solution -->
+                    <rect x="380" y="20" width="150" height="100" rx="8" fill="#f0fff4" stroke="#38a169" stroke-width="2"/>
+                    <text x="455" y="45" text-anchor="middle" class="label-strong" fill="#276749">Решение</text>
+                    <text x="455" y="65" text-anchor="middle" class="label-small">↓ платная реклама</text>
+                    <text x="455" y="82" text-anchor="middle" class="label-small">↑ контент и рефералы</text>
+                    <text x="455" y="99" text-anchor="middle" class="label-small">↑ онбординг, retention</text>
+
+                    <!-- Metrics breakdown -->
+                    <rect x="20" y="140" width="510" height="105" rx="8" fill="#f7fafc" stroke="#e2e8f0" stroke-width="1"/>
+                    <text x="275" y="162" text-anchor="middle" class="label-strong">Разбивка по каналам привлечения</text>
+
+                    <text x="40" y="185" class="label-small" style="font-weight: bold;">Платная реклама</text>
+                    <rect x="150" y="175" width="80" height="14" fill="#e53e3e" rx="2"/>
+                    <text x="240" y="186" class="label-tiny" fill="#9b2c2c">retention 15% · CAC 2 500 ₽</text>
+
+                    <text x="40" y="210" class="label-small" style="font-weight: bold;">Контент</text>
+                    <rect x="150" y="200" width="180" height="14" fill="#38a169" rx="2"/>
+                    <text x="340" y="211" class="label-tiny" fill="#276749">retention 40% · CAC 800 ₽</text>
+
+                    <text x="40" y="235" class="label-small" style="font-weight: bold;">Рефералы</text>
+                    <rect x="150" y="225" width="220" height="14" fill="#3182ce" rx="2"/>
+                    <text x="380" y="236" class="label-tiny" fill="#2b6cb0">retention 60% · CAC 300 ₽</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Кейс:</strong> выручка растёт, но unit-экономика отрицательная. Когортный анализ + разбивка по каналам показывает: <strong>платная реклама даёт клиентов с retention 15%</strong>, а контент и рефералы — 40–60%. Решение: перераспределить бюджет. Аналитика → бизнес-решение.
+                </div>
+            </div>
+
+            <!-- ТИПИЧНЫЕ ОШИБКИ -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 10px;">⚠️ Шесть типичных ошибок в unit-экономике и когортах</div>
+                <div class="grid-2">
+                    <div class="callout warn">
+                        <strong>❌ Средние по больнице</strong>
+                        <p>Средний чек вырос — но за счёт одного крупного клиента. <strong>Решение:</strong> медиана, квартили, когорты, сегменты.</p>
+                    </div>
+                    <div class="callout warn">
+                        <strong>❌ Survivorship bias</strong>
+                        <p>LTV считают только по оставшимся клиентам → завышен. <strong>Решение:</strong> считать по всей когорте, включая ушедших.</p>
+                    </div>
+                    <div class="callout warn">
+                        <strong>❌ Simpson's paradox</strong>
+                        <p>В каждой группе улучшение, в целом — ухудшение (сдвиг структуры). <strong>Решение:</strong> смотреть на разбивку.</p>
+                    </div>
+                    <div class="callout warn">
+                        <strong>❌ LTV по выручке</strong>
+                        <p>Выручка — не прибыль. Сравнение с CAC будет некорректным. <strong>Решение:</strong> LTV по contribution margin.</p>
+                    </div>
+                    <div class="callout warn">
+                        <strong>❌ CAC без зарплат</strong>
+                        <p>Считают только рекламу → CAC занижен. <strong>Решение:</strong> включать зарплаты маркетинга и продаж.</p>
+                    </div>
+                    <div class="callout warn">
+                        <strong>❌ Игнорирование сезонности</strong>
+                        <p>Сравнение августа с июлем без поправки → ложные выводы. <strong>Решение:</strong> год-к-году.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ТАБЛИЦА НОРМ -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 8px;">📊 Нормы unit-экономики: на что ориентироваться</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr><th>Метрика</th><th>Здоровый бизнес</th><th>На грани</th><th>Убыточный</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr class="winner"><td><strong>LTV / CAC</strong></td><td>≥ 3</td><td>1–3</td><td>&lt; 1</td></tr>
+                        <tr class="winner"><td><strong>Payback period</strong></td><td>≤ 12 мес</td><td>12–24 мес</td><td>&gt; 24 мес</td></tr>
+                        <tr><td><strong>Retention M1</strong></td><td>&gt; 40%</td><td>25–40%</td><td>&lt; 25%</td></tr>
+                        <tr><td><strong>Retention M3</strong></td><td>&gt; 25%</td><td>15–25%</td><td>&lt; 15%</td></tr>
+                        <tr><td><strong>Contribution Margin</strong></td><td>&gt; 60%</td><td>30–60%</td><td>&lt; 30%</td></tr>
+                        <tr><td><strong>Churn (мес)</strong></td><td>&lt; 3%</td><td>3–7%</td><td>&gt; 7%</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- CALL-OUT -->
+            <div class="callout ok">
+                <strong>💡 Главный вывод</strong>
+                <p>Unit-экономика и когортный анализ — это <strong>не просто метрики, а способ мышления</strong>. Они заставляют смотреть не на общую картину, а на <strong>конкретных клиентов</strong> и на то, как они ведут себя со временем. Выручка растёт — не значит, что бизнес здоров. Клиентов больше — не значит, что экономика сходится. Смотрите на LTV/CAC, payback, когорты.</p>
+            </div>
+
+            <!-- ВИДЕОПЛЕЕР -->
+            <div class="video-section">
+                <div class="video-container">
+                    <iframe id="lecture-player" src="https://rutube.ru" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+                </div>
+                <div class="links-hub">
+                    <button onclick="changeVideo('https://rutube.ru/')" class="video-btn stop-btn">⏹ СТОП</button>
+                    <button onclick="changeVideo('https://rutube.ru/play/embed/')" class="video-btn rt-btn">📜 Лекция 4. Unit-экономика</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="slide-footer">
+            Направление «Менеджмент» | Курс: Аналитика данных | Лекция 4: «Unit-экономика и когортный анализ»
+        </div>
+    </div>
+
+    <!-- ПРАВАЯ ПАНЕЛЬ -->
+    <div class="speaker-notes">
+        <div style="position: sticky; top: 0; background: #1a202c; padding: 20px 20px 10px 20px; border-bottom: 1px solid #4a5568; width: 100%; z-index: 100;">
+            <div class="notes-header" style="display: block; padding-bottom: 15px;">
+                <audio id="lecture-audio" preload="auto" controls
+                       src="https://archive.org/download/03_20261110_20261110/04.mp3"
+                       style="width: 100%; height: 32px; border-radius: 4px;"></audio>
+            </div>
+            <div style="width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                <iframe id="right-lecture-player" src="https://archive.org/embed/20261020_20261020_0955?autoplay=true&loop=true&muted=true" allow="clipboard-write; autoplay" width="100%" height="100%" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="border: none;"></iframe>
+            </div>
+        </div>
+
+        <div class="lecture-text" style="margin-top: 20px;">
+
+            <h3>📌 Введение</h3>
+
+            <p>Добрый день, коллеги. Мы начинаем четвёртую лекцию нашего курса. Она продолжает тему метрик. В первой лекции мы разобрали одиннадцать ролей аналитиков. А в четвёртой лекции — их ключевые показатели. Мы увидели, что у каждой роли свои метрики. Но осталась важная тема, которую мы не затронули. Это unit-экономика и когортный анализ.</p>
+
+            <p>Почему эти темы заслуживают отдельной лекции. Потому что они отвечают на самый главный вопрос бизнеса. Зарабатывает ли компания на своих клиентах. Или только кажется, что зарабатывает. Можно расти в выручке и при этом терять деньги. Можно привлекать много клиентов и при этом разоряться. Unit-экономика и когортный анализ помогают это увидеть.</p>
+
+            <p>Давайте сразу обозначим главную мысль. Выручка — это не прибыль. Количество клиентов — это не успех. Метрики, которые мы разберём сегодня, показывают реальную экономику бизнеса. Они позволяют понять, окупается ли привлечение клиента. Держится ли клиент в продукте. И зарабатывает ли компания на каждом конкретном человеке.</p>
+
+            <p>Представьте себе такую ситуацию. Подписочный сервис растёт на пятнадцать процентов в месяц. Руководство довольно. Все смотрят на выручку. Она растёт. Но LTV/CAC равно одной целой восьми десятым. То есть на каждый рубль привлечения компания зарабатывает только один рубль восемьдесят копеек. Это значит, что бизнес работает в минус. А руководство этого не видит. Потому что смотрит только на выручку.</p>
+
+            <p>Или другой пример. Компания запустила рекламную кампанию. Пришло много клиентов. Выручка выросла. Но когортный анализ показывает, что новые клиенты уходят через месяц. А старые, которые пришли раньше, остаются надолго. Значит, реклама привлекает не тех клиентов. И деньги потрачены зря.</p>
+
+            <p>Сегодня мы разберём несколько важных тем. Сначала поймём, что такое unit-экономика. Затем разберём ключевые метрики. ARPU. LTV. CAC. Payback period. Увидим, как их считать и как интерпретировать. После этого перейдём к когортному анализу. Разберём, что такое когорта. Как строить когортную таблицу. Как читать retention-кривые. И наконец, познакомимся с RFM-анализом. Это инструмент сегментации клиентов по ценности.</p>
+
+            <p>Обратите внимание на важную мысль. Unit-экономика и когортный анализ — это не просто метрики. Это способ мышления. Они заставляют аналитика смотреть не на общую картину. А на конкретных клиентов. И на то, как они ведут себя со временем. Это гораздо сложнее. Но и гораздо полезнее.</p>
+
+            <p>Я желаю вам продуктивной работы. И надеюсь, что после этой лекции вы сможете ответить на главный вопрос любого бизнеса. Зарабатываем ли мы на своих клиентах. Давайте начнём.</p>
+
+            <h3>📌 Блок 1. Что такое unit-экономика</h3>
+
+            <p>Перейдём к первому вопросу. Давайте разберёмся, что такое unit-экономика.</p>
+
+            <p>Дадим определение. Unit-экономика — это расчёт прибыли или убытка на одну единицу бизнеса. Единицей может быть клиент. Заказ. Товар. Поездка. Подписка. Всё что угодно. Главное, чтобы эта единица была измеримой и однородной.</p>
+
+            <p>Поясним на примере. Представьте, что у нас есть интернет-магазин. Мы хотим понять, зарабатываем ли мы на каждом заказе. Для этого мы считаем unit-экономику заказа. Сколько денег приносит один заказ. И сколько денег уходит на его обработку. Если приходит больше, чем уходит — unit-экономика положительная. Если наоборот — отрицательная.</p>
+
+            <p>Или другой пример. Подписочный сервис. Мы хотим понять, зарабатываем ли мы на каждом клиенте за всё время его жизни. Для этого мы считаем unit-экономику клиента. Сколько денег клиент приносит за всё время подписки. И сколько денег потрачено на его привлечение и обслуживание. Если приносит больше — unit-экономика положительная. Бизнес здоров.</p>
+
+            <p>Ключевой вопрос unit-экономики звучит так. Сколько мы зарабатываем на одном клиенте за всё время. И сколько мы тратим на то, чтобы этого клиента получить. И удержать.</p>
+
+            <h4>Зачем нужна unit-экономика</h4>
+
+            <p>Зачем это нужно. Причин несколько. Первая причина. Unit-экономика показывает, масштабируется ли бизнес. Если unit-экономика положительная — можно увеличивать бюджет на привлечение. Каждый новый клиент будет приносить прибыль. Если unit-экономика отрицательная — рост только ухудшает ситуацию. Каждый новый клиент увеличивает убыток.</p>
+
+            <p>Вторая причина. Unit-экономика помогает принимать решения по каналам привлечения. Один канал может давать дорогих клиентов. Другой — дешёвых. Но при этом дешёвые клиенты могут быстро уходить. А дорогие — оставаться надолго. Unit-экономика показывает, какой канал на самом деле выгоднее.</p>
+
+            <p>Третья причина. Unit-экономика нужна инвесторам. Когда компания привлекает инвестиции, инвесторы первым делом смотрят на unit-экономику. Если она отрицательная — инвестиции не помогут. Если положительная — есть смысл вкладывать деньги в рост.</p>
+
+            <p>Отсюда следует важная мысль. Unit-экономика — это не просто расчёт. Это диагностика бизнес-модели. Она показывает, работает ли бизнес в принципе. Или только кажется, что работает.</p>
+
+            <h3>📌 Блок 2. Ключевые метрики unit-экономики</h3>
+
+            <p>Теперь перейдём ко второму вопросу. Какие метрики используются в unit-экономике. Разберём основные.</p>
+
+            <h4>ARPU — средний доход на пользователя</h4>
+
+            <p>Начнём с метрики ARPU. По-английски это Average Revenue Per User. Средний доход на пользователя. Дадим определение. ARPU — это выручка за период, делённая на количество активных пользователей за этот период.</p>
+
+            <p>Поясним на примере. За месяц компания заработала один миллион рублей. Активных пользователей за этот месяц — десять тысяч. Значит, ARPU равен ста рублям. В среднем каждый пользователь приносит сто рублей в месяц.</p>
+
+            <p>Метрика ARPU полезна для понимания общей эффективности продукта. Если ARPU растёт — значит, пользователи готовы платить больше. Или компания научилась лучше монетизировать. Если ARPU падает — значит, что-то не так. Возможно, привлекаются не те пользователи. Или продукт становится менее ценным.</p>
+
+            <h4>ARPPU — средний доход на платящего пользователя</h4>
+
+            <p>Второй показатель. Это ARPPU. По-английски Average Revenue Per Paying User. Средний доход на платящего пользователя. Дадим определение. ARPPU — это выручка, делённая на количество платящих пользователей.</p>
+
+            <p>Поясним на примере. За месяц компания заработала миллион рублей. Платящих пользователей — две тысячи. Значит, ARPPU равен пятистам рублям. В среднем каждый платящий пользователь приносит пятьсот рублей в месяц.</p>
+
+            <p>Разница между ARPU и ARPPU важна. ARPU показывает доход на всех пользователей. Включая тех, кто не платит. ARPPU показывает доход только на платящих. Если разница между ARPU и ARPPU большая — значит, много пользователей не платят. Это нормально для freemium-моделей. Но аналитик должен это видеть.</p>
+
+            <h4>LTV — пожизненная ценность клиента</h4>
+
+            <p>Третий показатель. Это LTV. По-английски Lifetime Value. Пожизненная ценность клиента. Дадим определение. LTV — это сколько денег клиент приносит за всё время взаимодействия с продуктом. От первого контакта до последнего платежа.</p>
+
+            <p>Поясним на примере. Клиент подписался на сервис. Платит пятьсот рублей в месяц. Остаётся с нами в среднем два года. Значит, его LTV равен пятистам рублей умножить на двадцать четыре месяца. То есть двенадцать тысяч рублей.</p>
+
+            <p>Метрика LTV — одна из самых важных в unit-экономике. Она показывает, сколько мы можем позволить себе потратить на привлечение одного клиента. И при этом остаться в плюсе.</p>
+
+            <p>Но есть важная оговорка. LTV — это не точное число. Это оценка. И способов оценки несколько. Мы разберём три основных способа.</p>
+
+            <h4>Способы расчёта LTV</h4>
+
+            <p>Первый способ. Простой LTV. Мы берём ARPU и умножаем на среднее время жизни клиента. Среднее время жизни можно взять из исторических данных. Например, если клиенты в среднем остаются двадцать четыре месяца — умножаем ARPU на двадцать четыре.</p>
+
+            <p>Этот способ простой. Но у него есть недостаток. Он не учитывает удержание. Если клиенты уходят быстрее, чем мы думаем — LTV будет завышен. Поэтому простой LTV используют только как грубую оценку.</p>
+
+            <p>Второй способ. Когортный LTV. Мы берём группу клиентов, пришедших в одном месяце. И считаем, сколько денег эта группа принесла за всё время. Затем делим на размер группы. Это даёт точный LTV для этой когорты. О когортах мы поговорим позже. Пока просто запомним, что когортный LTV — самый точный.</p>
+
+            <p>Третий способ. Прогнозный LTV. Мы используем формулу. ARPU умножить на retention rate. И разделить на единицу плюс ставка дисконтирования минус retention rate. Эта формула учитывает, что деньги сегодня дороже денег завтра. И что клиенты постепенно уходят.</p>
+
+            <p>Формула выглядит так. LTV равно ARPU умножить на retention rate. И разделить на сумму единицы, ставки дисконтирования и минус retention rate. Это более сложный способ. Но он даёт более точную оценку для быстрорастущих компаний.</p>
+
+            <h4>CAC — стоимость привлечения клиента</h4>
+
+            <p>Четвёртый показатель. Это CAC. По-английски Customer Acquisition Cost. Стоимость привлечения клиента. Дадим определение. CAC — это все затраты на маркетинг и продажи, делённые на количество привлечённых клиентов за период.</p>
+
+            <p>Поясним на примере. За месяц компания потратила на рекламу двести тысяч рублей. И привлекла сто клиентов. Значит, CAC равен двум тысячам рублей. В среднем каждый клиент обошёлся компании в две тысячи рублей.</p>
+
+            <p>Метрика CAC показывает, сколько стоит привлечь клиента. И позволяет сравнить с LTV. Если LTV больше CAC — бизнес здоров. Если меньше — бизнес в минусе.</p>
+
+            <p>Но и здесь есть важные нюансы. CAC бывает разным. Первый вид. Общий CAC. Это все расходы на маркетинг и продажи, делённые на всех привлечённых клиентов. Второй вид. CAC по платным каналам. Это только расходы на рекламу, делённые на клиентов из рекламы. Третий вид. CAC по органическим каналам. Это расходы на контент и SEO, делённые на клиентов из органики.</p>
+
+            <p>Разница между этими видами важна. Общий CAC может быть низким. Потому что много клиентов приходит бесплатно. Но платные каналы могут быть убыточными. Поэтому аналитик должен смотреть на CAC по каналам отдельно.</p>
+
+            <h4>Payback period — срок окупаемости</h4>
+
+            <p>Пятый показатель. Это payback period. Срок окупаемости. Дадим определение. Payback period — это время, за которое клиент приносит столько же денег, сколько было потрачено на его привлечение.</p>
+
+            <p>Поясним на примере. CAC равен двум тысячам рублей. Клиент приносит пятьсот рублей в месяц. Значит, payback period равен четырём месяцам. Через четыре месяца клиент окупит свою стоимость. И начнёт приносить прибыль.</p>
+
+            <p>Метрика payback period очень важна для бизнеса с высокой стоимостью привлечения. Например, для подписочных сервисов. Или для онлайн-образования. Если payback period короткий — компания быстро возвращает вложенные деньги. И может быстрее масштабироваться. Если длинный — деньги замораживаются на долгое время. И это создаёт нагрузку на бюджет.</p>
+
+            <h4>LTV/CAC — ключевое соотношение</h4>
+
+            <p>Шестой показатель. Это LTV/CAC. Ключевое соотношение. Дадим определение. LTV/CAC — это отношение пожизненной ценности клиента к стоимости его привлечения.</p>
+
+            <p>Поясним на примере. LTV равен шести тысячам рублей. CAC равен двум тысячам рублей. Значит, LTV/CAC равно трём. На каждый рубль привлечения компания зарабатывает три рубля.</p>
+
+            <p>Есть эмпирическое правило. Если LTV/CAC больше трёх — бизнес здоров. Если от одного до трёх — бизнес на грани. Если меньше единицы — бизнес убыточен. Это правило не универсальное. Но оно хорошо работает как быстрый индикатор.</p>
+
+            <h4>Contribution Margin — маржинальная прибыль</h4>
+
+            <p>Седьмой показатель. Это contribution margin. Маржинальная прибыль. Дадим определение. Contribution margin — это выручка от клиента минус переменные затраты на его обслуживание. То есть сколько денег остаётся после того, как мы заплатили за всё, что зависит от объёма.</p>
+
+            <p>Поясним на примере. Клиент приносит пятьсот рублей в месяц. Переменные затраты на его обслуживание — сто рублей. Значит, contribution margin равен четырёмстам рублям. Эти четыреста рублей идут на покрытие фиксированных затрат. И на прибыль.</p>
+
+            <p>Метрика contribution margin важна тем, что LTV нужно считать не по выручке. А по contribution margin. Потому что выручка — это не прибыль. Прибыль — это выручка минус затраты. Если считать LTV по выручке, а CAC по всем затратам — сравнение будет некорректным.</p>
+
+            <p>Отсюда важное правило. LTV считаем по марже. CAC считаем по всем затратам на привлечение. Тогда LTV/CAC покажет реальную экономику.</p>
+
+            <h3>📌 Блок 3. Когортный анализ: главный инструмент аналитика</h3>
+
+            <p>Теперь перейдём к третьему вопросу. Что такое когортный анализ и зачем он нужен.</p>
+
+            <h4>Что такое когорта</h4>
+
+            <p>Дадим определение. Когорта — это группа клиентов, объединённых общим признаком. Чаще всего — общим месяцем первой покупки или первой активности. Например, когорта января две тысячи двадцать четвёртого года. Это все клиенты, которые впервые пришли в продукт в январе.</p>
+
+            <p>Когортный анализ — это метод анализа, при котором мы отслеживаем поведение каждой когорты во времени. Сравниваем когорты между собой. И видим, как меняется продукт.</p>
+
+            <p>Зачем это нужно. Причин несколько. Первая причина. Средние метрики врут. Если мы смотрим на средний retention по всем клиентам — мы смешиваем старых и новых. И не видим, что продукт меняется. Когорты показывают правду.</p>
+
+            <p>Вторая причина. Когорты показывают, улучшается ли продукт. Если новые когорты держатся лучше старых — продукт становится лучше. Если хуже — есть проблема.</p>
+
+            <p>Третья причина. Когорты показывают качество каналов привлечения. Клиенты из одного канала могут держаться долго. Из другого — уходить через месяц. Когортный анализ это видит.</p>
+
+            <h4>Как построить когортную таблицу</h4>
+
+            <p>Когортная таблица — это основная визуализация когортного анализа. Она устроена так. Строки — когорты. Столбцы — периоды жизни клиента. Например, месяцы с момента первой покупки. В ячейках — метрика. Чаще всего retention rate. Доля клиентов когорты, которые остались активными к этому месяцу.</p>
+
+            <p>Поясним на примере. Когорта января. Сто клиентов. Через месяц осталось сорок пять. Retention rate равен сорока пяти процентам. Через два месяца осталось тридцать два. Retention rate тридцать два процента. И так далее.</p>
+
+            <p>Если сравниваем когорты — видим, какая когорта держится лучше. Когорта января через три месяца — двадцать пять процентов. Когорта февраля через три месяца — двадцать восемь процентов. Когорта марта через три месяца — тридцать два процента. Значит, продукт улучшается. Каждая новая когорта держится лучше предыдущей.</p>
+
+            <h4>Retention curve — кривая удержания</h4>
+
+            <p>Кривая удержания — это график, который показывает, как меняется retention rate когорты во времени. По горизонтальной оси — месяцы жизни. По вертикальной — доля оставшихся клиентов.</p>
+
+            <p>Кривая удержания обычно имеет форму буквы L. Первый месяц — резкое падение. Потом кривая выравнивается. Это значит, что часть клиентов уходит сразу. А оставшиеся остаются надолго.</p>
+
+            <p>Если кривая удержания выравнивается на высоком уровне — это хорошо. Значит, продукт находит лояльную аудиторию. Если продолжает падать — плохо. Значит, клиенты уходят постепенно. И продукт не создаёт привычку.</p>
+
+            <h4>Retention vs Churn</h4>
+
+            <p>Важно различать retention и churn. Retention rate — это доля оставшихся. Churn rate — это доля ушедших. Для одного периода retention плюс churn равно ста процентам. Но для когорт важна именно кумулятивная кривая. Не месячные значения. А общая динамика.</p>
+
+            <h4>Типичные ошибки когортного анализа</h4>
+
+            <p>Теперь разберём типичные ошибки. Первая ошибка. Смотреть только на средний retention по всем клиентам. Это смешивает старых и новых. И скрывает проблемы.</p>
+
+            <p>Вторая ошибка. Сравнивать когорты разного размера. Если когорта января — сто клиентов. А когорта февраля — тысяча. Прямое сравнение может быть некорректным. Лучше смотреть на относительные метрики.</p>
+
+            <p>Третья ошибка. Игнорировать сезонность. Когорты, пришедшие в декабре, могут вести себя иначе, чем когорты июня. Это нужно учитывать.</p>
+
+            <p>Четвёртая ошибка. Считать retention только для платящих клиентов. Тогда мы не видим, что происходит с бесплатными. А бесплатные — это будущие платящие.</p>
+
+            <p>Отсюда важное правило. Когортный анализ требует аккуратности. И понимания того, что именно мы измеряем.</p>
+
+            <h3>📌 Блок 4. RFM-анализ: сегментация клиентов по ценности</h3>
+
+            <p>Теперь перейдём к четвёртому вопросу. Что такое RFM-анализ.</p>
+
+            <h4>Что такое RFM</h4>
+
+            <p>RFM — это метод сегментации клиентов по трём параметрам. Первый — Recency. Давность последней покупки. Второй — Frequency. Частота покупок. Третий — Monetary. Сумма покупок.</p>
+
+            <p>Идея простая. Клиенты, которые покупали недавно — более ценны. Клиенты, которые покупают часто — более ценны. Клиенты, которые тратят много — более ценны. Комбинация этих трёх параметров даёт сегменты клиентов.</p>
+
+            <h4>Как работает RFM</h4>
+
+            <p>Работает так. По каждому параметру клиенту присваивается балл. Обычно от одного до пяти. Пятёрка — самый лучший. Единица — самый худший. Например, если клиент покупал вчера — Recency равен пятёрке. Если покупал год назад — единице. Если покупает каждый месяц — Frequency равен пятёрке. Если покупал один раз — единице. Если тратит много — Monetary равен пятёрке. Если мало — единице.</p>
+
+            <p>Комбинация трёх баллов даёт сегмент. Например, клиент с баллами пять, пять, пять — это чемпион. Покупал недавно, часто и много. Клиент с баллами один, один, один — потерянный. Покупал давно, редко и мало.</p>
+
+            <h4>Сегменты RFM</h4>
+
+            <p>Основные сегменты такие. Первый сегмент. Чемпионы. Покупают часто и дорого. Недавно совершали покупку. Самые ценные клиенты. Второй сегмент. Лояльные. Покупают регулярно. Держатся с продуктом долго. Третий сегмент. Новички. Только что пришли. Ещё не успели проявить себя. Четвёртый сегмент. Спящие. Покупали когда-то. Но давно. Рискуют уйти. Пятый сегмент. Потерянные. Покупали очень давно. Скорее всего, уже не вернутся.</p>
+
+            <p>Применение простое. Для каждого сегмента — своя стратегия. Чемпионам — программа лояльности. Лояльным — апсейл. Новичкам — онбординг. Спящим — реактивация. Потерянным — не тратить деньги.</p>
+
+            <h4>Зачем нужен RFM</h4>
+
+            <p>Зачем это нужно. Причин несколько. Первая причина. RFM позволяет не тратить деньги на всех одинаково. Клиенты разные. И стратегии должны быть разные. Вторая причина. RFM помогает найти скрытые возможности. Например, клиенты, которые покупали часто, но давно. Их можно вернуть. Третья причина. RFM простой в реализации. Его можно построить за час в любой аналитической системе.</p>
+
+            <h4>Ограничения RFM</h4>
+
+            <p>Но у RFM есть ограничения. Первое ограничение. RFM не учитывает маржу. Клиент может покупать много. Но при этом приносить мало прибыли. Второе ограничение. RFM не учитывает контекст. Клиент может быть спящим по объективной причине. Например, сезонный бизнес. Третье ограничение. RFM работает для транзакционных моделей. Для подписок он менее полезен.</p>
+
+            <p>Отсюда важное правило. RFM — это инструмент. А не волшебная таблетка. Его нужно использовать в сочетании с другими метриками.</p>
+
+            <h3>📌 Блок 5. Типичные ошибки в unit-экономике и когортах</h3>
+
+            <p>Теперь перейдём к пятому вопросу. Какие ошибки чаще всего совершают аналитики.</p>
+
+            <h4>Ошибка 1. Средние по больнице</h4>
+
+            <p>Первая ошибка. Средние по больнице. Мы уже говорили об этом. Средний чек вырос. Но это один крупный клиент. Средний retention вырос. Но это одна крупная когорта. Средние скрывают распределение.</p>
+
+            <p>Как избежать. Смотреть на медиану. На квартили. На когорты. На сегменты. Не ограничиваться одним числом.</p>
+
+            <h4>Ошибка 2. Survivorship bias</h4>
+
+            <p>Вторая ошибка. Survivorship bias. Это ошибка выжившего. Мы считаем LTV только по клиентам, которые остались. И не учитываем тех, кто ушёл. В результате LTV получается завышенным.</p>
+
+            <p>Как избежать. Считать LTV по всей когорте. Включая ушедших. Использовать когортный метод. А не только простой.</p>
+
+            <h4>Ошибка 3. Simpson's paradox</h4>
+
+            <p>Третья ошибка. Парадокс Симпсона. Это ситуация, когда в каждой группе — улучшение. А в целом — ухудшение. Например, конверсия выросла в каждом канале. Но общая конверсия упала. Потому что структура каналов изменилась.</p>
+
+            <p>Как избежать. Смотреть на разбивку. На группы. На сегменты. Не ограничиваться общим числом.</p>
+
+            <h4>Ошибка 4. LTV по выручке</h4>
+
+            <p>Четвёртая ошибка. Считать LTV по выручке. А не по марже. Выручка — это не прибыль. Если считать LTV по выручке, а CAC по всем затратам — сравнение будет некорректным.</p>
+
+            <p>Как избежать. Считать LTV по contribution margin. Учитывать переменные затраты.</p>
+
+            <h4>Ошибка 5. CAC без зарплат</h4>
+
+            <p>Пятая ошибка. Считать CAC только по рекламным расходам. И не учитывать зарплаты маркетинга и продаж. В результате CAC занижается.</p>
+
+            <p>Как избежать. Включать в CAC все затраты на привлечение. Рекламу. Зарплаты. Инструменты. Агентские вознаграждения.</p>
+
+            <h4>Ошибка 6. Игнорирование сезонности</h4>
+
+            <p>Шестая ошибка. Игнорировать сезонность. Сравнивать август с июлем без поправки. Когорты декабря ведут себя иначе, чем когорты июня. Это нужно учитывать.</p>
+
+            <p>Как избежать. Сравнивать год-к-году. Или использовать сезонную корректировку.</p>
+
+            <h3>📌 Блок 6. Практический кейс: от метрик к решению</h3>
+
+            <p>Теперь приведём практический кейс. Он покажет, как unit-экономика и когортный анализ работают вместе.</p>
+
+            <p>Представьте подписочный сервис. Выручка растёт на пятнадцать процентов в месяц. Руководство довольно. Но аналитик смотрит глубже.</p>
+
+            <p>Первое. Считает unit-экономику. ARPU равен трёмстам рублям в месяц. LTV по марже — четыре тысячи рублей. CAC — две тысячи двести рублей. LTV/CAC равно одной целой восьми десятым. Payback period — двадцать четыре месяца.</p>
+
+            <p>Это плохо. Бизнес нездоров. На каждый рубль привлечения компания зарабатывает только один рубль восемьдесят копеек. А окупаемость — два года. Это критично.</p>
+
+            <p>Второе. Считает когорты. Когорта января — retention через месяц сорок процентов. Когорта июня — тридцать пять процентов. Когорта декабря — двадцать восемь процентов. Новые когорты держатся хуже.</p>
+
+            <p>Третье. Считает когорты по каналам. Клиенты из платной рекламы — retention через месяц пятнадцать процентов. Из контента — сорок процентов. Из рефералов — шестьдесят процентов.</p>
+
+            <p>Вывод. Платная реклама привлекает не тех клиентов. Они быстро уходят. А деньги на них тратятся. Контент и рефералы дают качественных клиентов. Но денег на них тратится мало.</p>
+
+            <p>Решение. Сократить бюджет на платную рекламу. Увеличить инвестиции в контент и реферальную программу. Пересмотреть онбординг. Улучшить retention в первые месяцы.</p>
+
+            <p>Это и есть работа аналитика. Не просто посчитать метрики. А увидеть за ними бизнес-решение.</p>
+
+            <h3>📌 Блок 7. Связь с другими лекциями</h3>
+
+            <p>Теперь свяжем эту лекцию с другими.</p>
+
+            <p>С первой лекцией. Там мы разбирали одиннадцать ролей аналитиков. И их задачи.</p>
+
+            <p>С четвёртой лекцией. Там мы разбирали ключевые метрики по ролям. Когортный анализ и unit-экономика — это углубление темы продуктовых и маркетинговых метрик.</p>
+
+            <p>С седьмой лекцией. Там мы разбирали статистику. Когортный анализ требует понимания статистической значимости. Особенно когда когорты маленькие.</p>
+
+            <p>С двенадцатой лекцией. Там мы разбирали визуализацию в аналитике. Когортная таблица и retention-кривые — это визуализации. Без них когортный анализ не работает.</p>
+
+            <p>С двадцать четвёртой лекцией. Там мы разбирали оценку качества моделей. Модели прогнозируют метрики. И их качество нужно проверять.</p>
+
+            <p>С двадцать шестой лекцией. Там мы разбирали внедрение и мониторинг моделей. Unit-экономика и когорты — часть мониторинга бизнеса.</p>
+
+            <h3>📌 Заключение</h3>
+
+            <p>Мы подошли к завершению лекции. Давайте соберём всё вместе.</p>
+
+            <p>Мы разобрали unit-экономику. Мы увидели, что это расчёт прибыли на единицу бизнеса. Клиента, заказа, подписки. Мы разобрали ключевые метрики. ARPU и ARPPU. LTV. CAC. Payback period. LTV/CAC. Contribution margin. Мы увидели, как считать LTV и CAC. И как их сравнивать.</p>
+
+            <p>Мы разобрали когортный анализ. Мы увидели, что это метод анализа групп клиентов во времени. Мы разобрали когортную таблицу. Retention curve. И типичные ошибки.</p>
+
+            <p>Мы разобрали RFM-анализ. Мы увидели, как сегментировать клиентов по давности, частоте и сумме покупок. И как применять разные стратегии к разным сегментам.</p>
+
+            <p>Мы разобрали типичные ошибки. Средние по больнице. Survivorship bias. Парадокс Симпсона. И другие. И увидели, как их избежать.</p>
+
+            <p>И наконец, мы разобрали практический кейс. От метрик к решению.</p>
+
+            <p>Запомните главное. Unit-экономика и когортный анализ — это не просто метрики. Это способ мышления. Они заставляют аналитика смотреть не на общую картину. А на конкретных клиентов. И на то, как они ведут себя со временем. Это гораздо сложнее. Но и гораздо полезнее.</p>
+
+            <p>В следующей лекции мы поговорим о том, как собирать требования и коммуницировать с бизнесом. Как задавать правильные вопросы. Как переводить бизнес-задачу на язык данных. Как презентовать результаты. Это будет логическим продолжением темы метрик и анализа.</p>
+
+            <p>А сейчас — спасибо за внимание. Я готов ответить на ваши вопросы.</p>
+
+            <!-- СЛОВАРЬ ТЕРМИНОВ -->
+            <div class="dark-block">
+                <div class="dark-block-title">📖 Словарь терминов и аббревиатур</div>
+                <table class="dark-table">
+                    <thead>
+                        <tr><th style="width:20%;">Термин</th><th style="width:30%;">Расшифровка</th><th>Пояснение</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="term">Unit-экономика</td><td>Unit Economics</td><td>Расчёт прибыли/убытка на единицу бизнеса</td></tr>
+                        <tr><td class="term">ARPU</td><td>Average Revenue Per User</td><td>Средний доход на пользователя</td></tr>
+                        <tr><td class="term">ARPPU</td><td>Average Revenue Per Paying User</td><td>Средний доход на платящего пользователя</td></tr>
+                        <tr><td class="term">LTV</td><td>Lifetime Value</td><td>Пожизненная ценность клиента</td></tr>
+                        <tr><td class="term">CAC</td><td>Customer Acquisition Cost</td><td>Стоимость привлечения клиента</td></tr>
+                        <tr><td class="term">Payback period</td><td>Срок окупаемости</td><td>Время, за которое клиент окупит CAC</td></tr>
+                        <tr><td class="term">Contribution Margin</td><td>Маржинальная прибыль</td><td>Выручка минус переменные затраты</td></tr>
+                        <tr><td class="term">Когорта</td><td>Cohort</td><td>Группа клиентов с общим признаком (месяц привлечения)</td></tr>
+                        <tr><td class="term">Retention rate</td><td>Удержание</td><td>Доля оставшихся клиентов когорты</td></tr>
+                        <tr><td class="term">Churn rate</td><td>Отток</td><td>Доля ушедших клиентов когорты</td></tr>
+                        <tr><td class="term">Cohort matrix</td><td>Когортная таблица</td><td>Строки = когорты, столбцы = месяцы жизни</td></tr>
+                        <tr><td class="term">Retention curve</td><td>Кривая удержания</td><td>График retention по месяцам жизни</td></tr>
+                        <tr><td class="term">RFM</td><td>Recency, Frequency, Monetary</td><td>Давность, частота, сумма покупок</td></tr>
+                        <tr><td class="term">Survivorship bias</td><td>Ошибка выжившего</td><td>Оценка только по оставшимся клиентам</td></tr>
+                        <tr><td class="term">Simpson's paradox</td><td>Парадокс Симпсона</td><td>В группах улучшение, в целом — ухудшение</td></tr>
+                        <tr><td class="term">Discount rate</td><td>Ставка дисконтирования</td><td>Деньги сегодня дороже денег завтра</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function changeVideo(embedUrl) {
+            document.getElementById('lecture-player').src = embedUrl;
+        }
+    </script>
+
+    <!-- НАВИГАЦИЯ МЕЖДУ ЛЕКЦИЯМИ -->
+    <nav class="lecture-nav" id="lectureNav">
+    <div class="nav-progress" id="navProgress" style="width: 0%;"></div>
+    <a href="Лекция (N-1).html" class="nav-btn-arrow" id="prevBtn">
+        <span class="arrow-icon">←</span>
+        <span class="arrow-label">
+            <small>Назад</small>
+            <span class="arrow-title" id="prevTitle">Лекция (N-1)</span>
+        </span>
+    </a>
+    <div class="nav-center">
+        <div class="nav-counter">Лекция <span id="currentNum">N</span> <span>из 21</span></div>
+        <a href="index.html" class="nav-index-link">📚 К содержанию</a>
+    </div>
+    <a href="Лекция (N+1).html" class="nav-btn-arrow" id="nextBtn">
+        <span class="arrow-label" style="align-items: flex-end;">
+            <small>Вперёд</small>
+            <span class="arrow-title" id="nextTitle">Лекция (N+1)</span>
+        </span>
+        <span class="arrow-icon">→</span>
+    </a>
+</nav>
+
+  
+    <script>
+    (function () {
+        'use strict';
+
+        const TOTAL_LECTURES = 21;
+        const totalDurationMs = (23 * 60 + 30) * 1000;
+        const autoNextDelayMs = 2000;
+        const AUTOSTART_PARAM = 'autostart';
+
+        const fileName = decodeURIComponent(location.pathname.split('/').pop() || '');
+        let currentLecture = 4;
+
+        const match = fileName.match(/Лекция\s*(\d+)\.html/i);
+        if (match) {
+            currentLecture = parseInt(match[1], 10);
+        } else {
+            const el = document.getElementById('currentNum');
+            if (el) currentLecture = parseInt(el.textContent, 10) || 4;
+        }
+
+        if (isNaN(currentLecture) || currentLecture < 1) currentLecture = 1;
+        if (currentLecture > TOTAL_LECTURES) currentLecture = TOTAL_LECTURES;
+
+        const prev = currentLecture > 1 ? currentLecture - 1 : null;
+        const next = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+
+        const currentNumEl = document.getElementById('currentNum');
+        if (currentNumEl) currentNumEl.textContent = currentLecture;
+
+        const navProgress = document.getElementById('navProgress');
+        if (navProgress) navProgress.style.width = (currentLecture / TOTAL_LECTURES * 100) + '%';
+
+        const prevBtn = document.getElementById('prevBtn');
+        if (prevBtn) {
+            if (prev) {
+                prevBtn.href = 'Лекция ' + prev + '.html';
+                const t = document.getElementById('prevTitle');
+                if (t) t.textContent = 'Лекция ' + prev;
+                prevBtn.style.opacity = '1';
+                prevBtn.style.cursor = 'pointer';
+                prevBtn.onclick = null;
+            } else {
+                prevBtn.removeAttribute('href');
+                prevBtn.style.opacity = '0.35';
+                prevBtn.style.cursor = 'not-allowed';
+                prevBtn.onclick = (e) => e.preventDefault();
+                const t = document.getElementById('prevTitle');
+                if (t) t.textContent = 'Это первая лекция';
+            }
+        }
+
+        const nextBtn = document.getElementById('nextBtn');
+        if (nextBtn) {
+            if (next) {
+                nextBtn.href = 'Лекция ' + next + '.html';
+                const t = document.getElementById('nextTitle');
+                if (t) t.textContent = 'Лекция ' + next;
+                nextBtn.style.opacity = '1';
+                nextBtn.style.cursor = 'pointer';
+                nextBtn.onclick = null;
+            } else {
+                nextBtn.removeAttribute('href');
+                nextBtn.style.opacity = '0.35';
+                nextBtn.style.cursor = 'not-allowed';
+                nextBtn.onclick = (e) => e.preventDefault();
+                const t = document.getElementById('nextTitle');
+                if (t) t.textContent = 'Это последняя лекция';
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            const tag = e.target && e.target.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+            if (e.key === 'ArrowLeft' && prev) window.location.href = 'Лекция ' + prev + '.html';
+            else if (e.key === 'ArrowRight' && next) window.location.href = 'Лекция ' + next + '.html';
+            else if (e.key === 'Home') window.location.href = 'index.html';
+        });
+
+        function initScroll() {
+            const studentBlock = document.querySelector('.student-view');
+            const speakerBlock = document.querySelector('.speaker-notes');
+            const badge = document.getElementById('scroll-status-badge');
+            const audio = document.getElementById('lecture-audio');
+            if (!studentBlock || !speakerBlock) return;
+
+            const studentBehavior = studentBlock.style.scrollBehavior;
+            const speakerBehavior = speakerBlock.style.scrollBehavior;
+            let isRunning = false, completed = false, pausedElapsed = 0, startedAt = 0, rafId = null;
+            let startS = 0, startP = 0, maxS = 0, maxP = 0;
+
+            function setBadge(text, color) {
+                if (!badge) return;
+                badge.style.display = 'block';
+                badge.textContent = text;
+                badge.style.borderColor = color;
+            }
+            function measure() {
+                maxS = Math.max(studentBlock.scrollHeight - studentBlock.clientHeight, 0);
+                maxP = Math.max(speakerBlock.scrollHeight - speakerBlock.clientHeight, 0);
+            }
+            function fmt(ms) {
+                const m = Math.floor(ms / 60000);
+                const s = Math.floor((ms % 60000) / 1000);
+                return m + ':' + String(s).padStart(2, '0');
+            }
+            function playAudio() {
+                if (!audio) return;
+                const p = audio.play();
+                if (p && typeof p.catch === 'function') {
+                    p.catch(err => {
+                        console.warn('[AutoAudio]', err.message);
+                        setBadge('▶ ИДЕТ ПРОКРУТКА (звук заблокирован)', '#eab308');
+                    });
+                }
+            }
+            function pauseAudio() { if (audio) try { audio.pause(); } catch (_) {} }
+            function resetAudio() { if (audio) try { audio.pause(); audio.currentTime = 0; } catch (_) {} }
+
+            function animate() {
+                if (!isRunning) return;
+                const elapsed = pausedElapsed + (performance.now() - startedAt);
+                const fraction = Math.min(elapsed / totalDurationMs, 1);
+                measure();
+                studentBlock.scrollTop = startS + (maxS - startS) * fraction;
+                speakerBlock.scrollTop = startP + (maxP - startP) * fraction;
+                if (badge) {
+                    badge.textContent = '▶ ' + fmt(elapsed) + ' / 25:00';
+                    badge.style.borderColor = '#16a34a';
+                }
+                if (fraction >= 1) { finish(); return; }
+                rafId = requestAnimationFrame(animate);
+            }
+
+            function startOrResume() {
+                if (completed) {
+                    pausedElapsed = 0; completed = false;
+                    studentBlock.scrollTop = 0; speakerBlock.scrollTop = 0;
+                    resetAudio();
+                }
+                measure();
+                startS = studentBlock.scrollTop;
+                startP = speakerBlock.scrollTop;
+                startedAt = performance.now();
+                isRunning = true;
+                studentBlock.style.scrollBehavior = 'auto';
+                speakerBlock.style.scrollBehavior = 'auto';
+                cancelAnimationFrame(rafId);
+                rafId = requestAnimationFrame(animate);
+                playAudio();
+            }
+            function pause() {
+                if (isRunning) pausedElapsed += performance.now() - startedAt;
+                isRunning = false;
+                cancelAnimationFrame(rafId);
+                setBadge('⏸ ПАУЗА ' + fmt(pausedElapsed), '#dc2626');
+                studentBlock.style.scrollBehavior = studentBehavior;
+                speakerBlock.style.scrollBehavior = speakerBehavior;
+                pauseAudio();
+            }
+            function finish() {
+                isRunning = false; completed = true;
+                cancelAnimationFrame(rafId);
+                measure();
+                studentBlock.scrollTop = maxS;
+                speakerBlock.scrollTop = maxP;
+                studentBlock.style.scrollBehavior = studentBehavior;
+                speakerBlock.style.scrollBehavior = speakerBehavior;
+
+                const nextLec = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+                if (nextLec) {
+                    setBadge('✅ ГОТОВО → Лекция ' + nextLec, '#16a34a');
+                    setTimeout(() => {
+                        location.href = 'Лекция ' + nextLec + '.html?' + AUTOSTART_PARAM + '=1';
+                    }, autoNextDelayMs);
+                } else {
+                    setBadge('✅ КУРС ЗАВЕРШЕН', '#16a34a');
+                    pauseAudio();
+                }
+            }
+            function toggle() { isRunning ? pause() : startOrResume(); }
+
+            window.addEventListener('keydown', (e) => {
+                if (e.repeat) return;
+                const t = e.target; const tag = t && t.tagName;
+                if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+                if (e.code === 'Space' || e.key === ' ') {
+                    e.preventDefault();
+                    toggle();
+                }
+            }, true);
+
+            if (badge) badge.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+            [studentBlock, speakerBlock].forEach(el => {
+                el.addEventListener('click', (e) => {
+                    if (e.target.closest('a,button,iframe,input,textarea,select,video,audio')) return;
+                    if (window.getSelection().toString().length > 0) return;
+                    toggle();
+                });
+            });
+
+            const params = new URLSearchParams(location.search);
+            if (params.get(AUTOSTART_PARAM) === '1') {
+                params.delete(AUTOSTART_PARAM);
+                const clean = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
+                history.replaceState(null, '', clean);
+                setTimeout(startOrResume, 500);
+            } else {
+                setBadge('▶ ПРОБЕЛ / КЛИК — старт', '#4a5568');
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initScroll, { once: true });
+        } else {
+            initScroll();
+        }
+    })();
+    </script>
+
+</body>
+</html>

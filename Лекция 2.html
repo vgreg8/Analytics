@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лекция 2. Информационные технологии и средства аналитика</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #ffffff; }
+
+        .student-view { width: 66.66%; height: 100vh; background: #ffffff; padding: 35px 40px; display: flex; flex-direction: column; justify-content: space-between; border-right: 2px solid #e2e8f0; overflow-y: auto; scroll-behavior: smooth; }
+        .speaker-notes { width: 33.34%; height: 100%; background: #1a202c; color: #edf2f7; padding: 30px; overflow-y: auto; }
+
+        .slide-header { font-size: 26px; color: #1a365d; font-weight: bold; line-height: 1.3; margin-bottom: 18px; border-bottom: 4px solid #3182ce; padding-bottom: 12px; }
+        .slide-body { flex-grow: 1; display: flex; flex-direction: column; gap: 18px; padding: 5px 0; }
+        .slide-footer { font-size: 13px; color: #a0aec0; text-align: right; margin-top: 12px; }
+
+        .chart-box { background: #f7fafc; border: 2.5px dashed #cbd5e0; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .chart-box strong { font-size: 16px; display: block; margin-bottom: 6px; }
+        .chart-box p { font-size: 13px; color: #4a5568; line-height: 1.45; }
+
+        .cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .cat-card { border-radius: 10px; padding: 14px 16px; border: 2px solid #e2e8f0; }
+        .cat-card.core { background: #ebf8ff; border-color: #90cdf4; }
+        .cat-card.viz { background: #f0fff4; border-color: #9ae6b4; }
+        .cat-card.stat { background: #fffaf0; border-color: #fbd38d; }
+        .cat-card.big { background: #faf5ff; border-color: #d6bcfa; }
+        .cat-card.req { background: #fefcbf; border-color: #f6e05e; }
+        .cat-card.etl { background: #fed7d7; border-color: #fc8181; }
+        .cat-card.web { background: #e6fffa; border-color: #81e6d9; }
+        .cat-card h4 { font-size: 13px; margin-bottom: 8px; color: #1a365d; display: flex; align-items: center; gap: 6px; }
+        .cat-card .label { font-size: 10px; font-weight: bold; color: #4a5568; margin-top: 7px; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.3px; }
+        .cat-card ul { margin: 0; padding-left: 14px; font-size: 11.5px; color: #2d3748; line-height: 1.45; }
+
+        .tag { display: inline-block; background: #ebf8ff; color: #2b6cb0; padding: 2px 7px; border-radius: 4px; font-size: 11px; margin: 2px 2px 2px 0; font-weight: 500; }
+        .tag.ru { background: #f0fff4; color: #276749; }
+        .tag.intl { background: #ebf8ff; color: #2b6cb0; }
+
+        .compare-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .compare-table th { background: #1a365d; color: white; padding: 9px 11px; text-align: left; font-weight: 600; }
+        .compare-table td { padding: 8px 11px; border-bottom: 1px solid #e2e8f0; color: #2d3748; vertical-align: top; }
+        .compare-table tr:nth-child(even) td { background: #f7fafc; }
+        .compare-table .ru { color: #276749; font-weight: bold; }
+        .compare-table .intl { color: #2b6cb0; font-weight: bold; }
+        .compare-table .group-row td { background: #ebf8ff; font-weight: bold; color: #1a365d; font-size: 12.5px; }
+
+        .criteria-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .criteria-card { background: #f7fafc; border-left: 4px solid #3182ce; padding: 10px 12px; border-radius: 6px; }
+        .criteria-card h5 { font-size: 12px; color: #1a365d; margin-bottom: 4px; }
+        .criteria-card p { font-size: 11px; color: #4a5568; line-height: 1.4; }
+
+        .video-section { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 5px; }
+        .video-container { width: 100%; max-width: 580px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: #000; aspect-ratio: 16 / 9; }
+        .links-hub { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .video-btn { text-decoration: none; padding: 9px 14px; border-radius: 6px; font-size: 12px; font-weight: bold; color: white; display: flex; align-items: center; gap: 6px; transition: transform 0.2s, background 0.2s; cursor: pointer; border: none; }
+        .video-btn:hover { transform: translateY(-2px); }
+        .rt-btn { background: #00a877; }
+        .rt-btn:hover { background: #008f65; }
+        .stop-btn { background: #dc143c; }
+        .stop-btn:hover { background: #b01030; }
+
+        .notes-header { font-size: 17px; color: #63b3ed; font-weight: bold; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a5568; padding-bottom: 10px; }
+        .lecture-text { font-size: 14.5px; line-height: 1.65; color: #e2e8f0; text-align: justify; }
+        .lecture-text p { margin-bottom: 14px; }
+        .lecture-text h3 { color: #63b3ed; font-size: 15px; margin: 18px 0 10px; border-bottom: 1px solid #2d3748; padding-bottom: 5px; }
+        .lecture-text ul { margin: 8px 0 14px 18px; }
+        .lecture-text li { margin-bottom: 6px; }
+
+        .dark-block { background: #2d3748; border: 1px solid #4a5568; border-radius: 10px; padding: 16px 18px; margin-top: 20px; }
+        .dark-block-title { font-size: 14px; font-weight: bold; color: #63b3ed; margin-bottom: 12px; border-bottom: 2px solid #4a5568; padding-bottom: 8px; }
+        .dark-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+        .dark-table th { background: #1a202c; color: #90cdf4; padding: 7px 9px; text-align: left; font-weight: 600; border-bottom: 1px solid #4a5568; }
+        .dark-table td { padding: 6px 9px; border-bottom: 1px solid #2d3748; color: #cbd5e0; vertical-align: top; line-height: 1.4; }
+        .dark-table tr:nth-child(even) td { background: #2a3242; }
+        .dark-table .term { font-weight: bold; color: #90cdf4; white-space: nowrap; }
+        .dark-block ol { margin: 0 0 12px 18px; padding: 0; font-size: 12px; color: #cbd5e0; line-height: 1.5; }
+        .dark-block ol li { margin-bottom: 5px; }
+        .dark-block .src-group { font-weight: bold; color: #fbd38d; font-size: 12px; margin: 12px 0 6px; }
+        .dark-block a { color: #63b3ed; text-decoration: none; }
+        .dark-block a:hover { text-decoration: underline; }
+
+        .lecture-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(12px); border-top: 2px solid rgba(255, 255, 255, 0.08); padding: 12px 20px; display: flex; align-items: center; justify-content: center; gap: 12px; z-index: 9999; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25); font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .lecture-nav .nav-progress { position: absolute; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899); border-radius: 0 3px 3px 0; }
+        .lecture-nav .nav-btn-arrow { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); border: 1.5px solid rgba(255, 255, 255, 0.15); color: #e2e8f0; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; font-family: inherit; }
+        .lecture-nav .nav-btn-arrow:hover:not(:disabled) { background: rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.6); color: white; transform: translateY(-2px); }
+        .lecture-nav .nav-btn-arrow:disabled { opacity: 0.35; cursor: not-allowed; }
+        .lecture-nav .nav-btn-arrow .arrow-icon { font-size: 16px; line-height: 1; }
+        .lecture-nav .nav-btn-arrow .arrow-label { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+        .lecture-nav .nav-btn-arrow .arrow-label small { font-size: 9.5px; font-weight: 400; opacity: 0.7; text-transform: uppercase; }
+        .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { font-size: 12px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lecture-nav .nav-center { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 20px; color: #94a3b8; font-size: 11px; border-left: 1px solid rgba(255, 255, 255, 0.1); border-right: 1px solid rgba(255, 255, 255, 0.1); }
+        .lecture-nav .nav-counter { font-size: 15px; font-weight: 900; color: #f1f5f9; }
+        .lecture-nav .nav-counter span { color: #64748b; font-size: 12px; font-weight: 600; }
+        .lecture-nav .nav-index-link { color: #60a5fa; text-decoration: none; font-size: 11px; font-weight: 600; }
+        .lecture-nav .nav-index-link:hover { color: #93c5fd; text-decoration: underline; }
+        body { padding-bottom: 80px !important; }
+        @media (max-width: 900px) {
+            .lecture-nav { padding: 10px 12px; gap: 8px; }
+            .lecture-nav .nav-btn-arrow { padding: 8px 12px; }
+            .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { max-width: 90px; font-size: 11px; }
+            .cat-grid, .criteria-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ЛЕВАЯ ПАНЕЛЬ (2/3): ЭКРАН ДЛЯ СТУДЕНТОВ -->
+    <div class="student-view">
+        <div class="slide-header">
+            Лекция 2. Информационные технологии и средства аналитика
+        </div>
+
+        <div class="slide-body">
+
+            <!-- ВВЕДЕНИЕ -->
+            <div class="chart-box" style="background: #ebf8ff; border-color: #90cdf4;">
+                <strong style="color: #2b6cb0;">🎯 Зачем аналитику инструменты?</strong>
+                <p>Инструментарий аналитика — это технологический контур, который обеспечивает полный цикл работы с данными: от извлечения и очистки до моделирования, визуализации и документирования требований. Выбор инструментов зависит от роли, масштаба задач и требований импортозамещения.</p>
+            </div>
+
+            <!-- ЭВОЛЮЦИЯ ИНСТРУМЕНТОВ -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 10px;">📈 Эволюция инструментов: от простого к сложному</div>
+                <div style="display: flex; gap: 8px; align-items: stretch; flex-wrap: wrap;">
+                    <div style="flex:1; min-width:120px; background:#ebf8ff; border-radius:8px; padding:10px; text-align:center; border:2px solid #90cdf4;">
+                        <div style="font-size:20px;">📊</div>
+                        <div style="font-size:11px; font-weight:bold; color:#2b6cb0; margin-top:4px;">Excel / Таблицы</div>
+                        <div style="font-size:10px; color:#4a5568;">базовые расчёты</div>
+                    </div>
+                    <div style="flex:1; min-width:120px; background:#f0fff4; border-radius:8px; padding:10px; text-align:center; border:2px solid #9ae6b4;">
+                        <div style="font-size:20px;">📈</div>
+                        <div style="font-size:11px; font-weight:bold; color:#276749; margin-top:4px;">BI-платформы</div>
+                        <div style="font-size:10px; color:#4a5568;">дашборды</div>
+                    </div>
+                    <div style="flex:1; min-width:120px; background:#fffaf0; border-radius:8px; padding:10px; text-align:center; border:2px solid #fbd38d;">
+                        <div style="font-size:20px;">🌐</div>
+                        <div style="font-size:11px; font-weight:bold; color:#975a16; margin-top:4px;">Веб-аналитика</div>
+                        <div style="font-size:10px; color:#4a5568;">поведение</div>
+                    </div>
+                    <div style="flex:1; min-width:120px; background:#faf5ff; border-radius:8px; padding:10px; text-align:center; border:2px solid #d6bcfa;">
+                        <div style="font-size:20px;">🗄️</div>
+                        <div style="font-size:11px; font-weight:bold; color:#553c9a; margin-top:4px;">Big Data</div>
+                        <div style="font-size:10px; color:#4a5568;">петабайты</div>
+                    </div>
+                    <div style="flex:1; min-width:120px; background:#fefcbf; border-radius:8px; padding:10px; text-align:center; border:2px solid #f6e05e;">
+                        <div style="font-size:20px;">💻</div>
+                        <div style="font-size:11px; font-weight:bold; color:#975a16; margin-top:4px;">Python / R</div>
+                        <div style="font-size:10px; color:#4a5568;">алгоритмы</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 7 КЛАССОВ ИНСТРУМЕНТОВ -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 10px;">📐 7 классов программных продуктов</div>
+                <div class="cat-grid">
+
+                    <div class="cat-card core">
+                        <h4>📊 1. Электронные таблицы</h4>
+                        <div class="label">Задачи</div>
+                        <ul><li>Очистка и первичная обработка данных</li><li>Разведочный анализ, проверка гипотез</li><li>Сводные таблицы, простые диаграммы</li><li>Финансовое моделирование</li></ul>
+                        <div class="label">Роли</div>
+                        <span class="tag">Аналитик данных</span><span class="tag">Финансовый</span><span class="tag">Бизнес-аналитик</span><span class="tag">Маркетинговый</span>
+                        <div class="label">Международные</div>
+                        <span class="tag intl">Excel</span><span class="tag intl">Power Query (язык M)</span><span class="tag intl">Power Pivot (DAX)</span><span class="tag intl">Power BI</span><span class="tag intl">Google BigQuery</span>
+                        <div class="label">Отечественные</div>
+                        <span class="tag ru">Р7 Офис</span><span class="tag ru">МойОфис</span><span class="tag ru">LibreOffice Calc (свободный)</span>
+                    </div>
+
+                    <div class="cat-card etl">
+                        <h4>🗄️ 2. Системы управления базами данных</h4>
+                        <div class="label">Задачи</div>
+                        <ul><li>Хранение больших объёмов данных</li><li>Одновременный доступ пользователей</li><li>Быстрый поиск через SQL</li><li>Резервное копирование, транзакции</li></ul>
+                        <div class="label">Роли</div>
+                        <span class="tag">Аналитик данных</span><span class="tag">Системный аналитик</span><span class="tag">Инженер данных</span><span class="tag">BI-аналитик</span>
+                        <div class="label">Международные</div>
+                        <span class="tag intl">PostgreSQL</span><span class="tag intl">MS SQL Server</span><span class="tag intl">Oracle</span><span class="tag intl">MySQL</span>
+                        <div class="label">Отечественные</div>
+                        <span class="tag ru">Postgres Pro</span><span class="tag ru">Ред База Данных</span><span class="tag ru">Линтер База Данных</span><span class="tag ru">ClickHouse</span>
+                    </div>
+
+                    <div class="cat-card viz">
+                        <h4>📈 3. Визуализация и бизнес-аналитика</h4>
+                        <div class="label">Задачи</div>
+                        <ul><li>Объединение данных из разных источников</li><li>Интерактивные отчёты и дашборды</li><li>Совместная работа, мобильный просмотр</li><li>Автообновление по расписанию</li></ul>
+                        <div class="label">Роли</div>
+                        <span class="tag">Аналитик данных</span><span class="tag">BI-аналитик</span><span class="tag">Продуктовый</span><span class="tag">Веб-аналитик</span><span class="tag">Маркетинговый</span>
+                        <div class="label">Международные</div>
+                        <span class="tag intl">Tableau</span><span class="tag intl">Power BI</span><span class="tag intl">Qlik</span><span class="tag intl">Looker</span><span class="tag intl">MicroStrategy</span>
+                        <div class="label">Отечественные</div>
+                        <span class="tag ru">DataLens</span><span class="tag ru">Visiology</span><span class="tag ru">Modus BI</span><span class="tag ru">Форсайт</span><span class="tag ru">Навигатор BI</span><span class="tag ru">Р7-Аналитика</span><span class="tag ru">1С:Аналитика</span>
+                    </div>
+
+                    <div class="cat-card web">
+                        <h4>🌐 4. Веб- и продуктовая аналитика</h4>
+                        <div class="label">Задачи</div>
+                        <ul><li>Поведение посетителей на сайте</li><li>Анализ воронки, удержания, когорт</li><li>Оценка эффективности рекламы</li><li>A/B-эксперименты, сегментация</li></ul>
+                        <div class="label">Роли</div>
+                        <span class="tag">Веб-аналитик</span><span class="tag">Продуктовый</span><span class="tag">Маркетинговый</span><span class="tag">UX-аналитик</span>
+                        <div class="label">Международные</div>
+                        <span class="tag intl">Google Analytics</span><span class="tag intl">Google Tag Manager</span><span class="tag intl">Amplitude</span><span class="tag intl">Mixpanel</span><span class="tag intl">Firebase</span>
+                        <div class="label">Отечественные</div>
+                        <span class="tag ru">Яндекс.Метрика</span><span class="tag ru">Яндекс.Тег</span><span class="tag ru">AppMetrica</span><span class="tag ru">devtodev</span>
+                    </div>
+
+                    <div class="cat-card big">
+                        <h4>🗄️ 5. Большие данные</h4>
+                        <div class="label">Задачи</div>
+                        <ul><li>Распределённое хранение и обработка</li><li>Потоковая обработка в реальном времени</li><li>Работа с неструктурированными данными</li><li>Рекомендательные и предсказательные модели</li></ul>
+                        <div class="label">Роли</div>
+                        <span class="tag">Аналитик больших данных</span><span class="tag">Инженер данных</span><span class="tag">Data Scientist</span>
+                        <div class="label">Международные</div>
+                        <span class="tag intl">Hadoop</span><span class="tag intl">Spark</span><span class="tag intl">Kafka</span><span class="tag intl">Flink</span>
+                        <div class="label">Отечественные</div>
+                        <span class="tag ru">Arenadata Hadoop</span><span class="tag ru">Arenadata DB</span><span class="tag ru">ClickHouse</span>
+                    </div>
+
+                    <div class="cat-card req">
+                        <h4>📋 6. Моделирование требований</h4>
+                        <div class="label">Задачи</div>
+                        <ul><li>Описание текущих и новых бизнес-процессов</li><li>Моделирование поведения системы</li><li>Техническое задание для разработчиков</li><li>Связь требований с тестами и архитектурой</li></ul>
+                        <div class="label">Роли</div>
+                        <span class="tag">Бизнес-аналитик</span><span class="tag">Системный аналитик</span><span class="tag">Аналитик 1С</span><span class="tag">UX-аналитик</span>
+                        <div class="label">Международные</div>
+                        <span class="tag intl">Visio</span><span class="tag intl">Lucidchart</span><span class="tag intl">draw.io</span><span class="tag intl">Enterprise Architect</span><span class="tag intl">ARIS</span>
+                        <div class="label">Отечественные</div>
+                        <span class="tag ru">Бизнес Студио</span><span class="tag ru">Stormbpmn</span><span class="tag ru">Рамюс</span><span class="tag ru">1С:Моделирование</span>
+                    </div>
+
+                    <div class="cat-card stat" style="grid-column: span 2;">
+                        <h4>💻 7. Языки программирования и среды разработки</h4>
+                        <div class="label">Задачи</div>
+                        <ul><li>Автоматизация повторяющихся операций</li><li>Построение статистических моделей и ML</li><li>Собственные функции и библиотеки</li><li>Интеграция систем через API</li><li>Воспроизводимость анализа</li></ul>
+                        <div class="label">Роли</div>
+                        <span class="tag">Аналитик данных</span><span class="tag">Аналитик больших данных</span><span class="tag">Data Scientist</span><span class="tag">Инженер данных</span>
+                        <div class="label">Международные</div>
+                        <span class="tag intl">Python</span><span class="tag intl">R</span><span class="tag intl">SQL</span><span class="tag intl">Jupyter</span><span class="tag intl">PyCharm</span>
+                        <div class="label">Отечественные</div>
+                        <span class="tag ru">Российские библиотеки</span><span class="tag ru">Среды разработки</span><span class="tag ru">Образовательные платформы</span>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- СВОДНАЯ ТАБЛИЦА: ИНСТРУМЕНТЫ ПО РОЛЯМ -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 8px;">📋 Сводная таблица: инструменты по ролям аналитика</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr><th>Роль</th><th>Задачи</th><th>Международные</th><th>Отечественные</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr class="group-row"><td colspan="4">📊 Аналитики данных</td></tr>
+                        <tr><td>Аналитик данных (DA)</td><td>Обработка, статистика, A/B</td><td class="intl">Python, R, SQL, Tableau</td><td class="ru">DataLens, ClickHouse</td></tr>
+                        <tr><td>BI-аналитик</td><td>Дашборды, отчётность</td><td class="intl">Power BI, Tableau</td><td class="ru">DataLens, Visiology, Modus BI</td></tr>
+                        <tr><td>Аналитик Big Data</td><td>Data Mining, ML</td><td class="intl">Spark, Hadoop, Kafka</td><td class="ru">Arenadata, ClickHouse</td></tr>
+                        <tr><td>Продуктовый</td><td>ARPU, LTV, Retention</td><td class="intl">Amplitude, Mixpanel</td><td class="ru">AppMetrica, devtodev</td></tr>
+                        <tr><td>Веб-аналитик</td><td>Поведение, реклама</td><td class="intl">Google Analytics, GTM</td><td class="ru">Яндекс.Метрика, Яндекс.Тег</td></tr>
+                        <tr><td>Финансовый</td><td>Модели, риски</td><td class="intl">Excel, Python, SQL</td><td class="ru">Excel, 1С, Loginom</td></tr>
+                        <tr><td>Маркетинговый</td><td>Каналы, бюджеты</td><td class="intl">Яндекс.Директ, GA, Power BI</td><td class="ru">Яндекс.Директ, Метрика, DataLens</td></tr>
+                        <tr class="group-row"><td colspan="4">📋 Аналитики требований</td></tr>
+                        <tr><td>Бизнес-аналитик</td><td>BPMN, процессы, ТЗ</td><td class="intl">Visio, ARIS, Bizagi</td><td class="ru">Бизнес Студио, Stormbpmn</td></tr>
+                        <tr><td>Системный аналитик</td><td>UML, интеграции, API</td><td class="intl">Enterprise Architect, draw.io</td><td class="ru">Бизнес Студио, Stormbpmn</td></tr>
+                        <tr><td>Аналитик 1С</td><td>Автоматизация учёта</td><td class="intl">1С, BPMN-редакторы</td><td class="ru">1С:Предприятие</td></tr>
+                        <tr><td>UX-аналитик</td><td>CJM, карта эмпатии</td><td class="intl">GA, Hotjar, Figma</td><td class="ru">Яндекс.Метрика, Figma-аналоги</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- СРАВНЕНИЕ МЕЖДУНАРОДНЫХ И ОТЕЧЕСТВЕННЫХ -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 8px;">🌍 Международные vs 🇷🇺 Отечественные: ключевые различия</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr><th>Критерий</th><th class="intl">Международные</th><th class="ru">Отечественные</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>Функциональность</strong></td><td>Максимальная зрелость, проверена миллионами пользователей</td><td>Близка к международным по базовым задачам, уступает в узких областях</td></tr>
+                        <tr><td><strong>Стоимость владения</strong></td><td>Лицензии в валюте, высокая стоимость поддержки</td><td>Рублёвые лицензии, включены в реестр российского ПО, поддержка на русском</td></tr>
+                        <tr><td><strong>Интеграция</strong></td><td>Огромное число готовых коннекторов, стандартные протоколы</td><td>Лучше интегрированы с российскими учётными системами и реестрами</td></tr>
+                        <tr><td><strong>Взаимозаменяемость</strong></td><td>Средняя: зависит от интерфейса и языков формул</td><td>Средняя: высокая для простых задач, ниже для сложных моделей</td></tr>
+                        <tr><td><strong>Соответствие регуляторам</strong></td><td>Санкционные риски, ограничения на хранение персданных</td><td>Соответствуют требованиям, включены в реестр, безопасны для госсектора</td></tr>
+                        <tr><td><strong>Поддержка и сообщество</strong></td><td>Огромное сообщество, много обучающих материалов</td><td>Меньше сообщество, но поддержка на русском, быстрая реакция на запросы</td></tr>
+                        <tr><td><strong>Доступность кадров</strong></td><td>Специалистов много, курсов много</td><td>Ситуация быстро меняется, появляются курсы и вузовские программы</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 7 КРИТЕРИЕВ СРАВНЕНИЯ -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 10px;">⚖️ 7 критериев выбора инструмента</div>
+                <div class="criteria-grid">
+                    <div class="criteria-card">
+                        <h5>1. Функциональность</h5>
+                        <p>Соответствие возможностей инструмента задачам организации. Не всегда максимум функций — это плюс.</p>
+                    </div>
+                    <div class="criteria-card">
+                        <h5>2. Стоимость владения</h5>
+                        <p>Не только лицензия, но и поддержка, обучение, миграция. Комплексный расчёт на несколько лет.</p>
+                    </div>
+                    <div class="criteria-card">
+                        <h5>3. Интеграция</h5>
+                        <p>Способность подключаться к существующим системам: базам данных, учётным системам, облакам.</p>
+                    </div>
+                    <div class="criteria-card">
+                        <h5>4. Взаимозаменяемость</h5>
+                        <p>Насколько легко перейти на другой инструмент, если текущий перестанет устраивать.</p>
+                    </div>
+                    <div class="criteria-card">
+                        <h5>5. Соответствие регуляторам</h5>
+                        <p>Требования к хранению персданных, сертификация, реестр российского ПО.</p>
+                    </div>
+                    <div class="criteria-card">
+                        <h5>6. Поддержка и сообщество</h5>
+                        <p>Скорость решения проблем, доступность обучающих материалов, язык поддержки.</p>
+                    </div>
+                    <div class="criteria-card" style="grid-column: span 2;">
+                        <h5>7. Обучение и доступность кадров</h5>
+                        <p>Есть ли на рынке специалисты, курсы, вузовские программы. Стратегический вопрос при выборе.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- НОРМАТИВНАЯ БАЗА -->
+            <div class="chart-box" style="background: #faf5ff; border-color: #d6bcfa;">
+                <strong style="color: #553c9a;">📜 Нормативная база выбора и применения инструментов</strong>
+                <p><strong>Отечественные:</strong> Реестр российского ПО Минцифры; ГОСТ Р 71484 (качество данных); профстандарты 06.042, 08.037, 06.022.<br>
+                <strong>Международные:</strong> ISO/IEC 25010 (качество ПО); ISO/IEC 5259 (качество данных для аналитики); BABOK (требования к инструментам бизнес-анализа).<br>
+                <strong>Ключевой принцип:</strong> выбор инструмента — это управленческое решение, а не только техническое. Он должен учитывать регуляторику, бюджет и стратегию.</p>
+            </div>
+
+            <!-- ВИДЕОПЛЕЕР -->
+            <div class="video-section">
+                <div class="video-container">
+                    <iframe id="lecture-player" src="https://rutube.ru" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+                </div>
+                <div class="links-hub">
+                    <button onclick="changeVideo('https://rutube.ru/')" class="video-btn stop-btn">⏹ СТОП</button>
+                    <button onclick="changeVideo('https://rutube.ru/play/embed/')" class="video-btn rt-btn">📜 Лекция 2. Информационные технологии и средства аналитика</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="slide-footer">
+            Направление «Менеджмент» | Курс: Аналитика данных | Лекция 2: «Информационные технологии и средства аналитика»
+        </div>
+    </div>
+
+    <!-- ПРАВАЯ ПАНЕЛЬ (1/3): СКРИПТ ПРЕПОДАВАТЕЛЯ -->
+    <div class="speaker-notes">
+        <!-- Фиксированная верхняя часть с плеером -->
+        <div style="position: sticky; top: 0; background: #1a202c; padding: 20px 20px 10px 20px; border-bottom: 1px solid #4a5568; width: 100%; z-index: 100;">
+                       <div class="notes-header" style="display: block; padding-bottom: 15px;">
+               <audio id="lecture-audio" preload="auto" controls
+                      src="https://archive.org/download/03_20261110_20261110/02.mp3"
+                      style="width: 100%; height: 32px; border-radius: 4px;"></audio>
+            </div>
+            <div style="width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+             <iframe id="right-lecture-player" src="https://archive.org/embed/20261020_20261020_0955?autoplay=true&loop=true&muted=true"  allow="clipboard-write; autoplay" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen style="border: none;"></iframe>
+
+                           </div>
+        </div>
+
+        <div class="lecture-text" style="margin-top: 20px;">
+
+            <h3>📌 Введение</h3>
+
+            <p>Добрый день, уважаемые слушатели. Сегодня мы начинаем вторую лекцию нашего курса, посвящённую информационным технологиям и средствам, которые использует в своей работе аналитик. Тема эта исключительно важна. Современный аналитик немыслим без инструментов. Именно инструменты позволяют ему собирать данные, обрабатывать их, строить модели, визуализировать результаты и документировать требования. Без них работа аналитика была бы медленной, неточной и попросту невозможной.</p>
+
+            <p>Давайте сразу определим цель нашей встречи. Мы должны систематизировать знания о программных средствах аналитика. Нам нужно понять, какие классы инструментов существуют. Мы должны увидеть, как эти инструменты соотносятся с разными ролями аналитиков. И наконец, мы должны научиться ориентироваться в многообразии программных продуктов, которые предлагает рынок.</p>
+
+            <p>Обратите внимание на ключевую мысль. Информационные технологии сопровождают аналитика на всех этапах его работы. Сначала аналитик собирает данные из разных источников. Затем он обрабатывает эти данные и приводит их в удобный вид. После этого он анализирует информацию и строит модели. Далее он визуализирует результаты в виде отчётов и дашбордов. И наконец, он документирует свои выводы и требования. На каждом из этих этапов используются свои программные продукты.</p>
+
+            <p>Все инструменты аналитика можно разделить по функциональному назначению. Одни средства отвечают за хранение и управление данными. Другие предназначены для статистической обработки и машинного обучения. Третьи помогают визуализировать информацию. Четвёртые нужны для моделирования бизнес-процессов и написания технических заданий. Пятые служат для веб-аналитики и продуктовой аналитики. Шестые обеспечивают инфраструктуру и интеграцию. Такая классификация помогает не запутаться в огромном числе программ.</p>
+
+            <p>Кроме того, мы будем различать инструменты по их происхождению. На российском рынке представлены как международные, так и отечественные программные продукты. У каждого из них есть свои достоинства и свои ограничения. Мы подробно сравним их между собой. Это особенно важно в условиях импортозамещения и требований к защите данных.</p>
+
+            <p>Наконец, мы обязательно коснёмся нормативной базы. Выбор программных средств не происходит стихийно. Он регулируется государственными стандартами, профессиональными стандартами и рекомендациями по импортозамещению. Аналитик должен понимать, какие документы влияют на выбор инструментов. Это поможет ему принимать грамотные и обоснованные решения.</p>
+
+            <p>Итак, в ходе лекции мы решим несколько задач. Мы рассмотрим ключевые классы программных продуктов. Мы сравним их между собой по важным критериям. Мы проведём группировку инструментов. И мы отдельно сравним международные и российские программы. Это позволит вам получить целостное представление о технологическом арсенале современного аналитика.</p>
+
+            <p>Перейдём к первому вопросу. Мы начнём с классификации программных средств и подробно разберём каждую группу.</p>
+
+            <h3>📌 2.1. Электронные таблицы и простые инструменты</h3>
+
+            <p>Начнём с самого доступного класса инструментов. Это электронные таблицы. На первый взгляд может показаться, что это простой инструмент для быстрых расчётов. Однако современные табличные процессоры превратились в полноценные аналитические среды. По своим возможностям они приближаются к специализированным системам бизнес-аналитики. Именно поэтому мы начинаем с них. Это тот фундамент, с которого аналитик начинает свой путь. И это тот инструмент, к которому он возвращается на протяжении всей карьеры.</p>
+
+            <p>Электронные таблицы решают широкий круг задач. Первое. Это первичная обработка данных. Сюда входят очистка, приведение к единому формату и удаление дублей. Второе. Это быстрая проверка гипотез и разведочный анализ. Третье. Это построение сводных таблиц и простых диаграмм для оперативной отчётности. Четвёртое. Это финансовое моделирование и сценарный анализ. Пятое. Это подготовка данных для загрузки в более сложные системы.</p>
+
+            <p>С этими инструментами работает практически каждый аналитик. Аналитик данных использует таблицы для первичного знакомства с данными и быстрой проверки идей. Финансовый аналитик строит в них финансовые модели и оценивает инвестиционные проекты. Бизнес-аналитик ведёт реестры требований и простые расчёты. Системный аналитик применяет таблицы для документирования структур данных. Маркетинговый аналитик сводит данные по рекламным кампаниям. Продуктовый аналитик использует таблицы для оперативных выгрузок.</p>
+
+            <p>Долгое время электронные таблицы оставались набором ячеек с формулами. Аналитик вручную копировал данные и вставлял их на новый лист. Затем он строил формулы. Этот подход работал, пока объёмы данных были небольшими, а источники — стабильными. Однако с ростом объёмов информации и числа источников ручная обработка стала узким местом. Именно тогда компания Майкрософт начала встраивать в свои таблицы инструменты, которые изменили облик табличной аналитики.</p>
+
+            <p>Первым шагом стал инструмент подготовки данных, известный как Пауэр Кверри. Это надстройка, которая позволяет подключаться к десяткам источников данных. Среди них файлы, базы данных и веб-сервисы. Инструмент записывает все действия аналитика в виде пошагового сценария. Этот сценарий можно сохранить и применить повторно при обновлении данных. По сути, он выполняет функцию извлечения, преобразования и загрузки данных. В профессиональной среде эту функцию называют английской аббревиатурой, которую мы произнесём полностью: извлечение, преобразование, загрузка. В документации разработчика подчёркивается, что этот инструмент использует собственный язык формул. Неофициально его называют языком Эм. Этот язык позволяет описывать сложные преобразования данных, создавать собственные функции и управлять структурой запросов. Аналитик, освоивший язык Эм, может автоматизировать рутинные операции и строить воспроизводимые конвейеры обработки данных.</p>
+
+            <p>Вторым шагом стала надстройка для моделирования данных, известная как Пауэр Пивот. Она добавляет в таблицы полноценную реляционную модель данных. Обычные сводные таблицы работают с одним плоским набором данных. Эта надстройка позволяет связывать между собой несколько таблиц по общим полям. Это уже не просто таблица, а миниатюрная аналитическая база данных. Для вычислений в этой модели используется язык выражений для анализа данных. Его сокращённое название звучит как Дакс. Этот язык включает функции, знакомые по обычным таблицам. Но он дополняет их функциями для работы с реляционными связями и динамическими агрегатами. С его помощью аналитик создаёт вычисляемые столбцы и меры. Мера — это показатель, который пересчитывается в зависимости от контекста фильтрации. Именно этот язык позволяет отвечать на вопросы вроде такого. Какова доля продаж этого товара в общем объёме продаж по региону за выбранный период.</p>
+
+            <p>Третьим шагом стала самостоятельная платформа бизнес-аналитики, известная как Пауэр Би Ай. Она вобрала в себя всё лучшее из двух предыдущих инструментов. И добавила мощные средства визуализации и публикации отчётов. Платформа позволяет строить интерактивные дашборды, которые обновляются в реальном времени. И позволяет делиться ими с коллегами. В современной литературе по анализу данных эти три инструмента рассматриваются как единая экосистема. Первый отвечает за подготовку данных. Второй — за моделирование. Третий — за визуализацию и распространение результатов.</p>
+
+            <p>Отдельного упоминания заслуживает облачная платформа анализа данных от компании Гугл. Она называется Биг Кверри. Это облачное хранилище данных и аналитическая платформа. Она позволяет обрабатывать петабайты информации с помощью обычного языка структурированных запросов. Эта платформа не заменяет электронные таблицы. Но она решает ту же задачу — анализ больших данных — на принципиально ином уровне масштаба. Аналитик данных и аналитик больших данных используют её для выполнения запросов к огромным массивам информации. При этом не нужно управлять собственной инфраструктурой. Платформа легко интегрируется с инструментами визуализации, включая Табло и Пауэр Би Ай. Кроме того, она напрямую связана с другими сервисами Гугл. Это делает её удобной для анализа веб-аналитики и маркетинговых данных. Таким образом, эта платформа — не замена таблицам, а следующий шаг в эволюции аналитических инструментов. Он доступен тем, кто работает с большими объёмами данных.</p>
+
+            <p>Теперь зададим ключевой вопрос. Обладают ли бесплатные и отечественные табличные процессоры возможностями, сопоставимыми с этой экосистемой?</p>
+
+            <p>Начнём с бесплатного табличного процессора ЛибреОфис Калс. Он входит в состав офисного пакета ЛибреОфис. Он предоставляет базовые функции работы с данными. Это формулы, сводные таблицы, диаграммы и фильтры. Однако встроенного аналога инструмента подготовки данных в нём нет. Пользователи обсуждают возможность подключения к внешним источникам данных. Но это требует использования встроенной базы данных или внешних скриптов. Для выполнения преобразований, аналогичных инструменту подготовки данных, предлагаются сторонние расширения или даже внешние инструменты. Что касается надстройки для моделирования и языка выражений для анализа данных, то в ЛибреОфис они отсутствуют. Сводные таблицы работают с плоскими наборами данных. Они не поддерживают реляционное моделирование с вычисляемыми мерами. В сравнении возможностей ЛибреОфис и Майкрософт Офис прямо указывается, что такие функции, как инструмент подготовки данных и платформа бизнес-аналитики, не имеют полноценной замены в ЛибреОфис. Таким образом, ЛибреОфис Калс — это надёжный инструмент для базовой аналитики. Но для сложных конвейеров обработки данных и реляционного моделирования его возможностей недостаточно.</p>
+
+            <p>Теперь обратимся к отечественным разработкам. В России созданы офисные пакеты Р7 Офис и МойОфис. Они включены в реестр отечественного программного обеспечения. Рассмотрим их аналитические возможности.</p>
+
+            <p>Р7 Офис активно развивает функции работы с данными. В его табличном редакторе реализованы сводные таблицы с возможностью детализации данных в пару кликов. Появилась функция раскрытия детализации для пустых ячеек. Это расширяет возможности анализа. Кроме того, пакет поддерживает прямое подключение к базам данных. И отображение сводных таблиц, сформированных на основе внешних источников. Однако встроенных аналогов инструмента подготовки данных с собственным языком преобразований или надстройки для моделирования с реляционной моделью и языком выражений в нём пока нет. Аналитические сценарии в Р7 Офис развиваются. Но они ориентированы прежде всего на сводную аналитику. А не на построение полноценных конвейеров обработки данных и моделей данных.</p>
+
+            <p>МойОфис также наращивает аналитическую функциональность. В табличном редакторе улучшена работа со сводными таблицами. Добавлены гибкие фильтры и сортировка. Расширена функциональность дополнительных вычислений в сводных таблицах. Важным шагом стало появление помощника на основе искусственного интеллекта. Он позволяет создавать сводные таблицы по запросу пользователя на естественном языке. Это интересное направление. Оно снижает порог входа для нетехнических специалистов. Однако, как и в случае с Р7 Офис, в МойОфис отсутствуют полноценные аналоги инструмента подготовки данных и надстройки для моделирования. Сводные таблицы остаются основным инструментом анализа. А реляционное моделирование и язык выражений для анализа данных не поддерживаются.</p>
+
+            <p>Что касается замены платформы бизнес-аналитики, то на российском рынке существует ряд платформ. Они позиционируются как отечественные аналоги. Среди них — аналитическая платформа от фирмы один Эс. Платформа Навигатор Би Ай от Сбера. Аналитическая платформа Форсайт. Платформа Визиолоджи. И аналитический модуль в составе пакета Р7. Эти платформы предоставляют возможности визуализации, построения дашбордов и работы с данными. Например, платформа Визиолоджи интегрируется с различными источниками. Среди них система управления базами данных Кликхаус, система Постгрес и файлы Эксель. Однако важно понимать одну вещь. Эти платформы являются аналогами именно платформы бизнес-аналитики как средства визуализации и публикации отчётов. Но они не заменяют инструмент подготовки данных и надстройку для моделирования внутри табличной среды. Аналитик, работающий с российскими платформами, может строить дашборды. Но конвейер подготовки данных и реляционная модель чаще всего остаются за пределами табличного процессора.</p>
+
+            <p>Электронные таблицы прошли путь от простых ячеек с формулами до аналитических экосистем. Международные инструменты задают высокую планку функциональности. Они позволяют автоматизировать подготовку данных, строить реляционные модели и создавать интерактивные отчёты. Бесплатный табличный процессор ЛибреОфис и отечественные пакеты Р7 Офис и МойОфис предоставляют надёжную базовую аналитику. Но пока не предлагают полноценных аналогов этих продвинутых возможностей. Это не означает, что они хуже. Это означает, что они решают другой класс задач и находятся на другом этапе развития. Аналитик должен понимать эту разницу. Это нужно, чтобы осознанно выбирать инструмент под задачу, а не под привычку.</p>
+
+            <p>Перейдём к следующему классу инструментов. Это системы управления базами данных. Именно они обеспечивают хранение и обработку структурированной информации, с которой работает аналитик.</p>
+
+            <h3>📌 2.2. Системы управления базами данных</h3>
+
+            <p>Перейдём к следующему классу инструментов. Это системы управления базами данных. Если электронные таблицы — это рабочий стол аналитика, то системы управления базами данных — это промышленный склад. Именно здесь хранятся основные объёмы структурированной информации. И именно здесь аналитик учится задавать вопросы к данным на профессиональном языке.</p>
+
+            <p>Системы управления базами данных решают несколько ключевых задач. Первое. Это надёжное хранение больших объёмов структурированных данных. Второе. Это обеспечение одновременного доступа многих пользователей без потери целостности информации. Третье. Это быстрый поиск и извлечение нужных записей с помощью языка структурированных запросов. Четвёртое. Это разграничение прав доступа, чтобы каждый сотрудник видел только те данные, которые ему положены. Пятое. Это резервное копирование и восстановление, чтобы информация не терялась при сбоях. Наконец, шестое. Это поддержка транзакций — то есть согласованных изменений, которые либо применяются полностью, либо не применяются вовсе.</p>
+
+            <p>С этими инструментами работает широкий круг специалистов. Аналитик данных пишет запросы на языке структурированных запросов и извлекает нужные срезы для анализа. Специалист по аналитике бизнес-данных строит на основе этих запросов отчёты и дашборды. Системный аналитик проектирует структуру базы данных: какие таблицы нужны, какие поля в них должны быть, как таблицы связаны между собой. Аналитик больших данных работает не только с реляционными, но и с нереляционными базами. Инженер данных создаёт хранилища и настраивает загрузку информации. Финансовый аналитик обращается к учётным системам, которые тоже построены на базах данных. Даже бизнес-аналитик и аналитик учётных систем периодически проверяют данные через запросы, чтобы убедиться в корректности требований.</p>
+
+            <p>Важно различать два больших семейства. Первое — это реляционные базы данных. Они хранят информацию в виде таблиц со строго заданной структурой. Связи между таблицами устанавливаются через общие поля. Для работы с ними используется язык структурированных запросов. Это наиболее распространённый тип баз в корпоративной среде. Второе — это нереляционные базы данных. Они появились позже и ориентированы на гибкие структуры, большие объёмы и высокую скорость записи. Их используют, когда данные не укладываются в жёсткую табличную схему. Например, это журналы событий, сообщения, профили пользователей с разным набором полей. Аналитик больших данных и инженер данных часто работают с обоими семействами.</p>
+
+            <p>На международном рынке сложилось несколько признанных решений. Первое. Это система Постгрес. Она известна своей надёжностью, открытым исходным кодом и богатыми возможностями расширения. Второе. Это система Майкрософт Эс Кью Эл Сервер. Она тесно интегрирована с экосистемой Майкрософт и широко используется в корпоративной среде. Третье. Это система Оракл. Она применяется в крупных организациях, где требуются высокая производительность и развитые средства администрирования. Четвёртое. Это система Май Эс Кью Эл, которая популярна в веб-разработке. Пятое. Это система Постгрес в облачных вариантах, которые предлагают крупные провайдеры. Все эти системы поддерживают язык структурированных запросов. Все они имеют развитые средства резервного копирования, репликации и разграничения прав. Их функциональность проверена десятилетиями эксплуатации.</p>
+
+            <p>В России также созданы полноценные системы управления базами данных. Первое. Это система Постгрес Про. Она построена на основе открытого кода Постгрес и дополнена средствами поддержки, оптимизации и безопасности. Она включена в реестр отечественного программного обеспечения. Второе. Это система Ред База Данных. Она также основана на открытом коде и ориентирована на российских заказчиков. Третье. Это система Линтер База Данных, которая развивается как отечественная разработка. Четвёртое. Это система Кликхаус, которая изначально создавалась в России и получила мировое признание как аналитическая колончатая база. Пятое. Это решения на основе открытого кода Постгрес, которые предлагают российские интеграторы с полной технической поддержкой.</p>
+
+            <p>Теперь сравним международные и отечественные решения по трём критериям.</p>
+
+            <p>Первый критерий — функциональность. Международные системы обладают максимальной зрелостью. Они поддерживают все мыслимые возможности: сложные типы данных, расширенные индексы, продвинутые механизмы репликации, встроенные средства анализа производительности. Отечественные системы, особенно Постгрес Про и Ред База Данных, по базовой функциональности близки к международным. Они поддерживают язык структурированных запросов, транзакции, репликацию, разграничение прав. Однако в отдельных узких областях они могут уступать. Например, в поддержке некоторых редких расширений или в инструментах администрирования. При этом Кликхаус занимает особое место. Это аналитическая база, которая по скорости выполнения аналитических запросов на больших объёмах опережает многие традиционные системы. И она признана во всём мире.</p>
+
+            <p>Второй критерий — интеграция. Международные системы интегрированы с огромным числом инструментов: с платформами бизнес-аналитики, с инструментами подготовки данных, с облачными сервисами. Отечественные системы также развивают интеграцию. Постгрес Про и Ред База Данных поддерживают стандартные протоколы подключения. Это значит, что к ним можно подключиться из большинства инструментов визуализации и аналитики. Российские платформы бизнес-аналитики, такие как Визиолоджи и Форсайт, напрямую поддерживают подключение к отечественным базам. Более того, они лучше интегрированы с российскими учётными системами и реестрами. Однако при переходе с международной системы на отечественную может потребоваться адаптация. Например, могут отличаться настройки драйверов или синтаксис отдельных функций.</p>
+
+            <p>Третий критерий — взаимозаменяемость. Здесь ситуация благоприятная. Поскольку все реляционные системы поддерживают язык структурированных запросов, аналитик, освоивший одну систему, сможет работать и с другой. Различия касаются синтаксических тонкостей, особенностей администрирования и производительности. Взаимозаменяемость высокая. Это значит, что организация может заменить международную систему на отечественную без полной переподготовки команды. Однако нужно планировать миграцию: переносить данные, проверять запросы, тестировать производительность. Для нереляционных баз взаимозаменяемость ниже, поскольку у каждого семейства свои модели данных и свои языки запросов.</p>
+
+            <p>Системы управления базами данных — это фундамент аналитической инфраструктуры. Международные решения задают стандарт зрелости и функциональности. Отечественные системы предлагают надёжные альтернативы, включённые в реестр российского программного обеспечения. Они близки по функциональности, хорошо интегрируются с российскими инструментами и обладают высокой взаимозаменяемостью благодаря языку структурированных запросов. Аналитик должен понимать эти различия, чтобы осознанно выбирать систему под задачи организации, под требования регуляторов и под бюджет проекта.</p>
+
+            <p>Перейдём к следующему классу инструментов. Это инструменты визуализации и бизнес-аналитики. Именно они превращают данные в наглядные отчёты и дашборды, с которыми работают руководители и команды.</p>
+
+            <h3>📌 2.3. Инструменты визуализации и бизнес-аналитики</h3>
+
+            <p>Перейдём к следующему классу инструментов. Это инструменты визуализации и бизнес-аналитики. Если системы управления базами данных отвечают за хранение информации, то эти инструменты отвечают за её представление. Именно здесь данные превращаются в наглядные отчёты, графики и дашборды. Именно здесь руководители и команды получают возможность видеть картину целиком и принимать решения на основе фактов.</p>
+
+            <p>Инструменты визуализации и бизнес-аналитики решают несколько ключевых задач. Первое. Это объединение данных из разных источников в единую модель. Второе. Это создание интерактивных отчётов, которые обновляются при изменении данных. Третье. Это построение дашбордов — то есть панелей с ключевыми показателями, которые видны с первого взгляда. Четвёртое. Это обеспечение совместной работы: возможность делиться отчётами с коллегами и разграничивать права доступа. Пятое. Это поддержка мобильного просмотра, чтобы руководитель мог посмотреть показатели со смартфона. Шестое. Это автоматическое обновление данных по расписанию, чтобы отчёты всегда были актуальными.</p>
+
+            <p>С этими инструментами работает широкий круг аналитиков. Аналитик данных строит дашборды для оперативного мониторинга показателей. Специалист по аналитике бизнес-данных создаёт отчёты для руководства и подразделений. Продуктовый аналитик визуализирует метрики продукта: удержание, конверсию, доход на пользователя. Веб-аналитик строит отчёты по поведению посетителей сайта и эффективности рекламных кампаний. Маркетинговый аналитик сводит данные по каналам привлечения и стоимости привлечения клиента. Финансовый аналитик создаёт финансовые дашборды с ключевыми показателями компании. Даже бизнес-аналитик и системный аналитик иногда используют эти инструменты, чтобы наглядно показать заказчику текущие процессы или результаты внедрения.</p>
+
+            <p>На международном рынке сложилось несколько признанных платформ. Первое. Это платформа Табло. Она известна своим мощным механизмом визуализации и интуитивным интерфейсом. Аналитик может перетаскивать поля мышью и мгновенно видеть результат. Второе. Это платформа Пауэр Би Ай от компании Майкрософт. Мы уже упоминали её в контексте таблиц, но здесь важно подчеркнуть, что это самостоятельная платформа. Она тесно интегрирована с офисными продуктами и обладает широкими возможностями моделирования данных. Третье. Это платформа Клик. Она предлагает ассоциативную модель данных, которая позволяет исследовать информацию в свободном режиме. Четвёртое. Это платформа Лукер от компании Гугл. Она ориентирована на облачную работу и тесно связана с облачными хранилищами данных. Пятое. Это платформа Микростратеджи, которая используется в крупных корпоративных средах. Все эти платформы обладают развитой функциональностью. Они поддерживают подключение к десяткам источников данных. Они позволяют строить сложные интерактивные отчёты. Они обеспечивают совместную работу и разграничение прав.</p>
+
+            <p>В России создан ряд платформ бизнес-аналитики, которые включены в реестр отечественного программного обеспечения. Первое. Это платформа ДетаЛенс от компании Яндекс. Она изначально создавалась для внутренних задач, а затем стала доступна широкой аудитории. Она предоставляет возможности визуализации, построения дашбордов и работы с данными. Второе. Это платформа Визиолоджи. Она ориентирована на крупные организации и поддерживает подключение к различным источникам данных. Третье. Это платформа Модус Би Ай. Она предлагает инструменты для построения отчётов и анализа данных. Четвёртое. Это платформа Форсайт. Аналитическая платформа. Она известна своими возможностями прогнозирования и работы с временными рядами. Пятое. Это платформа Навигатор Би Ай от Сбера. Она развивается как корпоративное решение. Шестое. Это аналитический модуль в составе пакета Р7. Он предоставляет базовые возможности визуализации. Седьмое. Это платформа один Эс. Аналитика. Она тесно интегрирована с учётными системами и позволяет строить отчёты на основе данных из этих систем.</p>
+
+            <p>Теперь сравним международные и отечественные платформы по трём критериям.</p>
+
+            <p>Первый критерий — функциональность. Международные платформы обладают максимальной зрелостью. Они поддерживают все мыслимые типы визуализации: тепловые карты, диаграммы рассеяния, каскадные диаграммы, географические карты. Они предлагают продвинутые средства моделирования данных, включая вычисляемые поля и меры. Они обеспечивают высокую производительность при работе с большими объёмами информации. Отечественные платформы активно развиваются. По базовой функциональности они близки к международным. ДетаЛенс очень популярен в России и предоставляет широкие возможности визуализации. Визиолоджи используется в крупных компаниях и поддерживает сложные сценарии. Однако в отдельных узких областях они могут уступать. Например, в поддержке некоторых редких типов диаграмм или в инструментах продвинутой аналитики. При этом важно отметить, что для большинства типовых задач российские платформы вполне достаточны.</p>
+
+            <p>Второй критерий — интеграция. Международные платформы интегрированы с огромным числом источников данных: с реляционными и нереляционными базами, с облачными хранилищами, с файлами разных форматов, с веб-сервисами. Они также хорошо интегрируются с другими инструментами аналитика. Отечественные платформы также развивают интеграцию. ДетаЛенс поддерживает подключение к различным источникам, включая базы данных и файлы. Визиолоджи интегрируется с системой управления базами данных Кликхаус, с системой Постгрес и с файлами Эксель. Российские платформы лучше интегрированы с отечественными учётными системами и реестрами. Это их важное преимущество. Однако при переходе с международной платформы на отечественную может потребоваться адаптация. Например, могут отличаться настройки драйверов или синтаксис вычисляемых полей.</p>
+
+            <p>Третий критерий — взаимозаменяемость. Здесь ситуация неоднозначная. С одной стороны, все платформы решают схожие задачи. Аналитик, освоивший одну платформу, сможет разобраться и в другой. С другой стороны, у каждой платформы свой интерфейс, свои особенности моделирования данных, свои языки формул. Поэтому полная взаимозаменяемость невозможна без переподготовки. Однако если речь идёт о замене международной платформы на отечественную, то нужно планировать миграцию. Нужно переносить отчёты, проверять совместимость формул, тестировать производительность. Взаимозаменяемость можно оценить как среднюю. Она выше для простых отчётов и ниже для сложных аналитических сценариев.</p>
+
+            <p>Следует упомянуть и о простых инструментах визуализации, которые встроены в электронные таблицы. Это диаграммы и сводные диаграммы в Эксель, в ЛибреОфис Калс, в Р7 Офис и в МойОфис. Они позволяют строить базовые графики без установки дополнительных платформ. Эти инструменты подходят для быстрой визуализации небольших наборов данных. Однако они уступают специализированным платформам по интерактивности, по возможностям совместной работы и по масштабируемости. Поэтому их используют как вспомогательное средство, а не как основную платформу для бизнес-аналитики.</p>
+
+            <p>Инструменты визуализации и бизнес-аналитики — это ключевой класс программных средств для аналитика. Международные платформы задают высокую планку функциональности и интеграции. Отечественные платформы предлагают надёжные альтернативы, включённые в реестр российского программного обеспечения. Они близки по функциональности, хорошо интегрируются с российскими системами и обладают средней взаимозаменяемостью. Аналитик должен понимать эти различия, чтобы осознанно выбирать платформу под задачи организации, под требования регуляторов и под бюджет проекта.</p>
+
+            <p>Перейдём к следующему классу инструментов. Это инструменты веб-аналитики и продуктовой аналитики. Именно они позволяют аналитику понять, как пользователи взаимодействуют с сайтом и с продуктом.</p>
+
+            <h3>📌 2.4. Инструменты веб-аналитики и продуктовой аналитики</h3>
+
+            <p>Перейдём к следующему классу инструментов. Это инструменты веб-аналитики и продуктовой аналитики. Если предыдущие классы отвечали за хранение, обработку и визуализацию данных, то эти инструменты отвечают на главный вопрос: как пользователь взаимодействует с сайтом и с продуктом. Именно здесь аналитик видит не просто цифры, а поведение живых людей. И именно здесь он находит ответы на вопросы, почему одни посетители совершают покупку, а другие уходят.</p>
+
+            <p>Инструменты веб-аналитики и продуктовой аналитики решают несколько ключевых задач. Первое. Это отслеживание поведения посетителей на сайте: какие страницы они открывают, сколько времени проводят, откуда приходят. Второе. Это анализ воронки: на каком шаге пользователи чаще всего уходят. Третье. Это оценка эффективности рекламных кампаний: какой канал приносит больше целевых действий. Четвёртое. Это проведение контролируемых экспериментов, чтобы проверить гипотезу на практике. Пятое. Это когортный анализ: как ведут себя группы пользователей, объединённые общим признаком. Шестое. Это изучение удержания: возвращаются ли пользователи в продукт спустя время. Седьмое. Это сегментация аудитории, чтобы понять, какие группы пользователей самые ценные.</p>
+
+            <p>С этими инструментами работает несколько ролей. Веб-аналитик отслеживает поведение посетителей сайта и эффективность рекламы. Продуктовый аналитик изучает метрики продукта: удержание, конверсию, средний доход на пользователя. Маркетинговый аналитик оценивает каналы привлечения и стоимость привлечения клиента. Специалист по анализу пользовательского опыта исследует путь клиента и проверяет гипотезы об улучшении интерфейса.</p>
+
+            <p>На международном рынке веб-аналитики сложилось несколько признанных решений. Первое. Это платформа Гугл Аналитика. Она предоставляет широкие возможности отслеживания трафика, конверсий и поведения пользователей. Она тесно интегрирована с рекламными сервисами Гугл. Второе. Это система для управления тегами, которая позволяет настраивать разметку сайта без программирования. Третье. Это платформа Адоб Аналитика, которая используется в крупных корпоративных средах. Четвёртое. Это сервисы тепловых карт и записи сессий, которые показывают, куда пользователи кликают и как двигаются по странице. Все эти инструменты обладают развитой функциональностью. Они позволяют строить отчёты, настраивать цели и сегменты, проводить контролируемые эксперименты.</p>
+
+            <p>В России создан ряд инструментов, которые включены в реестр отечественного программного обеспечения. Первое. Это платформа Яндекс Метрика. Она предоставляет возможности отслеживания трафика, поведения пользователей и эффективности рекламы. Она не уступает по основным функциям международным аналогам. Более того, она лучше интегрирована с российскими рекламными системами. Второе. Это система для управления тегами от Яндекса, которая позволяет настраивать разметку сайта. Третье. Это сервисы тепловых карт и записи сессий от российских разработчиков. Они включены в реестр отечественного программного обеспечения.</p>
+
+            <p>Теперь сравним международные и отечественные инструменты веб-аналитики.</p>
+
+            <p>Первый критерий — функциональность. Международные платформы обладают максимальной зрелостью. Они поддерживают все мыслимые типы отчётов, включая анализ аудитории, анализ поведения, анализ конверсий. Они предлагают продвинутые средства сегментации и прогнозирования. Отечественная платформа Яндекс Метрика по базовой функциональности близка к международным. Она предоставляет широкие возможности анализа поведения, включая карты кликов и вебвизор. Однако в отдельных узких областях она может уступать. Например, в поддержке некоторых редких типов отчётов или в инструментах прогнозирования. При этом важно отметить, что для большинства типовых задач российская платформа вполне достаточна.</p>
+
+            <p>Второй критерий — интеграция. Международные платформы интегрированы с огромным числом сервисов: с рекламными кабинетами, с системами управления контентом, с платформами бизнес-аналитики. Отечественная платформа Яндекс Метрика также развивает интеграцию. Она напрямую связана с рекламными сервисами Яндекса. Она поддерживает подключение к платформам визуализации, включая ДетаЛенс. Российские платформы лучше интегрированы с отечественными рекламными системами и учётными системами. Это их важное преимущество. Однако при переходе с международной платформы на отечественную может потребоваться адаптация. Например, могут отличаться настройки целей или синтаксис фильтров.</p>
+
+            <p>Третий критерий — взаимозаменяемость. Здесь ситуация благоприятная. Поскольку все платформы решают схожие задачи, аналитик, освоивший одну систему, сможет разобраться и в другой. Различия касаются интерфейса и некоторых особенностей настройки. Взаимозаменяемость высокая. Многие компании используют обе системы параллельно, чтобы перекрёстно проверять данные. Однако важно учитывать регуляторные ограничения. Международная платформа может быть ограничена в России из-за требований к хранению персональных данных. Поэтому отечественная платформа становится безальтернативной для многих организаций.</p>
+
+            <p>Перейдём к продуктовой аналитике. На международном рынке сложилось несколько признанных решений. Первое. Это платформа Амплитуда. Она позволяет строить воронки, анализировать когорты, проводить контролируемые эксперименты. Второе. Это платформа Микспанел. Она предлагает схожие возможности с акцентом на гибкость настройки. Третье. Это платформа Файрбейс от компании Гугл. Она предоставляет инструменты аналитики и экспериментов для мобильных приложений. Четвёртое. Это платформа для проведения экспериментов, которая позволяет проверять гипотезы на практике. Все эти инструменты обладают развитой функциональностью. Они позволяют строить сложные сценарии анализа и визуализировать результаты.</p>
+
+            <p>В России создан ряд инструментов продуктовой аналитики. Первое. Это платформа АппМетрика от компании Яндекс. Она предоставляет возможности отслеживания поведения пользователей в мобильных приложениях. Она позволяет строить воронки, анализировать когорты, проводить контролируемые эксперименты. Второе. Это платформа девтудев. Она ориентирована на анализ игровых приложений и предлагает инструменты для работы с метриками продукта. Третье. Это платформа для проведения экспериментов от компании ВэКа. Она позволяет проверять гипотезы на практике. Все эти инструменты включены в реестр отечественного программного обеспечения. Они предоставляют широкие возможности анализа.</p>
+
+            <p>Сравним продуктовую аналитику по тем же критериям.</p>
+
+            <p>Первый критерий — функциональность. Международные платформы обладают максимальной зрелостью. Они поддерживают все мыслимые типы анализа: воронки, когорты, удержание, сегментацию, эксперименты. Они предлагают продвинутые средства прогнозирования и машинного обучения. Отечественные платформы по базовой функциональности близки к международным. АппМетрика предоставляет широкие возможности анализа поведения в приложениях. Девтудев специализируется на игровой аналитике. Однако в отдельных узких областях они могут уступать. Например, в поддержке некоторых редких типов отчётов или в инструментах прогнозирования. При этом для большинства типовых задач российские платформы вполне достаточны.</p>
+
+            <p>Второй критерий — интеграция. Международные платформы интегрированы с огромным числом сервисов: с рекламными кабинетами, с системами управления контентом, с платформами бизнес-аналитики. Отечественные платформы также развивают интеграцию. АппМетрика напрямую связана с рекламными сервисами Яндекса. Она поддерживает подключение к платформам визуализации. Российские платформы лучше интегрированы с отечественными рекламными системами и учётными системами. Это их важное преимущество. Однако при переходе с международной платформы на отечественную может потребоваться адаптация. Например, могут отличаться настройки событий или синтаксис фильтров.</p>
+
+            <p>Третий критерий — взаимозаменяемость. Здесь ситуация неоднозначная. С одной стороны, все платформы решают схожие задачи. Аналитик, освоивший одну платформу, сможет разобраться и в другой. С другой стороны, у каждой платформы свой интерфейс, свои особенности настройки событий, свои языки формул. Поэтому полная взаимозаменяемость невозможна без переподготовки. Однако если речь идёт о замене международной платформы на отечественную, то нужно планировать миграцию. Нужно переносить события, проверять совместимость метрик, тестировать производительность. Взаимозаменяемость можно оценить как среднюю. Она выше для простых сценариев и ниже для сложных аналитических моделей.</p>
+
+            <p>Инструменты веб-аналитики и продуктовой аналитики — это ключевой класс программных средств для аналитика. Международные платформы задают высокую планку функциональности и интеграции. Отечественные платформы предлагают надёжные альтернативы, включённые в реестр российского программного обеспечения. Они близки по функциональности, хорошо интегрируются с российскими системами и обладают средней взаимозаменяемостью. Аналитик должен понимать эти различия, чтобы осознанно выбирать платформу под задачи организации, под требования регуляторов и под бюджет проекта.</p>
+
+            <p>Перейдём к следующему классу инструментов. Это инструменты работы с большими данными. Именно они позволяют обрабатывать огромные объёмы информации, которые не помещаются в обычные таблицы и не укладываются в традиционные базы данных.</p>
+
+            <h3>📌 2.5. Инструменты работы с большими данными</h3>
+
+            <p>Перейдём к следующему классу инструментов. Это инструменты работы с большими данными. Если предыдущие классы были рассчитаны на относительно небольшие объёмы информации, то здесь речь идёт о данных, которые не помещаются в память одного компьютера. Это данные, которые поступают непрерывно. Это данные, которые имеют разную структуру. Именно для таких случаев созданы специальные технологии.</p>
+
+            <p>Инструменты больших данных решают несколько ключевых задач. Первое. Это распределённое хранение информации на множестве серверов. Второе. Это распределённая обработка, когда вычисления выполняются параллельно на нескольких машинах. Третье. Это потоковая обработка, когда данные анализируются по мере поступления. Четвёртое. Это работа с неструктурированными данными: текстами, изображениями, журналами событий. Пятое. Это построение рекомендательных и предсказательных моделей на больших объёмах. Шестое. Это обеспечение отказоустойчивости: если один сервер выходит из строя, система продолжает работать.</p>
+
+            <p>С этими инструментами работает несколько ролей. Аналитик больших данных анализирует огромные массивы информации и строит модели. Инженер данных создаёт хранилища и настраивает загрузку. Специалист по данным, или дата-сайентист, разрабатывает алгоритмы машинного обучения. Аналитик данных может обращаться к этим системам для выполнения сложных запросов. Продуктовый аналитик иногда использует их для анализа больших наборов событий.</p>
+
+            <p>На международном рынке сложилось несколько признанных технологий. Первое. Это платформа Хадуп. Она включает распределённую файловую систему и модель вычислений, которая позволяет обрабатывать данные на кластере серверов. Второе. Это вычислительный движок Спарк. Он работает в памяти и поэтому значительно быстрее традиционных подходов. Третье. Это система потоковой обработки Кафка. Она позволяет передавать и обрабатывать потоки событий в реальном времени. Четвёртое. Это система Флинк, которая также ориентирована на потоковую обработку. Пятое. Это озеро данных, которое позволяет хранить данные в исходном формате без предварительной структуры. Все эти технологии обладают развитой функциональностью. Они поддерживают отказоустойчивость, масштабирование и работу с разными форматами данных.</p>
+
+            <p>В России создан ряд инструментов для работы с большими данными. Первое. Это платформа Арендата Хадуп. Она построена на основе открытого кода Хадуп и дополнена средствами поддержки и безопасности. Она включена в реестр отечественного программного обеспечения. Второе. Это платформа Арендата ДиБи. Она предоставляет возможности распределённого хранения и обработки. Третье. Это система управления базами данных Кликхаус. Она изначально создавалась в России и получила мировое признание как аналитическая колончатая база. Четвёртое. Это платформа для потоковой обработки от российских разработчиков. Пятое. Это решения на основе открытого кода Спарк, которые предлагают российские интеграторы с технической поддержкой.</p>
+
+            <p>Сравним по трём критериям.</p>
+
+            <p>Первый критерий — функциональность. Международные технологии обладают максимальной зрелостью. Они проверены на огромных кластерах и поддерживают все мыслимые сценарии. Отечественные решения, особенно Арендата Хадуп и Арендата ДиБи, по базовой функциональности близки к международным. Они поддерживают распределённое хранение, обработку и отказоустойчивость. Кликхаус занимает особое место: по скорости аналитических запросов на больших объёмах он опережает многие традиционные системы. Однако в отдельных узких областях отечественные решения могут уступать. Например, в поддержке некоторых редких библиотек машинного обучения. При этом для большинства типовых задач они вполне достаточны.</p>
+
+            <p>Второй критерий — интеграция. Международные технологии интегрированы с огромным числом инструментов: с платформами визуализации, с системами машинного обучения, с облачными сервисами. Отечественные решения также развивают интеграцию. Арендата Хадуп и Арендата ДиБи поддерживают стандартные протоколы. Кликхаус легко подключается к платформам бизнес-аналитики, включая Визиолоджи и ДетаЛенс. Российские инструменты лучше интегрированы с отечественными системами хранения и обработки данных. Это их важное преимущество. Однако при переходе с международной технологии на отечественную может потребоваться адаптация. Например, могут отличаться настройки кластера или синтаксис запросов.</p>
+
+            <p>Третий критерий — взаимозаменяемость. Здесь ситуация благоприятная. Поскольку многие отечественные решения построены на тех же открытых принципах, что и международные, аналитик, освоивший одну технологию, сможет разобраться и в другой. Различия касаются администрирования и некоторых особенностей настройки. Взаимозаменяемость высокая. Однако для нереляционных и потоковых систем она ниже, поскольку у каждого семейства свои модели данных и свои языки запросов.</p>
+
+            <p>Инструменты работы с большими данными — это фундамент для анализа огромных объёмов информации. Международные технологии задают стандарт зрелости. Отечественные решения предлагают надёжные альтернативы, включённые в реестр российского программного обеспечения. Они близки по функциональности, хорошо интегрируются с российскими системами и обладают высокой взаимозаменяемостью. Аналитик должен понимать эти различия, чтобы осознанно выбирать технологию под задачи организации, под требования регуляторов и под бюджет проекта.</p>
+
+            <p>Перейдём к следующему классу инструментов. Это инструменты моделирования и документирования требований. Именно они позволяют аналитику описать, как должна работать система, и передать эти знания разработчикам.</p>
+
+            <h3>📌 2.6. Инструменты моделирования и документирования требований</h3>
+
+            <p>Перейдём к следующему классу инструментов. Это инструменты моделирования и документирования требований. Если предыдущие классы были ориентированы на анализ данных, то эти инструменты ориентированы на описание того, какой должна быть информационная система. Именно здесь аналитик требований превращает потребности заказчика в понятные схемы, спецификации и технические задания. Именно здесь рождается тот документ, по которому разработчики будут создавать продукт.</p>
+
+            <p>Инструменты моделирования и документирования требований решают несколько ключевых задач. Первое. Это описание текущих бизнес-процессов в виде схем и документов. Второе. Это моделирование нового процесса с улучшениями. Третье. Это описание требований к системе в структурированном виде. Четвёртое. Это создание технического задания для разработчиков. Пятое. Это поддержка совместной работы над требованиями: возможность комментировать, согласовывать и версионировать документы. Шестое. Это связывание требований с тестовыми сценариями и с архитектурой системы.</p>
+
+            <p>С этими инструментами работает несколько ролей. Бизнес-аналитик моделирует бизнес-процессы и описывает требования заказчика. Системный аналитик проектирует поведение системы и составляет техническое задание. Аналитик учётных систем описывает процессы автоматизации в учётной системе. Специалист по анализу пользовательского опыта моделирует путь пользователя и проверяет гипотезы об интерфейсе.</p>
+
+            <p>На международном рынке сложилось несколько признанных инструментов. Первое. Это редактор диаграмм, который позволяет рисовать схемы, блок-схемы и диаграммы. Его часто используют для быстрого создания моделей. Второе. Это платформа для моделирования бизнес-процессов, которая поддерживает нотацию моделирования бизнес-процессов и унифицированный язык моделирования. Третье. Это инструмент для архитектурного моделирования, который позволяет описывать архитектуру предприятия и связывать требования с компонентами системы. Четвёртое. Это специализированная среда для бизнес-анализа, которая поддерживает полный цикл работы с требованиями: от выявления до управления изменениями. Пятое. Это онлайн-сервис для совместного рисования диаграмм, который позволяет команде работать над схемами одновременно. Все эти инструменты обладают развитой функциональностью. Они поддерживают стандартные нотации, экспорт в разные форматы, интеграцию с системами управления проектами.</p>
+
+            <p>В России создан ряд инструментов для моделирования и документирования требований. Первое. Это платформа для моделирования бизнес-процессов и архитектуры предприятия. Она поддерживает нотацию моделирования бизнес-процессов, нотацию описания процессов и функционального моделирования. Она включена в реестр отечественного программного обеспечения. Второе. Это онлайн-редактор для создания схем и диаграмм. Он ориентирован на командную работу и поддерживает нотацию моделирования бизнес-процессов. Третье. Это среда для моделирования архитектуры и анализа требований. Она используется в крупных организациях. Четвёртое. Это модуль моделирования в составе российских офисных пакетов, который предоставляет базовые возможности рисования схем.</p>
+
+            <p>Сравним по трём критериям.</p>
+
+            <p>Первый критерий — функциональность. Международные инструменты обладают максимальной зрелостью. Они поддерживают все основные нотации моделирования, включая нотацию моделирования бизнес-процессов, унифицированный язык моделирования, нотацию описания процессов и функциональное моделирование. Они предлагают продвинутые средства проверки моделей, генерации документов и управления версиями. Отечественные инструменты активно развиваются. Платформа для моделирования бизнес-процессов и архитектуры предприятия по базовой функциональности близка к международным. Она поддерживает ключевые нотации и позволяет создавать регламентирующие документы. Однако в отдельных узких областях она может уступать. Например, в поддержке редких видов диаграмм или в инструментах имитационного моделирования. При этом для большинства типовых задач российские инструменты вполне достаточны.</p>
+
+            <p>Второй критерий — интеграция. Международные инструменты интегрированы с системами управления проектами, с средами разработки, с репозиториями требований. Отечественные инструменты также развивают интеграцию. Платформа для моделирования бизнес-процессов поддерживает экспорт в разные форматы и может быть связана с учётными системами. Российские инструменты лучше интегрированы с отечественными системами управления и реестрами. Это их важное преимущество. Однако при переходе с международного инструмента на отечественный может потребоваться адаптация. Например, могут отличаться форматы экспорта или настройки нотаций.</p>
+
+            <p>Третий критерий — взаимозаменяемость. Здесь ситуация неоднозначная. С одной стороны, все инструменты решают схожие задачи и поддерживают стандартные нотации. Аналитик, освоивший одну платформу, сможет разобраться и в другой. С другой стороны, у каждой платформы свой интерфейс, свои особенности работы с моделями, свои форматы хранения. Поэтому полная взаимозаменяемость невозможна без переподготовки. Взаимозаменяемость можно оценить как среднюю. Она выше для простых схем и ниже для сложных моделей с интеграцией.</p>
+
+            <p>Инструменты моделирования и документирования требований — это ключевой класс программных средств для аналитика требований. Международные инструменты задают высокую планку функциональности и интеграции. Отечественные инструменты предлагают надёжные альтернативы, включённые в реестр российского программного обеспечения. Они близки по функциональности, хорошо интегрируются с российскими системами и обладают средней взаимозаменяемостью. Аналитик должен понимать эти различия, чтобы осознанно выбирать инструмент под задачи организации, под требования регуляторов и под бюджет проекта.</p>
+
+            <p>Перейдём к следующему классу инструментов. Это языки программирования и среды разработки. Именно они позволяют аналитику выйти за рамки готовых решений и создать собственные алгоритмы обработки данных.</p>
+
+            <h3>📌 2.7. Языки программирования и среды разработки</h3>
+
+            <p>Перейдём к следующему классу инструментов. Это языки программирования и среды разработки. Если предыдущие классы предлагали готовые решения, то здесь аналитик создаёт собственные. Именно здесь он выходит за рамки стандартных отчётов и строит алгоритмы, которые решают уникальные задачи. Именно здесь рождаются модели машинного обучения и сложные конвейеры обработки данных.</p>
+
+            <p>Языки программирования решают несколько ключевых задач. Первое. Это автоматизация повторяющихся операций. Второе. Это обработка данных, которые не помещаются в память. Третье. Это построение статистических моделей и моделей машинного обучения. Четвёртое. Это создание собственных функций и библиотек для специфических задач. Пятое. Это интеграция разных систем через программные интерфейсы. Шестое. Это воспроизводимость анализа: один и тот же сценарий можно запустить повторно и получить тот же результат.</p>
+
+            <p>С этими инструментами работает несколько ролей. Аналитик данных использует язык программирования для обработки данных, визуализации и построения моделей. Аналитик больших данных применяет его для работы с распределёнными системами. Специалист по данным разрабатывает алгоритмы машинного обучения. Инженер данных создаёт конвейеры загрузки и преобразования. Продуктовый аналитик и веб-аналитик используют программирование для сложных выгрузок и автоматизации отчётов. Системный аналитик и бизнес-аналитик применяют язык структурированных запросов для проверки данных и создания прототипов.</p>
+
+            <p>На международном рынке сложилось несколько признанных языков. Первое. Это язык Питон. Он считается основным языком анализа данных. У него огромное сообщество, множество библиотек для статистики, машинного обучения и визуализации. Второе. Это язык Эр. Он создавался специально для статистической обработки и визуализации. Его любят исследователи и специалисты по данным. Третье. Это язык структурированных запросов. Он используется для извлечения данных из баз. Четвёртое. Это среда разработки Джупитер. Она позволяет объединять код, текст, формулы и графики в одном документе. Это удобно для исследований и обучения. Пятое. Это среда разработки для языка Питон, которая предоставляет инструменты отладки и управления проектами. Все эти языки и среды обладают развитой функциональностью. Они поддерживают тысячи библиотек, интеграцию с базами данных и облачными сервисами.</p>
+
+            <p>Важно понимать: языки программирования Питон и Эр являются международными и открытыми. У них нет отечественных аналогов в полном смысле. Однако российские компании и специалисты вносят значительный вклад в их развитие. Первое. Это российские библиотеки для анализа данных и машинного обучения. Они включены в реестр отечественного программного обеспечения. Второе. Это среды разработки, созданные в России. Они предоставляют инструменты для работы с языком Питон и с языком Эр. Третье. Это платформы для совместной работы с кодом, которые поддерживают российские стандарты безопасности. Четвёртое. Это образовательные платформы, которые обучают аналитиков работе с этими языками. Пятое. Это интеграционные решения, которые связывают международные языки с отечественными системами хранения и обработки данных.</p>
+
+            <p>Сравним по трём критериям.</p>
+
+            <p>Первый критерий — функциональность. Международные языки и среды обладают максимальной зрелостью. Они проверены миллионами пользователей по всему миру. Они поддерживают все мыслимые сценарии анализа данных. Отечественные решения, как правило, дополняют международные языки, а не заменяют их. Они предоставляют специализированные библиотеки и инструменты для российских задач. Например, для работы с российскими форматами отчётности или с отечественными системами управления базами данных. Однако в целом функциональность международных языков выше, поскольку они развиваются глобальным сообществом.</p>
+
+            <p>Второй критерий — интеграция. Международные языки интегрированы с огромным числом инструментов: с базами данных, с платформами визуализации, с облачными сервисами. Отечественные решения также развивают интеграцию. Российские библиотеки поддерживают стандартные протоколы. Они могут быть использованы в международных средах разработки. Российские платформы лучше интегрированы с отечественными системами хранения и обработки данных. Это их важное преимущество. Однако при переходе с международного инструмента на отечественный может потребоваться адаптация. Например, могут отличаться настройки окружения или синтаксис библиотек.</p>
+
+            <p>Третий критерий — взаимозаменяемость. Здесь ситуация особая. Языки программирования Питон и Эр являются открытыми стандартами. Аналитик, освоивший один язык, сможет разобраться и в другом. Однако полная взаимозаменяемость между ними невозможна, поскольку у каждого языка своя философия и свои библиотеки. Взаимозаменяемость между международными и отечественными решениями также ограничена. Отечественные библиотеки часто дополняют международные, а не заменяют их. Поэтому аналитик должен владеть международными языками и уметь использовать отечественные дополнения.</p>
+
+            <p>Языки программирования и среды разработки — это вершина технологического арсенала аналитика. Международные языки задают стандарт функциональности и интеграции. Отечественные решения предлагают специализированные библиотеки и инструменты, включённые в реестр российского программного обеспечения. Они дополняют международные языки и хорошо интегрируются с российскими системами. Взаимозаменяемость ограничена, но аналитик должен владеть международными языками и уметь использовать отечественные дополнения. Это позволяет ему решать задачи любой сложности.</p>
+
+            <p>Мы рассмотрели ключевые классы программных продуктов. Перейдём к следующему вопросу. Мы подробно сравним международные и отечественные инструменты по важным критериям.</p>
+
+            <h3>📌 3. Сравнительный анализ международных и отечественных инструментов</h3>
+
+            <p>Перейдём к следующему вопросу. Мы подробно сравним международные и отечественные инструменты по важным критериям. Это позволит нам не просто перечислить названия, а понять, чем они отличаются и что важно учитывать при выборе.</p>
+
+            <p>Первый критерий — функциональность. Это самый очевидный критерий. Международные инструменты обладают максимальной зрелостью. Они развивались десятилетиями. Их функциональность проверена миллионами пользователей по всему миру. Они поддерживают все мыслимые сценарии работы с данными. Отечественные инструменты активно развиваются. По базовой функциональности они близки к международным. Они поддерживают ключевые операции: сбор данных, обработку, визуализацию, моделирование. Однако в отдельных узких областях они могут уступать. Например, в поддержке редких типов диаграмм. Или в инструментах продвинутой аналитики. При этом для большинства типовых задач российские инструменты вполне достаточны. Это важно понимать. Функциональность — не единственный критерий. Иногда избыточная функциональность международных инструментов оказывается невостребованной. А отечественные решения, заточенные под конкретные задачи, работают эффективнее.</p>
+
+            <p>Второй критерий — стоимость владения. Этот критерий часто оказывается решающим. Международные инструменты, как правило, требуют покупки лицензий в иностранной валюте. Стоимость лицензий может быть высокой. Кроме того, нужно учитывать расходы на поддержку, на обучение персонала, на интеграцию. Отечественные инструменты предлагают более гибкие условия. Многие из них включены в реестр российского программного обеспечения. Это даёт преимущества при государственных закупках. Стоимость лицензий в рублях предсказуема. Поддержка осуществляется на русском языке. Обучение персонала проще, поскольку документация и интерфейс на русском. Однако не всё так однозначно. Международные инструменты иногда предлагают бесплатные версии для небольших команд. А отечественные инструменты могут требовать затрат на миграцию с уже используемых систем. Поэтому стоимость владения нужно считать комплексно. Важно учитывать не только цену лицензии, но и все сопутствующие расходы.</p>
+
+            <p>Третий критерий — интеграция. Это способность инструмента подключаться к другим системам. Международные инструменты обладают огромным числом готовых коннекторов. Они подключаются к десяткам источников данных. Они интегрируются с популярными системами управления проектами. Они поддерживают стандартные протоколы обмена данными. Отечественные инструменты также развивают интеграцию. Они поддерживают стандартные протоколы. Они подключаются к российским системам управления базами данных. Они интегрируются с отечественными учётными системами. Это их важное преимущество. Российские инструменты лучше понимают специфику отечественных систем. Например, они нативно поддерживают форматы обмена данными, принятые в России. Однако при переходе с международной системы на отечественную может потребоваться адаптация. Могут отличаться настройки драйверов. Могут отличаться форматы экспорта. Поэтому интеграцию нужно проверять до начала миграции.</p>
+
+            <p>Четвёртый критерий — взаимозаменяемость. Это способность заменить один инструмент другим без потери функциональности. Здесь ситуация неоднозначная. С одной стороны, многие инструменты решают схожие задачи. Аналитик, освоивший один инструмент, сможет разобраться и в другом. С другой стороны, у каждого инструмента свой интерфейс. Свои особенности настройки. Свои языки формул. Поэтому полная взаимозаменяемость невозможна без переподготовки. Взаимозаменяемость можно оценить как среднюю. Она выше для простых задач. Она ниже для сложных аналитических сценариев. Например, заменить один инструмент визуализации на другой относительно просто. А заменить одну платформу моделирования данных на другую сложнее. Потому что нужно переносить модели. Проверять совместимость формул. Тестировать производительность. Поэтому при выборе инструмента важно думать о будущем. Важно понимать, насколько легко будет перейти на другой инструмент, если текущий перестанет устраивать.</p>
+
+            <p>Пятый критерий — соответствие требованиям регуляторов. Это особенно важно в России. Международные инструменты могут иметь ограничения. Например, требования к хранению персональных данных на территории России. Или требования к сертификации программного обеспечения. Отечественные инструменты, включённые в реестр российского программного обеспечения, соответствуют этим требованиям. Они могут использоваться в государственных организациях. Они могут применяться для работы с персональными данными. Это их важное преимущество. Однако не всё так просто. Международные инструменты иногда предлагают локальные версии. Они размещают данные на серверах в России. Они проходят сертификацию. Поэтому при выборе инструмента нужно проверять его соответствие конкретным требованиям. А не полагаться на общие стереотипы.</p>
+
+            <p>Шестой критерий — поддержка и сообщество. Это важный критерий, который часто недооценивают. Международные инструменты обладают огромным сообществом пользователей. Это значит, что на любой вопрос можно найти ответ. Это значит, что существует множество обучающих материалов. Это значит, что выходят регулярные обновления. Отечественные инструменты имеют меньшие сообщества. Однако у них есть важное преимущество. Поддержка осуществляется на русском языке. Разработчики быстрее реагируют на запросы российских пользователей. Они лучше понимают специфику российских задач. Кроме того, российские инструменты часто имеют прямые каналы связи с разработчиками. Это позволяет быстрее решать проблемы. Поэтому при выборе инструмента важно учитывать не только функциональность, но и качество поддержки.</p>
+
+            <p>Седьмой критерий — обучение и доступность квалифицированных кадров. Международные инструменты широко изучаются. По ним много курсов, книг, видео. Найти специалиста, знакомого с международным инструментом, относительно легко. Отечественные инструменты менее распространены. Однако ситуация быстро меняется. Российские компании активно обучают своих сотрудников. Появляются курсы по отечественным инструментам. Вузы включают их в программы. Поэтому доступность кадров постепенно растёт. При выборе инструмента важно думать о том, кто будет с ним работать. Если в команде уже есть специалисты по международному инструменту, переход на отечественный может потребовать обучения. Если команда только формируется, можно сразу обучать её на отечественном инструменте. Это вопрос стратегии.</p>
+
+            <p>Мы рассмотрели семь критериев сравнения. Функциональность. Стоимость владения. Интеграция. Взаимозаменяемость. Соответствие требованиям регуляторов. Поддержка и сообщество. Обучение и доступность кадров. Ни один из этих критериев не является абсолютным. Нельзя сказать, что международные инструменты всегда лучше. И нельзя сказать, что отечественные всегда предпочтительнее. Всё зависит от конкретной ситуации. От задач организации. От требований регуляторов. От бюджета. От квалификации команды. От стратегии развития. Поэтому аналитик должен уметь оценивать инструменты по этим критериям. И принимать осознанные решения.</p>
+
+            <h3>📌 4. Заключение</h3>
+
+            <p>Подведём итоги нашей лекции. Мы рассмотрели ключевые классы программных продуктов, которые использует аналитик. Мы начали с простых электронных таблиц. Затем перешли к системам управления базами данных. После этого разобрали инструменты визуализации и бизнес-аналитики. Далее изучили средства веб-аналитики и продуктовой аналитики. Потом рассмотрели инструменты больших данных. И завершили обзор средствами моделирования требований и языками программирования.</p>
+
+            <p>Мы увидели главное. Каждый класс инструментов решает свой круг задач. И каждый класс соотносится с определёнными ролями аналитиков. Электронные таблицы нужны всем. Базы данных — аналитикам данных и системным аналитикам. Визуализация — специалистам по бизнес-аналитике. Веб-аналитика — веб-аналитикам и маркетологам. Большие данные — аналитикам больших данных. Моделирование требований — бизнес-аналитикам и системным аналитикам. Языки программирования — аналитикам данных и специалистам по данным.</p>
+
+            <p>Мы также сравнили международные и отечественные инструменты. И увидели, что нельзя дать однозначного ответа на вопрос, что лучше. Международные решения обладают максимальной зрелостью. Отечественные решения предлагают надёжные альтернативы и лучше интегрированы с российскими системами. Выбор зависит от задач, от требований регуляторов, от бюджета и от квалификации команды.</p>
+
+            <p>Запомните главное. Аналитик должен владеть не одним инструментом, а несколькими. Он должен понимать, какой инструмент подходит для какой задачи. И он должен уметь переключаться между ними. Это делает его гибким и востребованным специалистом.</p>
+
+            <p>На следующей лекции мы продолжим изучение технологий аналитика. Мы подробно разберём нормативную базу, которая регулирует выбор и применение программных средств. Спасибо за внимание. Я готов ответить на ваши вопросы.</p>
+
+            <!-- СЛОВАРЬ ТЕРМИНОВ -->
+            <div class="dark-block">
+                <div class="dark-block-title">📖 Словарь терминов и аббревиатур</div>
+                <table class="dark-table">
+                    <thead>
+                        <tr><th style="width:16%;">Термин</th><th style="width:34%;">Расшифровка</th><th>Пояснение</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="term">BI</td><td>Business Intelligence</td><td>Бизнес-аналитика — инструменты и методы анализа данных для принятия решений</td></tr>
+                        <tr><td class="term">ETL</td><td>Extract, Transform, Load</td><td>Извлечение, преобразование, загрузка данных</td></tr>
+                        <tr><td class="term">СУБД</td><td>Система управления базами данных</td><td>Программное обеспечение для создания и управления базами данных</td></tr>
+                        <tr><td class="term">SQL</td><td>Structured Query Language</td><td>Язык структурированных запросов к базам данных</td></tr>
+                        <tr><td class="term">Power Query</td><td>Пауэр Кверри</td><td>Инструмент подготовки данных в Excel, язык M</td></tr>
+                        <tr><td class="term">Power Pivot</td><td>Пауэр Пивот</td><td>Надстройка для реляционного моделирования, язык DAX</td></tr>
+                        <tr><td class="term">DAX</td><td>Data Analysis Expressions</td><td>Язык выражений для анализа данных в Power Pivot и Power BI</td></tr>
+                        <tr><td class="term">M (язык)</td><td>Язык формул Power Query</td><td>Язык для описания преобразований данных</td></tr>
+                        <tr><td class="term">BigQuery</td><td>Биг Кверри</td><td>Облачная аналитическая платформа от Google</td></tr>
+                        <tr><td class="term">BPMN</td><td>Business Process Model and Notation</td><td>Нотация моделирования бизнес-процессов</td></tr>
+                        <tr><td class="term">UML</td><td>Unified Modeling Language</td><td>Унифицированный язык моделирования</td></tr>
+                        <tr><td class="term">API</td><td>Application Programming Interface</td><td>Программный интерфейс для интеграции систем</td></tr>
+                        <tr><td class="term">A/B-тест</td><td>A/B Testing</td><td>Контролируемый эксперимент для сравнения двух версий</td></tr>
+                        <tr><td class="term">TCO</td><td>Total Cost of Ownership</td><td>Совокупная стоимость владения</td></tr>
+                        <tr><td class="term">Реестр ПО</td><td>Реестр российского программного обеспечения</td><td>Государственный список отечественного ПО</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ИСТОЧНИКИ -->
+            <div class="dark-block">
+                <div class="dark-block-title">📚 Источники и литература</div>
+                <div class="src-group">📊 Нормативные документы</div>
+                <ol>
+                    <li>Реестр российского программного обеспечения Минцифры России.</li>
+                    <li>ГОСТ Р 71484.1-2024 — качество данных для аналитики и машинного обучения.</li>
+                    <li>ISO/IEC 25010 — характеристики качества программного обеспечения.</li>
+                    <li>ISO/IEC 5259 — качество данных для аналитики и машинного обучения.</li>
+                    <li>BABOK — свод знаний по бизнес-анализу.</li>
+                </ol>
+                <div class="src-group">📖 Учебная литература и обзоры</div>
+                <ol start="6">
+                    <li>Документация Microsoft: Power Query, Power Pivot, Power BI, язык DAX, язык M.</li>
+                    <li>Документация Google: BigQuery.</li>
+                    <li>Документация Яндекс: Метрика, AppMetrica, DataLens.</li>
+                    <li>Документация Р7 Офис, МойОфис, Postgres Pro, Арендата, Кликхаус.</li>
+                    <li>Обзоры рынка BI и аналитических платформ: TAdviser, CNews.</li>
+                    <li>Практические руководства по LibreOffice Calc и его ограничениям в сравнении с Microsoft Excel.</li>
+                </ol>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function changeVideo(embedUrl) {
+            document.getElementById('lecture-player').src = embedUrl;
+        }
+    </script>
+
+    
+<!-- НАВИГАЦИЯ МЕЖДУ ЛЕКЦИЯМИ -->
+<nav class="lecture-nav" id="lectureNav">
+    <div class="nav-progress" id="navProgress" style="width: 0%;"></div>
+    <a href="Лекция (N-1).html" class="nav-btn-arrow" id="prevBtn">
+        <span class="arrow-icon">←</span>
+        <span class="arrow-label">
+            <small>Назад</small>
+            <span class="arrow-title" id="prevTitle">Лекция (N-1)</span>
+        </span>
+    </a>
+    <div class="nav-center">
+        <div class="nav-counter">Лекция <span id="currentNum">N</span> <span>из 21</span></div>
+        <a href="index.html" class="nav-index-link">📚 К содержанию</a>
+    </div>
+    <a href="Лекция (N+1).html" class="nav-btn-arrow" id="nextBtn">
+        <span class="arrow-label" style="align-items: flex-end;">
+            <small>Вперёд</small>
+            <span class="arrow-title" id="nextTitle">Лекция (N+1)</span>
+        </span>
+        <span class="arrow-icon">→</span>
+    </a>
+</nav>
+
+
+
+<script>
+(function () {
+    'use strict';
+
+    // =========================================================
+    // НАСТРОЙКИ
+    // =========================================================
+    const TOTAL_LECTURES = 21;                         // всего лекций в курсе
+    const totalDurationMs = (84 * 60 + 30) * 1000;     // длительность автопрокрутки
+    const autoNextDelayMs = 2000;                      // задержка автоперехода
+    const AUTOSTART_PARAM = 'autostart';
+
+    // =========================================================
+    // ОПРЕДЕЛЕНИЕ НОМЕРА ТЕКУЩЕЙ ЛЕКЦИИ
+    // =========================================================
+    const fileName = decodeURIComponent(location.pathname.split('/').pop() || '');
+    let currentLecture = 1;
+
+    // 1) Пытаемся извлечь номер из имени файла "Лекция 7.html"
+    const match = fileName.match(/Лекция\s*(\d+)\.html/i);
+    if (match) {
+        currentLecture = parseInt(match[1], 10);
+    } else {
+        // 2) Fallback: берём из HTML-счётчика
+        const el = document.getElementById('currentNum');
+        if (el) currentLecture = parseInt(el.textContent, 10) || 1;
+    }
+
+    // Ограничиваем допустимым диапазоном
+    if (isNaN(currentLecture) || currentLecture < 1) currentLecture = 1;
+    if (currentLecture > TOTAL_LECTURES) currentLecture = TOTAL_LECTURES;
+
+    // =========================================================
+    // ОПРЕДЕЛЕНИЕ СОСЕДНИХ ЛЕКЦИЙ
+    // =========================================================
+    const prev = currentLecture > 1 ? currentLecture - 1 : null;
+    const next = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+
+    // =========================================================
+    // ОБНОВЛЕНИЕ СЧЁТЧИКА И ПРОГРЕСС-БАРА
+    // =========================================================
+    const currentNumEl = document.getElementById('currentNum');
+    if (currentNumEl) currentNumEl.textContent = currentLecture;
+
+    const navProgress = document.getElementById('navProgress');
+    if (navProgress) {
+        navProgress.style.width = (currentLecture / TOTAL_LECTURES * 100) + '%';
+    }
+
+    // =========================================================
+    // НАСТРОЙКА КНОПКИ "НАЗАД"
+    // =========================================================
+    const prevBtn = document.getElementById('prevBtn');
+    if (prevBtn) {
+        if (prev) {
+            prevBtn.href = 'Лекция ' + prev + '.html';
+            const t = document.getElementById('prevTitle');
+            if (t) t.textContent = 'Лекция ' + prev;
+            prevBtn.style.opacity = '1';
+            prevBtn.style.cursor = 'pointer';
+            prevBtn.onclick = null;
+        } else {
+            prevBtn.removeAttribute('href');
+            prevBtn.style.opacity = '0.35';
+            prevBtn.style.cursor = 'not-allowed';
+            prevBtn.onclick = (e) => e.preventDefault();
+            const t = document.getElementById('prevTitle');
+            if (t) t.textContent = 'Это первая лекция';
+        }
+    }
+
+    // =========================================================
+    // НАСТРОЙКА КНОПКИ "ВПЕРЁД"
+    // =========================================================
+    const nextBtn = document.getElementById('nextBtn');
+    if (nextBtn) {
+        if (next) {
+            nextBtn.href = 'Лекция ' + next + '.html';
+            const t = document.getElementById('nextTitle');
+            if (t) t.textContent = 'Лекция ' + next;
+            nextBtn.style.opacity = '1';
+            nextBtn.style.cursor = 'pointer';
+            nextBtn.onclick = null;
+        } else {
+            nextBtn.removeAttribute('href');
+            nextBtn.style.opacity = '0.35';
+            nextBtn.style.cursor = 'not-allowed';
+            nextBtn.onclick = (e) => e.preventDefault();
+            const t = document.getElementById('nextTitle');
+            if (t) t.textContent = 'Это последняя лекция';
+        }
+    }
+
+    // =========================================================
+    // КЛАВИАТУРНАЯ НАВИГАЦИЯ
+    // =========================================================
+    document.addEventListener('keydown', (e) => {
+        const tag = e.target && e.target.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+        if (e.key === 'ArrowLeft' && prev) {
+            window.location.href = 'Лекция ' + prev + '.html';
+        } else if (e.key === 'ArrowRight' && next) {
+            window.location.href = 'Лекция ' + next + '.html';
+        } else if (e.key === 'Home') {
+            window.location.href = 'index.html';
+        }
+    });
+
+    // =========================================================
+    // АВТОПРОКРУТКА И СИНХРОНИЗАЦИЯ ПАНЕЛЕЙ
+    // =========================================================
+    function initScroll() {
+        const studentBlock = document.querySelector('.student-view');
+        const speakerBlock = document.querySelector('.speaker-notes');
+        const badge = document.getElementById('scroll-status-badge');
+        const audio = document.getElementById('lecture-audio');
+        if (!studentBlock || !speakerBlock) return;
+
+        const studentBehavior = studentBlock.style.scrollBehavior;
+        const speakerBehavior = speakerBlock.style.scrollBehavior;
+        let isRunning = false, completed = false, pausedElapsed = 0, startedAt = 0, rafId = null;
+        let startS = 0, startP = 0, maxS = 0, maxP = 0;
+
+        function setBadge(text, color) {
+            if (!badge) return;
+            badge.style.display = 'block';
+            badge.textContent = text;
+            badge.style.borderColor = color;
+        }
+        function measure() {
+            maxS = Math.max(studentBlock.scrollHeight - studentBlock.clientHeight, 0);
+            maxP = Math.max(speakerBlock.scrollHeight - speakerBlock.clientHeight, 0);
+        }
+        function fmt(ms) {
+            const m = Math.floor(ms / 60000);
+            const s = Math.floor((ms % 60000) / 1000);
+            return m + ':' + String(s).padStart(2, '0');
+        }
+        function playAudio() {
+            if (!audio) return;
+            const p = audio.play();
+            if (p && typeof p.catch === 'function') {
+                p.catch(err => {
+                    console.warn('[AutoAudio]', err.message);
+                    setBadge('▶ ИДЕТ ПРОКРУТКА (звук заблокирован)', '#eab308');
+                });
+            }
+        }
+        function pauseAudio() { if (audio) try { audio.pause(); } catch (_) {} }
+        function resetAudio() { if (audio) try { audio.pause(); audio.currentTime = 0; } catch (_) {} }
+
+        function animate() {
+            if (!isRunning) return;
+            const elapsed = pausedElapsed + (performance.now() - startedAt);
+            const fraction = Math.min(elapsed / totalDurationMs, 1);
+            measure();
+            studentBlock.scrollTop = startS + (maxS - startS) * fraction;
+            speakerBlock.scrollTop = startP + (maxP - startP) * fraction;
+            if (badge) {
+                badge.textContent = '▶ ' + fmt(elapsed) + ' / 25:00';
+                badge.style.borderColor = '#16a34a';
+            }
+            if (fraction >= 1) { finish(); return; }
+            rafId = requestAnimationFrame(animate);
+        }
+
+        function startOrResume() {
+            if (completed) {
+                pausedElapsed = 0; completed = false;
+                studentBlock.scrollTop = 0; speakerBlock.scrollTop = 0;
+                resetAudio();
+            }
+            measure();
+            startS = studentBlock.scrollTop;
+            startP = speakerBlock.scrollTop;
+            startedAt = performance.now();
+            isRunning = true;
+            studentBlock.style.scrollBehavior = 'auto';
+            speakerBlock.style.scrollBehavior = 'auto';
+            cancelAnimationFrame(rafId);
+            rafId = requestAnimationFrame(animate);
+            playAudio();
+        }
+        function pause() {
+            if (isRunning) pausedElapsed += performance.now() - startedAt;
+            isRunning = false;
+            cancelAnimationFrame(rafId);
+            setBadge('⏸ ПАУЗА ' + fmt(pausedElapsed), '#dc2626');
+            studentBlock.style.scrollBehavior = studentBehavior;
+            speakerBlock.style.scrollBehavior = speakerBehavior;
+            pauseAudio();
+        }
+        function finish() {
+            isRunning = false; completed = true;
+            cancelAnimationFrame(rafId);
+            measure();
+            studentBlock.scrollTop = maxS;
+            speakerBlock.scrollTop = maxP;
+            studentBlock.style.scrollBehavior = studentBehavior;
+            speakerBlock.style.scrollBehavior = speakerBehavior;
+
+            const nextLec = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+            if (nextLec) {
+                setBadge('✅ ГОТОВО → Лекция ' + nextLec, '#16a34a');
+                setTimeout(() => {
+                    location.href = 'Лекция ' + nextLec + '.html?' + AUTOSTART_PARAM + '=1';
+                }, autoNextDelayMs);
+            } else {
+                setBadge('✅ КУРС ЗАВЕРШЕН', '#16a34a');
+                pauseAudio();
+            }
+        }
+        function toggle() { isRunning ? pause() : startOrResume(); }
+
+        // Пробел — старт/пауза
+        window.addEventListener('keydown', (e) => {
+            if (e.repeat) return;
+            const t = e.target; const tag = t && t.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+            if (e.code === 'Space' || e.key === ' ') {
+                e.preventDefault();
+                toggle();
+            }
+        }, true);
+
+        if (badge) badge.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+        [studentBlock, speakerBlock].forEach(el => {
+            el.addEventListener('click', (e) => {
+                if (e.target.closest('a,button,iframe,input,textarea,select,video,audio')) return;
+                if (window.getSelection().toString().length > 0) return;
+                toggle();
+            });
+        });
+
+        // Автостарт при переходе с предыдущей лекции
+        const params = new URLSearchParams(location.search);
+        if (params.get(AUTOSTART_PARAM) === '1') {
+            params.delete(AUTOSTART_PARAM);
+            const clean = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
+            history.replaceState(null, '', clean);
+            setTimeout(startOrResume, 500);
+        } else {
+            setBadge('▶ ПРОБЕЛ / КЛИК — старт', '#4a5568');
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initScroll, { once: true });
+    } else {
+        initScroll();
+    }
+})();
+</script>
+
+</body>
+</html>

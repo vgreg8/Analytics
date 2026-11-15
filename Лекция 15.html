@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лекция 15. Логистическая регрессия: линейный алгоритм для классификации</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #ffffff; }
+
+        .student-view { width: 66.66%; height: 100vh; background: #ffffff; padding: 35px 40px; display: flex; flex-direction: column; justify-content: space-between; border-right: 2px solid #e2e8f0; overflow-y: auto; scroll-behavior: smooth; }
+        .speaker-notes { width: 33.34%; height: 100%; background: #1a202c; color: #edf2f7; padding: 30px; overflow-y: auto; }
+
+        .slide-header { font-size: 26px; color: #1a365d; font-weight: bold; line-height: 1.3; margin-bottom: 18px; border-bottom: 4px solid #3182ce; padding-bottom: 12px; }
+        .slide-body { flex-grow: 1; display: flex; flex-direction: column; gap: 18px; padding: 5px 0; }
+        .slide-footer { font-size: 13px; color: #64748b; text-align: right; margin-top: 12px; }
+
+        .chart-box { background: #f7fafc; border: 2.5px dashed #cbd5e0; padding: 20px; border-radius: 12px; }
+        .chart-box strong { font-size: 17px; display: block; margin-bottom: 8px; color: #0f172a; }
+        .chart-box p { font-size: 14px; color: #1e293b; line-height: 1.5; }
+
+        .viz-card { background: #ffffff; border: 2px solid #cbd5e0; border-radius: 12px; padding: 18px; box-shadow: 0 4px 10px rgba(15,23,42,0.06); }
+        .viz-title { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .viz-caption { font-size: 13px; color: #1e293b; margin-top: 10px; line-height: 1.6; }
+        .viz-caption strong { color: #0f172a; font-weight: 700; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+
+        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .stat-box { border-radius: 10px; padding: 14px; text-align: center; border: 2px solid; }
+        .stat-box .stat-icon { font-size: 26px; }
+        .stat-box .stat-number { font-size: 18px; font-weight: 900; margin-top: 4px; }
+        .stat-box .stat-label { font-size: 12px; color: #334155; margin-top: 4px; line-height: 1.35; font-weight: 600; }
+        .stat-box.tp { background: #f0fff4; border-color: #9ae6b4; }
+        .stat-box.tp .stat-number { color: #276749; }
+        .stat-box.fp { background: #fff5f5; border-color: #fc8181; }
+        .stat-box.fp .stat-number { color: #9b2c2c; }
+        .stat-box.fn { background: #fffaf0; border-color: #fbd38d; }
+        .stat-box.fn .stat-number { color: #975a16; }
+        .stat-box.tn { background: #ebf8ff; border-color: #90cdf4; }
+        .stat-box.tn .stat-number { color: #2b6cb0; }
+
+        .formula-box { background: linear-gradient(135deg, #0f172a, #1e293b); color: #f1f5f9; padding: 18px 20px; border-radius: 10px; text-align: center; box-shadow: 0 4px 14px rgba(15,23,42,0.3); }
+        .formula-main { font-family: 'Courier New', monospace; font-size: 16px; letter-spacing: 0.5px; color: #93c5fd; font-weight: 700; }
+        .formula-example { font-size: 13px; color: #e2e8f0; margin-top: 8px; line-height: 1.5; }
+
+        .tag { display: inline-block; background: #ebf8ff; color: #2b6cb0; padding: 2px 7px; border-radius: 4px; font-size: 12px; margin: 2px 2px 2px 0; font-weight: 600; }
+        .tag.green { background: #f0fff4; color: #276749; }
+        .tag.red { background: #fff5f5; color: #9b2c2c; }
+        .tag.orange { background: #fffaf0; color: #975a16; }
+        .tag.purple { background: #faf5ff; color: #553c9a; }
+
+        .callout { background: #fffbeb; border-left: 5px solid #f59e0b; padding: 14px 18px; border-radius: 6px; }
+        .callout strong { color: #92400e; font-size: 14px; }
+        .callout p { font-size: 13px; color: #451a03; margin-top: 4px; line-height: 1.5; }
+        .callout.warn { background: #fff5f5; border-left-color: #e53e3e; }
+        .callout.warn strong { color: #9b2c2c; }
+        .callout.warn p { color: #742a2a; }
+        .callout.ok { background: #f0fff4; border-left-color: #38a169; }
+        .callout.ok strong { color: #276749; }
+        .callout.ok p { color: #22543d; }
+
+        .role-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .role-table th { background: #1a365d; color: white; padding: 10px 12px; text-align: left; font-weight: 700; }
+        .role-table td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; color: #1e293b; vertical-align: top; line-height: 1.45; }
+        .role-table tr:nth-child(even) td { background: #f8fafc; }
+        .role-table .role-emoji { font-size: 16px; }
+
+        .compare-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .compare-table th { background: #1a365d; color: white; padding: 10px 12px; text-align: left; font-weight: 700; }
+        .compare-table td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; color: #1e293b; vertical-align: top; line-height: 1.45; }
+        .compare-table tr:nth-child(even) td { background: #f8fafc; }
+
+        .confusion-grid { display: grid; grid-template-columns: 130px 1fr 1fr; grid-template-rows: 45px 1fr 1fr; gap: 6px; max-width: 520px; margin: 0 auto; }
+        .cf-header { background: #1a365d; color: white; font-size: 13px; font-weight: bold; padding: 10px; text-align: center; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+        .cf-side { background: #2d3748; color: white; font-size: 13px; font-weight: bold; padding: 10px; text-align: center; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+        .cf-cell { padding: 16px 10px; text-align: center; border-radius: 6px; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1); }
+        .cf-cell .cf-name { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+        .cf-cell .cf-value { font-size: 28px; font-weight: 900; margin-top: 4px; }
+        .cf-cell .cf-sub { font-size: 11px; opacity: 0.85; margin-top: 4px; font-weight: 600; }
+        .cf-tp { background: #c6f6d5; color: #22543d; }
+        .cf-fp { background: #fed7d7; color: #742a2a; }
+        .cf-fn { background: #fefcbf; color: #744210; }
+        .cf-tn { background: #bee3f8; color: #2a4365; }
+
+        /* SVG styles — усиленный контраст и размеры */
+        .axis { stroke: #334155; stroke-width: 2; }
+        .grid-line { stroke: #cbd5e0; stroke-width: 1; }
+        .label { font-family: 'Segoe UI', sans-serif; font-size: 12px; fill: #1e293b; font-weight: 600; }
+        .label-strong { font-family: 'Segoe UI', sans-serif; font-size: 14px; font-weight: 700; fill: #0f172a; }
+        .label-small { font-family: 'Segoe UI', sans-serif; font-size: 11px; fill: #475569; font-weight: 500; }
+
+        .video-section { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 5px; }
+        .video-container { width: 100%; max-width: 580px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: #000; aspect-ratio: 16 / 9; }
+        .links-hub { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .video-btn { text-decoration: none; padding: 9px 14px; border-radius: 6px; font-size: 13px; font-weight: bold; color: white; display: flex; align-items: center; gap: 6px; transition: transform 0.2s, background 0.2s; cursor: pointer; border: none; }
+        .video-btn:hover { transform: translateY(-2px); }
+        .rt-btn { background: #00a877; }
+        .rt-btn:hover { background: #008f65; }
+        .stop-btn { background: #dc2626; }
+        .stop-btn:hover { background: #b91c1c; }
+
+        .notes-header { font-size: 17px; color: #63b3ed; font-weight: bold; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a5568; padding-bottom: 10px; }
+        .lecture-text { font-size: 14.5px; line-height: 1.65; color: #e2e8f0; text-align: justify; }
+        .lecture-text p { margin-bottom: 14px; }
+        .lecture-text h3 { color: #63b3ed; font-size: 15px; margin: 18px 0 10px; border-bottom: 1px solid #2d3748; padding-bottom: 5px; }
+        .lecture-text h4 { color: #90cdf4; font-size: 13.5px; margin: 14px 0 8px; }
+        .lecture-text ul { margin: 8px 0 14px 18px; }
+        .lecture-text li { margin-bottom: 6px; }
+
+        .dark-block { background: #2d3748; border: 1px solid #4a5568; border-radius: 10px; padding: 16px 18px; margin-top: 20px; }
+        .dark-block-title { font-size: 14px; font-weight: bold; color: #63b3ed; margin-bottom: 12px; border-bottom: 2px solid #4a5568; padding-bottom: 8px; }
+        .dark-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+        .dark-table th { background: #1a202c; color: #90cdf4; padding: 7px 9px; text-align: left; font-weight: 600; border-bottom: 1px solid #4a5568; }
+        .dark-table td { padding: 6px 9px; border-bottom: 1px solid #2d3748; color: #cbd5e0; vertical-align: top; line-height: 1.4; }
+        .dark-table tr:nth-child(even) td { background: #2a3242; }
+        .dark-table .term { font-weight: bold; color: #90cdf4; white-space: nowrap; }
+
+        .lecture-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(12px); border-top: 2px solid rgba(255, 255, 255, 0.08); padding: 12px 20px; display: flex; align-items: center; justify-content: center; gap: 12px; z-index: 9999; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25); }
+        .lecture-nav .nav-progress { position: absolute; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899); border-radius: 0 3px 3px 0; }
+        .lecture-nav .nav-btn-arrow { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); border: 1.5px solid rgba(255, 255, 255, 0.15); color: #e2e8f0; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; }
+        .lecture-nav .nav-btn-arrow:hover:not(:disabled) { background: rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.6); color: white; transform: translateY(-2px); }
+        .lecture-nav .nav-btn-arrow:disabled { opacity: 0.35; cursor: not-allowed; }
+        .lecture-nav .nav-btn-arrow .arrow-icon { font-size: 16px; line-height: 1; }
+        .lecture-nav .nav-btn-arrow .arrow-label { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+        .lecture-nav .nav-btn-arrow .arrow-label small { font-size: 9.5px; font-weight: 400; opacity: 0.7; text-transform: uppercase; }
+        .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { font-size: 12px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lecture-nav .nav-center { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 20px; color: #94a3b8; font-size: 11px; border-left: 1px solid rgba(255, 255, 255, 0.1); border-right: 1px solid rgba(255, 255, 255, 0.1); }
+        .lecture-nav .nav-counter { font-size: 15px; font-weight: 900; color: #f1f5f9; }
+        .lecture-nav .nav-counter span { color: #64748b; font-size: 12px; font-weight: 600; }
+        .lecture-nav .nav-index-link { color: #60a5fa; text-decoration: none; font-size: 11px; font-weight: 600; }
+        .lecture-nav .nav-index-link:hover { color: #93c5fd; text-decoration: underline; }
+        body { padding-bottom: 80px !important; }
+        @media (max-width: 900px) {
+            .lecture-nav { padding: 10px 12px; gap: 8px; }
+            .lecture-nav .nav-btn-arrow { padding: 8px 12px; }
+            .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { max-width: 90px; font-size: 11px; }
+            .grid-2, .grid-3, .stat-grid { grid-template-columns: 1fr; }
+            .confusion-grid { grid-template-columns: 90px 1fr 1fr; }
+        }
+
+        @keyframes pulseThreshold {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        .pulse-threshold { animation: pulseThreshold 2s ease-in-out infinite; }
+    </style>
+</head>
+<body>
+
+    <div class="student-view">
+        <div class="slide-header">
+            Лекция 15. Логистическая регрессия: линейный алгоритм для классификации
+        </div>
+
+        <div class="slide-body">
+
+            <!-- HERO -->
+            <div class="chart-box" style="background: #ebf8ff; border-color: #90cdf4;">
+                <strong style="color: #2b6cb0;">🎯 Главная идея</strong>
+                <p>Несмотря на название, <strong>логистическая регрессия — это алгоритм классификации</strong>, а не регрессии. Внутри она вычисляет линейную комбинацию признаков (как регрессия), затем пропускает её через <strong>сигмоиду</strong> — получается вероятность от 0 до 1. А порог превращает вероятность в класс. Главное преимущество — <strong>вероятностная оценка и интерпретируемость</strong>.</p>
+            </div>
+
+            <!-- ФОРМУЛА -->
+            <div class="formula-box">
+                <div class="formula-main">p(y=1|x) = σ(β₀ + β₁·x₁ + … + βₙ·xₙ)</div>
+                <div class="formula-example">σ(z) = 1 / (1 + e^(−z)) — сигмоида переводит любое число в вероятность [0, 1]</div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 1: СИГМОИДА -->
+            <div class="viz-card">
+                <div class="viz-title">📈 Сигмоида: как линейная комбинация превращается в вероятность</div>
+                <svg viewBox="0 0 540 330" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="330" fill="#ffffff"/>
+
+                    <!-- Grid -->
+                    <line x1="60" y1="265" x2="500" y2="265" class="grid-line"/>
+                    <line x1="60" y1="197" x2="500" y2="197" class="grid-line"/>
+                    <line x1="60" y1="130" x2="500" y2="130" class="grid-line"/>
+                    <line x1="60" y1="62"  x2="500" y2="62"  class="grid-line"/>
+
+                    <!-- Axes -->
+                    <line x1="60" y1="290" x2="500" y2="290" class="axis"/>
+                    <line x1="60" y1="30"  x2="60"  y2="290" class="axis"/>
+
+                    <!-- Y labels -->
+                    <text x="52" y="270" text-anchor="end" class="label-small">0.0</text>
+                    <text x="52" y="202" text-anchor="end" class="label-small">0.25</text>
+                    <text x="52" y="135" text-anchor="end" class="label-small">0.5</text>
+                    <text x="52" y="67"  text-anchor="end" class="label-small">0.75</text>
+                    <text x="52" y="55"  text-anchor="end" class="label-small">1.0</text>
+
+                    <!-- X labels -->
+                    <text x="60"  y="312" text-anchor="middle" class="label-small">−6</text>
+                    <text x="133" y="312" text-anchor="middle" class="label-small">−4</text>
+                    <text x="207" y="312" text-anchor="middle" class="label-small">−2</text>
+                    <text x="280" y="312" text-anchor="middle" class="label-small">0</text>
+                    <text x="353" y="312" text-anchor="middle" class="label-small">2</text>
+                    <text x="427" y="312" text-anchor="middle" class="label-small">4</text>
+                    <text x="500" y="312" text-anchor="middle" class="label-small">6</text>
+
+                    <!-- Axis labels -->
+                    <text x="280" y="328" text-anchor="middle" class="label-strong">z = β₀ + β₁·x₁ + …</text>
+                    <text x="22" y="160" text-anchor="middle" class="label-strong" transform="rotate(-90 22 160)">Вероятность p</text>
+
+                    <!-- Sigmoid curve -->
+                    <path d="M 60 289 L 80 288 Q 120 287 150 280 Q 190 268 210 252 Q 240 230 255 197 Q 270 165 285 130 Q 300 95 320 73 Q 350 52 390 47 Q 440 45 500 45"
+                          fill="none" stroke="#2563eb" stroke-width="4"/>
+
+                    <!-- Midpoint (0, 0.5) -->
+                    <circle cx="280" cy="130" r="7" fill="#dc2626" stroke="#ffffff" stroke-width="2.5"/>
+                    <line x1="280" y1="130" x2="280" y2="290" stroke="#dc2626" stroke-width="2" stroke-dasharray="5 4"/>
+                    <line x1="60" y1="130" x2="280" y2="130" stroke="#dc2626" stroke-width="2" stroke-dasharray="5 4"/>
+                    <text x="292" y="120" class="label-strong" fill="#991b1b">порог = 0.5</text>
+                    <text x="292" y="205" class="label-small" fill="#991b1b">класс «да»</text>
+                    <text x="292" y="255" class="label-small" fill="#991b1b">класс «нет»</text>
+
+                    <!-- Asymptotes -->
+                    <line x1="60" y1="55" x2="500" y2="55" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5 5"/>
+                    <line x1="60" y1="290" x2="500" y2="290" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5 5"/>
+                    <text x="490" y="48" text-anchor="end" class="label-small" fill="#475569">p → 1</text>
+                    <text x="490" y="283" text-anchor="end" class="label-small" fill="#475569">p → 0</text>
+
+                    <!-- Annotations -->
+                    <text x="130" y="245" class="label-small" fill="#6b21a8" font-weight="700">большие отрицательные → вероятность ≈ 0</text>
+                    <text x="385" y="100" class="label-small" fill="#6b21a8" font-weight="700">большие положительные → вероятность ≈ 1</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Сигмоида</strong> — это S-образная кривая. Она переводит любое число (линейную комбинацию признаков) в вероятность от нуля до единицы. В точке <strong>z = 0 вероятность ровно 0.5</strong> — это стандартный порог классификации. Большие положительные z дают вероятность, близкую к 1, большие отрицательные — близкую к 0. Благодаря этому выход модели всегда интерпретируем.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 2: КАК РАБОТАЕТ ПРЕДСКАЗАНИЕ -->
+            <div class="viz-card">
+                <div class="viz-title">🔄 Путь от признаков к классу: три шага</div>
+                <svg viewBox="0 0 540 250" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="250" fill="#ffffff"/>
+
+                    <!-- Step 1 -->
+                    <rect x="15" y="60" width="150" height="110" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="2.5"/>
+                    <text x="90" y="85" text-anchor="middle" class="label-strong" fill="#1e3a8a">1. Линейная комбинация</text>
+                    <text x="90" y="105" text-anchor="middle" class="label-small">z = β₀ + β₁x₁ + β₂x₂</text>
+                    <text x="90" y="125" text-anchor="middle" class="label-small">+ … + βₙxₙ</text>
+                    <text x="90" y="155" text-anchor="middle" class="label-small" fill="#2563eb" font-weight="700">получаем число z</text>
+
+                    <!-- Arrow 1 -->
+                    <text x="178" y="115" text-anchor="middle" class="label-strong" fill="#dc2626" style="font-size: 24px;">→</text>
+
+                    <!-- Step 2 -->
+                    <rect x="195" y="60" width="150" height="110" rx="10" fill="#faf5ff" stroke="#d8b4fe" stroke-width="2.5"/>
+                    <text x="270" y="85" text-anchor="middle" class="label-strong" fill="#6b21a8">2. Сигмоида</text>
+                    <text x="270" y="105" text-anchor="middle" class="label-small">p = σ(z)</text>
+                    <text x="270" y="125" text-anchor="middle" class="label-small">= 1 / (1 + e^(−z))</text>
+                    <text x="270" y="155" text-anchor="middle" class="label-small" fill="#6b21a8" font-weight="700">получаем вероятность</text>
+
+                    <!-- Arrow 2 -->
+                    <text x="358" y="115" text-anchor="middle" class="label-strong" fill="#dc2626" style="font-size: 24px;">→</text>
+
+                    <!-- Step 3 -->
+                    <rect x="375" y="60" width="150" height="110" rx="10" fill="#f0fdf4" stroke="#86efac" stroke-width="2.5"/>
+                    <text x="450" y="85" text-anchor="middle" class="label-strong" fill="#166534">3. Порог</text>
+                    <text x="450" y="105" text-anchor="middle" class="label-small">если p ≥ 0.5 → «да»</text>
+                    <text x="450" y="125" text-anchor="middle" class="label-small">если p &lt; 0.5 → «нет»</text>
+                    <text x="450" y="155" text-anchor="middle" class="label-small" fill="#166534" font-weight="700">получаем класс</text>
+
+                    <!-- Bottom annotation -->
+                    <text x="270" y="210" text-anchor="middle" class="label-small" fill="#334155"><strong>Пример:</strong> z = 2 → σ(2) ≈ 0.88 → вероятность 88% → класс «да»</text>
+                    <text x="270" y="232" text-anchor="middle" class="label-small" fill="#334155"><strong>Пример:</strong> z = −2 → σ(−2) ≈ 0.12 → вероятность 12% → класс «нет»</text>
+                </svg>
+                <div class="viz-caption">
+                    Логистическая регрессия — это трёхступенчатый конвейер. Сначала <strong>линейная комбинация</strong> признаков даёт число z. Затем <strong>сигмоида</strong> превращает его в вероятность. Наконец, <strong>порог</strong> превращает вероятность в класс. Внутри — регрессия, снаружи — классификация.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 3: ФУНКЦИЯ ПОТЕРЬ -->
+            <div class="viz-card">
+                <div class="viz-title">📉 Логистическая функция потерь: штраф за уверенные ошибки</div>
+                <svg viewBox="0 0 540 280" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="280" fill="#ffffff"/>
+
+                    <!-- Axes -->
+                    <line x1="60" y1="230" x2="490" y2="230" class="axis"/>
+                    <line x1="60" y1="20"  x2="60"  y2="230" class="axis"/>
+
+                    <text x="275" y="258" text-anchor="middle" class="label-strong">Предсказанная вероятность p</text>
+                    <text x="22" y="120" text-anchor="middle" class="label-strong" transform="rotate(-90 22 120)">Штраф</text>
+
+                    <!-- Loss curve for y=1: -log(p) -->
+                    <path d="M 65 30 Q 100 160 150 195 Q 220 220 300 225 Q 400 228 480 230"
+                          fill="none" stroke="#16a34a" stroke-width="4"/>
+                    <text x="180" y="170" class="label-small" fill="#166534" font-weight="700">y = 1 (правильный класс «да»)</text>
+
+                    <!-- Loss curve for y=0: -log(1-p) -->
+                    <path d="M 65 225 Q 130 225 220 220 Q 290 200 350 155 Q 400 110 480 30"
+                          fill="none" stroke="#dc2626" stroke-width="4"/>
+                    <text x="380" y="155" class="label-small" fill="#991b1b" font-weight="700">y = 0 (правильный класс «нет»)</text>
+
+                    <!-- Highlight: model predicted 0.99 but true was 0 -->
+                    <circle cx="475" cy="35" r="8" fill="#dc2626" stroke="#ffffff" stroke-width="2"/>
+                    <text x="460" y="20" text-anchor="end" class="label-small" fill="#991b1b" font-weight="700">уверенная ошибка</text>
+
+                    <!-- Highlight: model predicted 0.5 and true was 0 -->
+                    <circle cx="275" cy="210" r="6" fill="#d97706" stroke="#ffffff" stroke-width="2"/>
+                    <text x="275" y="200" text-anchor="middle" class="label-small" fill="#92400e" font-weight="700">неуверенная ошибка</text>
+                </svg>
+                <div class="viz-caption">
+                    Функция потерь штрафует за <strong>уверенные, но неверные</strong> предсказания. Если правильный класс «нет», а модель предсказала 0.99 — штраф огромный. Если модель предсказала 0.5 — штраф небольшой, потому что модель была неуверена. Это заставляет модель быть уверенной только тогда, когда она права.
+                </div>
+            </div>
+
+            <!-- МАТРИЦА ОШИБОК -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 10px;">🧩 Матрица ошибок: основа всех метрик классификации</div>
+                <div class="confusion-grid">
+                    <div></div>
+                    <div class="cf-header">Прогноз «да»</div>
+                    <div class="cf-header">Прогноз «нет»</div>
+
+                    <div class="cf-side">Реально «да»</div>
+                    <div class="cf-cell cf-tp">
+                        <div class="cf-name">Истинно положительные</div>
+                        <div class="cf-value">TP</div>
+                        <div class="cf-sub">верно нашли «да»</div>
+                    </div>
+                    <div class="cf-cell cf-fn">
+                        <div class="cf-name">Ложноотрицательные</div>
+                        <div class="cf-value">FN</div>
+                        <div class="cf-sub">пропустили «да»</div>
+                    </div>
+
+                    <div class="cf-side">Реально «нет»</div>
+                    <div class="cf-cell cf-fp">
+                        <div class="cf-name">Ложноположительные</div>
+                        <div class="cf-value">FP</div>
+                        <div class="cf-sub">ошибочно «да»</div>
+                    </div>
+                    <div class="cf-cell cf-tn">
+                        <div class="cf-name">Истинно отрицательные</div>
+                        <div class="cf-value">TN</div>
+                        <div class="cf-sub">верно нашли «нет»</div>
+                    </div>
+                </div>
+                <div class="viz-caption" style="text-align: center;">
+                    Четыре ячейки — четыре сценария. <strong>TP</strong> и <strong>TN</strong> — правильные ответы. <strong>FP</strong> и <strong>FN</strong> — ошибки. Все метрики классификации строятся на основе этих четырёх чисел.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 4: ТОЧНОСТЬ И ПОЛНОТА -->
+            <div class="viz-card">
+                <div class="viz-title">🎯 Точность и полнота: две стороны одной медали</div>
+                <div class="grid-2">
+                    <!-- Precision -->
+                    <div>
+                        <div style="font-size: 14px; font-weight: 700; color: #1e3a8a; margin-bottom: 8px; text-align: center;">Точность (Precision)</div>
+                        <svg viewBox="0 0 240 190" width="100%">
+                            <rect x="0" y="0" width="240" height="190" fill="#ffffff"/>
+                            <ellipse cx="120" cy="100" rx="100" ry="60" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
+                            <text x="120" y="55" text-anchor="middle" class="label-small" fill="#1e3a8a" font-weight="700">все, кого модель назвала «да»</text>
+                            <!-- TP inside predicted-yes -->
+                            <circle cx="90" cy="105" r="26" fill="#bbf7d0" stroke="#16a34a" stroke-width="2.5"/>
+                            <text x="90" y="111" text-anchor="middle" class="label-strong" fill="#14532d">TP</text>
+                            <circle cx="155" cy="105" r="22" fill="#fecaca" stroke="#dc2626" stroke-width="2.5"/>
+                            <text x="155" y="111" text-anchor="middle" class="label-strong" fill="#7f1d1d">FP</text>
+                        </svg>
+                        <div style="font-size: 13px; color: #1e293b; margin-top: 6px; text-align: center; line-height: 1.5;">
+                            <strong>Precision = TP / (TP + FP)</strong><br>
+                            Из предсказанных «да» — сколько действительно «да»?
+                        </div>
+                    </div>
+                    <!-- Recall -->
+                    <div>
+                        <div style="font-size: 14px; font-weight: 700; color: #166534; margin-bottom: 8px; text-align: center;">Полнота (Recall)</div>
+                        <svg viewBox="0 0 240 190" width="100%">
+                            <rect x="0" y="0" width="240" height="190" fill="#ffffff"/>
+                            <ellipse cx="120" cy="100" rx="100" ry="60" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+                            <text x="120" y="55" text-anchor="middle" class="label-small" fill="#166534" font-weight="700">все, кто реально «да»</text>
+                            <circle cx="90" cy="105" r="26" fill="#bbf7d0" stroke="#16a34a" stroke-width="2.5"/>
+                            <text x="90" y="111" text-anchor="middle" class="label-strong" fill="#14532d">TP</text>
+                            <circle cx="155" cy="105" r="22" fill="#fef08a" stroke="#d97706" stroke-width="2.5"/>
+                            <text x="155" y="111" text-anchor="middle" class="label-strong" fill="#78350f">FN</text>
+                        </svg>
+                        <div style="font-size: 13px; color: #1e293b; margin-top: 6px; text-align: center; line-height: 1.5;">
+                            <strong>Recall = TP / (TP + FN)</strong><br>
+                            Из всех реальных «да» — скольких мы нашли?
+                        </div>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    <strong>Точность</strong> — «из тех, кого мы назвали „да“, сколько действительно „да“?» <strong>Полнота</strong> — «из всех реальных „да“, скольких мы нашли?». Обычно эти метрики находятся в конфликте: повышаем точность — падает полнота, и наоборот.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 5: F-МЕРА -->
+            <div class="viz-card">
+                <div class="viz-title">⚖️ F-мера: гармоническое среднее точности и полноты</div>
+                <svg viewBox="0 0 540 220" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="220" fill="#ffffff"/>
+
+                    <!-- Formula -->
+                    <text x="270" y="40" text-anchor="middle" class="label-strong" style="font-size: 16px;">F₁ = 2 · (Precision · Recall) / (Precision + Recall)</text>
+
+                    <!-- Example A: balanced -->
+                    <rect x="20" y="70" width="240" height="130" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+                    <text x="140" y="95" text-anchor="middle" class="label-strong" fill="#166534" style="font-size: 15px;">Сбалансировано</text>
+                    <text x="140" y="118" text-anchor="middle" class="label-small" fill="#1e293b">Precision = 0.8</text>
+                    <text x="140" y="136" text-anchor="middle" class="label-small" fill="#1e293b">Recall = 0.8</text>
+                    <text x="140" y="172" text-anchor="middle" class="label-strong" fill="#166534" style="font-size: 18px;">F₁ = 0.8</text>
+
+                    <!-- Example B: unbalanced -->
+                    <rect x="280" y="70" width="240" height="130" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="2"/>
+                    <text x="400" y="95" text-anchor="middle" class="label-strong" fill="#991b1b" style="font-size: 15px;">Сильный перекос</text>
+                    <text x="400" y="118" text-anchor="middle" class="label-small" fill="#1e293b">Precision = 0.95</text>
+                    <text x="400" y="136" text-anchor="middle" class="label-small" fill="#1e293b">Recall = 0.30</text>
+                    <text x="400" y="172" text-anchor="middle" class="label-strong" fill="#991b1b" style="font-size: 18px;">F₁ ≈ 0.46</text>
+                </svg>
+                <div class="viz-caption">
+                    F-мера — это <strong>гармоническое</strong> среднее, а не арифметическое. Она сильнее штрафует перекос: если одна метрика сильно ниже другой, F-мера падает. В примере справа точность 0.95, но полнота всего 0.30 — F-мера около 0.46, а не 0.62 (среднее арифметическое).
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 6: ROC-КРИВАЯ -->
+            <div class="viz-card">
+                <div class="viz-title">📊 ROC-кривая и площадь под ней (AUC): оценка независимо от порога</div>
+                <svg viewBox="0 0 540 400" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="400" fill="#ffffff"/>
+
+                    <!-- Plot area -->
+                    <rect x="70" y="30" width="440" height="310" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+
+                    <!-- Grid -->
+                    <line x1="70"  y1="107" x2="510" y2="107" class="grid-line"/>
+                    <line x1="70"  y1="185" x2="510" y2="185" class="grid-line"/>
+                    <line x1="70"  y1="262" x2="510" y2="262" class="grid-line"/>
+                    <line x1="180" y1="30"  x2="180" y2="340" class="grid-line"/>
+                    <line x1="290" y1="30"  x2="290" y2="340" class="grid-line"/>
+                    <line x1="400" y1="30"  x2="400" y2="340" class="grid-line"/>
+
+                    <!-- Axes -->
+                    <line x1="70" y1="340" x2="510" y2="340" class="axis"/>
+                    <line x1="70" y1="30"  x2="70"  y2="340" class="axis"/>
+
+                    <!-- X labels -->
+                    <text x="70"  y="362" text-anchor="middle" class="label-small">0.0</text>
+                    <text x="180" y="362" text-anchor="middle" class="label-small">0.25</text>
+                    <text x="290" y="362" text-anchor="middle" class="label-small">0.5</text>
+                    <text x="400" y="362" text-anchor="middle" class="label-small">0.75</text>
+                    <text x="510" y="362" text-anchor="middle" class="label-small">1.0</text>
+
+                    <!-- Y labels -->
+                    <text x="62" y="344" text-anchor="end" class="label-small">0.0</text>
+                    <text x="62" y="266" text-anchor="end" class="label-small">0.25</text>
+                    <text x="62" y="189" text-anchor="end" class="label-small">0.5</text>
+                    <text x="62" y="111" text-anchor="end" class="label-small">0.75</text>
+                    <text x="62" y="34"  text-anchor="end" class="label-small">1.0</text>
+
+                    <!-- Axis labels -->
+                    <text x="290" y="388" text-anchor="middle" class="label-strong">Доля ложноположительных (FPR)</text>
+                    <text x="25" y="185" text-anchor="middle" class="label-strong" transform="rotate(-90 25 185)">Доля истинно положительных (TPR)</text>
+
+                    <!-- Random diagonal -->
+                    <line x1="70" y1="340" x2="510" y2="30" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6 4"/>
+                    <text x="390" y="140" class="label-small" fill="#475569" font-weight="700">случайная модель (AUC = 0.5)</text>
+
+                    <!-- Shaded AUC area -->
+                    <path d="M 70 340 Q 90 180 130 110 Q 180 55 280 38 Q 400 30 510 30 L 510 340 Z"
+                          fill="#3b82f6" fill-opacity="0.15"/>
+
+                    <!-- ROC curve (good model) -->
+                    <path d="M 70 340 Q 90 180 130 110 Q 180 55 280 38 Q 400 30 510 30"
+                          fill="none" stroke="#2563eb" stroke-width="4"/>
+
+                    <!-- Perfect model -->
+                    <path d="M 70 340 L 70 30 L 510 30" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-dasharray="5 4"/>
+                    <text x="290" y="22" text-anchor="middle" class="label-small" fill="#166534" font-weight="700">идеальная модель (AUC = 1.0)</text>
+
+                    <!-- AUC badge -->
+                    <rect x="300" y="210" width="180" height="60" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="2.5"/>
+                    <text x="390" y="232" text-anchor="middle" class="label-strong" fill="#1e3a8a">Площадь под кривой</text>
+                    <text x="390" y="258" text-anchor="middle" class="label-strong" fill="#2563eb" style="font-size: 22px;">AUC ≈ 0.87</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>ROC-кривая</strong> показывает, как меняется соотношение истинно положительных и ложноположительных при разных порогах. <strong>Диагональ</strong> — случайное угадывание (AUC = 0.5). <strong>Левый верхний угол</strong> — идеал (AUC = 1.0). Чем выше кривая и чем больше площадь под ней — тем лучше модель. AUC не зависит от порога, поэтому удобна для сравнения моделей.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 7: ДИСБАЛАНС КЛАССОВ -->
+            <div class="viz-card">
+                <div class="viz-title">⚠️ Дисбаланс классов: почему точность обманчива</div>
+                <svg viewBox="0 0 540 270" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="270" fill="#ffffff"/>
+
+                    <!-- Left: Naive model -->
+                    <text x="140" y="30" text-anchor="middle" class="label-strong" fill="#991b1b" style="font-size: 15px;">Модель «всегда да»</text>
+
+                    <rect x="30" y="50" width="220" height="190" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="2"/>
+
+                    <!-- Bar chart inside -->
+                    <text x="50" y="85" class="label-small" fill="#1e293b" font-weight="700">Точность:</text>
+                    <rect x="120" y="73" width="110" height="16" fill="#16a34a" rx="3"/>
+                    <text x="235" y="86" class="label-small" fill="#166534" font-weight="700">99%</text>
+
+                    <text x="50" y="125" class="label-small" fill="#1e293b" font-weight="700">Полнота:</text>
+                    <rect x="120" y="113" width="2" height="16" fill="#dc2626" rx="3"/>
+                    <text x="128" y="126" class="label-small" fill="#991b1b" font-weight="700">0%</text>
+
+                    <text x="50" y="165" class="label-small" fill="#1e293b" font-weight="700">F-мера:</text>
+                    <rect x="120" y="153" width="2" height="16" fill="#dc2626" rx="3"/>
+                    <text x="128" y="166" class="label-small" fill="#991b1b" font-weight="700">0%</text>
+
+                    <text x="140" y="215" text-anchor="middle" class="label-small" fill="#991b1b" font-weight="700">99% точность, но бесполезна</text>
+
+                    <!-- Right: Balanced model -->
+                    <text x="400" y="30" text-anchor="middle" class="label-strong" fill="#166534" style="font-size: 15px;">Сбалансированная модель</text>
+
+                    <rect x="290" y="50" width="220" height="190" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+
+                    <text x="310" y="85" class="label-small" fill="#1e293b" font-weight="700">Точность:</text>
+                    <rect x="380" y="73" width="90" height="16" fill="#16a34a" rx="3"/>
+                    <text x="475" y="86" class="label-small" fill="#166534" font-weight="700">80%</text>
+
+                    <text x="310" y="125" class="label-small" fill="#1e293b" font-weight="700">Полнота:</text>
+                    <rect x="380" y="113" width="80" height="16" fill="#16a34a" rx="3"/>
+                    <text x="465" y="126" class="label-small" fill="#166534" font-weight="700">75%</text>
+
+                    <text x="310" y="165" class="label-small" fill="#1e293b" font-weight="700">F-мера:</text>
+                    <rect x="380" y="153" width="78" height="16" fill="#16a34a" rx="3"/>
+                    <text x="463" y="166" class="label-small" fill="#166534" font-weight="700">77%</text>
+
+                    <text x="400" y="215" text-anchor="middle" class="label-small" fill="#166534" font-weight="700">Реально решает задачу</text>
+                </svg>
+                <div class="viz-caption">
+                    При дисбалансе (например, уходят только 1% клиентов) модель «всегда да» даёт <strong>99% точности</strong>, но находит <strong>0% ушедших</strong>. Метрика точности обманчива. Нужно смотреть на <strong>полноту, F-меру и AUC</strong>. Способы борьбы: веса классов, пересэмплирование, изменение порога.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 8: ПОРОГ КЛАССИФИКАЦИИ -->
+            <div class="viz-card">
+                <div class="viz-title">🎚️ Как порог меняет предсказания: компромисс точности и полноты</div>
+                <svg viewBox="0 0 540 270" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="270" fill="#ffffff"/>
+
+                    <!-- X axis -->
+                    <line x1="50" y1="210" x2="510" y2="210" class="axis"/>
+                    <text x="280" y="235" text-anchor="middle" class="label-strong">Порог классификации</text>
+
+                    <!-- Tick labels -->
+                    <text x="70"  y="230" text-anchor="middle" class="label-small">0.1</text>
+                    <text x="200" y="230" text-anchor="middle" class="label-small">0.3</text>
+                    <text x="330" y="230" text-anchor="middle" class="label-small">0.5</text>
+                    <text x="460" y="230" text-anchor="middle" class="label-small">0.7</text>
+
+                    <!-- Precision curve (grows with threshold) -->
+                    <path d="M 70 175 Q 200 150 330 100 Q 400 70 490 40"
+                          fill="none" stroke="#2563eb" stroke-width="4"/>
+                    <text x="500" y="45" class="label-small" fill="#1e40af" font-weight="700">Точность</text>
+
+                    <!-- Recall curve (falls with threshold) -->
+                    <path d="M 70 40 Q 200 55 330 100 Q 420 140 490 175"
+                          fill="none" stroke="#16a34a" stroke-width="4"/>
+                    <text x="500" y="182" class="label-small" fill="#166534" font-weight="700">Полнота</text>
+
+                    <!-- Default threshold 0.5 -->
+                    <line x1="330" y1="30" x2="330" y2="210" stroke="#dc2626" stroke-width="2.5" stroke-dasharray="6 4" class="pulse-threshold"/>
+                    <text x="330" y="22" text-anchor="middle" class="label-strong" fill="#991b1b">порог = 0.5</text>
+
+                    <!-- Intersection dot -->
+                    <circle cx="330" cy="100" r="8" fill="#dc2626" stroke="#ffffff" stroke-width="2.5"/>
+                    <text x="348" y="105" class="label-small" fill="#991b1b" font-weight="700">баланс</text>
+
+                    <!-- Arrows for effect of lowering threshold -->
+                    <text x="200" y="258" text-anchor="middle" class="label-small" fill="#1e293b" font-weight="700">↓ порог → ↑ полнота, ↓ точность</text>
+                    <text x="460" y="258" text-anchor="middle" class="label-small" fill="#1e293b" font-weight="700">↑ порог → ↑ точность, ↓ полнота</text>
+                </svg>
+                <div class="viz-caption">
+                    Порог — это компромисс. Если понизить его (например, до 0.3) — модель будет чаще предсказывать «да», то есть вырастет <strong>полнота</strong>, но упадёт <strong>точность</strong>. Если повысить до 0.7 — наоборот. Выбор порога зависит от стоимости ошибок: если важнее не пропустить «да» — понижаем, если не хочется ложных тревог — повышаем.
+                </div>
+            </div>
+
+            <!-- СРАВНЕНИЕ С ЛИНЕЙНОЙ РЕГРЕССИЕЙ -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 8px;">⚖️ Логистическая регрессия vs линейная регрессия</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr><th>Критерий</th><th>Линейная регрессия</th><th>Логистическая регрессия</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>Задача</strong></td><td>Регрессия (число)</td><td>Классификация (класс)</td></tr>
+                        <tr><td><strong>Выход</strong></td><td>Любое число</td><td>Вероятность от 0 до 1</td></tr>
+                        <tr><td><strong>Функция активации</strong></td><td>Нет (тождественная)</td><td>Сигмоида</td></tr>
+                        <tr><td><strong>Функция потерь</strong></td><td>Сумма квадратов ошибок</td><td>Логистическая (кросс-энтропия)</td></tr>
+                        <tr><td><strong>Аналитическое решение</strong></td><td>Есть (МНК)</td><td>Нет (только итеративно)</td></tr>
+                        <tr><td><strong>Метрики</strong></td><td>MAE, MSE, R²</td><td>Точность, полнота, F-мера, AUC</td></tr>
+                        <tr><td><strong>Интерпретация весов</strong></td><td>Изменение цели на единицу признака</td><td>Изменение логарифма шансов</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- СТАТ-БОКСЫ -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 10px;">🧮 Четыре числа, из которых строятся все метрики</div>
+                <div class="stat-grid">
+                    <div class="stat-box tp">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-number">TP</div>
+                        <div class="stat-label">Истинно<br>положительные</div>
+                    </div>
+                    <div class="stat-box fp">
+                        <div class="stat-icon">⚠️</div>
+                        <div class="stat-number">FP</div>
+                        <div class="stat-label">Ложно-<br>положительные</div>
+                    </div>
+                    <div class="stat-box fn">
+                        <div class="stat-icon">❌</div>
+                        <div class="stat-number">FN</div>
+                        <div class="stat-label">Ложно-<br>отрицательные</div>
+                    </div>
+                    <div class="stat-box tn">
+                        <div class="stat-icon">✔️</div>
+                        <div class="stat-number">TN</div>
+                        <div class="stat-label">Истинно<br>отрицательные</div>
+                    </div>
+                </div>
+                <div class="callout" style="margin-top: 10px;">
+                    <strong>💡 Формулы метрик</strong>
+                    <p>Точность = TP / (TP + FP) · Полнота = TP / (TP + FN) · F₁ = 2·P·R / (P + R) · Accuracy = (TP + TN) / всё</p>
+                </div>
+            </div>
+
+            <!-- ПРИМЕНЕНИЕ ПО РОЛЯМ -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 8px;">👥 Кто и для каких задач использует логистическую регрессию</div>
+                <table class="role-table">
+                    <thead>
+                        <tr><th style="width: 32%;">Роль аналитика</th><th>Типичные задачи</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="role-emoji">📈</span> <strong>Аналитик данных</strong></td><td>Прогноз покупки, клика, регистрации; оценка влияния факторов на вероятность события</td></tr>
+                        <tr><td><span class="role-emoji">💰</span> <strong>Финансовый аналитик</strong></td><td>Кредитный скоринг (вернёт / не вернёт), выявление мошеннических транзакций</td></tr>
+                        <tr><td><span class="role-emoji">🚀</span> <strong>Продуктовый аналитик</strong></td><td>Прогноз удержания, конверсии в первую покупку, возврата в приложение</td></tr>
+                        <tr><td><span class="role-emoji">🌐</span> <strong>Веб-аналитик</strong></td><td>Прогноз конверсии сайта, клика по объявлению, эффективности рекламных кампаний</td></tr>
+                        <tr><td><span class="role-emoji">📊</span> <strong>BI-аналитик</strong></td><td>Оценка риска срыва проекта на дашборде, поиск аномалий в отчётности</td></tr>
+                        <tr><td><span class="role-emoji">🗄️</span> <strong>Аналитик больших данных</strong></td><td>Базовая линия перед нейросетями; отбор признаков через L1-регуляризацию</td></tr>
+                        <tr><td><span class="role-emoji">📣</span> <strong>Маркетинговый аналитик</strong></td><td>Прогноз отклика на рассылку, таргетинг по вероятности покупки</td></tr>
+                        <tr><td><span class="role-emoji">💼</span> <strong>Бизнес-аналитик</strong></td><td>Прогноз успеха проекта, оценка вероятности сбоя бизнес-процесса</td></tr>
+                        <tr><td><span class="role-emoji">⚙️</span> <strong>Системный аналитик</strong></td><td>Предсказание сбоя системы по метрикам, классификация типов ошибок</td></tr>
+                        <tr><td><span class="role-emoji">🎨</span> <strong>UX-аналитик</strong></td><td>Прогноз высокой оценки, отказа от использования функции</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- CALL-OUT -->
+            <div class="callout ok">
+                <strong>💡 Главный вывод</strong>
+                <p>Логистическая регрессия — это <strong>не «просто классификатор», а вероятностная модель</strong>. Она даёт не только класс, но и уверенность в нём. Интерпретируемость весов — её главное преимущество в кредитном скоринге, медицине и других задачах, где нужно объяснить решение. И это <strong>отличная базовая линия</strong>: если сложная модель не лучше логистической — она не нужна.</p>
+            </div>
+
+            <!-- ВИДЕОПЛЕЕР -->
+            <div class="video-section">
+                <div class="video-container">
+                    <iframe id="lecture-player" src="https://rutube.ru" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+                </div>
+                <div class="links-hub">
+                    <button onclick="changeVideo('https://rutube.ru/')" class="video-btn stop-btn">⏹ СТОП</button>
+                    <button onclick="changeVideo('https://rutube.ru/play/embed/')" class="video-btn rt-btn">📜 Лекция 15. Логистическая регрессия</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="slide-footer">
+            Направление «Менеджмент» | Курс: Аналитика данных | Лекция 15: «Логистическая регрессия: линейный алгоритм для классификации»
+        </div>
+    </div>
+
+    <div class="speaker-notes">
+        <div style="position: sticky; top: 0; background: #1a202c; padding: 20px 20px 10px 20px; border-bottom: 1px solid #4a5568; width: 100%; z-index: 100;">
+            <div class="notes-header" style="display: block; padding-bottom: 15px;">
+                <audio id="lecture-audio" preload="auto" controls
+                       src="https://archive.org/download/03_20261110_20261110/15.mp3"
+                       style="width: 100%; height: 32px; border-radius: 4px;"></audio>
+            </div>
+            <div style="width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                <iframe id="right-lecture-player" src="https://archive.org/embed/20261020_20261020_0955?autoplay=true&loop=true&muted=true" allow="clipboard-write; autoplay" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen style="border: none;"></iframe>
+            </div>
+        </div>
+
+        <div class="lecture-text" style="margin-top: 20px;">
+            <h3>📌 Логистическая регрессия: линейный алгоритм для классификации</h3>
+            <p>Теперь разберём третий алгоритм. Он называется логистическая регрессия. Несмотря на название, это не регрессия. Это алгоритм классификации. И это очень важное уточнение. Потому что название часто путает новичков. Давайте разберёмся, почему алгоритм называется регрессией, но решает задачу классификации.</p>
+            <h4>Определение и основная идея</h4>
+            <p>Начнём с определения. Логистическая регрессия — это алгоритм машинного обучения с учителем. Он используется для задач классификации. Чаще всего для бинарной классификации. То есть когда есть только два класса. Например, спам или не спам. Уйдёт клиент или останется. Заболевание есть или нет.</p>
+            <p>Почему же алгоритм называется регрессией. Потому что внутри он оценивает вероятность. Вероятность — это непрерывное число от нуля до единицы. И вот эту вероятность алгоритм вычисляет с помощью линейной регрессии. А затем превращает вероятность в класс. Так и получается: внутри регрессия, снаружи классификация.</p>
+            <p>Поясним на примере. Представьте, что мы хотим предсказать, уйдёт ли клиент из компании. Сначала алгоритм оценивает вероятность ухода. Например, вероятность равна семидесяти процентам. Затем алгоритм сравнивает эту вероятность с порогом. Порог обычно равен половине. Если вероятность больше половины — предсказываем уход. Если меньше — предсказываем, что клиент останется.</p>
+            <p>Отсюда следует важная мысль. Логистическая регрессия — это не просто «да или нет». Это вероятностная оценка. И это её главное преимущество перед другими алгоритмами классификации. Мы получаем не только ответ, но и степень уверенности в этом ответе.</p>
+            <h4>Логистическая функция: сигмоида</h4>
+            <p>Теперь разберём ключевое понятие. Как линейная регрессия превращается в вероятность. Для этого используется специальная функция. Она называется логистическая функция. Или сигмоида.</p>
+            <p>Дадим определение. Логистическая функция — это математическая функция, которая преобразует любое число в значение от нуля до единицы. Как это работает. Если на вход подать большое положительное число — на выходе получим число, близкое к единице. Если на вход подать большое отрицательное число — на выходе получим число, близкое к нулю. Если на вход подать ноль — на выходе получим ровно половину.</p>
+            <p>Поясним на примере. Представьте, что линейная регрессия выдала число два. Логистическая функция превращает его в вероятность около восьмидесяти восьми процентов. Если линейная регрессия выдала число минус два — вероятность будет около двенадцати процентов. Если выдала ноль — вероятность ровно пятьдесят процентов.</p>
+            <p>Это свойство очень удобно. Потому что мы получаем гладкую кривую. Она называется сигмоидой. Она имеет форму буквы эс. И она переводит любую линейную комбинацию признаков в корректную вероятность. А вероятность уже можно сравнивать с порогом и превращать в класс.</p>
+            <p>Обратите внимание на важную мысль. Благодаря сигмоиде выход модели всегда интерпретируем. Это не просто число. Это вероятность принадлежности к классу. И эту вероятность можно объяснить бизнесу. Например, сказать: «Модель считает, что этот клиент уйдёт с вероятностью восемьдесят процентов». Это гораздо полезнее, чем просто «клиент уйдёт».</p>
+            <h4>Как обучается модель: логистическая функция потерь</h4>
+            <p>Теперь перейдём к вопросу обучения. Как алгоритм находит веса. В линейной регрессии мы минимизировали сумму квадратов ошибок. В логистической регрессии так делать нельзя. Потому что выход — это вероятность. И квадратичная ошибка плохо работает с вероятностями.</p>
+            <p>Поэтому используется другая функция ошибки. Она называется логистическая функция потерь. Или кросс-энтропия. Дадим определение. Логистическая функция потерь — это функция, которая штрафует модель за уверенные, но неверные предсказания.</p>
+            <p>Поясним на примере. Представьте, что модель предсказала вероятность ухода девяносто девять процентов. А клиент на самом деле остался. Это уверенная, но неверная ошибка. Такая ошибка штрафуется очень сильно. А если модель предсказала вероятность пятьдесят один процент, а клиент ушёл — ошибка небольшая. Потому что модель была неуверена.</p>
+            <p>Логистическая функция потерь устроена так. Если правильный класс — единица, а модель предсказала вероятность близкую к единице — штраф маленький. Если правильный класс — единица, а модель предсказала вероятность близкую к нулю — штраф огромный. И наоборот. Такая логика заставляет модель быть уверенной только тогда, когда она права.</p>
+            <p>Минимизация этой функции выполняется с помощью градиентного спуска. Или с помощью более продвинутых оптимизаторов. Например, метода Ньютона. Или квазиньютоновских методов. Аналитического решения, как в линейной регрессии, здесь нет. Поэтому обучение всегда итеративное. Обычно оно занимает немного времени. Даже на больших данных.</p>
+            <h4>Метрики качества логистической регрессии</h4>
+            <p>Теперь перейдём к оценке качества. Здесь всё сложнее, чем в регрессии. Потому что для классификации одной метрики недостаточно. Нужно смотреть сразу на несколько. Разберём основные.</p>
+            <p><strong>Матрица ошибок.</strong> Начнём с базового понятия. Оно называется матрица ошибок. Дадим определение. Матрица ошибок — это таблица, которая показывает, сколько объектов модель отнесла к каждому классу. И сколько из них действительно к нему относятся.</p>
+            <p>У матрицы ошибок четыре ячейки. Первая ячейка называется истинно положительные. Это объекты, которые действительно относятся к положительному классу. И модель верно их определила. Вторая ячейка называется ложноположительные. Это объекты, которые относятся к отрицательному классу. Но модель ошибочно отнесла их к положительному. Третья ячейка называется ложноотрицательные. Это объекты, которые относятся к положительному классу. Но модель ошибочно отнесла их к отрицательному. Четвёртая ячейка называется истинно отрицательные. Это объекты, которые относятся к отрицательному классу. И модель верно их определила.</p>
+            <p>Приведём пример. Представьте, что мы предсказываем уход клиента. Положительный класс — это ушедшие клиенты. Отрицательный класс — это оставшиеся. Истинно положительные — это ушедшие клиенты, которых модель правильно предсказала. Ложноположительные — это оставшиеся клиенты, которых модель ошибочно назвала ушедшими. Ложноотрицательные — это ушедшие клиенты, которых модель ошибочно назвала оставшимися. Истинно отрицательные — это оставшиеся клиенты, которых модель правильно определила.</p>
+            <p>Понимание матрицы ошибок очень важно. Потому что все остальные метрики классификации строятся на её основе.</p>
+            <p><strong>Точность.</strong> Первая метрика называется точность. По-английски это precision. Дадим определение. Точность — это доля истинно положительных среди всех объектов, которые модель назвала положительными.</p>
+            <p>Поясним на примере. Модель назвала положительными сто клиентов. Из них восемьдесят действительно ушли. Значит, точность равна восьмидесяти процентам. То есть из всех, кого мы назвали ушедшими, восемьдесят процентов действительно ушли.</p>
+            <p>Точность важна, когда ложноположительные ошибки дорого стоят. Например, если мы отправляем клиенту дорогое удержание. И ошиблись. Мы потратили деньги зря. В таких задачах нужна высокая точность.</p>
+            <p><strong>Полнота.</strong> Вторая метрика называется полнота. По-английски это recall. Дадим определение. Полнота — это доля истинно положительных среди всех объектов, которые действительно относятся к положительному классу.</p>
+            <p>Поясним на примере. В компании ушло двести клиентов. Модель правильно определила сто пятьдесят из них. Значит, полнота равна семидесяти пяти процентам. То есть мы нашли семьдесят пять процентов всех реальных уходов.</p>
+            <p>Полнота важна, когда ложноотрицательные ошибки дорого стоят. Например, если мы пропустили клиента, который собирается уйти. И не предложили ему удержание. Мы теряем клиента. В таких задачах нужна высокая полнота.</p>
+            <p><strong>F-мера.</strong> Третья метрика называется F-мера. По-английски это F-score. Дадим определение. F-мера — это гармоническое среднее между точностью и полнотой.</p>
+            <p>Поясним на примере. Если точность равна восьмидесяти процентам. А полнота равна шестидесяти процентам. То F-мера будет около шестидесяти восьми процентов. Это не среднее арифметическое. Это гармоническое среднее. Оно сильнее штрафует ситуацию, когда одна из метрик сильно меньше другой.</p>
+            <p>F-мера полезна, когда нужно учесть и точность, и полноту. Но нет чёткого перевеса в сторону одной из них. Её часто используют в соревнованиях по машинному обучению. И в задачах, где важно общее качество, а не только одна сторона.</p>
+            <p><strong>ROC-кривая и площадь под ней.</strong> Четвёртая метрика называется площадь под ROC-кривой. По-английски это ROC-AUC. Но мы будем использовать русское название. Сначала разберёмся, что такое ROC-кривая.</p>
+            <p>Дадим определение. ROC-кривая — это график, который показывает зависимость доли истинно положительных от доли ложноположительных при разных порогах классификации.</p>
+            <p>Поясним на примере. По умолчанию порог классификации равен половине. Но его можно менять. Если понизить порог до тридцати процентов — модель будет чаще предсказывать положительный класс. Доля истинно положительных вырастет. Но и доля ложноположительных тоже вырастет. Если повысить порог до семидесяти процентов — наоборот.</p>
+            <p>ROC-кривая показывает все эти компромиссы сразу. Она строится в координатах. По горизонтали — доля ложноположительных. По вертикали — доля истинно положительных. Идеальная модель имеет кривую, которая проходит через левый верхний угол. Случайная модель имеет прямую диагональ.</p>
+            <p>Площадь под этой кривой называется площадью под ROC-кривой. Она измеряется от нуля до единицы. Если площадь равна половине — модель работает не лучше случайного угадывания. Если площадь равна единице — модель идеальна. На практике хорошие модели имеют площадь от восьмидесяти до девяноста пяти процентов.</p>
+            <p>Эта метрика полезна тем, что она не зависит от порога. Она оценивает качество модели в целом. А не при каком-то конкретном пороге. Поэтому её часто используют для сравнения разных моделей между собой.</p>
+            <h4>Проблема дисбаланса классов и её решения</h4>
+            <p>Теперь разберём важную проблему. Она называется дисбаланс классов. Мы уже упоминали её в методе к-ближайших соседей. Но для классификации она особенно остра.</p>
+            <p>Дадим определение. Дисбаланс классов — это ситуация, когда одних классов в данных гораздо больше, чем других. Например, девяносто девять процентов клиентов остаются. А один процент уходит. Такая ситуация типична для многих задач. Мошенничество — редкость. Уход клиентов — редкость. Заболевания — редкость.</p>
+            <p>Почему это проблема. Потому что модель может стать «ленивой». Она просто предсказывает частый класс всегда. И получает высокую точность. Но это бесполезно. Ведь мы хотим находить именно редкие события. А модель их пропускает.</p>
+            <p>Приведём пример. Если модель всегда предсказывает, что клиент останется. Её точность будет девяносто девять процентов. Потому что девяносто девять процентов клиентов действительно остаются. Но полнота будет равна нулю. Потому что модель не нашла ни одного ушедшего клиента. Хотя формально точность высокая.</p>
+            <p>Как решить эту проблему. Есть несколько способов. Первый способ — изменить веса классов. Мы говорим модели, что ошибки на редком классе стоят дороже. И модель начинает уделять ему больше внимания.</p>
+            <p>Второй способ — пересэмплирование. Можно увеличить число объектов редкого класса. Это называется оверсэмплинг. Или уменьшить число объектов частого класса. Это называется undersampling. Оба способа балансируют классы в обучающей выборке.</p>
+            <p>Третий способ — изменить порог классификации. По умолчанию он равен половине. Но если мы понизим порог до тридцати процентов — модель будет чаще предсказывать редкий класс. Полнота вырастет. Хотя точность может упасть. Это компромисс.</p>
+            <p>Четвёртый способ — использовать специальные метрики качества. Например, F-меру или площадь под ROC-кривой. Они лучше отражают качество на несбалансированных данных. Чем простая точность.</p>
+            <h4>Когда логистическая регрессия работает хорошо</h4>
+            <p>Первое условие — нужна интерпретируемость. Логистическая регрессия очень интерпретируема. Мы можем посмотреть на веса. И сказать, какой признак повышает вероятность положительного класса. А какой понижает. И насколько сильно. Это очень ценно для бизнеса.</p>
+            <p>Приведём пример. Модель предсказывает уход клиента. Вес признака «количество обращений в поддержку» положительный. Значит, чем больше обращений — тем выше вероятность ухода. Вес признака «стаж клиента» отрицательный. Значит, чем дольше клиент с нами — тем ниже вероятность ухода. Такая интерпретация позволяет бизнесу принять конкретные меры.</p>
+            <p>Второе условие — задача близка к линейно разделимой. Если классы можно разделить прямой линией или гиперплоскостью — логистическая регрессия справится хорошо. Если граница сложная и нелинейная — понадобятся другие алгоритмы. Или добавление полиномиальных признаков.</p>
+            <p>Третье условие — нужна вероятностная оценка. Логистическая регрессия даёт не просто класс. Она даёт вероятность. Это полезно для ранжирования. Например, когда мы хотим отсортировать клиентов по вероятности ухода. И работать в первую очередь с самыми рискованными.</p>
+            <p>Четвёртое условие — данных не слишком мало. Логистическая регрессия требует достаточного числа примеров каждого класса. Если редкий класс представлен десятком объектов — модель может переобучиться. Нужны сотни или тысячи примеров.</p>
+            <h4>Примеры применения по ролям аналитиков</h4>
+            <p><strong>Аналитик данных</strong> использует логистическую регрессию очень часто. Это один из базовых алгоритмов в его арсенале. Типичная задача — предсказание бинарного события. Например, совершит ли пользователь покупку. Или кликнет ли он по рекламе. Или зарегистрируется ли на сайте. Ещё одна важная задача — оценка влияния факторов. Логистическая регрессия показывает, какой признак повышает или понижает вероятность события.</p>
+            <p><strong>Финансовый аналитик</strong> использует логистическую регрессию для оценки кредитного риска. Типичная задача — предсказание, вернёт ли клиент кредит. Или наоборот, объявит ли дефолт. Модель оценивает вероятность дефолта. И банк принимает решение о выдаче кредита на основе этой вероятности. Ещё одна задача — выявление мошеннических операций. Логистическая регрессия оценивает вероятность того, что транзакция мошенническая.</p>
+            <p><strong>Продуктовый аналитик</strong> использует логистическую регрессию для прогнозирования продуктовых событий. Типичная задача — предсказание удержания. Удержится ли новый пользователь в продукте через месяц. Или предсказание конверсии в первую покупку. Или предсказание возврата в приложение. Кроме того, продуктовый аналитик применяет логистическую регрессию для оценки влияния изменений в продукте.</p>
+            <p><strong>Веб-аналитик</strong> использует логистическую регрессию для анализа поведения на сайте. Типичная задача — предсказание конверсии. Совершит ли пользователь целевое действие на сайте. Оставит ли заявку. Добавит ли товар в корзину. Оформит ли заказ. Ещё одна задача — оценка эффективности рекламных кампаний. Логистическая регрессия оценивает вероятность клика по объявлению.</p>
+            <p><strong>Специалист по аналитике бизнес-данных</strong> использует логистическую регрессию при построении дашбордов. Типичная задача — оценка риска. Например, дашборд по проектам может содержать вероятность срыва сроков. Или дашборд по клиентам может содержать вероятность ухода. Кроме того, такой специалист применяет логистическую регрессию для поиска аномалий.</p>
+            <p><strong>Аналитик больших данных</strong> использует логистическую регрессию как базовую линию. Типичная задача — быстрая оценка задачи перед применением сложных алгоритмов. Если логистическая регрессия справляется хорошо — можно не усложнять. Если плохо — становится понятно, что граница классов нелинейная. Кроме того, аналитик больших данных применяет логистическую регрессию с регуляризацией для отбора признаков.</p>
+            <p><strong>Маркетинговый аналитик</strong> использует логистическую регрессию для оценки отклика на рекламу. Типичная задача — предсказание, откликнется ли клиент на маркетинговую кампанию. Купит ли он товар после рассылки. Зарегистрируется ли на вебинар. Оставит ли заявку на сайте. Ещё одна задача — таргетинг. Логистическая регрессия оценивает вероятность покупки для каждого клиента.</p>
+            <p><strong>Бизнес-аналитик</strong> использует логистическую регрессию реже. Но в некоторых задачах она полезна. Например, для прогнозирования успеха проекта. На основе характеристик проекта логистическая регрессия оценивает вероятность его успешного завершения. Это помогает приоритизировать проекты. Ещё одна задача — оценка вероятности сбоя бизнес-процесса.</p>
+            <p><strong>Системный аналитик</strong> использует логистическую регрессию в задачах анализа логов. Типичная задача — предсказание сбоя системы. Логистическая регрессия оценивает вероятность сбоя на основе текущих метрик. Это позволяет принять меры до того, как система упадёт. Ещё одна задача — классификация ошибок.</p>
+            <p><strong>Специалист по анализу пользовательского опыта</strong> использует логистическую регрессию для оценки удовлетворённости. Типичная задача — предсказание, поставит ли пользователь высокую оценку. Или напишет ли положительный отзыв. Логистическая регрессия оценивает вероятность этого события. Ещё одна задача — предсказание отказа от использования функции.</p>
+            <h4>Подведём итог блока</h4>
+            <p>Давайте соберём всё вместе. Мы разобрали логистическую регрессию. Мы увидели её идею. Она оценивает вероятность принадлежности к классу. И превращает эту вероятность в класс. Мы разобрали логистическую функцию, которая переводит любое число в вероятность. Мы разобрали логистическую функцию потерь, которая штрафует за уверенные ошибки. Мы познакомились с матрицей ошибок. И с четырьмя метриками качества: точностью, полнотой, F-мерой и площадью под ROC-кривой. Мы узнали о дисбалансе классов. И о способах его решения. И увидели конкретные примеры применения в работе разных аналитиков.</p>
+            <p>Запомните главное. Логистическая регрессия — это не «просто классификатор». Это вероятностная модель. Она даёт не только класс, но и уверенность в нём. И интерпретируемость её весов — это её главное преимущество. Особенно в задачах, где нужно объяснить решение бизнесу. Например, в кредитном скоринге или в медицине. Там нельзя просто сказать «модель так решила». Нужно объяснить, почему.</p>
+            <p>Кроме того, логистическая регрессия — это отличная базовая линия. Её нужно попробовать в первую очередь. И только потом переходить к более сложным моделям. Если сложная модель не лучше логистической — она не нужна. Простота — это преимущество. А не недостаток.</p>
+
+            <div class="dark-block">
+                <div class="dark-block-title">📖 Словарь терминов и аббревиатур</div>
+                <table class="dark-table">
+                    <thead>
+                        <tr><th style="width:22%;">Термин</th><th style="width:30%;">Расшифровка</th><th>Пояснение</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="term">Логистическая регрессия</td><td>Logistic Regression</td><td>Алгоритм классификации, дающий вероятность</td></tr>
+                        <tr><td class="term">Сигмоида</td><td>Sigmoid</td><td>S-образная функция, переводит число в вероятность</td></tr>
+                        <tr><td class="term">Порог классификации</td><td>Threshold</td><td>Граница, по которой вероятность превращается в класс</td></tr>
+                        <tr><td class="term">Кросс-энтропия</td><td>Cross-Entropy</td><td>Функция потерь для логистической регрессии</td></tr>
+                        <tr><td class="term">Матрица ошибок</td><td>Confusion Matrix</td><td>Таблица 2×2 с TP, FP, FN, TN</td></tr>
+                        <tr><td class="term">Истинно положительные</td><td>True Positive (TP)</td><td>Верно нашли «да»</td></tr>
+                        <tr><td class="term">Ложноположительные</td><td>False Positive (FP)</td><td>Ошибочно сказали «да»</td></tr>
+                        <tr><td class="term">Ложноотрицательные</td><td>False Negative (FN)</td><td>Пропустили «да»</td></tr>
+                        <tr><td class="term">Истинно отрицательные</td><td>True Negative (TN)</td><td>Верно нашли «нет»</td></tr>
+                        <tr><td class="term">Точность</td><td>Precision</td><td>Доля TP среди предсказанных «да»</td></tr>
+                        <tr><td class="term">Полнота</td><td>Recall</td><td>Доля TP среди всех реальных «да»</td></tr>
+                        <tr><td class="term">F-мера</td><td>F-score</td><td>Гармоническое среднее точности и полноты</td></tr>
+                        <tr><td class="term">ROC-кривая</td><td>ROC Curve</td><td>Зависимость TPR от FPR при разных порогах</td></tr>
+                        <tr><td class="term">AUC</td><td>Area Under Curve</td><td>Площадь под ROC-кривой, от 0 до 1</td></tr>
+                        <tr><td class="term">Дисбаланс классов</td><td>Class Imbalance</td><td>Одних классов гораздо больше других</td></tr>
+                        <tr><td class="term">Оверсэмплинг</td><td>Oversampling</td><td>Увеличение числа объектов редкого класса</td></tr>
+                        <tr><td class="term">Undersampling</td><td>Undersampling</td><td>Уменьшение числа объектов частого класса</td></tr>
+                        <tr><td class="term">Веса классов</td><td>Class Weights</td><td>Штраф за ошибки на редком классе</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function changeVideo(embedUrl) {
+            document.getElementById('lecture-player').src = embedUrl;
+        }
+    </script>
+
+    <!-- НАВИГАЦИЯ МЕЖДУ ЛЕКЦИЯМИ -->
+<nav class="lecture-nav" id="lectureNav">
+    <div class="nav-progress" id="navProgress" style="width: 0%;"></div>
+    <a href="Лекция (N-1).html" class="nav-btn-arrow" id="prevBtn">
+        <span class="arrow-icon">←</span>
+        <span class="arrow-label">
+            <small>Назад</small>
+            <span class="arrow-title" id="prevTitle">Лекция (N-1)</span>
+        </span>
+    </a>
+    <div class="nav-center">
+        <div class="nav-counter">Лекция <span id="currentNum">N</span> <span>из 21</span></div>
+        <a href="index.html" class="nav-index-link">📚 К содержанию</a>
+    </div>
+    <a href="Лекция (N+1).html" class="nav-btn-arrow" id="nextBtn">
+        <span class="arrow-label" style="align-items: flex-end;">
+            <small>Вперёд</small>
+            <span class="arrow-title" id="nextTitle">Лекция (N+1)</span>
+        </span>
+        <span class="arrow-icon">→</span>
+    </a>
+</nav>
+
+
+
+<script>
+(function () {
+    'use strict';
+
+    const TOTAL_LECTURES = 21;
+    const totalDurationMs = (26 * 60 + 30) * 1000;
+    const autoNextDelayMs = 2000;
+    const AUTOSTART_PARAM = 'autostart';
+
+    const fileName = decodeURIComponent(location.pathname.split('/').pop() || '');
+    let currentLecture = 15;
+    const match = fileName.match(/Лекция\s*(\d+)\.html/i);
+    if (match) {
+        currentLecture = parseInt(match[1], 10);
+    } else {
+        const el = document.getElementById('currentNum');
+        if (el) currentLecture = parseInt(el.textContent, 10) || 15;
+    }
+    if (isNaN(currentLecture) || currentLecture < 1) currentLecture = 1;
+    if (currentLecture > TOTAL_LECTURES) currentLecture = TOTAL_LECTURES;
+
+    const prev = currentLecture > 1 ? currentLecture - 1 : null;
+    const next = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+
+    const currentNumEl = document.getElementById('currentNum');
+    if (currentNumEl) currentNumEl.textContent = currentLecture;
+
+    const navProgress = document.getElementById('navProgress');
+    if (navProgress) {
+        navProgress.style.width = (currentLecture / TOTAL_LECTURES * 100) + '%';
+    }
+
+    const prevBtn = document.getElementById('prevBtn');
+    if (prevBtn) {
+        if (prev) {
+            prevBtn.href = 'Лекция ' + prev + '.html';
+            const t = document.getElementById('prevTitle');
+            if (t) t.textContent = 'Лекция ' + prev;
+            prevBtn.style.opacity = '1';
+            prevBtn.style.cursor = 'pointer';
+            prevBtn.onclick = null;
+        } else {
+            prevBtn.removeAttribute('href');
+            prevBtn.style.opacity = '0.35';
+            prevBtn.style.cursor = 'not-allowed';
+            prevBtn.onclick = (e) => e.preventDefault();
+            const t = document.getElementById('prevTitle');
+            if (t) t.textContent = 'Это первая лекция';
+        }
+    }
+
+    const nextBtn = document.getElementById('nextBtn');
+    if (nextBtn) {
+        if (next) {
+            nextBtn.href = 'Лекция ' + next + '.html';
+            const t = document.getElementById('nextTitle');
+            if (t) t.textContent = 'Лекция ' + next;
+            nextBtn.style.opacity = '1';
+            nextBtn.style.cursor = 'pointer';
+            nextBtn.onclick = null;
+        } else {
+            nextBtn.removeAttribute('href');
+            nextBtn.style.opacity = '0.35';
+            nextBtn.style.cursor = 'not-allowed';
+            nextBtn.onclick = (e) => e.preventDefault();
+            const t = document.getElementById('nextTitle');
+            if (t) t.textContent = 'Это последняя лекция';
+        }
+    }
+
+    document.addEventListener('keydown', (e) => {
+        const tag = e.target && e.target.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+        if (e.key === 'ArrowLeft' && prev) {
+            window.location.href = 'Лекция ' + prev + '.html';
+        } else if (e.key === 'ArrowRight' && next) {
+            window.location.href = 'Лекция ' + next + '.html';
+        } else if (e.key === 'Home') {
+            window.location.href = 'index.html';
+        }
+    });
+
+    function initScroll() {
+        const studentBlock = document.querySelector('.student-view');
+        const speakerBlock = document.querySelector('.speaker-notes');
+        const badge = document.getElementById('scroll-status-badge');
+        const audio = document.getElementById('lecture-audio');
+        if (!studentBlock || !speakerBlock) return;
+
+        const studentBehavior = studentBlock.style.scrollBehavior;
+        const speakerBehavior = speakerBlock.style.scrollBehavior;
+        let isRunning = false, completed = false, pausedElapsed = 0, startedAt = 0, rafId = null;
+        let startS = 0, startP = 0, maxS = 0, maxP = 0;
+
+        function setBadge(text, color) {
+            if (!badge) return;
+            badge.style.display = 'block';
+            badge.textContent = text;
+            badge.style.borderColor = color;
+        }
+        function measure() {
+            maxS = Math.max(studentBlock.scrollHeight - studentBlock.clientHeight, 0);
+            maxP = Math.max(speakerBlock.scrollHeight - speakerBlock.clientHeight, 0);
+        }
+        function fmt(ms) {
+            const m = Math.floor(ms / 60000);
+            const s = Math.floor((ms % 60000) / 1000);
+            return m + ':' + String(s).padStart(2, '0');
+        }
+        function playAudio() {
+            if (!audio) return;
+            const p = audio.play();
+            if (p && typeof p.catch === 'function') {
+                p.catch(err => {
+                    console.warn('[AutoAudio]', err.message);
+                    setBadge('▶ ИДЕТ ПРОКРУТКА (звук заблокирован)', '#eab308');
+                });
+            }
+        }
+        function pauseAudio() { if (audio) try { audio.pause(); } catch (_) {} }
+        function resetAudio() { if (audio) try { audio.pause(); audio.currentTime = 0; } catch (_) {} }
+
+        function animate() {
+            if (!isRunning) return;
+            const elapsed = pausedElapsed + (performance.now() - startedAt);
+            const fraction = Math.min(elapsed / totalDurationMs, 1);
+            measure();
+            studentBlock.scrollTop = startS + (maxS - startS) * fraction;
+            speakerBlock.scrollTop = startP + (maxP - startP) * fraction;
+            if (badge) {
+                badge.textContent = '▶ ' + fmt(elapsed) + ' / ' + fmt(totalDurationMs);
+                badge.style.borderColor = '#16a34a';
+            }
+            if (fraction >= 1) { finish(); return; }
+            rafId = requestAnimationFrame(animate);
+        }
+
+        function startOrResume() {
+            if (completed) {
+                pausedElapsed = 0; completed = false;
+                studentBlock.scrollTop = 0; speakerBlock.scrollTop = 0;
+                resetAudio();
+            }
+            measure();
+            startS = studentBlock.scrollTop;
+            startP = speakerBlock.scrollTop;
+            startedAt = performance.now();
+            isRunning = true;
+            studentBlock.style.scrollBehavior = 'auto';
+            speakerBlock.style.scrollBehavior = 'auto';
+            cancelAnimationFrame(rafId);
+            rafId = requestAnimationFrame(animate);
+            playAudio();
+        }
+        function pause() {
+            if (isRunning) pausedElapsed += performance.now() - startedAt;
+            isRunning = false;
+            cancelAnimationFrame(rafId);
+            setBadge('⏸ ПАУЗА ' + fmt(pausedElapsed), '#dc2626');
+            studentBlock.style.scrollBehavior = studentBehavior;
+            speakerBlock.style.scrollBehavior = speakerBehavior;
+            pauseAudio();
+        }
+        function finish() {
+            isRunning = false; completed = true;
+            cancelAnimationFrame(rafId);
+            measure();
+            studentBlock.scrollTop = maxS;
+            speakerBlock.scrollTop = maxP;
+            studentBlock.style.scrollBehavior = studentBehavior;
+            speakerBlock.style.scrollBehavior = speakerBehavior;
+
+            const nextLec = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+            if (nextLec) {
+                setBadge('✅ ГОТОВО → Лекция ' + nextLec, '#16a34a');
+                setTimeout(() => {
+                    location.href = 'Лекция ' + nextLec + '.html?' + AUTOSTART_PARAM + '=1';
+                }, autoNextDelayMs);
+            } else {
+                setBadge('✅ КУРС ЗАВЕРШЕН', '#16a34a');
+                pauseAudio();
+            }
+        }
+        function toggle() { isRunning ? pause() : startOrResume(); }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.repeat) return;
+            const t = e.target; const tag = t && t.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+            if (e.code === 'Space' || e.key === ' ') {
+                e.preventDefault();
+                toggle();
+            }
+        }, true);
+
+        if (badge) badge.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+        [studentBlock, speakerBlock].forEach(el => {
+            el.addEventListener('click', (e) => {
+                if (e.target.closest('a,button,iframe,input,textarea,select,video,audio')) return;
+                if (window.getSelection().toString().length > 0) return;
+                toggle();
+            });
+        });
+
+        const params = new URLSearchParams(location.search);
+        if (params.get(AUTOSTART_PARAM) === '1') {
+            params.delete(AUTOSTART_PARAM);
+            const clean = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
+            history.replaceState(null, '', clean);
+            setTimeout(startOrResume, 500);
+        } else {
+            setBadge('▶ ПРОБЕЛ / КЛИК — старт', '#4a5568');
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initScroll, { once: true });
+    } else {
+        initScroll();
+    }
+})();
+</script>
+
+</body>
+</html>

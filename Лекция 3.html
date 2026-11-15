@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лекция 3. Ключевые показатели и метрики аналитики</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #ffffff; }
+
+        .student-view { width: 66.66%; height: 100vh; background: #ffffff; padding: 35px 40px; display: flex; flex-direction: column; justify-content: space-between; border-right: 2px solid #e2e8f0; overflow-y: auto; scroll-behavior: smooth; }
+        .speaker-notes { width: 33.34%; height: 100%; background: #1a202c; color: #edf2f7; padding: 30px; overflow-y: auto; }
+
+        .slide-header { font-size: 26px; color: #1a365d; font-weight: bold; line-height: 1.3; margin-bottom: 18px; border-bottom: 4px solid #3182ce; padding-bottom: 12px; }
+        .slide-body { flex-grow: 1; display: flex; flex-direction: column; gap: 18px; padding: 5px 0; }
+        .slide-footer { font-size: 13px; color: #a0aec0; text-align: right; margin-top: 12px; }
+
+        .chart-box { background: #f7fafc; border: 2.5px dashed #cbd5e0; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .chart-box strong { font-size: 16px; display: block; margin-bottom: 6px; }
+        .chart-box p { font-size: 13px; color: #4a5568; line-height: 1.45; }
+
+        .cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .cat-card { border-radius: 10px; padding: 14px 16px; border: 2px solid #e2e8f0; }
+        .cat-card.core { background: #ebf8ff; border-color: #90cdf4; }
+        .cat-card.viz { background: #f0fff4; border-color: #9ae6b4; }
+        .cat-card.stat { background: #fffaf0; border-color: #fbd38d; }
+        .cat-card.big { background: #faf5ff; border-color: #d6bcfa; }
+        .cat-card.req { background: #fefcbf; border-color: #f6e05e; }
+        .cat-card.etl { background: #fed7d7; border-color: #fc8181; }
+        .cat-card.web { background: #e6fffa; border-color: #81e6d9; }
+        .cat-card h4 { font-size: 13px; margin-bottom: 8px; color: #1a365d; display: flex; align-items: center; gap: 6px; }
+        .cat-card .label { font-size: 10px; font-weight: bold; color: #4a5568; margin-top: 7px; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.3px; }
+        .cat-card ul { margin: 0; padding-left: 14px; font-size: 11.5px; color: #2d3748; line-height: 1.45; }
+
+        .tag { display: inline-block; background: #ebf8ff; color: #2b6cb0; padding: 2px 7px; border-radius: 4px; font-size: 11px; margin: 2px 2px 2px 0; font-weight: 500; }
+        .tag.ru { background: #f0fff4; color: #276749; }
+        .tag.intl { background: #ebf8ff; color: #2b6cb0; }
+        .tag.metric { background: #fef3c7; color: #92400e; }
+        .tag.method { background: #e0e7ff; color: #3730a3; }
+
+        .compare-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .compare-table th { background: #1a365d; color: white; padding: 9px 11px; text-align: left; font-weight: 600; }
+        .compare-table td { padding: 8px 11px; border-bottom: 1px solid #e2e8f0; color: #2d3748; vertical-align: top; }
+        .compare-table tr:nth-child(even) td { background: #f7fafc; }
+        .compare-table .ru { color: #276749; font-weight: bold; }
+        .compare-table .intl { color: #2b6cb0; font-weight: bold; }
+        .compare-table .group-row td { background: #ebf8ff; font-weight: bold; color: #1a365d; font-size: 12.5px; }
+
+        .criteria-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .criteria-card { background: #f7fafc; border-left: 4px solid #3182ce; padding: 10px 12px; border-radius: 6px; }
+        .criteria-card h5 { font-size: 12px; color: #1a365d; margin-bottom: 4px; }
+        .criteria-card p { font-size: 11px; color: #4a5568; line-height: 1.4; }
+
+        .video-section { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 5px; }
+        .video-container { width: 100%; max-width: 580px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: #000; aspect-ratio: 16 / 9; }
+        .links-hub { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .video-btn { text-decoration: none; padding: 9px 14px; border-radius: 6px; font-size: 12px; font-weight: bold; color: white; display: flex; align-items: center; gap: 6px; transition: transform 0.2s, background 0.2s; cursor: pointer; border: none; }
+        .video-btn:hover { transform: translateY(-2px); }
+        .rt-btn { background: #00a877; }
+        .rt-btn:hover { background: #008f65; }
+        .stop-btn { background: #dc143c; }
+        .stop-btn:hover { background: #b01030; }
+
+        .notes-header { font-size: 17px; color: #63b3ed; font-weight: bold; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a5568; padding-bottom: 10px; }
+        .lecture-text { font-size: 14.5px; line-height: 1.65; color: #e2e8f0; text-align: justify; }
+        .lecture-text p { margin-bottom: 14px; }
+        .lecture-text h3 { color: #63b3ed; font-size: 15px; margin: 18px 0 10px; border-bottom: 1px solid #2d3748; padding-bottom: 5px; }
+        .lecture-text ul { margin: 8px 0 14px 18px; }
+        .lecture-text li { margin-bottom: 6px; }
+
+        .role-card { border-radius: 12px; padding: 16px 18px; border: 2px solid #e2e8f0; background: #ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.04); }
+        .role-card h3 { font-size: 15px; color: #1a365d; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .role-card .role-icon { font-size: 22px; }
+        .role-card .metrics-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 10px; margin: 8px 0; }
+        .role-card .metric-item { font-size: 11.5px; color: #2d3748; padding: 3px 0; border-bottom: 1px dotted #e2e8f0; }
+        .role-card .method-row { margin-top: 8px; }
+
+        .highlight-box { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 6px; }
+        .highlight-box strong { color: #92400e; font-size: 13px; }
+        .highlight-box p { font-size: 12px; color: #78350f; margin-top: 4px; line-height: 1.4; }
+
+        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .stat-box { background: #ebf8ff; border-radius: 10px; padding: 14px; text-align: center; border: 2px solid #90cdf4; }
+        .stat-box .stat-number { font-size: 24px; font-weight: 900; color: #2b6cb0; }
+        .stat-box .stat-label { font-size: 11px; color: #4a5568; margin-top: 4px; }
+
+        .dark-block { background: #2d3748; border: 1px solid #4a5568; border-radius: 10px; padding: 16px 18px; margin-top: 20px; }
+        .dark-block-title { font-size: 14px; font-weight: bold; color: #63b3ed; margin-bottom: 12px; border-bottom: 2px solid #4a5568; padding-bottom: 8px; }
+        .dark-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+        .dark-table th { background: #1a202c; color: #90cdf4; padding: 7px 9px; text-align: left; font-weight: 600; border-bottom: 1px solid #4a5568; }
+        .dark-table td { padding: 6px 9px; border-bottom: 1px solid #2d3748; color: #cbd5e0; vertical-align: top; line-height: 1.4; }
+        .dark-table tr:nth-child(even) td { background: #2a3242; }
+        .dark-table .term { font-weight: bold; color: #90cdf4; white-space: nowrap; }
+        .dark-block ol { margin: 0 0 12px 18px; padding: 0; font-size: 12px; color: #cbd5e0; line-height: 1.5; }
+        .dark-block ol li { margin-bottom: 5px; }
+        .dark-block .src-group { font-weight: bold; color: #fbd38d; font-size: 12px; margin: 12px 0 6px; }
+        .dark-block a { color: #63b3ed; text-decoration: none; }
+        .dark-block a:hover { text-decoration: underline; }
+
+        .lecture-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(12px); border-top: 2px solid rgba(255, 255, 255, 0.08); padding: 12px 20px; display: flex; align-items: center; justify-content: center; gap: 12px; z-index: 9999; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25); font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .lecture-nav .nav-progress { position: absolute; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899); border-radius: 0 3px 3px 0; }
+        .lecture-nav .nav-btn-arrow { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); border: 1.5px solid rgba(255, 255, 255, 0.15); color: #e2e8f0; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; font-family: inherit; }
+        .lecture-nav .nav-btn-arrow:hover:not(:disabled) { background: rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.6); color: white; transform: translateY(-2px); }
+        .lecture-nav .nav-btn-arrow:disabled { opacity: 0.35; cursor: not-allowed; }
+        .lecture-nav .nav-btn-arrow .arrow-icon { font-size: 16px; line-height: 1; }
+        .lecture-nav .nav-btn-arrow .arrow-label { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+        .lecture-nav .nav-btn-arrow .arrow-label small { font-size: 9.5px; font-weight: 400; opacity: 0.7; text-transform: uppercase; }
+        .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { font-size: 12px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lecture-nav .nav-center { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 20px; color: #94a3b8; font-size: 11px; border-left: 1px solid rgba(255, 255, 255, 0.1); border-right: 1px solid rgba(255, 255, 255, 0.1); }
+        .lecture-nav .nav-counter { font-size: 15px; font-weight: 900; color: #f1f5f9; }
+        .lecture-nav .nav-counter span { color: #64748b; font-size: 12px; font-weight: 600; }
+        .lecture-nav .nav-index-link { color: #60a5fa; text-decoration: none; font-size: 11px; font-weight: 600; }
+        .lecture-nav .nav-index-link:hover { color: #93c5fd; text-decoration: underline; }
+        body { padding-bottom: 80px !important; }
+        @media (max-width: 900px) {
+            .lecture-nav { padding: 10px 12px; gap: 8px; }
+            .lecture-nav .nav-btn-arrow { padding: 8px 12px; }
+            .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { max-width: 90px; font-size: 11px; }
+            .cat-grid, .criteria-grid, .role-card .metrics-list { grid-template-columns: 1fr; }
+            .stat-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ЛЕВАЯ ПАНЕЛЬ (2/3): ЭКРАН ДЛЯ СТУДЕНТОВ -->
+    <div class="student-view">
+        <div class="slide-header">
+            Лекция 3. Ключевые показатели и метрики аналитики
+        </div>
+
+        <div class="slide-body">
+
+            <!-- ВВЕДЕНИЕ -->
+            <div class="chart-box" style="background: #ebf8ff; border-color: #90cdf4;">
+                <strong style="color: #2b6cb0;">🎯 Зачем аналитику метрики?</strong>
+                <p>Метрика — это измеримый показатель, который позволяет оценить состояние процесса, продукта, системы или бизнеса в целом. Без правильных метрик невозможно принять верное управленческое решение. Ошибка в выборе показателя ведёт к ошибочным действиям. Сегодня мы систематизируем знания о метриках для всех 11 типов аналитиков.</p>
+            </div>
+
+            <!-- КЛЮЧЕВЫЕ ЦИФРЫ -->
+            <div class="stat-grid">
+                <div class="stat-box">
+                    <div class="stat-number">11</div>
+                    <div class="stat-label">типов аналитиков</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number">7</div>
+                    <div class="stat-label">групп метрик</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number">5–10</div>
+                    <div class="stat-label">ключевых метрик на роль</div>
+                </div>
+            </div>
+
+            <!-- КЛАССИФИКАЦИЯ МЕТРИК -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 10px;">📐 Классификация метрик</div>
+                <div class="cat-grid">
+
+                    <div class="cat-card core">
+                        <h4>🔢 По природе</h4>
+                        <div class="label">Количественные</div>
+                        <ul><li>Числовые значения</li><li>Выручка, количество пользователей</li><li>Время выполнения задачи</li></ul>
+                        <div class="label">Качественные</div>
+                        <ul><li>Категории или описания</li><li>Тип клиента, причина отказа</li><li>Уровень удовлетворённости</li></ul>
+                    </div>
+
+                    <div class="cat-card viz">
+                        <h4>📊 По уровню</h4>
+                        <div class="label">Стратегические (KPI)</div>
+                        <ul><li>Достижение глобальных целей</li><li>Долгосрочные результаты</li></ul>
+                        <div class="label">Тактические</div>
+                        <ul><li>Среднесрочные задачи</li><li>Связь стратегии с работой</li></ul>
+                        <div class="label">Операционные</div>
+                        <ul><li>Текущие процессы</li><li>Контроль «здесь и сейчас»</li></ul>
+                    </div>
+
+                    <div class="cat-card stat">
+                        <h4>🌐 По области</h4>
+                        <div class="label">Группы</div>
+                        <ul><li>Финансовые</li><li>Маркетинговые</li><li>Продуктовые</li><li>Технические</li><li>Процессные</li><li>Пользовательские</li></ul>
+                    </div>
+
+                    <div class="cat-card big">
+                        <h4>🧮 По способу расчёта</h4>
+                        <div class="label">Типы</div>
+                        <ul><li>Абсолютные (выручка в рублях)</li><li>Относительные (доля рынка, конверсия)</li><li>Средние (типичное значение)</li><li>Медианные (устойчивы к выбросам)</li><li>Процентильные (распределение)</li></ul>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ТРЕБОВАНИЯ К МЕТРИКАМ -->
+            <div class="chart-box" style="background: #f0fff4; border-color: #9ae6b4;">
+                <strong style="color: #276749;">✅ Требования к метрикам</strong>
+                <p><strong>1. Измеримость</strong> — можно выразить числом или однозначной категорией.<br>
+                <strong>2. Однозначность</strong> — все специалисты понимают её одинаково.<br>
+                <strong>3. Достижимость</strong> — цель можно выполнить.<br>
+                <strong>4. Релевантность</strong> — соответствует текущим задачам.<br>
+                <strong>5. Привязка ко времени</strong> — период строго определён.</p>
+            </div>
+
+            <!-- 11 РОЛЕЙ АНАЛИТИКОВ -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 10px;">👥 11 типов аналитиков и их ключевые метрики</div>
+                <div class="cat-grid">
+
+                    <div class="role-card" style="border-color: #90cdf4; background: #f7fbff;">
+                        <h3><span class="role-icon">📊</span> Аналитик данных (DA)</h3>
+                        <div class="metrics-list">
+                            <div class="metric-item">Среднее, медиана, мода</div>
+                            <div class="metric-item">Стандартное отклонение, дисперсия</div>
+                            <div class="metric-item">Корреляция (Пирсон, Спирмен)</div>
+                            <div class="metric-item">Доля выбросов</div>
+                            <div class="metric-item">p-value, размер эффекта, мощность</div>
+                            <div class="metric-item">Точность, полнота, F1-мера</div>
+                            <div class="metric-item">RMSE, MAE, MAPE</div>
+                            <div class="metric-item">Доверительные интервалы</div>
+                        </div>
+                        <div class="method-row">
+                            <span class="tag method">Статистика</span>
+                            <span class="tag method">Проверка гипотез</span>
+                            <span class="tag method">A/B-тесты</span>
+                            <span class="tag method">Регрессия</span>
+                        </div>
+                    </div>
+
+                    <div class="role-card" style="border-color: #9ae6b4; background: #f6fff9;">
+                        <h3><span class="role-icon">💰</span> Финансовый аналитик</h3>
+                        <div class="metrics-list">
+                            <div class="metric-item">Выручка, прибыль (валовая, операционная, чистая)</div>
+                            <div class="metric-item">Рентабельность (ROA, ROE, ROS)</div>
+                            <div class="metric-item">Ликвидность (текущая, быстрая, абсолютная)</div>
+                            <div class="metric-item">Финансовая устойчивость (автономия)</div>
+                            <div class="metric-item">Оборачиваемость (активов, запасов, дебиторки)</div>
+                            <div class="metric-item">NPV, IRR, срок окупаемости</div>
+                            <div class="metric-item">EBITDA, EBIT</div>
+                            <div class="metric-item">Денежный поток (Cash Flow)</div>
+                        </div>
+                        <div class="method-row">
+                            <span class="tag method">Коэффициентный анализ</span>
+                            <span class="tag method">Модель Дюпон</span>
+                            <span class="tag method">DCF</span>
+                            <span class="tag method">Сценарный анализ</span>
+                        </div>
+                    </div>
+
+                    <div class="role-card" style="border-color: #fbd38d; background: #fffdf7;">
+                        <h3><span class="role-icon">📱</span> Продуктовый аналитик</h3>
+                        <div class="metrics-list">
+                            <div class="metric-item">ARPU — средний доход на пользователя</div>
+                            <div class="metric-item">LTV — пожизненная ценность</div>
+                            <div class="metric-item">Retention Rate — удержание</div>
+                            <div class="metric-item">Churn Rate — отток</div>
+                            <div class="metric-item">DAU/MAU — активные пользователи</div>
+                            <div class="metric-item">Конверсия воронки (CR)</div>
+                            <div class="metric-item">CAC — стоимость привлечения</div>
+                            <div class="metric-item">NPS — индекс лояльности</div>
+                        </div>
+                        <div class="method-row">
+                            <span class="tag method">Когортный анализ</span>
+                            <span class="tag method">A/B-тесты</span>
+                            <span class="tag method">RFM-анализ</span>
+                            <span class="tag method">Воронка</span>
+                        </div>
+                    </div>
+
+                    <div class="role-card" style="border-color: #81e6d9; background: #f5fffe;">
+                        <h3><span class="role-icon">🌐</span> Веб-аналитик</h3>
+                        <div class="metrics-list">
+                            <div class="metric-item">Трафик (визиты, уникальные посетители)</div>
+                            <div class="metric-item">Показатель отказов (Bounce Rate)</div>
+                            <div class="metric-item">Глубина просмотра, время на сайте</div>
+                            <div class="metric-item">Конверсия (CR)</div>
+                            <div class="metric-item">CTR — кликабельность рекламы</div>
+                            <div class="metric-item">CPC, CPM</div>
+                            <div class="metric-item">ROI рекламных кампаний</div>
+                            <div class="metric-item">Карты кликов, вебвизор</div>
+                        </div>
+                        <div class="method-row">
+                            <span class="tag method">Google Analytics</span>
+                            <span class="tag method">Яндекс.Метрика</span>
+                            <span class="tag method">Атрибуция</span>
+                            <span class="tag method">A/B-тесты</span>
+                        </div>
+                    </div>
+
+                    <div class="role-card" style="border-color: #d6bcfa; background: #fdf9ff;">
+                        <h3><span class="role-icon">📈</span> BI-аналитик</h3>
+                        <div class="metrics-list">
+                            <div class="metric-item">KPI подразделений</div>
+                            <div class="metric-item">Показатели эффективности (ROI, ROA)</div>
+                            <div class="metric-item">Отклонение факта от плана</div>
+                            <div class="metric-item">Динамика (темп роста, прирост)</div>
+                            <div class="metric-item">Качество данных (полнота, точность)</div>
+                            <div class="metric-item">Скорость подготовки отчётности</div>
+                            <div class="metric-item">Пользователи дашбордов</div>
+                            <div class="metric-item">Удовлетворённость заказчиков</div>
+                        </div>
+                        <div class="method-row">
+                            <span class="tag method">План/факт</span>
+                            <span class="tag method">Трендовый анализ</span>
+                            <span class="tag method">ABC/XYZ</span>
+                            <span class="tag method">Визуализация</span>
+                        </div>
+                    </div>
+
+                    <div class="role-card" style="border-color: #fc8181; background: #fff8f8;">
+                        <h3><span class="role-icon">🗄️</span> Аналитик больших данных</h3>
+                        <div class="metrics-list">
+                            <div class="metric-item">Объём (Volume), скорость (Velocity), многообразие (Variety)</div>
+                            <div class="metric-item">Accuracy, Precision, Recall, F1</div>
+                            <div class="metric-item">ROC-AUC, PR-AUC</div>
+                            <div class="metric-item">MAE, RMSE, MAPE</div>
+                            <div class="metric-item">Записей в секунду</div>
+                            <div class="metric-item">Задержка обработки (Latency)</div>
+                            <div class="metric-item">Силуэт, индекс Дэвиса-Болдина</div>
+                            <div class="metric-item">Precision@k, Recall@k</div>
+                        </div>
+                        <div class="method-row">
+                            <span class="tag method">Машинное обучение</span>
+                            <span class="tag method">Нейросети</span>
+                            <span class="tag method">Spark</span>
+                            <span class="tag method">MapReduce</span>
+                        </div>
+                    </div>
+
+                    <div class="role-card" style="border-color: #f6e05e; background: #fffef5;">
+                        <h3><span class="role-icon">📋</span> Бизнес-аналитик (BA)</h3>
+                        <div class="metrics-list">
+                            <div class="metric-item">Время выполнения процесса (cycle time)</div>
+                            <div class="metric-item">Стоимость процесса</div>
+                            <div class="metric-item">Количество ошибок/дефектов</div>
+                            <div class="metric-item">Пропускная способность (throughput)</div>
+                            <div class="metric-item">Загрузка сотрудников</div>
+                            <div class="metric-item">Удовлетворённость заказчика (CSI)</div>
+                            <div class="metric-item">ROI от оптимизации</div>
+                            <div class="metric-item">Время вывода продукта (time-to-market)</div>
+                        </div>
+                        <div class="method-row">
+                            <span class="tag method">BPMN</span>
+                            <span class="tag method">AS-IS / TO-BE</span>
+                            <span class="tag method">Интервью</span>
+                            <span class="tag method">SWOT</span>
+                        </div>
+                    </div>
+
+                    <div class="role-card" style="border-color: #90cdf4; background: #f7fbff;">
+                        <h3><span class="role-icon">⚙️</span> Системный аналитик (SA)</h3>
+                        <div class="metrics-list">
+                            <div class="metric-item">Количество требований</div>
+                            <div class="metric-item">Покрытие требований тестами</div>
+                            <div class="metric-item">Дефекты, связанные с требованиями</div>
+                            <div class="metric-item">Время на согласование требований</div>
+                            <div class="metric-item">Полнота и непротиворечивость</div>
+                            <div class="metric-item">Сложность системы</div>
+                            <div class="metric-item">Производительность (время отклика)</div>
+                            <div class="metric-item">Надёжность (uptime, MTBF, MTTR)</div>
+                        </div>
+                        <div class="method-row">
+                            <span class="tag method">UML</span>
+                            <span class="tag method">BPMN</span>
+                            <span class="tag method">Трассировка</span>
+                            <span class="tag method">ISO/IEC 25010</span>
+                        </div>
+                    </div>
+
+                    <div class="role-card" style="border-color: #9ae6b4; background: #f6fff9;">
+                        <h3><span class="role-icon">💼</span> Аналитик 1С</h3>
+                        <div class="metrics-list">
+                            <div class="metric-item">Время выполнения операций в 1С</div>
+                            <div class="metric-item">Количество ошибок при вводе данных</div>
+                            <div class="metric-item">Стоимость автоматизации</div>
+                            <div class="metric-item">Экономия времени после внедрения</div>
+                            <div class="metric-item">ROI от внедрения модуля</div>
+                            <div class="metric-item">Количество пользователей системы</div>
+                            <div class="metric-item">Загрузка сервера 1С</div>
+                            <div class="metric-item">Количество доработок после внедрения</div>
+                        </div>
+                        <div class="method-row">
+                            <span class="tag method">BPMN</span>
+                            <span class="tag method">IDEF0</span>
+                            <span class="tag method">Хронометраж</span>
+                            <span class="tag method">Экономический анализ</span>
+                        </div>
+                    </div>
+
+                    <div class="role-card" style="border-color: #fbd38d; background: #fffdf7;">
+                        <h3><span class="role-icon">🎨</span> UX-аналитик</h3>
+                        <div class="metrics-list">
+                            <div class="metric-item">Конверсия (CR) на ключевых шагах</div>
+                            <div class="metric-item">Время выполнения задачи (Task Time)</div>
+                            <div class="metric-item">Успешность выполнения (Task Success Rate)</div>
+                            <div class="metric-item">Количество ошибок пользователя</div>
+                            <div class="metric-item">SUS, NPS</div>
+                            <div class="metric-item">Вовлечённость (время, глубина прокрутки)</div>
+                            <div class="metric-item">Тепловые карты кликов и скроллинга</div>
+                            <div class="metric-item">Обращения в поддержку по интерфейсу</div>
+                        </div>
+                        <div class="method-row">
+                            <span class="tag method">Юзабилити-тесты</span>
+                            <span class="tag method">A/B-тесты</span>
+                            <span class="tag method">CJM</span>
+                            <span class="tag method">Интервью</span>
+                        </div>
+                    </div>
+
+                    <div class="role-card" style="border-color: #d6bcfa; background: #fdf9ff;">
+                        <h3><span class="role-icon">📣</span> Маркетинговый аналитик</h3>
+                        <div class="metrics-list">
+                            <div class="metric-item">CAC — стоимость привлечения</div>
+                            <div class="metric-item">ROI, ROMI</div>
+                            <div class="metric-item">CTR, CPC, CPM</div>
+                            <div class="metric-item">Конверсия по каналам</div>
+                            <div class="metric-item">LTV — пожизненная ценность</div>
+                            <div class="metric-item">Доля рынка</div>
+                            <div class="metric-item">Узнаваемость бренда</div>
+                            <div class="metric-item">Стоимость лида (CPL)</div>
+                        </div>
+                        <div class="method-row">
+                            <span class="tag method">Атрибуция</span>
+                            <span class="tag method">A/B-тесты</span>
+                            <span class="tag method">RFM-анализ</span>
+                            <span class="tag method">Маркетинг. исследования</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- СВОДНАЯ ТАБЛИЦА: ПЕРЕСЕЧЕНИЯ РОЛЕЙ -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 8px;">🔗 Пересечения в метриках и методах</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr><th>Пересечение</th><th>Роли</th><th>Общая метрика / метод</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>A/B-тестирование</strong></td><td>Продуктовый, Веб-аналитик, UX, Маркетинговый</td><td>p-value, размер эффекта, конверсия</td></tr>
+                        <tr><td><strong>План/факт анализ</strong></td><td>Финансовый, BI-аналитик</td><td>Отклонение, выполнение плана, динамика</td></tr>
+                        <tr><td><strong>Метрики требований</strong></td><td>Бизнес-аналитик, Системный аналитик</td><td>Полнота, непротиворечивость, покрытие тестами</td></tr>
+                        <tr><td><strong>Метрики качества моделей</strong></td><td>DA, Big Data Analyst</td><td>Accuracy, Precision, Recall, F1, RMSE, MAE</td></tr>
+                        <tr><td><strong>Когортный анализ</strong></td><td>Продуктовый, Веб, Маркетинговый</td><td>Retention, LTV, Churn</td></tr>
+                        <tr><td><strong>Стоимость привлечения</strong></td><td>Продуктовый, Маркетинговый</td><td>CAC, LTV/CAC, ROMI</td></tr>
+                        <tr><td><strong>ROI</strong></td><td>Финансовый, BI, Бизнес-аналитик, 1С, Маркетинговый</td><td>Возврат инвестиций от проектов и кампаний</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- СВОДНАЯ ТАБЛИЦА: РОЛЬ → МЕТРИКИ → МЕТОДЫ -->
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a365d; margin-bottom: 8px;">📋 Сводная таблица: роль → ключевые метрики → методы</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr><th style="width:18%;">Роль</th><th style="width:45%;">Ключевые метрики</th><th>Методы</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr class="group-row"><td colspan="3">📊 Аналитики данных</td></tr>
+                        <tr><td><strong>Аналитик данных (DA)</strong></td><td>Среднее, медиана, корреляция, p-value, RMSE, F1</td><td>Статистика, гипотезы, A/B, регрессия</td></tr>
+                        <tr><td><strong>BI-аналитик</strong></td><td>KPI, план/факт, динамика, качество данных</td><td>План/факт, ABC/XYZ, визуализация, ETL</td></tr>
+                        <tr><td><strong>Big Data Analyst</strong></td><td>Volume, Velocity, Variety, ROC-AUC, Latency</td><td>ML, нейросети, Spark, MapReduce</td></tr>
+                        <tr><td><strong>Продуктовый</strong></td><td>ARPU, LTV, Retention, Churn, DAU/MAU, CAC, NPS</td><td>Когорты, A/B, RFM, воронка</td></tr>
+                        <tr><td><strong>Веб-аналитик</strong></td><td>Трафик, Bounce Rate, CTR, CPC, ROI, CR</td><td>GA, Метрика, атрибуция, A/B</td></tr>
+                        <tr><td><strong>Финансовый</strong></td><td>Выручка, прибыль, ROA/ROE, NPV, IRR, EBITDA</td><td>Коэффициенты, Дюпон, DCF, сценарии</td></tr>
+                        <tr><td><strong>Маркетинговый</strong></td><td>CAC, ROI, ROMI, CTR, LTV, CPL, доля рынка</td><td>Атрибуция, A/B, RFM, исследования</td></tr>
+                        <tr class="group-row"><td colspan="3">📋 Аналитики требований и процессов</td></tr>
+                        <tr><td><strong>Бизнес-аналитик</strong></td><td>Cycle time, throughput, стоимость процесса, CSI</td><td>BPMN, AS-IS/TO-BE, SWOT, опросы</td></tr>
+                        <tr><td><strong>Системный аналитик</strong></td><td>Требования, покрытие тестами, uptime, MTBF, MTTR</td><td>UML, BPMN, трассировка, нагрузочные тесты</td></tr>
+                        <tr><td><strong>Аналитик 1С</strong></td><td>Время операций, ошибки ввода, стоимость автоматизации, ROI</td><td>BPMN, IDEF0, хронометраж, тестирование</td></tr>
+                        <tr><td><strong>UX-аналитик</strong></td><td>CR, Task Time, Success Rate, SUS, NPS, тепловые карты</td><td>Юзабилити-тесты, A/B, CJM, интервью</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- КЛЮЧЕВЫЕ ВЫВОДЫ -->
+            <div class="highlight-box">
+                <strong>💡 Главные выводы лекции</strong>
+                <p>1. Метрики — это инструмент управления, а не самоцель.<br>
+                2. Неправильная метрика ведёт к ошибочным решениям.<br>
+                3. Метрика должна быть измеримой, однозначной, достижимой, релевантной и привязанной ко времени.<br>
+                4. Метрики разных ролей пересекаются: важно видеть общую картину.<br>
+                5. Нельзя улучшать одну метрику за счёт другой — нужна система показателей.<br>
+                6. Метрики должны быть связаны с деньгами или с клиентами.</p>
+            </div>
+
+            <!-- ПЕРСПЕКТИВЫ -->
+            <div class="chart-box" style="background: #faf5ff; border-color: #d6bcfa;">
+                <strong style="color: #553c9a;">🔮 Перспективы: что будет расти</strong>
+                <p><strong>1. Качество данных</strong> — без чистых данных аналитика не работает.<br>
+                <strong>2. Пользовательский опыт</strong> — удобство выходит на первый план.<br>
+                <strong>3. Скорость принятия решений</strong> — конкурентное преимущество.<br>
+                <strong>4. Экономическая эффективность</strong> — что работает, а что нет.<br>
+                <strong>5. Этика и риски</strong> — ИИ требует новых измерений.<br>
+                <strong>6. Устойчивость</strong> — готовность бизнеса к сбоям.</p>
+            </div>
+
+            <!-- ВИДЕОПЛЕЕР -->
+            <div class="video-section">
+                <div class="video-container">
+                    <iframe id="lecture-player" src="https://rutube.ru" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+                </div>
+                <div class="links-hub">
+                    <button onclick="changeVideo('https://rutube.ru/')" class="video-btn stop-btn">⏹ СТОП</button>
+                    <button onclick="changeVideo('https://rutube.ru/play/embed/')" class="video-btn rt-btn">📜 Лекция 3. Ключевые показатели и метрики</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="slide-footer">
+            Направление «Менеджмент» | Курс: Аналитика данных | Лекция 3: «Ключевые показатели и метрики аналитики»
+        </div>
+    </div>
+
+    <!-- ПРАВАЯ ПАНЕЛЬ (1/3): СКРИПТ ПРЕПОДАВАТЕЛЯ -->
+     <div class="speaker-notes">
+        <!-- Фиксированная верхняя часть с плеером -->
+        <div style="position: sticky; top: 0; background: #1a202c; padding: 20px 20px 10px 20px; border-bottom: 1px solid #4a5568; width: 100%; z-index: 100;">
+                       <div class="notes-header" style="display: block; padding-bottom: 15px;">
+               <audio id="lecture-audio" preload="auto" controls
+                      src="https://archive.org/download/03_20261110_20261110/03.mp3"
+                      style="width: 100%; height: 32px; border-radius: 4px;"></audio>
+            </div>
+            <div style="width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+             <iframe id="right-lecture-player" src="https://archive.org/embed/20261020_20261020_0955?autoplay=true&loop=true&muted=true"  allow="clipboard-write; autoplay" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen style="border: none;"></iframe>
+
+                           </div>
+        </div>
+
+        <div class="lecture-text" style="margin-top: 20px;">
+
+            <h3>📌 1. Введение</h3>
+
+            <p>Добрый день, коллеги. Сегодня мы начинаем разговор о ключевых показателях и метриках в аналитике. Цель нашей лекции — систематизировать знания о метриках и показателях. С ними работает каждый из одиннадцати типов аналитиков. Мы увидим, что у разных специалистов свои задачи и свои инструменты. Но всех их объединяет одно: умение измерять и оценивать.</p>
+
+            <p>Давайте сразу определимся с понятием. Метрика — это измеримый показатель. Он позволяет оценить состояние процесса, продукта, системы или бизнеса в целом. Метрика отвечает на вопрос «что происходит?» и «насколько хорошо?». Без метрик работа аналитика превращается в догадки. Поэтому так важно понимать, какие показатели существуют и как их использовать.</p>
+
+            <p>Все метрики можно разделить на несколько групп. Первая группа — бизнес-метрики. Они показывают общее состояние компании. Вторая группа — продуктовые метрики. Они отражают, как пользователи взаимодействуют с продуктом. Третья группа — веб-метрики. Они описывают поведение посетителей на сайте. Четвёртая группа — финансовые метрики. Они оценивают прибыльность и устойчивость. Пятая группа — метрики качества процессов. Они показывают, насколько эффективно устроена работа. Шестая группа — метрики требований. Они нужны для контроля качества проектирования. И седьмая группа — метрики пользовательского опыта. Они говорят об удобстве и удовлетворённости. Каждая группа важна для своего специалиста.</p>
+
+            <p>Теперь поговорим о важности выбора правильных метрик. Неправильная метрика ведёт к ошибочным управленческим решениям. Представьте, что вы оцениваете успех рекламной кампании только по количеству кликов. Кликов может быть много, но покупок — мало. Или вы смотрите только на выручку, забывая о прибыли. Выручка растёт, а компания работает в убыток. Поэтому нужно выбирать метрики, которые действительно отражают прогресс к цели. Они должны быть измеримыми, однозначными, достижимыми, релевантными и привязанными ко времени.</p>
+
+            <p>Наконец, кратко обзор методов, которые помогают работать с метриками. Аналитики используют описательную статистику. Она помогает описать данные в целом. Проверка гипотез позволяет делать выводы о различиях. Сравнительное тестирование двух вариантов показывает, какой вариант лучше. Регрессионный анализ выявляет связи между показателями. Кластерный анализ помогает найти группы похожих объектов. Когортный анализ отслеживает поведение групп с течением времени. Анализ временных рядов показывает динамику и тренды. Анализ по группам и категориям помогает упорядочить данные. Все эти методы мы будем рассматривать дальше, когда перейдём к конкретным ролям.</p>
+
+            <p>Итак, мы с вами выяснили, что такое метрика. Увидели, какие группы метрик существуют. Поняли, почему важно выбирать правильные показатели. И узнали, какие методы помогают с ними работать. В следующих разделах мы подробно разберём каждую роль аналитика и её ключевые метрики.</p>
+
+            <h3>📌 2. Общая классификация метрик</h3>
+
+            <p>Теперь давайте наведём порядок в мире метрик. Их очень много, и без классификации легко запутаться. Мы разберём несколько оснований для деления. Это поможет вам быстро понимать, с каким показателем вы имеете дело.</p>
+
+            <p>Первое основание — природа метрики. По природе метрики бывают количественными и качественными. Количественные — это числа. Например, выручка, количество пользователей, время выполнения задачи. Качественные — это категории или описания. Например, тип клиента, причина отказа, уровень удовлетворённости по шкале «низкий, средний, высокий». Качественные метрики часто переводят в количественные для анализа. Но важно помнить, что за числами стоят смыслы.</p>
+
+            <p>Второе основание — уровень управления. По уровню метрики делятся на стратегические, тактические и операционные. Стратегические метрики показывают, достигаем ли мы глобальных целей. Их ещё называют ключевыми показателями эффективности. Они смотрят на долгосрочные результаты. Тактические метрики помогают управлять среднесрочными задачами. Они связывают стратегию с ежедневной работой. Операционные метрики отражают текущие процессы. Они нужны для контроля здесь и сейчас. Например, количество обработанных заявок за день.</p>
+
+            <p>Третье основание — область применения. По области метрики делятся на финансовые, маркетинговые, продуктовые, технические, процессные и пользовательские. Финансовые метрики оценивают деньги и устойчивость. Маркетинговые — эффективность продвижения. Продуктовые — взаимодействие с продуктом. Технические — работу систем. Процессные — качество и скорость операций. Пользовательские — опыт и удовлетворённость. Один и тот же бизнес может использовать метрики из разных областей. Главное — понимать, на какой вопрос отвечает каждая группа.</p>
+
+            <p>Четвёртое основание — способ расчёта. По способу расчёта метрики бывают абсолютными, относительными, средними, медианными и процентильными. Абсолютные показывают конкретное значение. Например, выручка в рублях. Относительные сравнивают два показателя. Например, доля рынка или конверсия. Средние описывают типичное значение. Медианные устойчивы к выбросам. Процентили помогают понять распределение. Например, девяносто пятый процентиль времени отклика. Выбор способа расчёта зависит от задачи и характера данных.</p>
+
+            <p>Наконец, к любой метрике предъявляются требования. Метрика должна быть измеримой. То есть её можно выразить числом или однозначной категорией. Она должна быть однозначной. Все специалисты должны понимать её одинаково. Она должна быть достижимой. Нельзя ставить цель, которую невозможно выполнить. Она должна быть релевантной. То есть соответствовать текущим задачам. И она должна быть привязана ко времени. Нельзя сравнивать показатели за разные периоды без приведения к одному сроку. Соблюдение этих требований делает метрику надёжным инструментом управления.</p>
+
+            <p>Мы рассмотрели четыре основания классификации. По природе, по уровню, по области и по способу расчёта. А также обсудили требования к метрикам. Теперь у вас есть каркас, на который можно нанизывать любые показатели. В следующем разделе мы перейдём к конкретным ролям аналитиков. И увидим, какие метрики важны для каждой из них.</p>
+
+            <h3>📌 Аналитик данных</h3>
+
+            <p>Начнём с аналитика данных. Это базовая и во многом универсальная роль. Именно этот специалист закладывает фундамент, на котором строят свою работу остальные. Его метрики образуют четыре слоя. Первый слой описывает сами данные. Второй слой проверяет гипотезы. Третий слой оценивает качество моделей. И четвёртый слой отвечает за надёжность выводов.</p>
+
+            <p>Первая метрика — среднее значение. Это сумма всех наблюдений, делённая на их количество. Среднее удобно и привычно. Но у него есть серьёзный недостаток. Оно очень чувствительно к крайним значениям. Один крупный выброс может сильно сдвинуть среднее. Поэтому аналитик данных никогда не смотрит только на среднее.</p>
+
+            <p>Вторая метрика — медиана. Это значение, которое делит упорядоченный ряд пополам. Медиана устойчива к выбросам. Если в данных есть несколько очень больших значений, медиана почти не изменится. Именно поэтому для доходов, времени отклика и чеков медиана часто информативнее среднего. Сравнение среднего и медианы сразу показывает асимметрию распределения.</p>
+
+            <p>Третья метрика — мода. Это самое часто встречающееся значение. Мода особенно полезна для категориальных данных. Например, она показывает самый популярный тариф или самый частый тип обращения. Для непрерывных данных моду считают по интервалам.</p>
+
+            <p>Для оценки разброса используют дисперсию и стандартное отклонение. Дисперсия — это средний квадрат отклонения наблюдений от среднего. Стандартное отклонение — корень из дисперсии. Оно измеряется в тех же единицах, что и исходные данные. Поэтому стандартное отклонение удобнее для объяснения бизнесу.</p>
+
+            <p>Следующая группа метрик — корреляция. Коэффициент корреляции показывает силу и направление связи между двумя показателями. Значение близко к единице означает сильную прямую связь. Значение близко к минус единице означает сильную обратную связь. Значение около нуля означает, что линейной связи почти нет. Аналитик данных использует два основных коэффициента. Первый — коэффициент корреляции Пирсона. Он измеряет линейную связь. Второй — коэффициент ранговой корреляции Спирмена. Он работает не с самими значениями, а с их рангами. Поэтому он устойчив к выбросам.</p>
+
+            <p>Аналитик данных должен помнить главное правило. Корреляция не означает причинно-следственную связь. Классический пример — рост продаж мороженого и рост числа утоплений. Они коррелируют, но мороженое не топит людей. Общая причина — жаркая погода.</p>
+
+            <p>Ещё одна метрика — доля выбросов. Выброс — это наблюдение, которое сильно отличается от остальных. Но аналитик данных не должен слепо удалять выбросы. Дело в том, что выбросы бывают двух видов. Первый вид — ошибка. Второй вид — реальный сигнал. Например, крупный клиент с необычно большим заказом.</p>
+
+            <p>Если аналитик данных проверяет гипотезы, он использует сравнительное тестирование двух вариантов. Для корректного вывода нужны три метрики. Первая — достигнутый уровень значимости. Он показывает вероятность получить такой результат случайно. Вторая — размер эффекта. Она показывает, насколько велика разница. Третья — мощность теста. Она показывает вероятность обнаружить эффект, если он действительно есть.</p>
+
+            <p>Для моделей классификации важны точность, полнота и комплексная оценка. Для регрессии — ошибки предсказания. И конечно, доверительные интервалы. Они показывают надёжность оценки. Критерии успеха для аналитика данных — это достоверность выводов, статистическая значимость и воспроизводимость результатов.</p>
+
+            <p>Аналитик данных — это не тот, кто считает числа. Это тот, кто отвечает за достоверность этих чисел. Именно на его результаты опираются все остальные специалисты. Поэтому качество его работы определяет качество решений всей компании.</p>
+
+            <h3>📌 Финансовый аналитик</h3>
+
+            <p>Теперь перейдём к финансовому аналитику. Специфика этой роли в том, что она работает с деньгами компании. Здесь ошибка стоит особенно дорого. Финансовый аналитик отвечает на вопросы о прибыльности, устойчивости и платёжеспособности бизнеса.</p>
+
+            <p>Первая метрика — выручка. Это сумма всех денег, которые компания получила от продажи товаров или услуг. Важно понимать, что рост выручки сам по себе не означает успех. Выручка может расти, а прибыль падать. Поэтому выручку всегда смотрят вместе с прибылью и с затратами.</p>
+
+            <p>Вторая метрика — валовая прибыль. Это выручка минус себестоимость проданных товаров. Валовая прибыль показывает, сколько денег остаётся до покрытия накладных расходов. Третья метрика — операционная прибыль. Это валовая прибыль минус коммерческие и управленческие расходы. Четвёртая метрика — чистая прибыль. Это прибыль после уплаты всех налогов и процентов. Финансовый аналитик всегда смотрит на всю цепочку прибыли.</p>
+
+            <p>Теперь перейдём к рентабельности. Первая метрика — рентабельность продаж. Это операционная или чистая прибыль, делённая на выручку. Вторая метрика — рентабельность активов. Это чистая прибыль, делённая на среднегодовую стоимость активов. Третья метрика — рентабельность собственного капитала. Это чистая прибыль, делённая на среднегодовой собственный капитал. Для понимания факторов рентабельности используют модель Дюпон. Она показывает, что рентабельность собственного капитала складывается из трёх компонентов. Рентабельность продаж, оборачиваемость активов и финансовый рычаг.</p>
+
+            <p>Перейдём к ликвидности. Первая метрика — коэффициент текущей ликвидности. Это отношение оборотных активов к краткосрочным обязательствам. Вторая метрика — коэффициент быстрой ликвидности. Он похож на предыдущий, но из оборотных активов исключаются запасы. Третья метрика — коэффициент абсолютной ликвидности. Это отношение денежных средств к краткосрочным обязательствам. Он самый строгий из трёх.</p>
+
+            <p>Теперь поговорим о финансовой устойчивости. Первая метрика — коэффициент автономии. Это отношение собственного капитала к общей сумме средств компании. Вторая метрика — коэффициент обеспеченности собственными средствами. Третья метрика — коэффициент финансового рычага. Это отношение заёмного капитала к собственному. Четвёртая метрика — отношение долга к прибыли до вычета процентов и налогов.</p>
+
+            <p>Перейдём к деловой активности. Первая метрика — оборачиваемость активов. Вторая метрика — оборачиваемость запасов. Третья метрика — оборачиваемость дебиторской задолженности. Четвёртая метрика — оборачиваемость кредиторской задолженности. Разница между ними называется финансовым циклом. Чем короче цикл, тем меньше денег нужно компании для работы.</p>
+
+            <p>Теперь перейдём к инвестиционным показателям. Первая метрика — чистая приведённая стоимость. Она учитывает все будущие денежные потоки проекта и приводит их к сегодняшнему дню. Вторая метрика — внутренняя норма доходности. Это ставка, при которой чистая приведённая стоимость равна нулю. Третья метрика — срок окупаемости. Это время, за которое проект вернёт вложенные деньги. Четвёртая метрика — индекс доходности инвестиций.</p>
+
+            <p>Сформулируем критерии успеха для финансового аналитика. Первый критерий — финансовая стабильность компании. Второй — инвестиционная привлекательность. Третий — минимизация рисков. Четвёртый — максимизация стоимости компании.</p>
+
+            <p>Запомните главное. Финансовый аналитик — это не бухгалтер. Бухгалтер фиксирует прошлое. А финансовый аналитик смотрит в будущее. И его метрики должны помогать принимать решения, а не просто описывать отчётность.</p>
+
+            <h3>📌 Продуктовый аналитик</h3>
+
+            <p>Теперь перейдём к продуктовому аналитику. Специфика этой роли в том, что он отвечает за жизненный цикл пользователя внутри цифрового продукта. Это может быть мобильное приложение, веб-сервис, онлайн-платформа или внутренняя корпоративная система. Продуктовый аналитик отвечает на главный вопрос: приносит ли продукт ценность пользователю и бизнесу одновременно.</p>
+
+            <p>Начнём с экономики пользователя. Первая метрика — средний доход на пользователя. Она показывает, сколько денег в среднем приносит один пользователь за период. Вторая метрика — пожизненная ценность пользователя. Она показывает, сколько денег пользователь принесёт за всё время взаимодействия с продуктом. Третья метрика — стоимость привлечения клиента. Она показывает, сколько денег компания тратит, чтобы привести одного клиента. Стоимость привлечения и пожизненная ценность сравниваются между собой. Отношение пожизненной ценности к стоимости привлечения — ключевой показатель здоровья продукта. Если отношение больше трёх, продукт обычно считается здоровым.</p>
+
+            <p>Теперь перейдём к вовлечённости и удержанию. Первая метрика — активные пользователи за день и за месяц. Вторая метрика — отношение активных пользователей за день к активным пользователям за месяц. Это отношение показывает, как часто пользователи возвращаются. Третья метрика — удержание пользователей. Она показывает, какая доля пользователей остаётся с продуктом через определённый период. Для измерения удержания используют когорты. Четвёртая метрика — отток пользователей. Пятая метрика — коэффициент возврата. Шестая метрика — частота сессий. Седьмая метрика — время в продукте.</p>
+
+            <p>Перейдём к воронке и конверсии. Первая метрика — конверсия воронки. Она показывает, какая доля пользователей проходит каждый шаг воронки. Вторая метрика — конверсия в первый платёж. Третья метрика — конверсия из бесплатного тарифа в платный. Четвёртая метрика — конверсия повторных покупок.</p>
+
+            <p>Перейдём к качеству привлечения. Первая метрика — доля пользователей из целевой аудитории. Вторая метрика — источник привлечения. Третья метрика — стоимость привлечения по каналам.</p>
+
+            <p>Перейдём к удовлетворённости. Первая метрика — индекс потребительской лояльности. Он основан на одном вопросе. Насколько вероятно, что вы порекомендуете продукт другу или коллеге. Вторая метрика — оценка после взаимодействия. Третья метрика — доля пользователей, столкнувшихся с ошибкой. Четвёртая метрика — количество обращений в поддержку на пользователя. Пятая метрика — время ответа поддержки.</p>
+
+            <p>Сформулируем критерии успеха для продуктового аналитика. Первый критерий — рост удержания. Второй — увеличение пожизненной ценности. Третий — снижение оттока. Четвёртый — повышение конверсии. Пятый — оптимизация стоимости привлечения. Шестой — сбалансированность метрик.</p>
+
+            <p>Запомните главное. Продуктовый аналитик — это не тот, кто считает клики. Это тот, кто понимает путь пользователя и связывает его с экономикой продукта. Без этого понимания продукт развивается вслепую.</p>
+
+            <h3>📌 Веб-аналитик</h3>
+
+            <p>Теперь перейдём к веб-аналитику. Специфика этой роли в том, что он работает с поведением посетителей на сайте или в веб-приложении. Веб-аналитик отвечает на вопросы о том, как люди попадают на сайт, что они там делают и почему уходят.</p>
+
+            <p>Начнём с трафика. Первая метрика — визиты. Визит — это сессия пользователя на сайте. Вторая метрика — уникальные посетители. Третья метрика — просмотры страниц. Четвёртая метрика — источники трафика. Пятая метрика — каналы привлечения.</p>
+
+            <p>Теперь перейдём к поведению на сайте. Первая метрика — показатель отказов. Это доля визитов, в которых пользователь покинул сайт, не совершив никаких действий. Вторая метрика — глубина просмотра. Третья метрика — время на сайте. Четвёртая метрика — время до первого действия. Пятая метрика — карты кликов. Шестая метрика — карты скроллинга. Седьмая метрика — записи сессий.</p>
+
+            <p>Теперь перейдём к конверсии и целям. Первая метрика — конверсия. Это доля посетителей, которые совершили целевое действие. Вторая метрика — конверсия по шагам. Третья метрика — количество достигнутых целей. Четвёртая метрика — стоимость цели. Пятая метрика — ценность цели.</p>
+
+            <p>Перейдём к эффективности рекламы. Первая метрика — кликабельность объявления. Вторая метрика — стоимость клика. Третья метрика — стоимость показа. Четвёртая метрика — возврат инвестиций в рекламу. Пятая метрика — доля рекламных расходов в выручке.</p>
+
+            <p>Теперь перейдём к техническому качеству. Первая метрика — скорость загрузки страницы. Вторая метрика — время ответа сервера. Третья метрика — доля ошибок. Четвёртая метрика — доступность сайта. Пятая метрика — доля мобильного трафика. Шестая метрика — конверсия на мобильных устройствах.</p>
+
+            <p>Сформулируем критерии успеха для веб-аналитика. Первый критерий — рост конверсии. Второй — снижение стоимости привлечения. Третий — повышение возврата инвестиций. Четвёртый — улучшение поведенческих факторов. Пятый — техническое качество. Шестой — точность данных.</p>
+
+            <p>Запомните главное. Веб-аналитик — это не тот, кто просто смотрит отчёты. Это тот, кто связывает поведение пользователей с бизнес-результатом. И помогает команде принимать решения на основе данных, а не догадок.</p>
+
+            <h3>📌 BI-аналитик</h3>
+
+            <p>Теперь перейдём к бизнес-аналитику в области данных. Эту роль часто называют специалистом по аналитике бизнес-данных. Специфика этой роли в том, что она находится между бизнесом и данными. Бизнес-аналитик в области данных не просто считает показатели. Он отвечает за то, чтобы бизнес получал нужные цифры вовремя и в понятном виде.</p>
+
+            <p>Начнём с ключевых показателей подразделений. Первая метрика — продажи. Вторая метрика — выручка. Третья метрика — маржинальность. Четвёртая метрика — ключевые показатели эффективности подразделений. Пятая метрика — показатели эффективности инвестиций. Шестая метрика — финансовые и операционные показатели в разрезах.</p>
+
+            <p>Перейдём к отклонению факта от плана. Первая метрика — абсолютное отклонение. Вторая метрика — относительное отклонение. Третья метрика — выполнение плана. Четвёртая метрика — количество периодов с невыполнением плана. Пятая метрика — точность планирования. Шестая метрика — скорость закрытия периода.</p>
+
+            <p>Перейдём к динамике показателей. Первая метрика — темп роста. Вторая метрика — темп прироста. Третья метрика — средний темп роста за несколько периодов. Четвёртая метрика — ускорение или замедление роста. Пятая метрика — вклад подразделений в общий рост. Шестая метрика — сравнение с рынком.</p>
+
+            <p>Перейдём к качеству данных и отчётности. Первая метрика — полнота данных. Вторая метрика — точность данных. Третья метрика — своевременность данных. Четвёртая метрика — согласованность данных. Пятая метрика — количество ошибок в отчётности. Шестая метрика — скорость подготовки отчётности. Седьмая метрика — доля автоматизированной отчётности.</p>
+
+            <p>Перейдём к востребованности аналитики. Первая метрика — количество пользователей дашбордов. Вторая метрика — частота использования дашбордов. Третья метрика — количество активных пользователей. Четвёртая метрика — глубина использования. Пятая метрика — количество запросов на новые отчёты. Шестая метрика — время ответа на запрос.</p>
+
+            <p>Перейдём к удовлетворённости заказчиков. Первая метрика — удовлетворённость внутренних заказчиков. Вторая метрика — количество повторных обращений. Третья метрика — количество жалоб. Четвёртая метрика — оценка полезности отчётов. Пятая метрика — доля заказчиков, использующих аналитику регулярно.</p>
+
+            <p>Перейдём к прогнозным значениям. Первая метрика — точность прогноза. Вторая метрика — горизонт прогнозирования. Третья метрика — интервал прогноза. Четвёртая метрика — количество пересмотров прогноза. Пятая метрика — использование прогнозов в решениях.</p>
+
+            <p>Сформулируем критерии успеха для бизнес-аналитика в области данных. Первый критерий — своевременность отчётности. Второй — точность отчётности. Третий — удовлетворённость бизнеса. Четвёртый — снижение трудозатрат на подготовку данных. Пятый — повышение качества управленческих решений. Шестой — рост востребованности аналитики. Седьмой — согласованность показателей.</p>
+
+            <p>Запомните главное. Бизнес-аналитик в области данных — это не просто составитель отчётов. Это переводчик между миром данных и миром бизнеса. Он помогает руководителям видеть правду в цифрах. И принимать решения на основе фактов, а не ощущений.</p>
+
+            <h3>📌 Аналитик больших данных</h3>
+
+            <p>Теперь перейдём к аналитику больших данных. Специфика этой роли в том, что он работает с данными, которые не помещаются в память одного компьютера. Это данные огромного объёма, которые поступают очень быстро и имеют разную структуру.</p>
+
+            <p>Начнём с характеристик данных. Первое измерение — объём данных. Второе измерение — скорость обработки. Третье измерение — многообразие данных. Четвёртая метрика — доля пропущенных значений. Пятая метрика — доля дубликатов. Шестая метрика — доля аномальных значений. Седьмая метрика — актуальность данных. Восьмая метрика — коэффициент сжатия.</p>
+
+            <p>Перейдём к качеству моделей машинного обучения. Первая метрика — точность. Вторая метрика — точность предсказания положительного класса. Третья метрика — полнота. Четвёртая метрика — комплексная оценка. Пятая метрика — площадь под кривой ошибок. Шестая метрика — площадь под кривой точности и полноты. Седьмая метрика — средняя абсолютная ошибка. Восьмая метрика — корень из средней квадратичной ошибки. Девятая метрика — средняя абсолютная ошибка в процентах. Десятая метрика — коэффициент детерминации.</p>
+
+            <p>Перейдём к производительности обработки. Первая метрика — количество обработанных записей в секунду. Вторая метрика — задержка обработки. Третья метрика — время выполнения задачи. Четвёртая метрика — использование вычислительных ресурсов. Пятая метрика — масштабируемость. Шестая метрика — отказоустойчивость. Седьмая метрика — время восстановления после сбоя.</p>
+
+            <p>Перейдём к качеству кластеризации. Первая метрика — коэффициент силуэта. Вторая метрика — индекс Дэвиса и Болдина. Третья метрика — индекс Калински и Харабаса. Четвёртая метрика — устойчивость кластеризации.</p>
+
+            <p>Перейдём к качеству рекомендательных систем. Первая метрика — точность на первых позициях. Вторая метрика — полнота на первых позициях. Третья метрика — средняя обратная позиция. Четвёртая метрика — средняя точность. Пятая метрика — покрытие каталога. Шестая метрика — новизна рекомендаций. Седьмая метрика — конверсия рекомендаций.</p>
+
+            <p>Перейдём к практической ценности. Первая метрика — экономический эффект модели. Вторая метрика — срок внедрения модели. Третья метрика — стоимость поддержки модели. Четвёртая метрика — частота переобучения. Пятая метрика — доля автоматических решений.</p>
+
+            <p>Сформулируем критерии успеха для аналитика больших данных. Первый критерий — качество моделей. Второй — скорость обработки. Третий — масштабируемость. Четвёртый — отказоустойчивость. Пятый — практическая ценность выводов. Шестой — полная стоимость владения. Седьмой — воспроизводимость результатов.</p>
+
+            <p>Запомните главное. Аналитик больших данных — это не тот, кто просто обучает модели. Это тот, кто отвечает за всю цепочку работы с данными. От сбора до внедрения. И от внедрения до поддержки. Его метрики должны быть не только техническими. Но и экономическими.</p>
+
+            <h3>📌 Бизнес-аналитик</h3>
+
+            <p>Теперь перейдём к бизнес-аналитику. Это классическая роль, которая существует в компаниях уже несколько десятилетий. Специфика этой роли в том, что она работает не с техническими системами и не с пользователями напрямую. Бизнес-аналитик работает с процессами.</p>
+
+            <p>Начнём с времени и скорости процессов. Первая метрика — время выполнения процесса. Вторая метрика — пропускная способность процесса. Третья метрика — коэффициент загрузки процесса. Четвёртая метрика — количество операций в процессе. Пятая метрика — время на передачу между этапами. Шестая метрика — время на согласование.</p>
+
+            <p>Перейдём к стоимости процессов. Первая метрика — стоимость процесса. Вторая метрика — стоимость ошибки. Третья метрика — стоимость ручной работы. Четвёртая метрика — стоимость несоответствия. Пятая метрика — экономия от оптимизации. Шестая метрика — возврат инвестиций от оптимизации процесса.</p>
+
+            <p>Перейдём к качеству процессов. Первая метрика — количество ошибок в процессе. Вторая метрика — доля ошибок от общего числа операций. Третья метрика — количество дефектов, обнаруженных клиентом. Четвёртая метрика — количество повторных обращений. Пятая метрика — коэффициент выполнения в срок. Шестая метрика — стабильность процесса. Седьмая метрика — соответствие процесса регламентам.</p>
+
+            <p>Перейдём к загрузке сотрудников. Первая метрика — загрузка сотрудников. Вторая метрика — количество задач на сотрудника. Третья метрика — сверхурочные часы. Четвёртая метрика — текучесть кадров. Пятая метрика — время на обучение нового сотрудника. Шестая метрика — количество ошибок на нового сотрудника.</p>
+
+            <p>Перейдём к удовлетворённости заказчика. Первая метрика — удовлетворённость заказчика. Вторая метрика — количество жалоб. Третья метрика — время ответа на жалобу. Четвёртая метрика — доля решённых жалоб. Пятая метрика — повторные жалобы. Шестая метрика — готовность рекомендовать.</p>
+
+            <p>Перейдём к эффективности изменений. Первая метрика — количество изменений требований. Вторая метрика — количество изменений после внедрения. Третья метрика — время на согласование изменений. Четвёртая метрика — доля успешных изменений. Пятая метрика — сопротивление изменениям. Шестая метрика — скорость внедрения изменений.</p>
+
+            <p>Перейдём к соответствию требованиям. Первая метрика — соответствие процесса регламентам. Вторая метрика — соответствие внешним стандартам. Третья метрика — количество аудиторских замечаний. Четвёртая метрика — срок устранения замечаний. Пятая метрика — количество внутренних проверок. Шестая метрика — доля процессов, охваченных проверками.</p>
+
+            <p>Перейдём к скорости вывода продукта на рынок. Первая метрика — время вывода продукта на рынок. Вторая метрика — время на исследование требований. Третья метрика — количество итераций. Четвёртая метрика — количество изменений после запуска. Пятая метрика — удовлетворённость заказчика после запуска. Шестая метрика — доля проектов, завершённых в срок.</p>
+
+            <p>Сформулируем критерии успеха для бизнес-аналитика. Первый критерий — оптимизация процессов. Второй — снижение издержек. Третий — повышение удовлетворённости заказчика. Четвёртый — соответствие требованиям. Пятый — достижение целей проекта. Шестой — устойчивость изменений. Седьмой — вовлечённость сотрудников. Восьмой — измеримость результатов.</p>
+
+            <p>Запомните главное. Бизнес-аналитик — это не тот, кто рисует схемы. Это тот, кто понимает, как работает компания. И находит способы сделать эту работу лучше. Его метрики должны быть связаны с деньгами и с клиентами.</p>
+
+            <h3>📌 Системный аналитик</h3>
+
+            <p>Теперь перейдём к системному аналитику. Специфика этой роли в том, что он находится между бизнесом и разработкой. Системный аналитик переводит потребности бизнеса на язык требований к системе.</p>
+
+            <p>Начнём с метрик требований. Первая метрика — количество требований. Требования бывают двух видов. Функциональные и нефункциональные. Вторая метрика — покрытие требований тестами. Третья метрика — количество дефектов, связанных с требованиями. Четвёртая метрика — время на согласование требований. Пятая метрика — полнота требований. Шестая метрика — непротиворечивость требований. Седьмая метрика — трассируемость требований. Восьмая метрика — количество изменений требований после утверждения. Девятая метрика — доля требований, изменённых после утверждения.</p>
+
+            <p>Перейдём к метрикам качества документации. Первая метрика — полнота документации. Вторая метрика — актуальность документации. Третья метрика — понятность документации. Четвёртая метрика — время на чтение документации. Пятая метрика — количество ошибок в документации. Шестая метрика — соответствие документации стандартам. Седьмая метрика — количество обращений к документации.</p>
+
+            <p>Перейдём к метрикам дефектов. Первая метрика — общее количество дефектов. Вторая метрика — количество дефектов по этапам. Третья метрика — плотность дефектов. Четвёртая метрика — время обнаружения дефекта. Пятая метрика — время исправления дефекта. Шестая метрика — доля повторных дефектов. Седьмая метрика — количество дефектов, найденных заказчиком.</p>
+
+            <p>Перейдём к метрикам сложности системы. Первая метрика — количество компонентов. Вторая метрика — количество интеграций. Третья метрика — связанность компонентов. Четвёртая метрика — количество интерфейсов. Пятая метрика — количество сущностей данных. Шестая метрика — глубина вложенности.</p>
+
+            <p>Перейдём к метрикам производительности и надёжности. Первая метрика — время отклика. Вторая метрика — пропускная способность. Третья метрика — коэффициент доступности. Четвёртая метрика — среднее время между отказами. Пятая метрика — среднее время восстановления. Шестая метрика — количество инцидентов. Седьмая метрика — время обнаружения инцидента.</p>
+
+            <p>Перейдём к метрикам соответствия стандартам. Первая метрика — соответствие архитектурным стандартам. Вторая метрика — соответствие стандартам качества. Третья метрика — соответствие стандартам документации. Четвёртая метрика — количество отклонений от стандартов. Пятая метрика — время на устранение отклонений. Шестая метрика — количество проверок соответствия.</p>
+
+            <p>Перейдём к метрикам изменений. Первая метрика — количество изменений требований после утверждения. Вторая метрика — время на обработку изменения. Третья метрика — количество изменений, вызвавших дефекты. Четвёртая метрика — доля изменений, реализованных без дефектов. Пятая метрика — количество изменений в архитектуре. Шестая метрика — время на согласование изменений. Седьмая метрика — количество отклонённых изменений.</p>
+
+            <p>Сформулируем критерии успеха для системного аналитика. Первый критерий — корректность требований. Второй — полнота требований. Третий — снижение числа доработок. Четвёртый — соответствие системы бизнес-требованиям. Пятый — качество документации. Шестой — прослеживаемость требований. Седьмой — управляемость изменений. Восьмой — снижение количества дефектов, связанных с требованиями.</p>
+
+            <p>Запомните главное. Системный аналитик — это не тот, кто пишет документацию. Это тот, кто переводит потребности бизнеса на язык системы. И следит за тем, чтобы система соответствовала этим потребностям.</p>
+
+            <h3>📌 Аналитик 1С</h3>
+
+            <p>Теперь перейдём к аналитику учётной системы один эс. Специфика этой роли в том, что он работает на стыке бухгалтерии, управления и информационных технологий. Его предмет — учётная система, в которой компания ведёт финансовый, налоговый, складской и кадровый учёт.</p>
+
+            <p>Начнём со скорости выполнения операций. Первая метрика — время выполнения типовой операции. Вторая метрика — время формирования отчёта. Третья метрика — время закрытия периода. Четвёртая метрика — время отклика интерфейса. Пятая метрика — количество операций в единицу времени. Шестая метрика — время восстановления после сбоя.</p>
+
+            <p>Перейдём к качеству ввода данных. Первая метрика — количество ошибок при вводе данных. Вторая метрика — доля ошибок от общего числа операций. Третья метрика — количество ошибок, обнаруженных при сверке. Четвёртая метрика — качество справочников. Пятая метрика — количество операций, требующих ручной корректировки. Шестая метрика — время на исправление ошибки.</p>
+
+            <p>Перейдём к стоимости автоматизации и экономии. Первая метрика — стоимость автоматизации. Вторая метрика — экономия времени после внедрения. Третья метрика — сокращение трудозатрат. Четвёртая метрика — стоимость обработки одной операции. Пятая метрика — стоимость поддержки системы. Шестая метрика — доля автоматизированных операций.</p>
+
+            <p>Перейдём к возврату инвестиций от внедрения. Первая метрика — возврат инвестиций. Вторая метрика — срок окупаемости. Третья метрика — чистая приведённая стоимость проекта. Четвёртая метрика — экономия на фонде оплаты труда. Пятая метрика — экономия на штрафах и пенях. Шестая метрика — экономия на сверках с контрагентами.</p>
+
+            <p>Перейдём к пользователям и нагрузке на систему. Первая метрика — количество пользователей системы. Вторая метрика — количество одновременных подключений. Третья метрика — загрузка сервера. Четвёртая метрика — объём базы данных. Пятая метрика — количество активных сессий. Шестая метрика — количество обращений пользователей в поддержку.</p>
+
+            <p>Перейдём к соответствию учётной политике и законодательству. Первая метрика — соответствие учётной политике. Вторая метрика — соответствие требованиям законодательства. Третья метрика — количество обновлений за период. Четвёртая метрика — время на внедрение изменений законодательства. Пятая метрика — количество замечаний от аудиторов. Шестая метрика — количество ошибок в регламентированной отчётности.</p>
+
+            <p>Перейдём к доработкам после внедрения. Первая метрика — количество доработок после внедрения. Вторая метрика — стоимость доработок. Третья метрика — время на доработку. Четвёртая метрика — количество доработок, вызванных ошибками. Пятая метрика — количество доработок, вызванных новыми требованиями. Шестая метрика — доля доработок, реализованных без ошибок.</p>
+
+            <p>Перейдём к удовлетворённости пользователей и поддержке. Первая метрика — удовлетворённость пользователей. Вторая метрика — количество жалоб пользователей. Третья метрика — время решения обращения. Четвёртая метрика — доля решённых обращений с первого раза. Пятая метрика — количество активных пользователей. Шестая метрика — количество обученных пользователей. Седьмая метрика — текучесть пользователей.</p>
+
+            <p>Сформулируем критерии успеха для аналитика учётной системы. Первый критерий — автоматизация рутинных операций. Второй — снижение трудозатрат. Третий — повышение точности учёта. Четвёртый — соответствие законодательству. Пятый — своевременность отчётности. Шестой — удовлетворённость пользователей. Седьмой — экономическая эффективность. Восьмой — устойчивость системы.</p>
+
+            <p>Запомните главное. Аналитик учётной системы — это не тот, кто просто настраивает программу. Это тот, кто понимает учёт, законодательство и бизнес одновременно. Его метрики должны быть связаны со скоростью, точностью и экономией.</p>
+
+            <h3>📌 UX-аналитик</h3>
+
+            <p>Теперь перейдём к аналитику пользовательского опыта. Специфика этой роли в том, что он смотрит на продукт глазами пользователя. Его интересует не только то, работает ли система технически. Его интересует, удобно ли человеку решать свою задачу.</p>
+
+            <p>Начнём с эффективности выполнения задач. Первая метрика — успешность выполнения задачи. Вторая метрика — время выполнения задачи. Третья метрика — количество шагов до цели. Четвёртая метрика — доля пользователей, дошедших до ключевого шага. Пятая метрика — коэффициент завершения задачи с первой попытки. Шестая метрика — равномерность выполнения задачи. Седьмая метрика — время до первого действия.</p>
+
+            <p>Перейдём к удовлетворённости пользователей. Первая метрика — индекс удовлетворённости. Второй — индекс потребительской лояльности. Третья метрика — оценка после взаимодействия. Четвёртая метрика — эмоциональная оценка. Пятая метрика — доля пользователей, которые рекомендуют продукт. Шестая метрика — доля жалоб на интерфейс.</p>
+
+            <p>Перейдём к вовлечённости. Первая метрика — время на странице. Вторая метрика — глубина прокрутки. Третья метрика — количество просмотренных экранов. Четвёртая метрика — частота возвратов. Пятая метрика — количество сессий на пользователя. Шестая метрика — доля активных пользователей. Седьмая метрика — коэффициент удержания.</p>
+
+            <p>Перейдём к ошибкам пользователей. Первая метрика — количество ошибок пользователя. Вторая метрика — доля ошибок от общего числа действий. Третья метрика — количество повторных ошибок. Четвёртая метрика — время на исправление ошибки. Пятая метрика — количество отменённых действий. Шестая метрика — доля успешных исправлений. Седьмая метрика — количество тупиковых ситуаций.</p>
+
+            <p>Перейдём к поведенческим данным. Первая метрика — тепловые карты кликов. Вторая метрика — тепловые карты скроллинга. Третья метрика — карты движения взгляда. Четвёртая метрика — записи сессий. Пятая метрика — пути пользователя. Шестая метрика — точки выхода. Седьмая метрика — точки возврата.</p>
+
+            <p>Перейдём к обращениям в поддержку. Первая метрика — количество обращений по интерфейсу. Вторая метрика — доля обращений, связанных с интерфейсом. Третья метрика — время ответа поддержки. Четвёртая метрика — доля решённых обращений с первого раза. Пятая метрика — удовлетворённость после обращения. Шестая метрика — количество обращений на пользователя. Седьмая метрика — доля пользователей, обратившихся повторно.</p>
+
+            <p>Перейдём к результатам сравнительного тестирования. Первая метрика — конверсия в тесте. Вторая метрика — успешность выполнения задачи в тесте. Третья метрика — время выполнения задачи в тесте. Четвёртая метрика — количество ошибок в тесте. Пятая метрика — удовлетворённость в тесте. Шестая метрика — защитные метрики. Седьмая метрика — размер эффекта в тесте. Восьмая метрика — устойчивость результата.</p>
+
+            <p>Сформулируем критерии успеха для аналитика пользовательского опыта. Первый критерий — улучшение пользовательского опыта. Второй — повышение конверсии. Третий — снижение когнитивной нагрузки. Четвёртый — удовлетворённость пользователей. Пятый — снижение количества ошибок. Шестой — снижение обращений в поддержку. Седьмой — рост удержания. Восьмой — измеримость результатов.</p>
+
+            <p>Запомните главное. Аналитик пользовательского опыта — это не тот, кто рисует красивые интерфейсы. Это тот, кто понимает, как человек думает и действует. Его метрики должны быть связаны с реальным опытом пользователя.</p>
+
+            <h3>📌 Маркетинговый аналитик</h3>
+
+            <p>Теперь перейдём к маркетинговому аналитику. Специфика этой роли в том, что он отвечает за эффективность привлечения и продвижения. Маркетинговый аналитик смотрит на то, как компания тратит деньги на рекламу, какие каналы работают, какие нет, и как эти вложения возвращаются в выручку.</p>
+
+            <p>Начнём со стоимости привлечения. Первая метрика — стоимость привлечения клиента. Вторая метрика — стоимость привлечения по каналам. Третья метрика — стоимость привлечения платящего клиента. Четвёртая метрика — стоимость привлечения по сегментам. Пятая метрика — динамика стоимости привлечения. Шестая метрика — доля затрат на привлечение в выручке.</p>
+
+            <p>Перейдём к возврату инвестиций в маркетинг. Первая метрика — возврат инвестиций в рекламу. Вторая метрика — возврат инвестиций в маркетинг. Третья метрика — возврат инвестиций по каналам. Четвёртая метрика — срок окупаемости маркетинговых инвестиций. Пятая метрика — чистая приведённая стоимость маркетинговых кампаний. Шестая метрика — доля маркетинговых затрат, которые окупились.</p>
+
+            <p>Перейдём к эффективности рекламных каналов. Первая метрика — кликабельность объявления. Вторая метрика — стоимость клика. Третья метрика — стоимость показа. Четвёртая метрика — частота показов. Пятая метрика — охват аудитории. Шестая метрика — доля целевой аудитории в охвате. Седьмая метрика — конверсия клика в целевое действие. Восьмая метрика — качество трафика.</p>
+
+            <p>Перейдём к конверсии по каналам. Первая метрика — конверсия по каналам. Вторая метрика — конверсия по типам кампаний. Третья метрика — конверсия по аудиториям. Четвёртая метрика — конверсия по креативам. Пятая метрика — конверсия по устройствам. Шестая метрика — конверсия по регионам. Седьмая метрика — конверсия по времени.</p>
+
+            <p>Перейдём к ценности клиента. Первая метрика — пожизненная ценность клиента. Вторая метрика — ценность клиента по каналам. Третья метрика — ценность клиента по сегментам. Четвёртая метрика — соотношение ценности клиента и стоимости привлечения. Пятая метрика — маржинальность клиента. Шестая метрика — срок жизни клиента. Седьмая метрика — отток клиентов.</p>
+
+            <p>Перейдём к доле рынка и узнаваемости бренда. Первая метрика — доля рынка. Вторая метрика — относительная доля рынка. Третья метрика — узнаваемость бренда. Четвёртая метрика — привлекательность бренда. Пятая метрика — доля голоса. Шестая метрика — индекс развития бренда. Седьмая метрика — стоимость бренда.</p>
+
+            <p>Перейдём к вовлечённости аудитории. Первая метрика — вовлечённость в социальных сетях. Вторая метрика — охват в социальных сетях. Третья метрика — коэффициент вовлечённости. Четвёртая метрика — рост подписчиков. Пятая метрика — доля активных подписчиков. Шестая метрика — виральность контента. Седьмая метрика — тональность упоминаний.</p>
+
+            <p>Перейдём к стоимости лида. Первая метрика — стоимость лида. Вторая метрика — стоимость квалифицированного лида. Третья метрика — конверсия лида в клиента. Четвёртая метрика — стоимость привлечения клиента через лиды. Пятая метрика — время от лида до клиента. Шестая метрика — доля лидов, ставших клиентами. Седьмая метрика — стоимость лида по каналам.</p>
+
+            <p>Сформулируем критерии успеха для маркетингового аналитика. Первый критерий — эффективность каналов. Второй — снижение стоимости привлечения. Третий — рост возврата инвестиций. Четвёртый — увеличение доли рынка. Пятый — повышение узнаваемости. Шестой — рост ценности клиента. Седьмой — снижение оттока. Восьмой — точность прогнозов. Девятый — обоснованность решений. Десятый — прозрачность отчётности.</p>
+
+            <p>Запомните главное. Маркетинговый аналитик — это не тот, кто просто считает клики. Это тот, кто связывает маркетинг с деньгами. Он показывает, какие каналы работают, какие нет, и почему. Его метрики должны помогать принимать решения.</p>
+
+            <h3>📌 4. Заключение</h3>
+
+            <p>Мы подошли к завершению нашей лекции. Давайте подведём итоги и вспомним главное. Мы начали с определения метрики. Метрика — это измеримый показатель. Он позволяет оценить состояние процесса, продукта, системы или бизнеса. Мы увидели, что метрики бывают разными. Они делятся по природе, по уровню, по области и по способу расчёта. И к каждой метрике предъявляются требования. Измеримость, однозначность, достижимость, релевантность и привязка ко времени. Без соблюдения этих требований метрика превращается в бесполезное число.</p>
+
+            <p>Затем мы подробно разобрали одиннадцать ролей аналитиков. Мы увидели, что каждая роль имеет свои ключевые показатели. Аналитик данных отвечает за достоверность и статистическую значимость. Финансовый аналитик — за устойчивость и прибыльность. Продуктовый аналитик — за ценность пользователя и удержание. Веб-аналитик — за поведение на сайте и конверсию. Бизнес-аналитик в области данных — за отчётность и качество данных. Аналитик больших данных — за модели и масштабируемость. Бизнес-аналитик — за процессы и их эффективность. Системный аналитик — за требования и качество системы. Аналитик учётной системы — за точность и скорость учёта. Аналитик пользовательского опыта — за удобство и удовлетворённость. Маркетинговый аналитик — за привлечение и возврат инвестиций.</p>
+
+            <p>Мы также увидели, что метрики разных ролей пересекаются. Продуктовый и веб-аналитик используют сравнительное тестирование двух вариантов. Финансовый аналитик и бизнес-аналитик в области данных применяют план-факт анализ. Бизнес-аналитик и системный аналитик работают с метриками требований. Аналитик данных и аналитик больших данных используют одни и те же метрики качества моделей. Это пересечение важно понимать. Оно помогает выстраивать диалог между специалистами. И не дублировать работу.</p>
+
+            <p>Теперь давайте сформулируем главные выводы. Первый вывод. Метрики — это инструмент управления, а не самоцель. Нельзя гнаться за красивыми цифрами. Нужно понимать, какую задачу решает метрика. И как она связана с бизнес-результатом. Второй вывод. Важно выбирать адекватные метрики под задачу. Одна и та же метрика может быть полезной в одном контексте. И вредной в другом. Третий вывод. Метрики должны удовлетворять требованиям. Измеримость, релевантность, своевременность и достоверность. Без этого они не заслуживают доверия. Четвёртый вывод. Нельзя улучшать одну метрику за счёт другой. Нужно смотреть на систему показателей в целом. И проверять, не ухудшилось ли что-то важное. Пятый вывод. Метрики должны быть понятны бизнесу. Если руководитель не понимает, что означает показатель, он не сможет принять решение. Шестой вывод. Метрики должны быть связаны с деньгами. Или с клиентами. Иначе они остаются абстракцией.</p>
+
+            <p>Отдельно скажем о перспективах. В будущем значение некоторых групп метрик будет расти. Первая группа — метрики качества данных. Без чистых и полных данных никакая аналитика не работает. Вторая группа — метрики пользовательского опыта. Продукты становятся сложнее. Пользователи становятся требовательнее. Третья группа — метрики скорости. Бизнес ускоряется. Быстрота принятия решений становится конкурентным преимуществом. Четвёртая группа — метрики экономической эффективности. В условиях ограниченных ресурсов важно понимать, что работает, а что нет. Пятая группа — метрики этики и рисков. Искусственный интеллект и автоматизация поднимают новые вопросы. Шестая группа — метрики устойчивости. Бизнес должен быть готов к сбоям.</p>
+
+            <p>Теперь давайте вспомним, что вы уносите с этой лекции. Вы уносите понимание того, что метрика — это не просто число. Это инструмент, который помогает принимать решения. Вы уносите знание о том, какие метрики важны для разных ролей. И как они связаны между собой. Вы уносите умение задавать правильные вопросы. Зачем нужна эта метрика. Как она считается. Что она показывает. И что она не показывает. Вы уносите понимание того, что хорошая метрика должна быть измеримой, однозначной, достижимой, релевантной и привязанной ко времени. И вы уносите главное. Метрики должны служить бизнесу. А не наоборот.</p>
+
+            <p>На этом наша лекция завершена. Спасибо за внимание. Я готов ответить на ваши вопросы.</p>
+
+            <!-- СЛОВАРЬ ТЕРМИНОВ -->
+            <div class="dark-block">
+                <div class="dark-block-title">📖 Словарь терминов и аббревиатур</div>
+                <table class="dark-table">
+                    <thead>
+                        <tr><th style="width:16%;">Термин</th><th style="width:34%;">Расшифровка</th><th>Пояснение</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="term">KPI</td><td>Key Performance Indicator</td><td>Ключевой показатель эффективности</td></tr>
+                        <tr><td class="term">ARPU</td><td>Average Revenue Per User</td><td>Средний доход на пользователя</td></tr>
+                        <tr><td class="term">LTV</td><td>Lifetime Value</td><td>Пожизненная ценность пользователя</td></tr>
+                        <tr><td class="term">Retention</td><td>Retention Rate</td><td>Удержание пользователей</td></tr>
+                        <tr><td class="term">Churn</td><td>Churn Rate</td><td>Отток пользователей</td></tr>
+                        <tr><td class="term">CAC</td><td>Customer Acquisition Cost</td><td>Стоимость привлечения клиента</td></tr>
+                        <tr><td class="term">ROI</td><td>Return on Investment</td><td>Возврат инвестиций</td></tr>
+                        <tr><td class="term">ROMI</td><td>Return on Marketing Investment</td><td>Возврат инвестиций в маркетинг</td></tr>
+                        <tr><td class="term">CTR</td><td>Click-Through Rate</td><td>Кликабельность рекламы</td></tr>
+                        <tr><td class="term">CPC</td><td>Cost Per Click</td><td>Стоимость клика</td></tr>
+                        <tr><td class="term">CPM</td><td>Cost Per Mille</td><td>Стоимость тысячи показов</td></tr>
+                        <tr><td class="term">NPS</td><td>Net Promoter Score</td><td>Индекс потребительской лояльности</td></tr>
+                        <tr><td class="term">SUS</td><td>System Usability Scale</td><td>Шкала удобства использования</td></tr>
+                        <tr><td class="term">A/B-тест</td><td>A/B Testing</td><td>Сравнительное тестирование двух вариантов</td></tr>
+                        <tr><td class="term">p-value</td><td>Достигнутый уровень значимости</td><td>Вероятность получить результат случайно</td></tr>
+                        <tr><td class="term">RMSE</td><td>Root Mean Square Error</td><td>Корень из средней квадратичной ошибки</td></tr>
+                        <tr><td class="term">MAE</td><td>Mean Absolute Error</td><td>Средняя абсолютная ошибка</td></tr>
+                        <tr><td class="term">MAPE</td><td>Mean Absolute Percentage Error</td><td>Средняя абсолютная ошибка в процентах</td></tr>
+                        <tr><td class="term">ROC-AUC</td><td>Area Under ROC Curve</td><td>Площадь под кривой ошибок</td></tr>
+                        <tr><td class="term">BPMN</td><td>Business Process Model and Notation</td><td>Нотация моделирования бизнес-процессов</td></tr>
+                        <tr><td class="term">UML</td><td>Unified Modeling Language</td><td>Унифицированный язык моделирования</td></tr>
+                        <tr><td class="term">CJM</td><td>Customer Journey Map</td><td>Карта пути клиента</td></tr>
+                        <tr><td class="term">RFM</td><td>Recency, Frequency, Monetary</td><td>Давность, частота, деньги</td></tr>
+                        <tr><td class="term">ABC/XYZ</td><td>ABC/XYZ-анализ</td><td>Группировка по важности и стабильности</td></tr>
+                        <tr><td class="term">DCF</td><td>Discounted Cash Flow</td><td>Дисконтирование денежных потоков</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ИСТОЧНИКИ -->
+            <div class="dark-block">
+                <div class="dark-block-title">📚 Источники и литература</div>
+                <div class="src-group">📊 Нормативные документы</div>
+                <ol>
+                    <li>ISO/IEC 25010 — характеристики качества программного обеспечения.</li>
+                    <li>ISO/IEC 5259 — качество данных для аналитики и машинного обучения.</li>
+                    <li>BABOK — свод знаний по бизнес-анализу.</li>
+                </ol>
+                <div class="src-group">📖 Учебная литература и обзоры</div>
+                <ol start="4">
+                    <li>Учебная литература по анализу данных, финансовому анализу, продуктовой аналитике, веб-аналитике, бизнес-анализу.</li>
+                    <li>Документация Microsoft, Google, Яндекс.</li>
+                    <li>Обзоры рынка BI и аналитических платформ: TAdviser, CNews.</li>
+                </ol>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function changeVideo(embedUrl) {
+            document.getElementById('lecture-player').src = embedUrl;
+        }
+    </script>
+
+    <!-- НАВИГАЦИЯ МЕЖДУ ЛЕКЦИЯМИ -->
+<nav class="lecture-nav" id="lectureNav">
+    <div class="nav-progress" id="navProgress" style="width: 0%;"></div>
+    <a href="Лекция (N-1).html" class="nav-btn-arrow" id="prevBtn">
+        <span class="arrow-icon">←</span>
+        <span class="arrow-label">
+            <small>Назад</small>
+            <span class="arrow-title" id="prevTitle">Лекция (N-1)</span>
+        </span>
+    </a>
+    <div class="nav-center">
+        <div class="nav-counter">Лекция <span id="currentNum">N</span> <span>из 21</span></div>
+        <a href="index.html" class="nav-index-link">📚 К содержанию</a>
+    </div>
+    <a href="Лекция (N+1).html" class="nav-btn-arrow" id="nextBtn">
+        <span class="arrow-label" style="align-items: flex-end;">
+            <small>Вперёд</small>
+            <span class="arrow-title" id="nextTitle">Лекция (N+1)</span>
+        </span>
+        <span class="arrow-icon">→</span>
+    </a>
+</nav>
+
+
+
+<script>
+(function () {
+    'use strict';
+
+    // =========================================================
+    // НАСТРОЙКИ
+    // =========================================================
+    const TOTAL_LECTURES = 21;                         // всего лекций в курсе
+    const totalDurationMs = (84 * 60 + 30) * 1000;     // длительность автопрокрутки
+    const autoNextDelayMs = 2000;                      // задержка автоперехода
+    const AUTOSTART_PARAM = 'autostart';
+
+    // =========================================================
+    // ОПРЕДЕЛЕНИЕ НОМЕРА ТЕКУЩЕЙ ЛЕКЦИИ
+    // =========================================================
+    const fileName = decodeURIComponent(location.pathname.split('/').pop() || '');
+    let currentLecture = 1;
+
+    // 1) Пытаемся извлечь номер из имени файла "Лекция 7.html"
+    const match = fileName.match(/Лекция\s*(\d+)\.html/i);
+    if (match) {
+        currentLecture = parseInt(match[1], 10);
+    } else {
+        // 2) Fallback: берём из HTML-счётчика
+        const el = document.getElementById('currentNum');
+        if (el) currentLecture = parseInt(el.textContent, 10) || 1;
+    }
+
+    // Ограничиваем допустимым диапазоном
+    if (isNaN(currentLecture) || currentLecture < 1) currentLecture = 1;
+    if (currentLecture > TOTAL_LECTURES) currentLecture = TOTAL_LECTURES;
+
+    // =========================================================
+    // ОПРЕДЕЛЕНИЕ СОСЕДНИХ ЛЕКЦИЙ
+    // =========================================================
+    const prev = currentLecture > 1 ? currentLecture - 1 : null;
+    const next = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+
+    // =========================================================
+    // ОБНОВЛЕНИЕ СЧЁТЧИКА И ПРОГРЕСС-БАРА
+    // =========================================================
+    const currentNumEl = document.getElementById('currentNum');
+    if (currentNumEl) currentNumEl.textContent = currentLecture;
+
+    const navProgress = document.getElementById('navProgress');
+    if (navProgress) {
+        navProgress.style.width = (currentLecture / TOTAL_LECTURES * 100) + '%';
+    }
+
+    // =========================================================
+    // НАСТРОЙКА КНОПКИ "НАЗАД"
+    // =========================================================
+    const prevBtn = document.getElementById('prevBtn');
+    if (prevBtn) {
+        if (prev) {
+            prevBtn.href = 'Лекция ' + prev + '.html';
+            const t = document.getElementById('prevTitle');
+            if (t) t.textContent = 'Лекция ' + prev;
+            prevBtn.style.opacity = '1';
+            prevBtn.style.cursor = 'pointer';
+            prevBtn.onclick = null;
+        } else {
+            prevBtn.removeAttribute('href');
+            prevBtn.style.opacity = '0.35';
+            prevBtn.style.cursor = 'not-allowed';
+            prevBtn.onclick = (e) => e.preventDefault();
+            const t = document.getElementById('prevTitle');
+            if (t) t.textContent = 'Это первая лекция';
+        }
+    }
+
+    // =========================================================
+    // НАСТРОЙКА КНОПКИ "ВПЕРЁД"
+    // =========================================================
+    const nextBtn = document.getElementById('nextBtn');
+    if (nextBtn) {
+        if (next) {
+            nextBtn.href = 'Лекция ' + next + '.html';
+            const t = document.getElementById('nextTitle');
+            if (t) t.textContent = 'Лекция ' + next;
+            nextBtn.style.opacity = '1';
+            nextBtn.style.cursor = 'pointer';
+            nextBtn.onclick = null;
+        } else {
+            nextBtn.removeAttribute('href');
+            nextBtn.style.opacity = '0.35';
+            nextBtn.style.cursor = 'not-allowed';
+            nextBtn.onclick = (e) => e.preventDefault();
+            const t = document.getElementById('nextTitle');
+            if (t) t.textContent = 'Это последняя лекция';
+        }
+    }
+
+    // =========================================================
+    // КЛАВИАТУРНАЯ НАВИГАЦИЯ
+    // =========================================================
+    document.addEventListener('keydown', (e) => {
+        const tag = e.target && e.target.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+        if (e.key === 'ArrowLeft' && prev) {
+            window.location.href = 'Лекция ' + prev + '.html';
+        } else if (e.key === 'ArrowRight' && next) {
+            window.location.href = 'Лекция ' + next + '.html';
+        } else if (e.key === 'Home') {
+            window.location.href = 'index.html';
+        }
+    });
+
+    // =========================================================
+    // АВТОПРОКРУТКА И СИНХРОНИЗАЦИЯ ПАНЕЛЕЙ
+    // =========================================================
+    function initScroll() {
+        const studentBlock = document.querySelector('.student-view');
+        const speakerBlock = document.querySelector('.speaker-notes');
+        const badge = document.getElementById('scroll-status-badge');
+        const audio = document.getElementById('lecture-audio');
+        if (!studentBlock || !speakerBlock) return;
+
+        const studentBehavior = studentBlock.style.scrollBehavior;
+        const speakerBehavior = speakerBlock.style.scrollBehavior;
+        let isRunning = false, completed = false, pausedElapsed = 0, startedAt = 0, rafId = null;
+        let startS = 0, startP = 0, maxS = 0, maxP = 0;
+
+        function setBadge(text, color) {
+            if (!badge) return;
+            badge.style.display = 'block';
+            badge.textContent = text;
+            badge.style.borderColor = color;
+        }
+        function measure() {
+            maxS = Math.max(studentBlock.scrollHeight - studentBlock.clientHeight, 0);
+            maxP = Math.max(speakerBlock.scrollHeight - speakerBlock.clientHeight, 0);
+        }
+        function fmt(ms) {
+            const m = Math.floor(ms / 60000);
+            const s = Math.floor((ms % 60000) / 1000);
+            return m + ':' + String(s).padStart(2, '0');
+        }
+        function playAudio() {
+            if (!audio) return;
+            const p = audio.play();
+            if (p && typeof p.catch === 'function') {
+                p.catch(err => {
+                    console.warn('[AutoAudio]', err.message);
+                    setBadge('▶ ИДЕТ ПРОКРУТКА (звук заблокирован)', '#eab308');
+                });
+            }
+        }
+        function pauseAudio() { if (audio) try { audio.pause(); } catch (_) {} }
+        function resetAudio() { if (audio) try { audio.pause(); audio.currentTime = 0; } catch (_) {} }
+
+        function animate() {
+            if (!isRunning) return;
+            const elapsed = pausedElapsed + (performance.now() - startedAt);
+            const fraction = Math.min(elapsed / totalDurationMs, 1);
+            measure();
+            studentBlock.scrollTop = startS + (maxS - startS) * fraction;
+            speakerBlock.scrollTop = startP + (maxP - startP) * fraction;
+            if (badge) {
+                badge.textContent = '▶ ' + fmt(elapsed) + ' / 25:00';
+                badge.style.borderColor = '#16a34a';
+            }
+            if (fraction >= 1) { finish(); return; }
+            rafId = requestAnimationFrame(animate);
+        }
+
+        function startOrResume() {
+            if (completed) {
+                pausedElapsed = 0; completed = false;
+                studentBlock.scrollTop = 0; speakerBlock.scrollTop = 0;
+                resetAudio();
+            }
+            measure();
+            startS = studentBlock.scrollTop;
+            startP = speakerBlock.scrollTop;
+            startedAt = performance.now();
+            isRunning = true;
+            studentBlock.style.scrollBehavior = 'auto';
+            speakerBlock.style.scrollBehavior = 'auto';
+            cancelAnimationFrame(rafId);
+            rafId = requestAnimationFrame(animate);
+            playAudio();
+        }
+        function pause() {
+            if (isRunning) pausedElapsed += performance.now() - startedAt;
+            isRunning = false;
+            cancelAnimationFrame(rafId);
+            setBadge('⏸ ПАУЗА ' + fmt(pausedElapsed), '#dc2626');
+            studentBlock.style.scrollBehavior = studentBehavior;
+            speakerBlock.style.scrollBehavior = speakerBehavior;
+            pauseAudio();
+        }
+        function finish() {
+            isRunning = false; completed = true;
+            cancelAnimationFrame(rafId);
+            measure();
+            studentBlock.scrollTop = maxS;
+            speakerBlock.scrollTop = maxP;
+            studentBlock.style.scrollBehavior = studentBehavior;
+            speakerBlock.style.scrollBehavior = speakerBehavior;
+
+            const nextLec = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+            if (nextLec) {
+                setBadge('✅ ГОТОВО → Лекция ' + nextLec, '#16a34a');
+                setTimeout(() => {
+                    location.href = 'Лекция ' + nextLec + '.html?' + AUTOSTART_PARAM + '=1';
+                }, autoNextDelayMs);
+            } else {
+                setBadge('✅ КУРС ЗАВЕРШЕН', '#16a34a');
+                pauseAudio();
+            }
+        }
+        function toggle() { isRunning ? pause() : startOrResume(); }
+
+        // Пробел — старт/пауза
+        window.addEventListener('keydown', (e) => {
+            if (e.repeat) return;
+            const t = e.target; const tag = t && t.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+            if (e.code === 'Space' || e.key === ' ') {
+                e.preventDefault();
+                toggle();
+            }
+        }, true);
+
+        if (badge) badge.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+        [studentBlock, speakerBlock].forEach(el => {
+            el.addEventListener('click', (e) => {
+                if (e.target.closest('a,button,iframe,input,textarea,select,video,audio')) return;
+                if (window.getSelection().toString().length > 0) return;
+                toggle();
+            });
+        });
+
+        // Автостарт при переходе с предыдущей лекции
+        const params = new URLSearchParams(location.search);
+        if (params.get(AUTOSTART_PARAM) === '1') {
+            params.delete(AUTOSTART_PARAM);
+            const clean = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
+            history.replaceState(null, '', clean);
+            setTimeout(startOrResume, 500);
+        } else {
+            setBadge('▶ ПРОБЕЛ / КЛИК — старт', '#4a5568');
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initScroll, { once: true });
+    } else {
+        initScroll();
+    }
+})();
+</script>
+
+</body>
+</html>

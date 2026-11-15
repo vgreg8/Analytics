@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лекция 13. Линейная регрессия: самый простой и самый важный алгоритм</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #ffffff; }
+        .student-view { width: 66.66%; height: 100vh; background: #ffffff; padding: 35px 40px; display: flex; flex-direction: column; justify-content: space-between; border-right: 2px solid #e2e8f0; overflow-y: auto; scroll-behavior: smooth; }
+        .speaker-notes { width: 33.34%; height: 100%; background: #1a202c; color: #edf2f7; padding: 30px; overflow-y: auto; }
+        .slide-header { font-size: 24px; color: #0f172a; font-weight: bold; line-height: 1.3; margin-bottom: 18px; border-bottom: 4px solid #2563eb; padding-bottom: 12px; }
+        .slide-body { flex-grow: 1; display: flex; flex-direction: column; gap: 18px; padding: 5px 0; }
+        .slide-footer { font-size: 13px; color: #64748b; text-align: right; margin-top: 12px; }
+        .chart-box { background: #f8fafc; border: 2.5px dashed #94a3b8; padding: 20px; border-radius: 12px; }
+        .viz-card { background: #ffffff; border: 2px solid #cbd5e0; border-radius: 12px; padding: 18px; box-shadow: 0 4px 10px rgba(15,23,42,0.06); }
+        .viz-title { font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .viz-caption { font-size: 12.5px; color: #334155; margin-top: 10px; line-height: 1.55; }
+        .viz-caption strong { color: #0f172a; font-weight: 700; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .formula-box { background: linear-gradient(135deg, #0f172a, #1e293b); color: #f1f5f9; padding: 16px 20px; border-radius: 10px; text-align: center; box-shadow: 0 4px 14px rgba(15,23,42,0.3); }
+        .formula-main { font-family: 'Courier New', monospace; font-size: 15px; letter-spacing: 0.5px; color: #93c5fd; font-weight: 700; }
+        .formula-example { font-size: 12px; color: #e2e8f0; margin-top: 8px; line-height: 1.5; }
+        .role-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .role-table th { background: #0f172a; color: white; padding: 10px 12px; text-align: left; font-weight: 700; }
+        .role-table td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; color: #1e293b; vertical-align: top; line-height: 1.45; }
+        .role-table tr:nth-child(even) td { background: #f8fafc; }
+        .role-table .role-emoji { font-size: 16px; }
+        .callout { background: #fef3c7; border-left: 5px solid #d97706; padding: 14px 18px; border-radius: 6px; }
+        .callout strong { color: #78350f; font-size: 14px; }
+        .callout p { font-size: 13px; color: #451a03; margin-top: 5px; line-height: 1.5; }
+
+        /* SVG styles — усиленный контраст */
+        .axis { stroke: #334155; stroke-width: 2; }
+        .grid-line { stroke: #cbd5e0; stroke-width: 1; }
+        .point { fill: #1e40af; stroke: #ffffff; stroke-width: 2; }
+        .point-highlight { fill: #dc2626; stroke: #ffffff; stroke-width: 2.5; }
+        .reg-line { stroke: #dc2626; stroke-width: 3; stroke-dasharray: 8 4; }
+        .residual { stroke: #334155; stroke-width: 1.8; stroke-dasharray: 4 3; opacity: 0.9; }
+        .label { font-family: 'Segoe UI', sans-serif; font-size: 12px; fill: #1e293b; }
+        .label-strong { font-family: 'Segoe UI', sans-serif; font-size: 13px; font-weight: 700; fill: #0f172a; }
+        .label-small { font-family: 'Segoe UI', sans-serif; font-size: 11px; fill: #475569; }
+        .label-bold-small { font-family: 'Segoe UI', sans-serif; font-size: 11.5px; font-weight: 700; }
+
+        .video-section { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 5px; }
+        .video-container { width: 100%; max-width: 580px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: #000; aspect-ratio: 16 / 9; }
+        .links-hub { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .video-btn { text-decoration: none; padding: 9px 14px; border-radius: 6px; font-size: 12px; font-weight: bold; color: white; display: flex; align-items: center; gap: 6px; transition: transform 0.2s, background 0.2s; cursor: pointer; border: none; }
+        .video-btn:hover { transform: translateY(-2px); }
+        .rt-btn { background: #00a877; }
+        .rt-btn:hover { background: #008f65; }
+        .stop-btn { background: #dc2626; }
+        .stop-btn:hover { background: #b91c1c; }
+
+        .notes-header { font-size: 17px; color: #63b3ed; font-weight: bold; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a5568; padding-bottom: 10px; }
+        .lecture-text { font-size: 14.5px; line-height: 1.65; color: #e2e8f0; text-align: justify; }
+        .lecture-text p { margin-bottom: 14px; }
+        .lecture-text h3 { color: #63b3ed; font-size: 15px; margin: 18px 0 10px; border-bottom: 1px solid #2d3748; padding-bottom: 5px; }
+        .lecture-text h4 { color: #90cdf4; font-size: 13.5px; margin: 14px 0 8px; }
+        .lecture-text ul { margin: 8px 0 14px 18px; }
+        .lecture-text li { margin-bottom: 6px; }
+
+        .dark-block { background: #2d3748; border: 1px solid #4a5568; border-radius: 10px; padding: 16px 18px; margin-top: 20px; }
+        .dark-block-title { font-size: 14px; font-weight: bold; color: #63b3ed; margin-bottom: 12px; border-bottom: 2px solid #4a5568; padding-bottom: 8px; }
+        .dark-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+        .dark-table th { background: #1a202c; color: #90cdf4; padding: 7px 9px; text-align: left; font-weight: 600; border-bottom: 1px solid #4a5568; }
+        .dark-table td { padding: 6px 9px; border-bottom: 1px solid #2d3748; color: #cbd5e0; vertical-align: top; line-height: 1.4; }
+        .dark-table tr:nth-child(even) td { background: #2a3242; }
+        .dark-table .term { font-weight: bold; color: #90cdf4; white-space: nowrap; }
+
+        .lecture-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(12px); border-top: 2px solid rgba(255, 255, 255, 0.08); padding: 12px 20px; display: flex; align-items: center; justify-content: center; gap: 12px; z-index: 9999; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25); }
+        .lecture-nav .nav-progress { position: absolute; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899); border-radius: 0 3px 3px 0; }
+        .lecture-nav .nav-btn-arrow { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); border: 1.5px solid rgba(255, 255, 255, 0.15); color: #e2e8f0; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; }
+        .lecture-nav .nav-btn-arrow:hover:not(:disabled) { background: rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.6); color: white; transform: translateY(-2px); }
+        .lecture-nav .nav-btn-arrow:disabled { opacity: 0.35; cursor: not-allowed; }
+        .lecture-nav .nav-btn-arrow .arrow-icon { font-size: 16px; line-height: 1; }
+        .lecture-nav .nav-btn-arrow .arrow-label { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+        .lecture-nav .nav-btn-arrow .arrow-label small { font-size: 9.5px; font-weight: 400; opacity: 0.7; text-transform: uppercase; }
+        .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { font-size: 12px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lecture-nav .nav-center { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 20px; color: #94a3b8; font-size: 11px; border-left: 1px solid rgba(255, 255, 255, 0.1); border-right: 1px solid rgba(255, 255, 255, 0.1); }
+        .lecture-nav .nav-counter { font-size: 15px; font-weight: 900; color: #f1f5f9; }
+        .lecture-nav .nav-counter span { color: #64748b; font-size: 12px; font-weight: 600; }
+        .lecture-nav .nav-index-link { color: #60a5fa; text-decoration: none; font-size: 11px; font-weight: 600; }
+        .lecture-nav .nav-index-link:hover { color: #93c5fd; text-decoration: underline; }
+        body { padding-bottom: 80px !important; }
+        @media (max-width: 900px) {
+            .lecture-nav { padding: 10px 12px; gap: 8px; }
+            .lecture-nav .nav-btn-arrow { padding: 8px 12px; }
+            .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { max-width: 90px; font-size: 11px; }
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+        }
+        @keyframes rollDown {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(150px, 62px); }
+        }
+        .gd-ball { animation: rollDown 3s ease-in-out infinite alternate; transform-origin: center; }
+        @keyframes pulse {
+            0%, 100% { r: 6; opacity: 1; }
+            50% { r: 8; opacity: 0.85; }
+        }
+        .pulse { animation: pulse 2s ease-in-out infinite; }
+    </style>
+</head>
+<body>
+
+    <div class="student-view">
+        <div class="slide-header">
+            Лекция 13. Линейная регрессия: самый простой и самый важный алгоритм
+        </div>
+
+        <div class="slide-body">
+
+            <div class="formula-box">
+                <div class="formula-main">ŷ = β₀ + β₁·x₁ + β₂·x₂ + … + βₙ·xₙ</div>
+                <div class="formula-example">Цена квартиры = базовое значение + вес площади × площадь + вес этажа × этаж + вес расстояния × расстояние</div>
+            </div>
+
+            <!-- ВИЗ 1 -->
+            <div class="viz-card">
+                <div class="viz-title">📈 Как выглядит линейная регрессия: точки данных, линия и остатки</div>
+                <svg viewBox="0 0 520 320" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="520" height="320" fill="#ffffff"/>
+                    <line x1="60" y1="223" x2="460" y2="223" class="grid-line"/>
+                    <line x1="60" y1="187" x2="460" y2="187" class="grid-line"/>
+                    <line x1="60" y1="150" x2="460" y2="150" class="grid-line"/>
+                    <line x1="60" y1="113" x2="460" y2="113" class="grid-line"/>
+                    <line x1="60" y1="77"  x2="460" y2="77"  class="grid-line"/>
+                    <line x1="60" y1="40"  x2="460" y2="40"  class="grid-line"/>
+                    <line x1="140" y1="40" x2="140" y2="260" class="grid-line"/>
+                    <line x1="220" y1="40" x2="220" y2="260" class="grid-line"/>
+                    <line x1="300" y1="40" x2="300" y2="260" class="grid-line"/>
+                    <line x1="380" y1="40" x2="380" y2="260" class="grid-line"/>
+                    <line x1="50" y1="260" x2="470" y2="260" class="axis"/>
+                    <line x1="50" y1="40"  x2="50"  y2="260" class="axis"/>
+                    <text x="260" y="295" text-anchor="middle" class="label-strong">Площадь квартиры (кв. м)</text>
+                    <text x="20" y="150" text-anchor="middle" class="label-strong" transform="rotate(-90 20 150)">Цена (млн руб.)</text>
+                    <text x="60"  y="280" text-anchor="middle" class="label-small">20</text>
+                    <text x="140" y="280" text-anchor="middle" class="label-small">40</text>
+                    <text x="220" y="280" text-anchor="middle" class="label-small">60</text>
+                    <text x="300" y="280" text-anchor="middle" class="label-small">80</text>
+                    <text x="380" y="280" text-anchor="middle" class="label-small">100</text>
+                    <text x="460" y="280" text-anchor="middle" class="label-small">120</text>
+                    <text x="42" y="227" text-anchor="end" class="label-small">3</text>
+                    <text x="42" y="191" text-anchor="end" class="label-small">4</text>
+                    <text x="42" y="154" text-anchor="end" class="label-small">5</text>
+                    <text x="42" y="117" text-anchor="end" class="label-small">6</text>
+                    <text x="42" y="81"  text-anchor="end" class="label-small">7</text>
+                    <text x="42" y="44"  text-anchor="end" class="label-small">8</text>
+                    <line x1="60" y1="220" x2="460" y2="18" class="reg-line"/>
+                    <line x1="80"  y1="190" x2="80"  y2="210" class="residual"/>
+                    <line x1="140" y1="198" x2="140" y2="180" class="residual"/>
+                    <line x1="220" y1="157" x2="220" y2="139" class="residual"/>
+                    <line x1="300" y1="117" x2="300" y2="99"  class="residual"/>
+                    <line x1="380" y1="77"  x2="380" y2="59"  class="residual"/>
+                    <line x1="440" y1="45"  x2="440" y2="28"  class="residual"/>
+                    <circle cx="80"  cy="190" r="5" class="point"/>
+                    <circle cx="100" cy="220" r="5" class="point"/>
+                    <circle cx="120" cy="165" r="5" class="point"/>
+                    <circle cx="140" cy="198" r="5" class="point"/>
+                    <circle cx="160" cy="146" r="5" class="point"/>
+                    <circle cx="180" cy="172" r="5" class="point"/>
+                    <circle cx="200" cy="124" r="5" class="point"/>
+                    <circle cx="220" cy="157" r="5" class="point"/>
+                    <circle cx="240" cy="102" r="5" class="point"/>
+                    <circle cx="260" cy="135" r="5" class="point"/>
+                    <circle cx="280" cy="84"  r="5" class="point"/>
+                    <circle cx="300" cy="117" r="5" class="point"/>
+                    <circle cx="320" cy="66"  r="5" class="point"/>
+                    <circle cx="340" cy="95"  r="5" class="point"/>
+                    <circle cx="360" cy="47"  r="5" class="point"/>
+                    <circle cx="380" cy="77"  r="5" class="point"/>
+                    <circle cx="400" cy="45"  r="5" class="point"/>
+                    <circle cx="420" cy="58"  r="5" class="point"/>
+                    <circle cx="440" cy="45"  r="5" class="point pulse"/>
+                    <circle cx="70" cy="308" r="5" class="point"/>
+                    <text x="82" y="312" class="label-small">Данные</text>
+                    <line x1="140" y1="308" x2="170" y2="308" class="reg-line"/>
+                    <text x="176" y="312" class="label-small">Линия регрессии</text>
+                    <line x1="290" y1="308" x2="310" y2="308" class="residual"/>
+                    <text x="316" y="312" class="label-small">Остатки (ошибки)</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Синие точки</strong> — реальные наблюдения. <strong>Красная пунктирная линия</strong> — предсказания модели. <strong>Серые вертикальные отрезки</strong> — остатки: разница между фактом и прогнозом. Метод наименьших квадратов ищет такую линию, при которой сумма квадратов этих отрезков минимальна.
+                </div>
+            </div>
+
+            <!-- ВИЗ 2 -->
+            <div class="viz-card">
+                <div class="viz-title">⚖️ Как интерпретировать веса модели</div>
+                <svg viewBox="0 0 500 230" width="100%" style="display: block;">
+    <rect x="0" y="0" width="500" height="230" fill="#ffffff"/>
+    <line x1="250" y1="15" x2="250" y2="205" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <text x="250" y="12" text-anchor="middle" class="label-small">0</text>
+    
+    <!-- Площадь (положительный) -->
+    <rect x="250" y="30" width="160" height="26" fill="#16a34a" rx="3"/>
+    <text x="245" y="48" text-anchor="end" class="label-bold-small" fill="#0f172a">Площадь</text>
+    <!-- Значение внутри полосы -->
+    <text x="405" y="48" text-anchor="end" class="label-bold-small" fill="#ffffff">+2.4 млн / кв. м</text>
+    
+    <!-- Этаж (положительный) -->
+    <rect x="250" y="72" width="65" height="26" fill="#22c55e" rx="3"/>
+    <text x="245" y="90" text-anchor="end" class="label-bold-small" fill="#0f172a">Этаж</text>
+    <!-- Значение внутри полосы (полоса расширена до 65, чтобы влез текст) -->
+    <text x="307" y="90" text-anchor="end" class="label-bold-small" fill="#ffffff">+0.3 млн</text>
+    
+    <!-- Расстояние (отрицательный) -->
+    <rect x="110" y="114" width="140" height="26" fill="#dc2626" rx="3"/>
+    <!-- Название признака слева от полосы -->
+    <text x="105" y="132" text-anchor="end" class="label-bold-small" fill="#0f172a">Расстояние</text>
+    <!-- Значение внутри полосы (выровнено по левому краю полосы) -->
+    <text x="120" y="132" text-anchor="start" class="label-bold-small" fill="#ffffff">−0.5 млн / км</text>
+    
+    <!-- Возраст дома (отрицательный) -->
+    <rect x="160" y="156" width="90" height="26" fill="#ef4444" rx="3"/>
+    <!-- Название признака слева от полосы -->
+    <text x="155" y="174" text-anchor="end" class="label-bold-small" fill="#0f172a">Возраст дома</text>
+    <!-- Значение внутри полосы -->
+    <text x="170" y="174" text-anchor="start" class="label-bold-small" fill="#ffffff">−0.2 млн / год</text>
+    
+    <text x="250" y="220" text-anchor="middle" class="label-small">← снижает цену   |   повышает цену →</text>
+</svg>
+                <div class="viz-caption">
+                    <strong>Положительный вес</strong> (зелёный) — рост признака увеличивает целевую переменную. <strong>Отрицательный вес</strong> (красный) — рост признака уменьшает её. Чем длиннее полоса, тем сильнее влияние. Такую модель легко объяснить заказчику.
+                </div>
+            </div>
+
+            <!-- ВИЗ 3 -->
+            <div class="viz-card">
+                <div class="viz-title">📐 Почему «наименьших квадратов»: квадраты остатков</div>
+                <svg viewBox="0 0 500 290" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="500" height="290" fill="#ffffff"/>
+                    <line x1="50" y1="230" x2="450" y2="230" class="axis"/>
+                    <line x1="50" y1="30"  x2="50"  y2="230" class="axis"/>
+                    <line x1="60" y1="200" x2="440" y2="60" stroke="#dc2626" stroke-width="3" stroke-dasharray="8 4"/>
+                    <rect x="120" y="150" width="28" height="28" fill="#fecaca" fill-opacity="0.45" stroke="#dc2626" stroke-width="2.5"/>
+                    <line x1="120" y1="150" x2="120" y2="178" stroke="#dc2626" stroke-width="2"/>
+                    <rect x="220" y="95" width="46" height="46" fill="#fecaca" fill-opacity="0.45" stroke="#dc2626" stroke-width="2.5"/>
+                    <line x1="220" y1="95" x2="220" y2="141" stroke="#dc2626" stroke-width="2"/>
+                    <rect x="320" y="104" width="51" height="51" fill="#fecaca" fill-opacity="0.45" stroke="#dc2626" stroke-width="2.5"/>
+                    <line x1="320" y1="104" x2="320" y2="155" stroke="#dc2626" stroke-width="2"/>
+                    <circle cx="120" cy="150" r="5" fill="#1e40af" stroke="#ffffff" stroke-width="2"/>
+                    <circle cx="220" cy="95"  r="5" fill="#1e40af" stroke="#ffffff" stroke-width="2"/>
+                    <circle cx="320" cy="155" r="5" fill="#1e40af" stroke="#ffffff" stroke-width="2"/>
+                    <circle cx="400" cy="75"  r="5" fill="#1e40af" stroke="#ffffff" stroke-width="2"/>
+                    <text x="134" y="170" text-anchor="middle" class="label-bold-small" fill="#7f1d1d">28²</text>
+                    <text x="243" y="122" text-anchor="middle" class="label-bold-small" fill="#7f1d1d">46²</text>
+                    <text x="345" y="133" text-anchor="middle" class="label-bold-small" fill="#7f1d1d">51²</text>
+                    <text x="250" y="275" text-anchor="middle" class="label-strong">Сумма квадратов = 28² + 46² + 51² → минимально</text>
+                </svg>
+                <div class="viz-caption">
+                    Каждый остаток возводится в квадрат — это <strong>площадь квадрата</strong> на графике. Большие ошибки штрафуются сильнее (51² = 2601, а 28² = 784). Метод наименьших квадратов подбирает такую линию, чтобы сумма этих площадей была минимальной.
+                </div>
+            </div>
+
+            <!-- ВИЗ 4 -->
+            <div class="viz-card">
+                <div class="viz-title">⛰️ Градиентный спуск: как модель ищет минимум ошибки</div>
+                <svg viewBox="0 0 500 240" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="500" height="240" fill="#ffffff"/>
+                    <path d="M 50 40 Q 250 260 450 40" fill="none" stroke="#1e40af" stroke-width="3.5"/>
+                    <text x="250" y="230" text-anchor="middle" class="label-strong">Значение веса</text>
+                    <text x="22" y="120" text-anchor="middle" class="label-strong" transform="rotate(-90 22 120)">Ошибка</text>
+                    <circle cx="130" cy="110" r="5" fill="#dc2626" opacity="0.9"/>
+                    <circle cx="165" cy="140" r="5" fill="#dc2626" opacity="0.9"/>
+                    <circle cx="200" cy="160" r="5" fill="#dc2626" opacity="0.9"/>
+                    <circle cx="235" cy="170" r="5" fill="#dc2626" opacity="0.9"/>
+                    <circle cx="265" cy="173" r="5" fill="#dc2626" opacity="0.9"/>
+                    <circle class="gd-ball" cx="100" cy="88" r="9" fill="#dc2626" stroke="#ffffff" stroke-width="2.5"/>
+                    <line x1="250" y1="175" x2="250" y2="195" stroke="#16a34a" stroke-width="2.5" stroke-dasharray="3 3"/>
+                    <text x="250" y="212" text-anchor="middle" class="label-bold-small" fill="#15803d">минимум ошибки</text>
+                    <text x="100" y="72" text-anchor="middle" class="label-bold-small" fill="#991b1b">старт</text>
+                </svg>
+                <div class="viz-caption">
+                    Модель начинает со случайных весов. На каждом шаге вычисляет градиент — направление, в котором ошибка убывает быстрее всего. И делает маленький шаг вниз. <strong>Скорость обучения</strong> задаёт размер шага: слишком большой — можно перескочить минимум, слишком маленький — обучение будет долгим.
+                </div>
+            </div>
+
+            <!-- ВИЗ 5 -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 10px;">📏 Три метрики качества: MAE, MSE, R²</div>
+                <div class="grid-3">
+                    <div class="viz-card" style="padding: 14px;">
+                        <div style="font-size: 13px; font-weight: 700; color: #1e40af; margin-bottom: 8px;">Средняя абс. ошибка</div>
+                        <svg viewBox="0 0 160 110" width="100%">
+                            <line x1="10" y1="90" x2="150" y2="90" stroke="#334155" stroke-width="1.5"/>
+                            <line x1="10" y1="10" x2="10" y2="90" stroke="#334155" stroke-width="1.5"/>
+                            <path d="M 10 10 L 80 90 L 150 10" fill="none" stroke="#1e40af" stroke-width="3.5"/>
+                            <text x="80" y="105" text-anchor="middle" class="label-small">ошибка →</text>
+                            <text x="5" y="50" text-anchor="middle" class="label-small" transform="rotate(-90 5 50)">штраф →</text>
+                        </svg>
+                        <div style="font-size: 11.5px; color: #334155; margin-top: 6px; line-height: 1.45;">В исходных единицах. Легко объяснить заказчику: «в среднем ошибаемся на N рублей».</div>
+                    </div>
+                    <div class="viz-card" style="padding: 14px;">
+                        <div style="font-size: 13px; font-weight: 700; color: #b45309; margin-bottom: 8px;">Средняя кв. ошибка</div>
+                        <svg viewBox="0 0 160 110" width="100%">
+                            <line x1="10" y1="90" x2="150" y2="90" stroke="#334155" stroke-width="1.5"/>
+                            <line x1="10" y1="10" x2="10" y2="90" stroke="#334155" stroke-width="1.5"/>
+                            <path d="M 10 10 Q 80 170 150 10" fill="none" stroke="#d97706" stroke-width="3.5"/>
+                            <text x="80" y="105" text-anchor="middle" class="label-small">ошибка →</text>
+                            <text x="5" y="50" text-anchor="middle" class="label-small" transform="rotate(-90 5 50)">штраф →</text>
+                        </svg>
+                        <div style="font-size: 11.5px; color: #334155; margin-top: 6px; line-height: 1.45;">Сильнее штрафует большие ошибки. Чувствительна к выбросам.</div>
+                    </div>
+                    <div class="viz-card" style="padding: 14px;">
+                        <div style="font-size: 13px; font-weight: 700; color: #15803d; margin-bottom: 8px;">Коэффициент детерминации</div>
+                        <svg viewBox="0 0 160 110" width="100%">
+                            <line x1="10" y1="90" x2="150" y2="90" stroke="#334155" stroke-width="1.5"/>
+                            <line x1="10" y1="10" x2="10" y2="90" stroke="#334155" stroke-width="1.5"/>
+                            <line x1="15" y1="85" x2="145" y2="15" stroke="#16a34a" stroke-width="2" stroke-dasharray="3 2"/>
+                            <circle cx="30" cy="78" r="4" fill="#1e40af"/>
+                            <circle cx="55" cy="62" r="4" fill="#1e40af"/>
+                            <circle cx="80" cy="50" r="4" fill="#1e40af"/>
+                            <circle cx="105" cy="38" r="4" fill="#1e40af"/>
+                            <circle cx="130" cy="25" r="4" fill="#1e40af"/>
+                            <text x="80" y="105" text-anchor="middle" class="label-small">факт →</text>
+                            <text x="5" y="50" text-anchor="middle" class="label-small" transform="rotate(-90 5 50)">прогноз →</text>
+                        </svg>
+                        <div style="font-size: 11.5px; color: #334155; margin-top: 6px; line-height: 1.45;">Доля объяснённой дисперсии. От 0 до 1. Чем ближе к 1 — тем лучше.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ВИЗ 6 -->
+            <div class="viz-card">
+                <div class="viz-title">🎯 Что показывает R²: факт против прогноза</div>
+                <svg viewBox="0 0 500 260" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="500" height="260" fill="#ffffff"/>
+                    <line x1="50" y1="230" x2="460" y2="230" class="axis"/>
+                    <line x1="50" y1="30"  x2="50"  y2="230" class="axis"/>
+                    <line x1="60" y1="220" x2="450" y2="40" stroke="#16a34a" stroke-width="2.5" stroke-dasharray="6 3"/>
+                    <circle cx="90"  cy="210" r="6" fill="#1e40af" stroke="#fff" stroke-width="2"/>
+                    <circle cx="130" cy="190" r="6" fill="#1e40af" stroke="#fff" stroke-width="2"/>
+                    <circle cx="170" cy="175" r="6" fill="#1e40af" stroke="#fff" stroke-width="2"/>
+                    <circle cx="210" cy="155" r="6" fill="#1e40af" stroke="#fff" stroke-width="2"/>
+                    <circle cx="250" cy="130" r="6" fill="#1e40af" stroke="#fff" stroke-width="2"/>
+                    <circle cx="290" cy="115" r="6" fill="#1e40af" stroke="#fff" stroke-width="2"/>
+                    <circle cx="330" cy="90"  r="6" fill="#1e40af" stroke="#fff" stroke-width="2"/>
+                    <circle cx="370" cy="75"  r="6" fill="#1e40af" stroke="#fff" stroke-width="2"/>
+                    <circle cx="410" cy="55"  r="6" fill="#1e40af" stroke="#fff" stroke-width="2"/>
+                    <circle cx="450" cy="40"  r="6" fill="#1e40af" stroke="#fff" stroke-width="2"/>
+                    <text x="250" y="252" text-anchor="middle" class="label-strong">Реальные значения</text>
+                    <text x="22" y="130" text-anchor="middle" class="label-strong" transform="rotate(-90 22 130)">Предсказания</text>
+                    <text x="440" y="30" text-anchor="end" class="label-bold-small" fill="#15803d">идеал: y = x</text>
+                </svg>
+                <div class="viz-caption">
+                    Каждая точка — объект. По горизонтали — реальное значение, по вертикали — предсказание. Если модель идеальна, все точки лежат на зелёной диагонали. R² показывает, какая доля разброса объяснена моделью: <strong>чем ближе точки к диагонали — тем выше R²</strong>.
+                </div>
+            </div>
+
+            <!-- ВИЗ 7 -->
+            <div class="viz-card">
+                <div class="viz-title">⚠️ Мультиколлинеарность: когда признаки дублируют друг друга</div>
+                <div class="grid-2">
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #15803d; margin-bottom: 8px; text-align: center;">✅ Хорошо: признаки независимы</div>
+                        <svg viewBox="0 0 240 190" width="100%">
+                            <line x1="30" y1="160" x2="230" y2="160" stroke="#334155" stroke-width="1.5"/>
+                            <line x1="30" y1="10"  x2="30"  y2="160" stroke="#334155" stroke-width="1.5"/>
+                            <circle cx="60" cy="140" r="5" fill="#1e40af"/><circle cx="90" cy="80" r="5" fill="#1e40af"/>
+                            <circle cx="120" cy="130" r="5" fill="#1e40af"/><circle cx="150" cy="60" r="5" fill="#1e40af"/>
+                            <circle cx="70" cy="60" r="5" fill="#1e40af"/><circle cx="100" cy="110" r="5" fill="#1e40af"/>
+                            <circle cx="160" cy="130" r="5" fill="#1e40af"/><circle cx="180" cy="50" r="5" fill="#1e40af"/>
+                            <circle cx="130" cy="40" r="5" fill="#1e40af"/><circle cx="210" cy="110" r="5" fill="#1e40af"/>
+                            <circle cx="190" cy="140" r="5" fill="#1e40af"/><circle cx="50" cy="100" r="5" fill="#1e40af"/>
+                            <circle cx="215" cy="60" r="5" fill="#1e40af"/><circle cx="170" cy="90" r="5" fill="#1e40af"/>
+                            <text x="130" y="178" text-anchor="middle" class="label-small">Признак 1 →</text>
+                            <text x="15" y="85" text-anchor="middle" class="label-small" transform="rotate(-90 15 85)">Признак 2 →</text>
+                        </svg>
+                        <div style="font-size: 11.5px; color: #334155; text-align: center; margin-top: 6px;">Каждый признак несёт уникальную информацию</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #991b1b; margin-bottom: 8px; text-align: center;">❌ Плохо: признаки сильно коррелируют</div>
+                        <svg viewBox="0 0 240 190" width="100%">
+                            <line x1="30" y1="160" x2="230" y2="160" stroke="#334155" stroke-width="1.5"/>
+                            <line x1="30" y1="10"  x2="30"  y2="160" stroke="#334155" stroke-width="1.5"/>
+                            <circle cx="50" cy="145" r="5" fill="#dc2626"/><circle cx="70" cy="130" r="5" fill="#dc2626"/>
+                            <circle cx="90" cy="115" r="5" fill="#dc2626"/><circle cx="110" cy="100" r="5" fill="#dc2626"/>
+                            <circle cx="130" cy="85"  r="5" fill="#dc2626"/><circle cx="150" cy="70" r="5" fill="#dc2626"/>
+                            <circle cx="170" cy="55"  r="5" fill="#dc2626"/><circle cx="190" cy="40" r="5" fill="#dc2626"/>
+                            <circle cx="205" cy="25"  r="5" fill="#dc2626"/><circle cx="220" cy="15" r="5" fill="#dc2626"/>
+                            <line x1="42" y1="150" x2="228" y2="12" stroke="#dc2626" stroke-width="2" stroke-dasharray="4 3"/>
+                            <text x="130" y="178" text-anchor="middle" class="label-small">Признак 1 →</text>
+                            <text x="15" y="85" text-anchor="middle" class="label-small" transform="rotate(-90 15 85)">Признак 2 →</text>
+                        </svg>
+                        <div style="font-size: 11.5px; color: #334155; text-align: center; margin-top: 6px;">Признаки дублируют друг друга → веса нестабильны</div>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    <strong>Мультиколлинеарность</strong> возникает, когда признаки сильно коррелируют. Модель не может однозначно разделить их влияние: веса становятся огромными и меняют знак. Решения: удалить лишние признаки, объединить их или использовать <strong>регуляризацию</strong>.
+                </div>
+            </div>
+
+            <!-- ВИЗ 8 -->
+            <div class="viz-card">
+                <div class="viz-title">🛡️ Регуляризация: Ridge vs Lasso</div>
+                <svg viewBox="0 0 520 270" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="520" height="270" fill="#ffffff"/>
+                    <text x="95"  y="22" text-anchor="middle" class="label-strong" fill="#475569">Исходные веса</text>
+                    <text x="260" y="22" text-anchor="middle" class="label-strong" fill="#6d28d9">Ridge (L2)</text>
+                    <text x="425" y="22" text-anchor="middle" class="label-strong" fill="#991b1b">Lasso (L1)</text>
+                    <line x1="30"  y1="45" x2="160" y2="45" stroke="#334155" stroke-width="1.5"/>
+                    <line x1="195" y1="45" x2="325" y2="45" stroke="#334155" stroke-width="1.5"/>
+                    <line x1="360" y1="45" x2="490" y2="45" stroke="#334155" stroke-width="1.5"/>
+                    <rect x="95" y="60" width="50" height="18" fill="#1e40af" rx="2"/>
+                    <text x="30" y="74" class="label-bold-small" fill="#0f172a">β₁</text>
+                    <rect x="95" y="100" width="30" height="18" fill="#1e40af" rx="2"/>
+                    <text x="30" y="114" class="label-bold-small" fill="#0f172a">β₂</text>
+                    <rect x="50" y="140" width="45" height="18" fill="#1e40af" rx="2"/>
+                    <text x="30" y="154" class="label-bold-small" fill="#0f172a">β₃</text>
+                    <rect x="95" y="180" width="40" height="18" fill="#1e40af" rx="2"/>
+                    <text x="30" y="194" class="label-bold-small" fill="#0f172a">β₄</text>
+                    <rect x="260" y="60" width="35" height="18" fill="#7c3aed" rx="2"/>
+                    <rect x="260" y="100" width="21" height="18" fill="#7c3aed" rx="2"/>
+                    <rect x="230" y="140" width="30" height="18" fill="#7c3aed" rx="2"/>
+                    <rect x="260" y="180" width="28" height="18" fill="#7c3aed" rx="2"/>
+                    <rect x="425" y="60" width="40" height="18" fill="#dc2626" rx="2"/>
+                    <line x1="425" y1="109" x2="465" y2="109" stroke="#dc2626" stroke-width="2.5"/>
+                    <text x="445" y="113" text-anchor="middle" class="label-bold-small" fill="#991b1b">β₂=0</text>
+                    <line x1="425" y1="149" x2="465" y2="149" stroke="#dc2626" stroke-width="2.5"/>
+                    <text x="445" y="153" text-anchor="middle" class="label-bold-small" fill="#991b1b">β₃=0</text>
+                    <rect x="425" y="180" width="32" height="18" fill="#dc2626" rx="2"/>
+                    <text x="95"  y="232" text-anchor="middle" class="label-small">все ненулевые</text>
+                    <text x="260" y="232" text-anchor="middle" class="label-small">все уменьшились, но не обнулились</text>
+                    <text x="425" y="232" text-anchor="middle" class="label-small">часть признаков отброшена</text>
+                    <text x="260" y="255" text-anchor="middle" class="label-bold-small" fill="#475569">Ridge борется с мультиколлинеарностью · Lasso делает отбор признаков</text>
+                </svg>
+            </div>
+
+            <!-- ВИЗ 9 -->
+            <div class="viz-card">
+                <div class="viz-title">⚖️ Компромисс между смещением и разбросом</div>
+                <svg viewBox="0 0 500 260" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="500" height="260" fill="#ffffff"/>
+                    <line x1="50" y1="220" x2="470" y2="220" class="axis"/>
+                    <line x1="50" y1="20"  x2="50"  y2="220" class="axis"/>
+                    <path d="M 60 40 Q 150 70 255 170 Q 360 210 460 220" fill="none" stroke="#1e40af" stroke-width="3"/>
+                    <path d="M 60 220 Q 180 210 280 130 Q 380 60 460 30" fill="none" stroke="#d97706" stroke-width="3"/>
+                    <path d="M 60 35 Q 150 62 255 95 Q 360 45 460 25" fill="none" stroke="#dc2626" stroke-width="3.5" stroke-dasharray="8 4"/>
+                    <line x1="255" y1="20" x2="255" y2="220" stroke="#16a34a" stroke-width="2" stroke-dasharray="4 3"/>
+                    <circle cx="255" cy="95" r="8" fill="#16a34a" stroke="#ffffff" stroke-width="2.5"/>
+                    <text x="255" y="243" text-anchor="middle" class="label-bold-small" fill="#15803d">оптимум</text>
+                    <text x="65"  y="32" class="label-bold-small" fill="#1e40af">Смещение²</text>
+                    <text x="200" y="56" text-anchor="middle" class="label-bold-small" fill="#991b1b">Общая ошибка</text>
+                    <text x="455" y="26" text-anchor="end" class="label-bold-small" fill="#b45309">Разброс</text>
+                    <text x="130" y="253" text-anchor="middle" class="label-small">простая модель</text>
+                    <text x="390" y="253" text-anchor="middle" class="label-small">сложная модель</text>
+                    <text x="260" y="15" text-anchor="middle" class="label-strong">Сложность модели →</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Смещение</strong> падает с ростом сложности модели. <strong>Разброс</strong> растёт. <strong>Общая ошибка</strong> имеет минимум. Задача специалиста — найти эту «золотую середину» между недообучением (слева) и переобучением (справа).
+                </div>
+            </div>
+
+            <!-- ТАБЛИЦА РОЛЕЙ -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 8px;">👥 Кто и для каких задач использует линейную регрессию</div>
+                <table class="role-table">
+                    <thead>
+                        <tr><th style="width: 32%;">Роль аналитика</th><th>Типичные задачи</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="role-emoji">📈</span> <strong>Аналитик данных</strong></td><td>Прогноз выручки, обращений, среднего чека; оценка влияния скидок и каналов</td></tr>
+                        <tr><td><span class="role-emoji">💰</span> <strong>Финансовый аналитик</strong></td><td>Прогноз выручки и затрат, оценка окупаемости, чувствительность к курсу валют</td></tr>
+                        <tr><td><span class="role-emoji">🚀</span> <strong>Продуктовый аналитик</strong></td><td>Прогноз удержания, ARPU, числа активных; оценка влияния новых функций</td></tr>
+                        <tr><td><span class="role-emoji">🌐</span> <strong>Веб-аналитик</strong></td><td>Прогноз конверсии, глубины просмотра; оценка рекламных кампаний</td></tr>
+                        <tr><td><span class="role-emoji">📊</span> <strong>BI-аналитик</strong></td><td>Прогнозные линии на дашбордах; сравнение факта с ожидаемыми значениями</td></tr>
+                        <tr><td><span class="role-emoji">🗄️</span> <strong>Аналитик больших данных</strong></td><td>Базовая линия перед сложными моделями; отбор признаков через Lasso</td></tr>
+                        <tr><td><span class="role-emoji">📣</span> <strong>Маркетинговый аналитик</strong></td><td>Оценка эффективности каналов, прогноз продаж от бюджета, расчёт ROI</td></tr>
+                        <tr><td><span class="role-emoji">💼</span> <strong>Бизнес-аналитик</strong></td><td>Прогноз времени выполнения процессов, оценка влияния изменений</td></tr>
+                        <tr><td><span class="role-emoji">⚙️</span> <strong>Системный аналитик</strong></td><td>Прогноз нагрузки на систему, объёма данных</td></tr>
+                        <tr><td><span class="role-emoji">🎨</span> <strong>UX-аналитик</strong></td><td>Прогноз удовлетворённости от времени загрузки, числа шагов сценария</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="callout">
+                <strong>💡 Главный вывод</strong>
+                <p>Линейная регрессия — это не «слабый» алгоритм. Это <strong>базовая линия</strong>, с которой нужно сравнивать любую сложную модель. Если сложная модель не лучше линейной — она не нужна. Простота и интерпретируемость — это её главные преимущества, особенно в бизнес-задачах, где важно объяснить решение.</p>
+            </div>
+
+            <div class="video-section">
+                <div class="video-container">
+                    <iframe id="lecture-player" src="https://rutube.ru" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+                </div>
+                <div class="links-hub">
+                    <button onclick="changeVideo('https://rutube.ru/')" class="video-btn stop-btn">⏹ СТОП</button>
+                    <button onclick="changeVideo('https://rutube.ru/play/embed/')" class="video-btn rt-btn">📜 Лекция 13. Линейная регрессия</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="slide-footer">
+            Направление «Менеджмент» | Курс: Аналитика данных | Лекция 13: «Линейная регрессия: самый простой и самый важный алгоритм»
+        </div>
+    </div>
+
+    <div class="speaker-notes">
+        <div style="position: sticky; top: 0; background: #1a202c; padding: 20px 20px 10px 20px; border-bottom: 1px solid #4a5568; width: 100%; z-index: 100;">
+            <div class="notes-header" style="display: block; padding-bottom: 15px;">
+                <audio id="lecture-audio" preload="auto" controls
+                       src="https://archive.org/download/03_20261110_20261110/13.mp3"
+                       style="width: 100%; height: 32px; border-radius: 4px;"></audio>
+            </div>
+            <div style="width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                <iframe id="right-lecture-player" src="https://archive.org/embed/20261020_20261020_0955?autoplay=true&loop=true&muted=true" allow="clipboard-write; autoplay" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen style="border: none;"></iframe>
+            </div>
+        </div>
+
+        <div class="lecture-text" style="margin-top: 20px;">
+            <h3>📌 Линейная регрессия: самый простой и самый важный алгоритм</h3>
+            <p>Перейдём к конкретным алгоритмам. И первым будет линейная регрессия. Это самый простой алгоритм машинного обучения. И одновременно самый важный. Без понимания линейной регрессии невозможно понять более сложные методы. Поэтому разберём её подробно. Как в учебнике.</p>
+            <h4>Определение и основная идея</h4>
+            <p>Дадим определение. Линейная регрессия — это алгоритм машинного обучения с учителем. Он используется для задач регрессии. То есть для предсказания непрерывного числового значения. Название «линейная» означает, что алгоритм предполагает линейную зависимость между признаками и целевой переменной.</p>
+            <p>Поясним это на примере. Представьте, что мы хотим предсказать цену квартиры. У нас есть признаки. Площадь квартиры. Этаж. Расстояние до метро. Год постройки дома. Линейная регрессия предполагает, что цена складывается из этих признаков с некоторыми весами. Чем больше площадь — тем выше цена. Чем дальше от метро — тем ниже цена. И так далее.</p>
+            <p>Теперь дадим математическое описание. Но не пугайтесь. Мы опишем его словами. Линейная регрессия ищет такую формулу. Целевая переменная равна сумме нескольких слагаемых. Каждое слагаемое — это произведение одного признака на его вес. Плюс свободный член. Свободный член — это базовое значение, которое не зависит от признаков.</p>
+            <p>Поясним на примере. Формула может выглядеть так. Цена равна базовому значению. Плюс вес площади умножить на площадь. Плюс вес этажа умножить на этаж. Плюс вес расстояния умножить на расстояние. И так далее для всех признаков.</p>
+            <p>Каждый вес показывает важность своего признака. Если вес площади большой и положительный — площадь сильно влияет на цену. Если вес расстояния отрицательный — удаление от метро снижает цену. Если вес какого-то признака близок к нулю — этот признак почти не влияет на результат.</p>
+            <h4>Что означают веса модели</h4>
+            <p>Остановимся на весах подробнее. Это ключевое понятие линейной регрессии. Вес показывает, насколько изменится целевая переменная. Если соответствующий признак увеличится на единицу. При условии, что все остальные признаки остаются неизменными.</p>
+            <p>Приведём пример. Предположим, что вес площади равен некоторому числу. Это значит, что каждый дополнительный квадратный метр площади увеличивает цену квартиры на величину этого веса. Если вес этажа тоже ненулевой — каждый дополнительный этаж меняет цену на величину своего веса. И так далее.</p>
+            <p>Такая интерпретация очень ценна для бизнеса. Она позволяет объяснить, какой фактор на что влияет. И насколько сильно. Это главное преимущество линейной регрессии перед сложными алгоритмами. Она интерпретируема. Её можно объяснить заказчику простыми словами. А не показывать чёрный ящик.</p>
+            <h4>Как обучается модель: метод наименьших квадратов</h4>
+            <p>Теперь перейдём к вопросу обучения. Как алгоритм находит эти веса. Ведь изначально они неизвестны. Ответ такой. Веса подбираются так, чтобы модель делала как можно меньше ошибок на обучающих данных. А конкретно — чтобы сумма квадратов ошибок была минимальной.</p>
+            <p>Дадим определение. Метод наименьших квадратов — это способ обучения линейной регрессии. Он минимизирует сумму квадратов разностей между предсказанными и истинными значениями. Квадратов — потому что положительные и отрицательные ошибки не должны компенсировать друг друга. И большие ошибки должны штрафоваться сильнее, чем маленькие.</p>
+            <p>Поясним на примере. Представьте, что у нас есть несколько квартир. Для каждой известна истинная цена. Модель делает предсказания. Для каждой квартиры вычисляется разность между предсказанием и истиной. Эта разность возводится в квадрат. Все квадраты складываются. Получается одно число — суммарная ошибка. Метод наименьших квадратов ищет такие веса, при которых это число минимально.</p>
+            <p>Этот метод имеет аналитическое решение. То есть можно вычислить оптимальные веса по формуле. Через операции линейной алгебры. Для небольших задач это работает быстро. Для больших задач используют другой подход — градиентный спуск.</p>
+            <h4>Градиентный спуск: итеративный поиск минимума</h4>
+            <p>Дадим определение. Градиентный спуск — это итеративный метод оптимизации. Он используется, когда аналитическое решение найти трудно. Или когда данных слишком много. Идея метода в следующем. Мы начинаем со случайных весов. Затем многократно их корректируем. На каждом шаге двигаемся в направлении, где ошибка уменьшается быстрее всего.</p>
+            <p>Поясним на примере. Представьте, что вы стоите на склоне горы. И хотите спуститься в долину. Но видите только то, что вокруг вас. Тогда вы делаете маленький шаг в сторону самого крутого спуска. Затем снова смотрите вокруг. И снова делаете маленький шаг вниз. Постепенно вы добираетесь до дна долины.</p>
+            <p>Градиентный спуск работает так же. Роль «склона» играет функция ошибки. Роль «шага» играет скорость обучения. Скорость обучения — это гиперпараметр. Он определяет, насколько сильно меняются веса на каждом шаге. Если скорость слишком большая — можно перескочить минимум. Если слишком маленькая — обучение будет очень долгим. Поэтому правильный выбор скорости обучения — это важная часть работы специалиста.</p>
+            <h4>Метрики качества линейной регрессии</h4>
+            <p>Теперь перейдём к оценке качества. Как понять, что модель обучена хорошо. Для этого есть несколько метрик. Разберём три главные.</p>
+            <p><strong>Средняя абсолютная ошибка.</strong> Первая метрика называется средняя абсолютная ошибка. По-английски это mean absolute error. Но мы будем использовать русское название. Дадим определение. Средняя абсолютная ошибка — это среднее значение модулей разностей между предсказаниями и истинными значениями.</p>
+            <p>Поясним на примере. Предсказали цену одной квартиры с ошибкой в сто тысяч. Другой — с ошибкой в двести тысяч. Третьей — с ошибкой в пятьдесят тысяч. Средняя абсолютная ошибка будет равна среднему из этих трёх чисел. Это среднее отклонение в тех же единицах, что и целевая переменная. То есть в рублях.</p>
+            <p>Эта метрика легко интерпретируется. Она показывает, насколько в среднем мы ошибаемся. Причём в понятных единицах. Поэтому её часто используют для объяснения результатов заказчику.</p>
+            <p><strong>Средняя квадратичная ошибка.</strong> Вторая метрика называется средняя квадратичная ошибка. По-английски это mean squared error. Дадим определение. Средняя квадратичная ошибка — это среднее значение квадратов разностей между предсказаниями и истинными значениями.</p>
+            <p>Отличие от предыдущей метрики в том, что ошибки возводятся в квадрат. Это значит, что большие ошибки штрафуются сильнее. Если модель ошиблась на большую величину — метрика сильно возрастёт. Поэтому эта метрика чувствительна к выбросам. Она полезна, когда большие ошибки особенно недопустимы.</p>
+            <p>Обратите внимание на важную мысль. Квадратичная ошибка измеряется в квадратных единицах. Если целевая переменная в рублях — метрика в квадратных рублях. Это не очень удобно для интерпретации. Поэтому на практике часто используют корень из этой метрики. Он возвращает нас к исходным единицам.</p>
+            <p><strong>Коэффициент детерминации.</strong> Третья метрика называется коэффициент детерминации. По-английски это R-squared. Дадим определение. Коэффициент детерминации — это доля дисперсии целевой переменной, которую объяснила модель.</p>
+            <p>Поясним на примере. Если коэффициент детерминации равен единице — модель объясняет всю дисперсию. То есть предсказывает идеально. Если коэффициент равен нулю — модель не объясняет ничего лучше простого среднего. Если коэффициент отрицательный — модель работает хуже, чем простое среднее. Обычно значения лежат в диапазоне от нуля до единицы. Чем ближе к единице — тем лучше.</p>
+            <p>Эта метрика удобна для сравнения разных моделей между собой. Но у неё есть особенность. Она может быть обманчива при малом числе наблюдений. Поэтому всегда нужно смотреть и на другие метрики тоже.</p>
+            <h4>Проблемы и решения</h4>
+            <p><strong>Мультиколлинеарность.</strong> Первая проблема называется мультиколлинеарность. Дадим определение. Мультиколлинеарность — это ситуация, когда признаки сильно коррелируют друг с другом. То есть дублируют информацию. Например, если в модели есть признак «площадь в квадратных метрах» и признак «площадь в квадратных футах». Эти два признака несут одну и ту же информацию. Просто в разных единицах.</p>
+            <p>Почему это проблема. Потому что веса становятся нестабильными. Модель не может однозначно определить, какому признаку приписать эффект. Веса могут оказаться огромными. И знаки могут быть бессмысленными. Интерпретация такой модели теряет смысл.</p>
+            <p>Как обнаружить мультиколлинеарность. Есть разные способы. Самый простой — посчитать корреляции между признаками. Если корреляция больше определённого порога — это сигнал. Более строгий способ — рассчитать специальный показатель для каждого признака. Он называется фактор инфляции дисперсии.</p>
+            <p>Как бороться с мультиколлинеарностью. Первый способ — удалить один из коррелирующих признаков. Второй способ — объединить признаки в один. Например, взять их среднее. Третий способ — использовать регуляризацию. О ней поговорим дальше.</p>
+            <p><strong>Регуляризация: гребневая регрессия и лассо.</strong> Теперь перейдём к регуляризации. Это важный приём, который используют не только в линейной регрессии. Но и во многих других алгоритмах.</p>
+            <p>Дадим определение. Регуляризация — это добавление штрафа к функции ошибки. Штраф зависит от величины весов модели. Чем больше веса — тем больше штраф. Идея в том, чтобы заставить модель использовать меньшие веса. Это делает модель более устойчивой и менее склонной к переобучению.</p>
+            <p>Есть два основных вида регуляризации. Разберём каждый.</p>
+            <p><strong>Гребневая регрессия.</strong> Первый вид называется гребневая регрессия. По-английски это ridge regression. Или регуляризация второго порядка. Дадим определение. Гребневая регрессия добавляет к функции ошибки штраф, пропорциональный сумме квадратов весов.</p>
+            <p>Что это даёт на практике. Веса становятся меньше по модулю. Но при этом почти никогда не становятся равными нулю. Модель сохраняет все признаки. Но их влияние становится более сглаженным. Это помогает бороться с мультиколлинеарностью. И снижает риск переобучения.</p>
+            <p>Сила штрафа задаётся гиперпараметром. Если штраф равен нулю — это обычная линейная регрессия. Если штраф очень большой — все веса стремятся к нулю. И модель предсказывает почти константу. Поэтому важно подобрать правильное значение штрафа. Обычно это делается с помощью перекрёстной проверки.</p>
+            <p><strong>Лассо-регрессия.</strong> Второй вид называется лассо-регрессия. По-английски это lasso regression. Или регуляризация первого порядка. Дадим определение. Лассо-регрессия добавляет к функции ошибки штраф, пропорциональный сумме модулей весов.</p>
+            <p>Что это даёт на практике. Лассо не только уменьшает веса. Но и обнуляет некоторые из них. То есть фактически исключает часть признаков из модели. Это свойство называется встроенным отбором признаков. Оно очень полезно, когда признаков много. И нужно оставить только самые важные.</p>
+            <p>Поясним на примере. Представьте, что у нас сто признаков. Но реально на целевую переменную влияют только десять. Обычная линейная регрессия использует все сто. И может переобучиться. Лассо-регрессия обнулит веса девяноста неинформативных признаков. И оставит только десять важных. Модель станет проще. И лучше будет работать на новых данных.</p>
+            <h4>Когда линейная регрессия работает хорошо</h4>
+            <p>Первое условие — зависимость близка к линейной. Если связь между признаками и целевой переменной примерно линейна — линейная регрессия будет работать хорошо. Если зависимость сложная и нелинейная — линейная регрессия может не справиться. Но даже в этом случае её полезно использовать как базовую линию.</p>
+            <p>Второе условие — признаков не слишком много. И они не сильно коррелируют. Если признаков сотни и они дублируют друг друга — нужна регуляризация. Или другие методы.</p>
+            <p>Третье условие — нужна интерпретируемость. Если заказчику важно объяснить, какой признак на что влияет — линейная регрессия даёт такой ответ. Она интерпретируема. Её коэффициенты имеют понятный смысл.</p>
+            <h4>Примеры применения по ролям аналитиков</h4>
+            <p><strong>Аналитик данных</strong> использует линейную регрессию очень часто. Типичные задачи — это прогнозирование ключевых метрик. Например, прогноз месячной выручки по историческим данным. Или прогноз числа обращений в поддержку по дням недели. Или прогноз среднего чека в зависимости от сезона и канала привлечения. Кроме того, он использует её для оценки влияния факторов: насколько каждая дополнительная скидка влияет на объём продаж.</p>
+            <p><strong>Финансовый аналитик</strong> применяет линейную регрессию для финансового моделирования. Прогноз выручки компании на основе исторических данных и макроэкономических показателей. Прогноз затрат по статьям бюджета. Оценка окупаемости инвестиционного проекта. Оценка чувствительности: как изменится прибыль при изменении курса валют или ключевой ставки.</p>
+            <p><strong>Продуктовый аналитик</strong> использует её для прогнозирования продуктовых метрик. Прогноз удержания пользователей по когортам. Прогноз среднего дохода на пользователя. Прогноз числа активных пользователей в зависимости от сезонности. Оценка влияния изменений в продукте: насколько новая функция увеличила время в приложении.</p>
+            <p><strong>Веб-аналитик</strong> применяет её для анализа поведения на сайте. Прогноз конверсии в зависимости от источника трафика. Прогноз глубины просмотра в зависимости от типа страницы. Прогноз отказов в зависимости от времени загрузки. Оценка рекламных кампаний: насколько дополнительные затраты на рекламу увеличивают число регистраций.</p>
+            <p><strong>Специалист по аналитике бизнес-данных</strong> использует линейную регрессию при построении дашбордов. Прогнозные линии на графиках. Например, дашборд продаж может содержать не только фактические значения, но и прогноз на следующий месяц. Кроме того, он применяет её для оценки эффективности подразделений: сравнение фактических результатов с ожидаемыми.</p>
+            <p><strong>Аналитик больших данных</strong> использует линейную регрессию как базовую линию. Быстрая оценка задачи перед применением сложных алгоритмов. Если линейная регрессия справляется хорошо — можно не усложнять. Если плохо — становится понятно, что зависимости нелинейные. Кроме того, он применяет лассо-регрессию для отбора признаков, когда признаков тысячи или десятки тысяч.</p>
+            <p><strong>Маркетинговый аналитик</strong> использует её для оценки эффективности рекламных каналов. Прогноз продаж в зависимости от бюджета на каждый канал. На основе этой модели можно распределить бюджет оптимально между каналами. Кроме того, он применяет её для расчёта окупаемости инвестиций в маркетинг: сколько дополнительной выручки приносит каждый рубль, вложенный в рекламу.</p>
+            <p><strong>Бизнес-аналитик</strong> использует линейную регрессию реже. Но в некоторых задачах она полезна. Например, для прогнозирования времени выполнения бизнес-процесса. Или для оценки влияния изменений в процессе на итоговый результат.</p>
+            <p><strong>Системный аналитик</strong> использует её ещё реже. Но в задачах оценки нагрузки на систему она может пригодиться. Прогнозирование времени отклика системы в зависимости от числа пользователей. Прогнозирование объёма данных в зависимости от темпа роста.</p>
+            <p><strong>Специалист по анализу пользовательского опыта</strong> использует линейную регрессию для оценки удовлетворённости пользователей. Прогноз оценки удобства интерфейса в зависимости от времени загрузки. Прогноз удовлетворённости от числа шагов в сценарии. Это помогает приоритизировать улучшения интерфейса.</p>
+            <h4>Подведём итог блока</h4>
+            <p>Давайте соберём всё вместе. Мы разобрали линейную регрессию подробно. Мы увидели её идею. Мы поняли, что она ищет линейную зависимость между признаками и целевой переменной. Мы разобрали метод наименьших квадратов и градиентный спуск. Мы познакомились с тремя метриками качества. Мы узнали о мультиколлинеарности и о регуляризации. И мы увидели конкретные примеры применения в работе разных аналитиков.</p>
+            <p>Запомните главное. Линейная регрессия — это не «слабый» алгоритм. Это базовая линия. С ней нужно сравнивать любую сложную модель. Если сложная модель не лучше линейной — она не нужна. Простота — это преимущество. А не недостаток. И интерпретируемость линейной регрессии — это её главная сила. Особенно в бизнес-задачах, где нужно объяснить решение.</p>
+
+            <div class="dark-block">
+                <div class="dark-block-title">📖 Словарь терминов и аббревиатур</div>
+                <table class="dark-table">
+                    <thead>
+                        <tr><th style="width:22%;">Термин</th><th style="width:30%;">Расшифровка</th><th>Пояснение</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="term">Линейная регрессия</td><td>Linear Regression</td><td>Алгоритм для предсказания непрерывного числа</td></tr>
+                        <tr><td class="term">Метод наименьших квадратов</td><td>Ordinary Least Squares</td><td>Минимизация суммы квадратов ошибок</td></tr>
+                        <tr><td class="term">Градиентный спуск</td><td>Gradient Descent</td><td>Итеративный метод оптимизации весов</td></tr>
+                        <tr><td class="term">Скорость обучения</td><td>Learning Rate</td><td>Гиперпараметр, задающий размер шага</td></tr>
+                        <tr><td class="term">Средняя абсолютная ошибка</td><td>MAE</td><td>Среднее из модулей разностей</td></tr>
+                        <tr><td class="term">Средняя квадратичная ошибка</td><td>MSE</td><td>Среднее из квадратов разностей</td></tr>
+                        <tr><td class="term">Коэффициент детерминации</td><td>R-squared</td><td>Доля объяснённой дисперсии</td></tr>
+                        <tr><td class="term">Мультиколлинеарность</td><td>Multicollinearity</td><td>Сильная корреляция признаков между собой</td></tr>
+                        <tr><td class="term">Регуляризация</td><td>Regularization</td><td>Штраф за большие веса</td></tr>
+                        <tr><td class="term">Гребневая регрессия</td><td>Ridge Regression</td><td>Штраф за сумму квадратов весов</td></tr>
+                        <tr><td class="term">Лассо-регрессия</td><td>Lasso Regression</td><td>Штраф за сумму модулей весов, обнуляет признаки</td></tr>
+                        <tr><td class="term">Фактор инфляции дисперсии</td><td>VIF</td><td>Показатель мультиколлинеарности</td></tr>
+                        <tr><td class="term">Базовая линия</td><td>Baseline</td><td>Простейшая модель для сравнения</td></tr>
+                        <tr><td class="term">Остаток</td><td>Residual</td><td>Разность между фактом и прогнозом</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function changeVideo(embedUrl) {
+            document.getElementById('lecture-player').src = embedUrl;
+        }
+    </script>
+
+  <!-- НАВИГАЦИЯ МЕЖДУ ЛЕКЦИЯМИ -->
+<nav class="lecture-nav" id="lectureNav">
+    <div class="nav-progress" id="navProgress" style="width: 0%;"></div>
+    <a href="Лекция (N-1).html" class="nav-btn-arrow" id="prevBtn">
+        <span class="arrow-icon">←</span>
+        <span class="arrow-label">
+            <small>Назад</small>
+            <span class="arrow-title" id="prevTitle">Лекция (N-1)</span>
+        </span>
+    </a>
+    <div class="nav-center">
+        <div class="nav-counter">Лекция <span id="currentNum">N</span> <span>из 21</span></div>
+        <a href="index.html" class="nav-index-link">📚 К содержанию</a>
+    </div>
+    <a href="Лекция (N+1).html" class="nav-btn-arrow" id="nextBtn">
+        <span class="arrow-label" style="align-items: flex-end;">
+            <small>Вперёд</small>
+            <span class="arrow-title" id="nextTitle">Лекция (N+1)</span>
+        </span>
+        <span class="arrow-icon">→</span>
+    </a>
+</nav>
+
+
+
+<script>
+(function () {
+    'use strict';
+
+    // =========================================================
+    // НАСТРОЙКИ
+    // =========================================================
+    const TOTAL_LECTURES = 21;                         // всего лекций в курсе
+    const totalDurationMs = (22 * 60 + 30) * 1000;     // длительность автопрокрутки
+    const autoNextDelayMs = 2000;                      // задержка автоперехода
+    const AUTOSTART_PARAM = 'autostart';
+
+    // =========================================================
+    // ОПРЕДЕЛЕНИЕ НОМЕРА ТЕКУЩЕЙ ЛЕКЦИИ
+    // =========================================================
+    const fileName = decodeURIComponent(location.pathname.split('/').pop() || '');
+    let currentLecture = 1;
+
+    // 1) Пытаемся извлечь номер из имени файла "Лекция 7.html"
+    const match = fileName.match(/Лекция\s*(\d+)\.html/i);
+    if (match) {
+        currentLecture = parseInt(match[1], 10);
+    } else {
+        // 2) Fallback: берём из HTML-счётчика
+        const el = document.getElementById('currentNum');
+        if (el) currentLecture = parseInt(el.textContent, 10) || 1;
+    }
+
+    // Ограничиваем допустимым диапазоном
+    if (isNaN(currentLecture) || currentLecture < 1) currentLecture = 1;
+    if (currentLecture > TOTAL_LECTURES) currentLecture = TOTAL_LECTURES;
+
+    // =========================================================
+    // ОПРЕДЕЛЕНИЕ СОСЕДНИХ ЛЕКЦИЙ
+    // =========================================================
+    const prev = currentLecture > 1 ? currentLecture - 1 : null;
+    const next = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+
+    // =========================================================
+    // ОБНОВЛЕНИЕ СЧЁТЧИКА И ПРОГРЕСС-БАРА
+    // =========================================================
+    const currentNumEl = document.getElementById('currentNum');
+    if (currentNumEl) currentNumEl.textContent = currentLecture;
+
+    const navProgress = document.getElementById('navProgress');
+    if (navProgress) {
+        navProgress.style.width = (currentLecture / TOTAL_LECTURES * 100) + '%';
+    }
+
+    // =========================================================
+    // НАСТРОЙКА КНОПКИ "НАЗАД"
+    // =========================================================
+    const prevBtn = document.getElementById('prevBtn');
+    if (prevBtn) {
+        if (prev) {
+            prevBtn.href = 'Лекция ' + prev + '.html';
+            const t = document.getElementById('prevTitle');
+            if (t) t.textContent = 'Лекция ' + prev;
+            prevBtn.style.opacity = '1';
+            prevBtn.style.cursor = 'pointer';
+            prevBtn.onclick = null;
+        } else {
+            prevBtn.removeAttribute('href');
+            prevBtn.style.opacity = '0.35';
+            prevBtn.style.cursor = 'not-allowed';
+            prevBtn.onclick = (e) => e.preventDefault();
+            const t = document.getElementById('prevTitle');
+            if (t) t.textContent = 'Это первая лекция';
+        }
+    }
+
+    // =========================================================
+    // НАСТРОЙКА КНОПКИ "ВПЕРЁД"
+    // =========================================================
+    const nextBtn = document.getElementById('nextBtn');
+    if (nextBtn) {
+        if (next) {
+            nextBtn.href = 'Лекция ' + next + '.html';
+            const t = document.getElementById('nextTitle');
+            if (t) t.textContent = 'Лекция ' + next;
+            nextBtn.style.opacity = '1';
+            nextBtn.style.cursor = 'pointer';
+            nextBtn.onclick = null;
+        } else {
+            nextBtn.removeAttribute('href');
+            nextBtn.style.opacity = '0.35';
+            nextBtn.style.cursor = 'not-allowed';
+            nextBtn.onclick = (e) => e.preventDefault();
+            const t = document.getElementById('nextTitle');
+            if (t) t.textContent = 'Это последняя лекция';
+        }
+    }
+
+    // =========================================================
+    // КЛАВИАТУРНАЯ НАВИГАЦИЯ
+    // =========================================================
+    document.addEventListener('keydown', (e) => {
+        const tag = e.target && e.target.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+        if (e.key === 'ArrowLeft' && prev) {
+            window.location.href = 'Лекция ' + prev + '.html';
+        } else if (e.key === 'ArrowRight' && next) {
+            window.location.href = 'Лекция ' + next + '.html';
+        } else if (e.key === 'Home') {
+            window.location.href = 'index.html';
+        }
+    });
+
+    // =========================================================
+    // АВТОПРОКРУТКА И СИНХРОНИЗАЦИЯ ПАНЕЛЕЙ
+    // =========================================================
+    function initScroll() {
+        const studentBlock = document.querySelector('.student-view');
+        const speakerBlock = document.querySelector('.speaker-notes');
+        const badge = document.getElementById('scroll-status-badge');
+        const audio = document.getElementById('lecture-audio');
+        if (!studentBlock || !speakerBlock) return;
+
+        const studentBehavior = studentBlock.style.scrollBehavior;
+        const speakerBehavior = speakerBlock.style.scrollBehavior;
+        let isRunning = false, completed = false, pausedElapsed = 0, startedAt = 0, rafId = null;
+        let startS = 0, startP = 0, maxS = 0, maxP = 0;
+
+        function setBadge(text, color) {
+            if (!badge) return;
+            badge.style.display = 'block';
+            badge.textContent = text;
+            badge.style.borderColor = color;
+        }
+        function measure() {
+            maxS = Math.max(studentBlock.scrollHeight - studentBlock.clientHeight, 0);
+            maxP = Math.max(speakerBlock.scrollHeight - speakerBlock.clientHeight, 0);
+        }
+        function fmt(ms) {
+            const m = Math.floor(ms / 60000);
+            const s = Math.floor((ms % 60000) / 1000);
+            return m + ':' + String(s).padStart(2, '0');
+        }
+        function playAudio() {
+            if (!audio) return;
+            const p = audio.play();
+            if (p && typeof p.catch === 'function') {
+                p.catch(err => {
+                    console.warn('[AutoAudio]', err.message);
+                    setBadge('▶ ИДЕТ ПРОКРУТКА (звук заблокирован)', '#eab308');
+                });
+            }
+        }
+        function pauseAudio() { if (audio) try { audio.pause(); } catch (_) {} }
+        function resetAudio() { if (audio) try { audio.pause(); audio.currentTime = 0; } catch (_) {} }
+
+        function animate() {
+            if (!isRunning) return;
+            const elapsed = pausedElapsed + (performance.now() - startedAt);
+            const fraction = Math.min(elapsed / totalDurationMs, 1);
+            measure();
+            studentBlock.scrollTop = startS + (maxS - startS) * fraction;
+            speakerBlock.scrollTop = startP + (maxP - startP) * fraction;
+            if (badge) {
+                badge.textContent = '▶ ' + fmt(elapsed) + ' / 25:00';
+                badge.style.borderColor = '#16a34a';
+            }
+            if (fraction >= 1) { finish(); return; }
+            rafId = requestAnimationFrame(animate);
+        }
+
+        function startOrResume() {
+            if (completed) {
+                pausedElapsed = 0; completed = false;
+                studentBlock.scrollTop = 0; speakerBlock.scrollTop = 0;
+                resetAudio();
+            }
+            measure();
+            startS = studentBlock.scrollTop;
+            startP = speakerBlock.scrollTop;
+            startedAt = performance.now();
+            isRunning = true;
+            studentBlock.style.scrollBehavior = 'auto';
+            speakerBlock.style.scrollBehavior = 'auto';
+            cancelAnimationFrame(rafId);
+            rafId = requestAnimationFrame(animate);
+            playAudio();
+        }
+        function pause() {
+            if (isRunning) pausedElapsed += performance.now() - startedAt;
+            isRunning = false;
+            cancelAnimationFrame(rafId);
+            setBadge('⏸ ПАУЗА ' + fmt(pausedElapsed), '#dc2626');
+            studentBlock.style.scrollBehavior = studentBehavior;
+            speakerBlock.style.scrollBehavior = speakerBehavior;
+            pauseAudio();
+        }
+        function finish() {
+            isRunning = false; completed = true;
+            cancelAnimationFrame(rafId);
+            measure();
+            studentBlock.scrollTop = maxS;
+            speakerBlock.scrollTop = maxP;
+            studentBlock.style.scrollBehavior = studentBehavior;
+            speakerBlock.style.scrollBehavior = speakerBehavior;
+
+            const nextLec = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+            if (nextLec) {
+                setBadge('✅ ГОТОВО → Лекция ' + nextLec, '#16a34a');
+                setTimeout(() => {
+                    location.href = 'Лекция ' + nextLec + '.html?' + AUTOSTART_PARAM + '=1';
+                }, autoNextDelayMs);
+            } else {
+                setBadge('✅ КУРС ЗАВЕРШЕН', '#16a34a');
+                pauseAudio();
+            }
+        }
+        function toggle() { isRunning ? pause() : startOrResume(); }
+
+        // Пробел — старт/пауза
+        window.addEventListener('keydown', (e) => {
+            if (e.repeat) return;
+            const t = e.target; const tag = t && t.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+            if (e.code === 'Space' || e.key === ' ') {
+                e.preventDefault();
+                toggle();
+            }
+        }, true);
+
+        if (badge) badge.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+        [studentBlock, speakerBlock].forEach(el => {
+            el.addEventListener('click', (e) => {
+                if (e.target.closest('a,button,iframe,input,textarea,select,video,audio')) return;
+                if (window.getSelection().toString().length > 0) return;
+                toggle();
+            });
+        });
+
+        // Автостарт при переходе с предыдущей лекции
+        const params = new URLSearchParams(location.search);
+        if (params.get(AUTOSTART_PARAM) === '1') {
+            params.delete(AUTOSTART_PARAM);
+            const clean = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
+            history.replaceState(null, '', clean);
+            setTimeout(startOrResume, 500);
+        } else {
+            setBadge('▶ ПРОБЕЛ / КЛИК — старт', '#4a5568');
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initScroll, { once: true });
+    } else {
+        initScroll();
+    }
+})();
+</script>
+
+</body>
+</html>

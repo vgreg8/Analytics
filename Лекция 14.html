@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лекция 14. Метод k-ближайших соседей: «скажи мне, кто твои соседи»</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #ffffff; }
+        .student-view { width: 66.66%; height: 100vh; background: #ffffff; padding: 35px 40px; display: flex; flex-direction: column; justify-content: space-between; border-right: 2px solid #e2e8f0; overflow-y: auto; scroll-behavior: smooth; }
+        .speaker-notes { width: 33.34%; height: 100%; background: #1a202c; color: #edf2f7; padding: 30px; overflow-y: auto; }
+        .slide-header { font-size: 24px; color: #1a365d; font-weight: bold; line-height: 1.3; margin-bottom: 18px; border-bottom: 4px solid #3182ce; padding-bottom: 12px; }
+        .slide-body { flex-grow: 1; display: flex; flex-direction: column; gap: 18px; padding: 5px 0; }
+        .slide-footer { font-size: 13px; color: #a0aec0; text-align: right; margin-top: 12px; }
+        .chart-box { background: #f7fafc; border: 2.5px dashed #cbd5e0; padding: 20px; border-radius: 12px; }
+        .chart-box strong { font-size: 16px; display: block; margin-bottom: 6px; }
+        .chart-box p { font-size: 13px; color: #4a5568; line-height: 1.45; }
+        .viz-card { background: #ffffff; border: 2px solid #e2e8f0; border-radius: 12px; padding: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.04); }
+        .viz-title { font-size: 14px; font-weight: bold; color: #1a365d; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .viz-caption { font-size: 11.5px; color: #4a5568; margin-top: 8px; line-height: 1.45; }
+        .viz-caption strong { color: #2d3748; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .stat-box { border-radius: 10px; padding: 14px; text-align: center; border: 2px solid; }
+        .stat-box .stat-icon { font-size: 26px; }
+        .stat-box .stat-number { font-size: 13px; font-weight: 900; margin-top: 4px; }
+        .stat-box .stat-label { font-size: 10.5px; color: #4a5568; margin-top: 2px; line-height: 1.3; }
+        .stat-box.eucl { background: #ebf8ff; border-color: #90cdf4; }
+        .stat-box.eucl .stat-number { color: #2b6cb0; }
+        .stat-box.manh { background: #fffaf0; border-color: #fbd38d; }
+        .stat-box.manh .stat-number { color: #975a16; }
+        .stat-box.cos { background: #f0fff4; border-color: #9ae6b4; }
+        .stat-box.cos .stat-number { color: #276749; }
+        .formula-box { background: linear-gradient(135deg, #1a202c, #2d3748); color: #edf2f7; padding: 16px 20px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .formula-main { font-family: 'Courier New', monospace; font-size: 14px; letter-spacing: 0.5px; color: #90cdf4; }
+        .formula-example { font-size: 11.5px; color: #cbd5e0; margin-top: 8px; line-height: 1.5; }
+        .tag { display: inline-block; background: #ebf8ff; color: #2b6cb0; padding: 2px 7px; border-radius: 4px; font-size: 11px; margin: 2px 2px 2px 0; font-weight: 500; }
+        .tag.green { background: #f0fff4; color: #276749; }
+        .tag.red { background: #fff5f5; color: #9b2c2c; }
+        .tag.orange { background: #fffaf0; color: #975a16; }
+        .tag.purple { background: #faf5ff; color: #553c9a; }
+        .callout { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 6px; }
+        .callout strong { color: #92400e; font-size: 13px; }
+        .callout p { font-size: 12px; color: #78350f; margin-top: 4px; line-height: 1.45; }
+        .callout.warn { background: #fff5f5; border-left-color: #e53e3e; }
+        .callout.warn strong { color: #9b2c2c; }
+        .callout.warn p { color: #742a2a; }
+        .callout.ok { background: #f0fff4; border-left-color: #38a169; }
+        .callout.ok strong { color: #276749; }
+        .callout.ok p { color: #22543d; }
+        .role-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+        .role-table th { background: #1a365d; color: white; padding: 8px 10px; text-align: left; font-weight: 600; }
+        .role-table td { padding: 7px 10px; border-bottom: 1px solid #e2e8f0; color: #2d3748; vertical-align: top; }
+        .role-table tr:nth-child(even) td { background: #f7fafc; }
+        .role-table .role-emoji { font-size: 16px; }
+        .compare-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .compare-table th { background: #1a365d; color: white; padding: 9px 11px; text-align: left; font-weight: 600; }
+        .compare-table td { padding: 8px 11px; border-bottom: 1px solid #e2e8f0; color: #2d3748; vertical-align: top; }
+        .compare-table tr:nth-child(even) td { background: #f7fafc; }
+        /* SVG styles */
+        .axis { stroke: #4a5568; stroke-width: 1.5; }
+        .grid-line { stroke: #e2e8f0; stroke-width: 0.8; }
+        .label { font-family: 'Segoe UI', sans-serif; font-size: 11px; fill: #4a5568; }
+        .label-strong { font-family: 'Segoe UI', sans-serif; font-size: 12px; font-weight: 700; fill: #1a365d; }
+        .label-small { font-family: 'Segoe UI', sans-serif; font-size: 9.5px; fill: #718096; }
+        .classA { fill: #3182ce; stroke: #ffffff; stroke-width: 1.5; }
+        .classB { fill: #dd6b20; stroke: #ffffff; stroke-width: 1.5; }
+        .new-point { fill: #e53e3e; stroke: #ffffff; stroke-width: 2; }
+        .circle-k1 { fill: none; stroke: #e53e3e; stroke-width: 1.8; stroke-dasharray: 6 3; }
+        .circle-k3 { fill: none; stroke: #d69e2e; stroke-width: 1.8; stroke-dasharray: 6 3; }
+        .circle-k7 { fill: none; stroke: #38a169; stroke-width: 1.8; stroke-dasharray: 6 3; }
+        .video-section { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 5px; }
+        .video-container { width: 100%; max-width: 580px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: #000; aspect-ratio: 16 / 9; }
+        .links-hub { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .video-btn { text-decoration: none; padding: 9px 14px; border-radius: 6px; font-size: 12px; font-weight: bold; color: white; display: flex; align-items: center; gap: 6px; transition: transform 0.2s, background 0.2s; cursor: pointer; border: none; }
+        .video-btn:hover { transform: translateY(-2px); }
+        .rt-btn { background: #00a877; }
+        .rt-btn:hover { background: #008f65; }
+        .stop-btn { background: #dc143c; }
+        .stop-btn:hover { background: #b01030; }
+        .notes-header { font-size: 17px; color: #63b3ed; font-weight: bold; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a5568; padding-bottom: 10px; }
+        .lecture-text { font-size: 14.5px; line-height: 1.65; color: #e2e8f0; text-align: justify; }
+        .lecture-text p { margin-bottom: 14px; }
+        .lecture-text h3 { color: #63b3ed; font-size: 15px; margin: 18px 0 10px; border-bottom: 1px solid #2d3748; padding-bottom: 5px; }
+        .lecture-text h4 { color: #90cdf4; font-size: 13.5px; margin: 14px 0 8px; }
+        .lecture-text ul { margin: 8px 0 14px 18px; }
+        .lecture-text li { margin-bottom: 6px; }
+        .dark-block { background: #2d3748; border: 1px solid #4a5568; border-radius: 10px; padding: 16px 18px; margin-top: 20px; }
+        .dark-block-title { font-size: 14px; font-weight: bold; color: #63b3ed; margin-bottom: 12px; border-bottom: 2px solid #4a5568; padding-bottom: 8px; }
+        .dark-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+        .dark-table th { background: #1a202c; color: #90cdf4; padding: 7px 9px; text-align: left; font-weight: 600; border-bottom: 1px solid #4a5568; }
+        .dark-table td { padding: 6px 9px; border-bottom: 1px solid #2d3748; color: #cbd5e0; vertical-align: top; line-height: 1.4; }
+        .dark-table tr:nth-child(even) td { background: #2a3242; }
+        .dark-table .term { font-weight: bold; color: #90cdf4; white-space: nowrap; }
+        .lecture-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(12px); border-top: 2px solid rgba(255, 255, 255, 0.08); padding: 12px 20px; display: flex; align-items: center; justify-content: center; gap: 12px; z-index: 9999; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25); font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .lecture-nav .nav-progress { position: absolute; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899); border-radius: 0 3px 3px 0; }
+        .lecture-nav .nav-btn-arrow { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); border: 1.5px solid rgba(255, 255, 255, 0.15); color: #e2e8f0; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; font-family: inherit; }
+        .lecture-nav .nav-btn-arrow:hover:not(:disabled) { background: rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.6); color: white; transform: translateY(-2px); }
+        .lecture-nav .nav-btn-arrow:disabled { opacity: 0.35; cursor: not-allowed; }
+        .lecture-nav .nav-btn-arrow .arrow-icon { font-size: 16px; line-height: 1; }
+        .lecture-nav .nav-btn-arrow .arrow-label { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+        .lecture-nav .nav-btn-arrow .arrow-label small { font-size: 9.5px; font-weight: 400; opacity: 0.7; text-transform: uppercase; }
+        .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { font-size: 12px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lecture-nav .nav-center { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 20px; color: #94a3b8; font-size: 11px; border-left: 1px solid rgba(255, 255, 255, 0.1); border-right: 1px solid rgba(255, 255, 255, 0.1); }
+        .lecture-nav .nav-counter { font-size: 15px; font-weight: 900; color: #f1f5f9; }
+        .lecture-nav .nav-counter span { color: #64748b; font-size: 12px; font-weight: 600; }
+        .lecture-nav .nav-index-link { color: #60a5fa; text-decoration: none; font-size: 11px; font-weight: 600; }
+        .lecture-nav .nav-index-link:hover { color: #93c5fd; text-decoration: underline; }
+        body { padding-bottom: 80px !important; }
+        @media (max-width: 900px) {
+            .lecture-nav { padding: 10px 12px; gap: 8px; }
+            .lecture-nav .nav-btn-arrow { padding: 8px 12px; }
+            .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { max-width: 90px; font-size: 11px; }
+            .grid-2, .grid-3, .stat-grid { grid-template-columns: 1fr; }
+        }
+        @keyframes pulseRed {
+            0%, 100% { r: 8; opacity: 1; }
+            50% { r: 10; opacity: 0.85; }
+        }
+        .pulse-new { animation: pulseRed 2s ease-in-out infinite; }
+        @keyframes dashMove {
+            to { stroke-dashoffset: -20; }
+        }
+        .dash-animated { animation: dashMove 2s linear infinite; }
+    </style>
+</head>
+<body>
+
+    <div class="student-view">
+        <div class="slide-header">
+            Лекция 14. Метод k-ближайших соседей: «скажи мне, кто твои соседи»
+        </div>
+
+        <div class="slide-body">
+
+            <div class="chart-box" style="background: #ebf8ff; border-color: #90cdf4;">
+                <strong style="color: #2b6cb0;">🎯 Главная идея</strong>
+                <p>Чтобы предсказать значение для нового объекта, нужно найти <strong>k похожих объектов</strong> в обучающей выборке. Для классификации — голосование соседей. Для регрессии — усреднение их значений. У алгоритма <strong>нет явной фазы обучения</strong>: все вычисления происходят в момент предсказания.</p>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 1: ГЛАВНАЯ КАРТИНКА С КРУГАМИ k=1, k=3, k=7 -->
+            <div class="viz-card">
+                <div class="viz-title">🎯 Как работает метод: новый объект и три значения k</div>
+                <svg viewBox="0 0 520 400" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="520" height="400" fill="#ffffff"/>
+
+                    <!-- Grid -->
+                    <line x1="40" y1="180" x2="480" y2="180" class="grid-line"/>
+                    <line x1="260" y1="20"  x2="260" y2="340" class="grid-line"/>
+
+                    <!-- Circles -->
+                    <circle cx="260" cy="180" r="70" class="circle-k7"/>
+                    <circle cx="260" cy="180" r="48" class="circle-k3"/>
+                    <circle cx="260" cy="180" r="34" class="circle-k1"/>
+
+                    <!-- Far points (outside all circles) -->
+                    <circle cx="380" cy="260" r="6" class="classA"/>
+                    <circle cx="140" cy="120" r="6" class="classA"/>
+                    <rect x="374" y="144" width="12" height="12" rx="2" class="classB"/>
+                    <rect x="344" y="244" width="12" height="12" rx="2" class="classB"/>
+
+                    <!-- Within r=70 circle (k=7): 4 blue + 3 orange -->
+                    <circle cx="190" cy="150" r="6" class="classA"/>
+                    <circle cx="240" cy="240" r="6" class="classA"/>
+                    <circle cx="200" cy="180" r="6" class="classA"/>
+                    <circle cx="220" cy="210" r="6" class="classA"/>
+                    <!-- Orange within k=7 -->
+                    <rect x="274" y="194" width="12" height="12" rx="2" class="classB"/>
+                    <rect x="294" y="194" width="12" height="12" rx="2" class="classB"/>
+                    <rect x="284" y="164" width="12" height="12" rx="2" class="classB"/>
+
+                    <!-- New point (center) -->
+                    <circle cx="260" cy="180" r="8" class="new-point pulse-new"/>
+                    <text x="260" y="184" text-anchor="middle" style="font-size: 9px; fill: #ffffff; font-weight: bold;">?</text>
+
+                    <!-- Legend -->
+                    <rect x="30" y="350" width="460" height="42" rx="6" fill="#f7fafc" stroke="#e2e8f0" stroke-width="1"/>
+                    <circle cx="50" cy="367" r="6" class="classA"/>
+                    <text x="62" y="371" class="label-small">Класс A</text>
+                    <rect x="130" y="361" width="12" height="12" rx="2" class="classB"/>
+                    <text x="148" y="371" class="label-small">Класс B</text>
+                    <circle cx="230" cy="367" r="8" class="new-point"/>
+                    <text x="244" y="371" class="label-small">Новый</text>
+                    <line x1="320" y1="367" x2="350" y2="367" stroke="#e53e3e" stroke-width="1.8" stroke-dasharray="6 3"/>
+                    <text x="356" y="371" class="label-small">k=1</text>
+                    <line x1="390" y1="367" x2="420" y2="367" stroke="#d69e2e" stroke-width="1.8" stroke-dasharray="6 3"/>
+                    <text x="426" y="371" class="label-small">k=3</text>
+                    <line x1="450" y1="367" x2="480" y2="367" stroke="#38a169" stroke-width="1.8" stroke-dasharray="6 3"/>
+                    <text x="486" y="371" class="label-small">k=7</text>
+
+                    <!-- Annotations -->
+                    <text x="260" y="310" text-anchor="middle" class="label-small" fill="#276749">k=7: 4 синих + 3 оранжевых → класс A</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Красная точка</strong> — новый объект. Три пунктирные окружности показывают три варианта выбора k. При <strong>k=1</strong> ближайший сосед — оранжевый квадрат (класс B). При <strong>k=3</strong> три ближайших соседа оранжевые (класс B). При <strong>k=7</strong> соседей семь: 3 оранжевых и 4 синих, значит побеждает класс A. <strong>Один и тот же новый объект может получить разные предсказания</strong> в зависимости от выбора k.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 2: ТРИ МЕТРИКИ РАССТОЯНИЯ -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 10px;">📏 Три метрики расстояния: как измерить похожесть</div>
+                <div class="grid-3">
+                    <!-- Euclidean -->
+                    <div class="viz-card" style="padding: 12px;">
+                        <div style="font-size: 12px; font-weight: bold; color: #2b6cb0; margin-bottom: 4px;">Евклидово</div>
+                        <svg viewBox="0 0 180 160" width="100%">
+                            <rect x="0" y="0" width="180" height="160" fill="#ffffff"/>
+                            <line x1="20" y1="140" x2="170" y2="140" class="axis"/>
+                            <line x1="20" y1="20"  x2="20"  y2="140" class="axis"/>
+                            <circle cx="50" cy="120" r="5" fill="#3182ce" stroke="#fff" stroke-width="1.5"/>
+                            <circle cx="140" cy="50" r="5" fill="#3182ce" stroke="#fff" stroke-width="1.5"/>
+                            <line x1="50" y1="120" x2="140" y2="50" stroke="#e53e3e" stroke-width="2.5"/>
+                            <line x1="50" y1="120" x2="140" y2="120" stroke="#a0aec0" stroke-width="1" stroke-dasharray="3 2"/>
+                            <line x1="140" y1="120" x2="140" y2="50" stroke="#a0aec0" stroke-width="1" stroke-dasharray="3 2"/>
+                            <text x="95" y="136" text-anchor="middle" class="label-small">Δx</text>
+                            <text x="148" y="90"  text-anchor="start" class="label-small">Δy</text>
+                            <text x="85" y="75"  text-anchor="middle" class="label-small" fill="#e53e3e">d</text>
+                        </svg>
+                        <div class="formula-main" style="font-size: 10.5px; color: #2b6cb0; background: #ebf8ff; padding: 6px; border-radius: 4px; margin-top: 4px;">d = √(Δx² + Δy²)</div>
+                        <div style="font-size: 10px; color: #4a5568; margin-top: 4px;">Длина прямой между точками</div>
+                    </div>
+                    <!-- Manhattan -->
+                    <div class="viz-card" style="padding: 12px;">
+                        <div style="font-size: 12px; font-weight: bold; color: #975a16; margin-bottom: 4px;">Манхэттенское</div>
+                        <svg viewBox="0 0 180 160" width="100%">
+                            <rect x="0" y="0" width="180" height="160" fill="#ffffff"/>
+                            <line x1="20" y1="140" x2="170" y2="140" class="axis"/>
+                            <line x1="20" y1="20"  x2="20"  y2="140" class="axis"/>
+                            <circle cx="50" cy="120" r="5" fill="#3182ce" stroke="#fff" stroke-width="1.5"/>
+                            <circle cx="140" cy="50" r="5" fill="#3182ce" stroke="#fff" stroke-width="1.5"/>
+                            <path d="M 50 120 L 140 120 L 140 50" fill="none" stroke="#d69e2e" stroke-width="2.5"/>
+                            <text x="95" y="136" text-anchor="middle" class="label-small">|Δx|</text>
+                            <text x="148" y="90"  text-anchor="start" class="label-small">|Δy|</text>
+                            <text x="85" y="75"  text-anchor="middle" class="label-small" fill="#d69e2e">d = |Δx| + |Δy|</text>
+                        </svg>
+                        <div class="formula-main" style="font-size: 10.5px; color: #975a16; background: #fffaf0; padding: 6px; border-radius: 4px; margin-top: 4px;">d = |Δx| + |Δy|</div>
+                        <div style="font-size: 10px; color: #4a5568; margin-top: 4px;">Сумма модулей разностей</div>
+                    </div>
+                    <!-- Cosine -->
+                    <div class="viz-card" style="padding: 12px;">
+                        <div style="font-size: 12px; font-weight: bold; color: #276749; margin-bottom: 4px;">Косинусное</div>
+                        <svg viewBox="0 0 180 160" width="100%">
+                            <rect x="0" y="0" width="180" height="160" fill="#ffffff"/>
+                            <line x1="20" y1="140" x2="170" y2="140" class="axis"/>
+                            <line x1="20" y1="20"  x2="20"  y2="140" class="axis"/>
+                            <circle cx="20" cy="140" r="3" fill="#4a5568"/>
+                            <line x1="20" y1="140" x2="140" y2="60" stroke="#38a169" stroke-width="2.5"/>
+                            <polygon points="140,60 130,64 134,54" fill="#38a169"/>
+                            <line x1="20" y1="140" x2="150" y2="120" stroke="#2f855a" stroke-width="2.5"/>
+                            <polygon points="150,120 140,124 142,114" fill="#2f855a"/>
+                            <path d="M 60 118 Q 70 90 90 90" fill="none" stroke="#e53e3e" stroke-width="1.5"/>
+                            <text x="80" y="110" class="label-small" fill="#e53e3e">θ</text>
+                        </svg>
+                        <div class="formula-main" style="font-size: 10.5px; color: #276749; background: #f0fff4; padding: 6px; border-radius: 4px; margin-top: 4px;">cos(θ) = (A·B) / (|A|·|B|)</div>
+                        <div style="font-size: 10px; color: #4a5568; margin-top: 4px;">Угол между векторами, не зависит от длины</div>
+                    </div>
+                </div>
+                <div class="viz-caption" style="margin-top: 8px;">
+                    <strong>Евклидово</strong> — расстояние «по прямой». <strong>Манхэттенское</strong> — расстояние «по улицам». <strong>Косинусное</strong> — мера сходства направления, полезно для текстов и разреженных данных.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 3: ЛЕНИВОЕ ОБУЧЕНИЕ -->
+            <div class="viz-card">
+                <div class="viz-title">⏱️ Ленивое обучение: почему у k-NN нет фазы обучения</div>
+                <svg viewBox="0 0 500 220" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="500" height="220" fill="#ffffff"/>
+
+                    <text x="20" y="30" class="label-strong">Обычные алгоритмы (например, линейная регрессия)</text>
+                    <rect x="20" y="45" width="280" height="28" rx="4" fill="#3182ce"/>
+                    <text x="160" y="63" text-anchor="middle" class="label" fill="#ffffff">Обучение: находит веса</text>
+                    <rect x="310" y="45" width="120" height="28" rx="4" fill="#a0aec0"/>
+                    <text x="370" y="63" text-anchor="middle" class="label" fill="#ffffff">Предсказание</text>
+                    <text x="20" y="95" class="label-small">Долгое обучение → быстрое предсказание</text>
+                    <line x1="20" y1="115" x2="480" y2="115" stroke="#e2e8f0" stroke-width="1.5"/>
+
+                    <text x="20" y="140" class="label-strong">k-NN (ленивое обучение)</text>
+                    <rect x="20" y="155" width="10" height="28" rx="4" fill="#38a169"/>
+                    <text x="28" y="195" class="label-small" fill="#276749">Обучение ≈ 0 (ничего не вычисляет)</text>
+                    <rect x="40" y="155" width="380" height="28" rx="4" fill="#e53e3e"/>
+                    <text x="230" y="173" text-anchor="middle" class="label" fill="#ffffff">Предсказание: сравнение со всеми объектами выборки</text>
+                    <text x="20" y="212" class="label-small">Мгновенное «обучение» → медленное предсказание</text>
+                </svg>
+                <div class="viz-caption">
+                    У k-NN нет явной фазы обучения — вся обучающая выборка используется целиком при каждом предсказании. <strong>Плюс:</strong> простота. <strong>Минус:</strong> предсказание требует вычисления расстояния до каждого объекта, поэтому на больших данных работает медленно.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 4: МАЛЕНЬКОЕ k vs БОЛЬШОЕ k -->
+            <div class="viz-card">
+                <div class="viz-title">⚖️ Как выбор k влияет на границу классов</div>
+                <div class="grid-2">
+                    <div>
+                        <div style="font-size: 12px; font-weight: bold; color: #9b2c2c; margin-bottom: 6px; text-align: center;">❌ k = 1 → переобучение</div>
+                        <svg viewBox="0 0 240 200" width="100%">
+                            <rect x="0" y="0" width="240" height="200" fill="#ffffff"/>
+                            <line x1="10" y1="180" x2="230" y2="180" class="axis"/>
+                            <line x1="10" y1="10"  x2="10"  y2="180" class="axis"/>
+                            <!-- Jagged decision boundary -->
+                            <path d="M 20 160 Q 40 130 60 100 Q 80 120 100 80 Q 120 110 140 70 Q 160 100 180 60 Q 200 90 220 40"
+                                  fill="none" stroke="#e53e3e" stroke-width="2.5"/>
+                            <circle cx="30" cy="150" r="4" class="classA"/>
+                            <circle cx="60" cy="100" r="4" class="classB"/>
+                            <circle cx="90" cy="90"  r="4" class="classA"/>
+                            <circle cx="120" cy="95" r="4" class="classB"/>
+                            <circle cx="150" cy="75" r="4" class="classA"/>
+                            <circle cx="180" cy="65" r="4" class="classB"/>
+                            <circle cx="210" cy="50" r="4" class="classA"/>
+                            <text x="120" y="195" text-anchor="middle" class="label-small">Граница «запоминает» каждую точку</text>
+                        </svg>
+                    </div>
+                    <div>
+                        <div style="font-size: 12px; font-weight: bold; color: #276749; margin-bottom: 6px; text-align: center;">✅ k = 15 → гладкая граница</div>
+                        <svg viewBox="0 0 240 200" width="100%">
+                            <rect x="0" y="0" width="240" height="200" fill="#ffffff"/>
+                            <line x1="10" y1="180" x2="230" y2="180" class="axis"/>
+                            <line x1="10" y1="10"  x2="10"  y2="180" class="axis"/>
+                            <path d="M 20 170 Q 100 120 220 30"
+                                  fill="none" stroke="#38a169" stroke-width="2.5"/>
+                            <circle cx="30" cy="150" r="4" class="classA"/>
+                            <circle cx="60" cy="100" r="4" class="classB"/>
+                            <circle cx="90" cy="90"  r="4" class="classA"/>
+                            <circle cx="120" cy="95" r="4" class="classB"/>
+                            <circle cx="150" cy="75" r="4" class="classA"/>
+                            <circle cx="180" cy="65" r="4" class="classB"/>
+                            <circle cx="210" cy="50" r="4" class="classA"/>
+                            <text x="120" y="195" text-anchor="middle" class="label-small">Гладкая, обобщает</text>
+                        </svg>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    <strong>Маленькое k</strong> — граница «извивается» вокруг каждой точки. Модель чувствительна к шуму, склонна к переобучению. <strong>Большое k</strong> — граница сглажена, модель устойчивее, но может потерять локальную структуру. Нужен баланс, который подбирают перекрёстной проверкой.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 5: ПРОКЛЯТИЕ РАЗМЕРНОСТИ -->
+            <div class="viz-card">
+                <div class="viz-title">🌀 Проклятие размерности: почему много признаков — это проблема</div>
+                <svg viewBox="0 0 520 260" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="520" height="260" fill="#ffffff"/>
+                    <line x1="60" y1="220" x2="480" y2="220" class="axis"/>
+                    <line x1="60" y1="30"  x2="60"  y2="220" class="axis"/>
+                    <line x1="60" y1="188" x2="480" y2="188" class="grid-line"/>
+                    <line x1="60" y1="156" x2="480" y2="156" class="grid-line"/>
+                    <line x1="60" y1="124" x2="480" y2="124" class="grid-line"/>
+                    <line x1="60" y1="92"  x2="480" y2="92"  class="grid-line"/>
+                    <line x1="60" y1="60"  x2="480" y2="60"  class="grid-line"/>
+                    <path d="M 70 55 Q 120 70 180 130 Q 250 180 340 200 Q 400 210 470 214"
+                          fill="none" stroke="#e53e3e" stroke-width="3"/>
+                    <circle cx="70"  cy="55"  r="5" fill="#e53e3e" stroke="#fff" stroke-width="1.5"/>
+                    <circle cx="120" cy="72"  r="5" fill="#e53e3e" stroke="#fff" stroke-width="1.5"/>
+                    <circle cx="180" cy="130" r="5" fill="#e53e3e" stroke="#fff" stroke-width="1.5"/>
+                    <circle cx="250" cy="178" r="5" fill="#e53e3e" stroke="#fff" stroke-width="1.5"/>
+                    <circle cx="340" cy="200" r="5" fill="#e53e3e" stroke="#fff" stroke-width="1.5"/>
+                    <circle cx="470" cy="214" r="5" fill="#e53e3e" stroke="#fff" stroke-width="1.5"/>
+                    <text x="270" y="245" text-anchor="middle" class="label-strong">Число признаков</text>
+                    <text x="25" y="125" text-anchor="middle" class="label-strong" transform="rotate(-90 25 125)">Отношение (мин / макс расстояние)</text>
+                    <text x="70"  y="235" text-anchor="middle" class="label-small">2</text>
+                    <text x="180" y="235" text-anchor="middle" class="label-small">10</text>
+                    <text x="300" y="235" text-anchor="middle" class="label-small">50</text>
+                    <text x="470" y="235" text-anchor="middle" class="label-small">200</text>
+                    <text x="52" y="58"  text-anchor="end" class="label-small">0.1</text>
+                    <text x="52" y="125" text-anchor="end" class="label-small">0.5</text>
+                    <text x="52" y="218" text-anchor="end" class="label-small">1.0</text>
+                    <text x="470" y="200" text-anchor="end" class="label-small" fill="#9b2c2c">все точки на одном расстоянии</text>
+                    <text x="100" y="48"  text-anchor="start" class="label-small" fill="#276749">различия очевидны</text>
+                </svg>
+                <div class="viz-caption">
+                    С ростом числа признаков <strong>отношение минимального и максимального расстояний стремится к единице</strong>. Это значит, что ближайший и самый далёкий сосед находятся почти на одинаковом расстоянии. Понятие «ближайший сосед» теряет смысл. Решение: снижение размерности (метод главных компонент) или другие алгоритмы.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 6: СТАНДАРТИЗАЦИЯ ПРИЗНАКОВ -->
+            <div class="viz-card">
+                <div class="viz-title">📐 Стандартизация признаков: зачем она нужна</div>
+                <div class="grid-2">
+                    <div>
+                        <div style="font-size: 12px; font-weight: bold; color: #9b2c2c; margin-bottom: 6px; text-align: center;">❌ Без стандартизации</div>
+                        <svg viewBox="0 0 240 200" width="100%">
+                            <rect x="0" y="0" width="240" height="200" fill="#ffffff"/>
+                            <line x1="20" y1="170" x2="220" y2="170" class="axis"/>
+                            <line x1="20" y1="20"  x2="20"  y2="170" class="axis"/>
+                            <text x="120" y="192" text-anchor="middle" class="label-small">Возраст (20–80)</text>
+                            <text x="12" y="95" text-anchor="middle" class="label-small" transform="rotate(-90 12 95)">Доход (тыс.)</text>
+                            <ellipse cx="120" cy="95" rx="35" ry="70" fill="#ebf8ff" stroke="#3182ce" stroke-width="1.5" stroke-dasharray="3 2"/>
+                            <circle cx="110" cy="50"  r="4" class="classA"/>
+                            <circle cx="130" cy="70"  r="4" class="classA"/>
+                            <circle cx="105" cy="100" r="4" class="classA"/>
+                            <circle cx="125" cy="130" r="4" class="classA"/>
+                            <circle cx="140" cy="90"  r="4" class="classA"/>
+                            <circle cx="115" cy="140" r="4" class="classA"/>
+                            <text x="120" y="30" text-anchor="middle" class="label-small" fill="#9b2c2c">Доход доминирует</text>
+                        </svg>
+                    </div>
+                    <div>
+                        <div style="font-size: 12px; font-weight: bold; color: #276749; margin-bottom: 6px; text-align: center;">✅ После стандартизации</div>
+                        <svg viewBox="0 0 240 200" width="100%">
+                            <rect x="0" y="0" width="240" height="200" fill="#ffffff"/>
+                            <line x1="20" y1="170" x2="220" y2="170" class="axis"/>
+                            <line x1="20" y1="20"  x2="20"  y2="170" class="axis"/>
+                            <text x="120" y="192" text-anchor="middle" class="label-small">Возраст (стандарт.)</text>
+                            <text x="12" y="95" text-anchor="middle" class="label-small" transform="rotate(-90 12 95)">Доход (стандарт.)</text>
+                            <circle cx="120" cy="95" r="50" fill="#f0fff4" stroke="#38a169" stroke-width="1.5" stroke-dasharray="3 2"/>
+                            <circle cx="95"  cy="70"  r="4" class="classA"/>
+                            <circle cx="130" cy="60"  r="4" class="classA"/>
+                            <circle cx="150" cy="100" r="4" class="classA"/>
+                            <circle cx="140" cy="135" r="4" class="classA"/>
+                            <circle cx="100" cy="130" r="4" class="classA"/>
+                            <circle cx="85"  cy="95"  r="4" class="classA"/>
+                            <text x="120" y="30" text-anchor="middle" class="label-small" fill="#276749">Признаки равноправны</text>
+                        </svg>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    Без стандартизации признак с большим разбросом (например, доход в рублях) <strong>доминирует</strong> в расстоянии и «забивает» остальные признаки. После стандартизации (нулевое среднее, единичная дисперсия) все признаки влияют на расстояние одинаково. <strong>Это обязательный шаг для k-NN.</strong>
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 7: ДИСБАЛАНС КЛАССОВ -->
+            <div class="viz-card">
+                <div class="viz-title">⚖️ Дисбаланс классов: почему k-NN «ошибается»</div>
+                <svg viewBox="0 0 500 220" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="500" height="220" fill="#ffffff"/>
+                    <!-- Many blue points -->
+                    <g>
+                        <circle cx="60"  cy="60"  r="5" class="classA"/><circle cx="90"  cy="40"  r="5" class="classA"/>
+                        <circle cx="120" cy="70"  r="5" class="classA"/><circle cx="70"  cy="100" r="5" class="classA"/>
+                        <circle cx="100" cy="120" r="5" class="classA"/><circle cx="150" cy="50"  r="5" class="classA"/>
+                        <circle cx="130" cy="130" r="5" class="classA"/><circle cx="170" cy="90"  r="5" class="classA"/>
+                        <circle cx="200" cy="60"  r="5" class="classA"/><circle cx="60"  cy="150" r="5" class="classA"/>
+                        <circle cx="150" cy="160" r="5" class="classA"/><circle cx="190" cy="140" r="5" class="classA"/>
+                        <circle cx="220" cy="100" r="5" class="classA"/><circle cx="90"  cy="170" r="5" class="classA"/>
+                        <circle cx="200" cy="180" r="5" class="classA"/><circle cx="240" cy="140" r="5" class="classA"/>
+                        <circle cx="250" cy="70"  r="5" class="classA"/><circle cx="180" cy="20"  r="5" class="classA"/>
+                    </g>
+                    <!-- Few orange points -->
+                    <g>
+                        <rect x="310" y="120" width="10" height="10" rx="2" class="classB"/>
+                        <rect x="340" y="140" width="10" height="10" rx="2" class="classB"/>
+                        <rect x="370" y="120" width="10" height="10" rx="2" class="classB"/>
+                        <rect x="330" y="100" width="10" height="10" rx="2" class="classB"/>
+                    </g>
+                    <circle cx="350" cy="90" r="8" class="new-point pulse-new"/>
+                    <text x="350" y="94" text-anchor="middle" style="font-size: 9px; fill: #ffffff; font-weight: bold;">?</text>
+                    <circle cx="350" cy="90" r="60" fill="none" stroke="#e53e3e" stroke-width="1.8" stroke-dasharray="6 3"/>
+                    <text x="350" y="20" text-anchor="middle" class="label-small" fill="#9b2c2c">k=5</text>
+                    <text x="350" y="205" text-anchor="middle" class="label-small">4 оранжевых, 0 синих, но...</text>
+                </svg>
+                <div class="viz-caption">
+                    Если класс A представлен 1000 объектами, а класс B — только 50, то в любом локальном окружении <strong>класс A будет доминировать</strong>. Хотя новый объект явно ближе к классу B, при голосовании победит частый класс. Решения: взвешивание по расстоянию, пересэмплирование, специальные метрики.
+                </div>
+            </div>
+
+            <!-- ТАБЛИЦА СРАВНЕНИЯ k -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 8px;">📊 Как выбрать k: сравнение</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr><th>Значение k</th><th>Поведение</th><th>Риск</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>k = 1</strong></td><td>Смотрим только на ближайшего соседа</td><td>Высокая чувствительность к шуму, <strong>переобучение</strong></td></tr>
+                        <tr><td><strong>k = 3–5</strong></td><td>Небольшая окрестность</td><td>Разумный баланс для небольших данных</td></tr>
+                        <tr><td><strong>k = 7–15</strong></td><td>Умеренная окрестность</td><td>Хорошо обобщает, но может «размыть» локальную структуру</td></tr>
+                        <tr><td><strong>k → большое</strong></td><td>Смотрим на всё больше соседей</td><td><strong>Недообучение</strong>, модель предсказывает «среднее по больнице»</td></tr>
+                    </tbody>
+                </table>
+                <div class="callout" style="margin-top: 8px;">
+                    <strong>💡 Правило выбора</strong>
+                    <p>Начинайте с небольших нечётных значений (k = 3, 5, 7). Подбирайте k с помощью перекрёстной проверки. Нечётное k нужно, чтобы избежать равенства голосов при бинарной классификации.</p>
+                </div>
+            </div>
+
+            <!-- ПРИМЕНЕНИЕ ПО РОЛЯМ -->
+            <div>
+                <div class="viz-title" style="margin-bottom: 8px;">👥 Кто и для каких задач использует k-NN</div>
+                <table class="role-table">
+                    <thead>
+                        <tr><th style="width: 32%;">Роль аналитика</th><th>Типичные задачи</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="role-emoji">📈</span> <strong>Аналитик данных</strong></td><td>Поиск похожих клиентов, заполнение пропущенных значений на основе соседей (импутация)</td></tr>
+                        <tr><td><span class="role-emoji">💰</span> <strong>Финансовый аналитик</strong></td><td>Оценка кредитного риска (базовая линия), поиск аномалий в транзакциях</td></tr>
+                        <tr><td><span class="role-emoji">🚀</span> <strong>Продуктовый аналитик</strong></td><td>Рекомендательные системы («пользователи, похожие на вас, покупали…»), сегментация</td></tr>
+                        <tr><td><span class="role-emoji">🌐</span> <strong>Веб-аналитик</strong></td><td>Прогноз покупки по поведению на сайте, рекомендации похожих страниц</td></tr>
+                        <tr><td><span class="role-emoji">📊</span> <strong>BI-аналитик</strong></td><td>Выявление подозрительных значений в отчётности, заполнение пропусков</td></tr>
+                        <tr><td><span class="role-emoji">🗄️</span> <strong>Аналитик больших данных</strong></td><td>Поиск похожих документов (эмбеддинги), приближённый поиск ближайших соседей</td></tr>
+                        <tr><td><span class="role-emoji">📣</span> <strong>Маркетинговый аналитик</strong></td><td>Поиск похожих аудиторий для таргетинга, построение контрольных групп</td></tr>
+                        <tr><td><span class="role-emoji">💼</span> <strong>Бизнес-аналитик</strong></td><td>Поиск похожих бизнес-процессов, оценка рисков проекта по аналогам</td></tr>
+                        <tr><td><span class="role-emoji">⚙️</span> <strong>Системный аналитик</strong></td><td>Поиск похожих ошибок в логах, прогнозирование нагрузки по историческим периодам</td></tr>
+                        <tr><td><span class="role-emoji">🎨</span> <strong>UX-аналитик</strong></td><td>Поиск пользователей с похожим опытом, прогноз удовлетворённости по аналогам</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="callout">
+                <strong>💡 Главный вывод</strong>
+                <p>Метод k-ближайших соседей — это не «лучший» алгоритм, а <strong>один из инструментов</strong>. Его сила — в простоте и интуитивности. Его слабость — в медленном предсказании на больших данных и в проклятии размерности. Главный урок: <strong>иногда модель — это сами данные</strong>, а не набор параметров.</p>
+            </div>
+
+            <div class="video-section">
+                <div class="video-container">
+                    <iframe id="lecture-player" src="https://rutube.ru" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+                </div>
+                <div class="links-hub">
+                    <button onclick="changeVideo('https://rutube.ru/')" class="video-btn stop-btn">⏹ СТОП</button>
+                    <button onclick="changeVideo('https://rutube.ru/play/embed/')" class="video-btn rt-btn">📜 Лекция 14. Метод k-ближайших соседей</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="slide-footer">
+            Направление «Менеджмент» | Курс: Аналитика данных | Лекция 14: «Метод k-ближайших соседей: скажи мне, кто твои соседи»
+        </div>
+    </div>
+
+    <div class="speaker-notes">
+        <div style="position: sticky; top: 0; background: #1a202c; padding: 20px 20px 10px 20px; border-bottom: 1px solid #4a5568; width: 100%; z-index: 100;">
+            <div class="notes-header" style="display: block; padding-bottom: 15px;">
+                <audio id="lecture-audio" preload="auto" controls
+                       src="https://archive.org/download/03_20261110_20261110/14.mp3"
+                       style="width: 100%; height: 32px; border-radius: 4px;"></audio>
+            </div>
+            <div style="width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                <iframe id="right-lecture-player" src="https://archive.org/embed/20261020_20261020_0955?autoplay=true&loop=true&muted=true" allow="clipboard-write; autoplay" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen style="border: none;"></iframe>
+            </div>
+        </div>
+
+        <div class="lecture-text" style="margin-top: 20px;">
+            <h3>📌 Метод к-ближайших соседей: «скажи мне, кто твои соседи»</h3>
+            <p>Теперь разберём метод к-ближайших соседей. По-английски это звучит как метод к-н-н. Но мы будем использовать русское название. Это один из самых интуитивных алгоритмов машинного обучения. И одновременно один из самых необычных. Потому что у него нет явной фазы обучения. Давайте разберёмся, как это возможно.</p>
+            <h4>Определение и основная идея</h4>
+            <p>Начнём с определения. Метод к-ближайших соседей — это алгоритм машинного обучения, который работает и для задач классификации, и для задач регрессии. Его идея очень проста. Чтобы предсказать значение для нового объекта, нужно найти несколько похожих объектов в обучающей выборке. И использовать их ответы для предсказания.</p>
+            <p>Поясним на примере. Представьте, что вы пришли в новый город и хотите узнать, хороший ли это район. Вы не знаете статистику по всему городу. Но вы можете посмотреть на несколько ближайших домов вокруг. Если большинство соседей довольны жизнью — вероятно, район хороший. Если большинство жалуются — вероятно, есть проблемы. Это и есть логика метода к-ближайших соседей.</p>
+            <p>Теперь дадим более строгое определение. У нас есть обучающая выборка. Каждый объект в ней имеет признаки и известный ответ. Приходит новый объект. Мы вычисляем расстояние от него до каждого объекта обучающей выборки. Затем выбираем к объектов с наименьшим расстоянием. Эти объекты называются соседями. Дальше всё зависит от типа задачи.</p>
+            <p>Если задача классификации — мы смотрим на классы соседей. И выбираем тот класс, который встречается чаще всего. Этот принцип называется голосованием. Если задача регрессии — мы усредняем целевые значения соседей. И это среднее становится предсказанием. Иногда соседей взвешивают по расстоянию. Тогда близкие соседи влияют сильнее, чем далёкие.</p>
+            <p>Обратите внимание на важную мысль. Параметр к — это гиперпараметр. Он задаётся человеком. От него зависит поведение алгоритма. Если к равно единице — мы смотрим только на самого близкого соседа. Если к равно пяти — на пятерых. И так далее. Правильный выбор к — это ключевая задача при работе с этим алгоритмом. Мы поговорим об этом подробнее.</p>
+            <h4>Как измеряется похожесть: метрики расстояния</h4>
+            <p>Теперь разберём ключевое понятие. Как определить, какие объекты похожи друг на друга. Для этого используется понятие расстояния. Чем меньше расстояние между объектами — тем они более похожи. Есть несколько способов вычисления расстояния. Разберём основные.</p>
+            <p><strong>Евклидово расстояние.</strong> Первая и самая распространённая метрика называется евклидово расстояние. Дадим определение. Евклидово расстояние — это длина прямой линии между двумя точками в многомерном пространстве. Если представить объекты как точки в пространстве признаков, то расстояние между ними — это длина отрезка, соединяющего эти точки.</p>
+            <p>Поясним на примере. Представьте двумерное пространство. По одной оси — возраст клиента. По другой оси — его доход. Каждый клиент — это точка на плоскости. Расстояние между двумя клиентами — это длина отрезка между их точками. Чем ближе точки — тем более похожи клиенты. В многомерном пространстве работает та же логика. Просто осей больше. Их столько, сколько признаков у объекта.</p>
+            <p><strong>Манхэттенское расстояние.</strong> Вторая метрика называется манхэттенское расстояние. Дадим определение. Манхэттенское расстояние — это сумма модулей разностей по каждому признаку. Название происходит от планировки города Манхэттен. Там улицы образуют прямоугольную сетку. И чтобы пройти от одной точки до другой, нельзя идти по прямой. Нужно двигаться вдоль улиц. Сначала по одной, потом повернуть и идти по другой.</p>
+            <p>Поясним на примере. Представьте, что две точки на плоскости. Расстояние по прямой между ними — это евклидово расстояние. А расстояние по улицам, если двигаться только вертикально и горизонтально — это манхэттенское расстояние. Оно всегда больше или равно евклидову. Манхэттенское расстояние полезно, когда признаки имеют разную природу. И когда важно, чтобы выбросы по одному признаку не доминировали над другими.</p>
+            <p><strong>Косинусное расстояние.</strong> Третья метрика называется косинусное расстояние. Дадим определение. Косинусное расстояние — это мера угла между двумя векторами. Оно не зависит от длины векторов. А зависит только от их направления.</p>
+            <p>Поясним на примере. Представьте два текста. Каждый текст можно представить как вектор частот слов. Если векторы направлены в одну сторону — тексты похожи по содержанию. Если в разные стороны — тексты не похожи. При этом длина векторов не важна. Один текст может быть длиннее другого. Но если их направления совпадают — они считаются похожими. Поэтому косинусное расстояние часто используют для работы с текстами. И с разреженными данными, где большинство значений равно нулю.</p>
+            <h4>Что такое ленивое обучение</h4>
+            <p>Теперь перейдём к важной особенности метода. Она называется ленивое обучение. Дадим определение. Ленивое обучение — это подход, при котором алгоритм не строит модель заранее. Все вычисления откладываются до момента предсказания. Когда приходит новый объект, алгоритм сравнивает его со всей обучающей выборкой. И только тогда делает вывод.</p>
+            <p>Поясним на примере. Большинство алгоритмов, например, линейная регрессия, сначала обучаются. То есть находят веса или параметры модели. Это обучение может занимать время. Но затем предсказание для нового объекта делается быстро. У метода к-ближайших соседей всё наоборот. Обучение происходит мгновенно. Потому что никаких параметров не вычисляется. Но предсказание требует времени. Ведь нужно вычислить расстояние до каждого объекта обучающей выборки.</p>
+            <p>Отсюда следует важное следствие. Метод к-ближайших соседей плохо работает на больших данных. Если в обучающей выборке миллион объектов — каждое предсказание потребует миллион вычислений расстояний. Это может быть слишком медленно. Особенно если предсказаний много. Поэтому для больших данных используют специальные структуры данных. Или другие алгоритмы.</p>
+            <h4>Ключевой гиперпараметр: число соседей</h4>
+            <p>Теперь вернёмся к гиперпараметру к. Это число соседей, которые участвуют в предсказании. От этого числа сильно зависит поведение алгоритма. Разберём, как выбрать правильное значение.</p>
+            <p><strong>Маленькое число соседей.</strong> Если к маленькое, например, равно единице. Тогда алгоритм смотрит только на самого близкого соседа. Это делает модель очень чувствительной к шуму. Если ближайший сосед оказался случайным выбросом — предсказание будет неверным. Такая модель склонна к переобучению. Она слишком хорошо запоминает обучающие данные. Но плохо работает на новых данных.</p>
+            <p>Приведём пример. Представьте, что мы классифицируем клиентов на лояльных и нелояльных. И к равно единице. Если один нелояльный клиент случайно оказался похож на лояльного — алгоритм отнесёт нового похожего клиента к лояльным. Хотя большинство похожих клиентов нелояльны. Такая ошибка возможна из-за единственного выброса.</p>
+            <p><strong>Большое число соседей.</strong> Если к большое, например, равно двадцати. Тогда алгоритм усредняет мнение многих соседей. Это делает модель более устойчивой к шуму. Но при этом теряется локальная информация. Например, если у нового объекта есть близкие соседи одного класса. Но много далёких соседей другого класса — результат может оказаться неверным. Такая модель склонна к недообучению. Она слишком сглаживает границы между классами.</p>
+            <p>Приведём пример. Представьте, что рядом с новым клиентом пять лояльных и один нелояльный. Но если мы берём двадцать соседей, и из них десять далёких окажутся нелояльными — результат может быть неверным. Хотя локально клиент явно ближе к лояльным. Поэтому слишком большое число соседей тоже плохо.</p>
+            <p><strong>Как выбрать правильное значение.</strong> Отсюда следует важный вывод. Нужно находить баланс. Слишком маленькое к — переобучение. Слишком большое к — недообучение. На практике число соседей подбирают с помощью перекрёстной проверки. Пробуют разные значения. И выбирают то, которое даёт лучшую оценку качества. Обычно начинают с небольших значений. И постепенно увеличивают. Хорошей практикой считается брать нечётное число соседей. Это нужно для задач классификации с двумя классами. Тогда не бывает ситуации равенства голосов.</p>
+            <h4>Проблемы метода к-ближайших соседей</h4>
+            <p><strong>Чувствительность к масштабу признаков.</strong> Первая проблема называется чувствительность к масштабу. Дадим определение. Если признаки имеют разные масштабы, то признаки с большими значениями начинают доминировать в расстоянии. Например, если один признак — возраст в годах, а другой — доход в рублях. Доход может быть в тысячу раз больше возраста. Тогда расстояние будет определяться почти только доходом. А возраст почти не будет влиять. Хотя он может быть важным.</p>
+            <p>Как решить эту проблему. Нужна стандартизация признаков. Это значит, что каждый признак приводится к единому масштабу. Например, к нулевому среднему и единичной дисперсии. Или к диапазону от нуля до единицы. После стандартизации все признаки влияют на расстояние одинаково. Это обязательный шаг при работе с методом к-ближайших соседей.</p>
+            <p><strong>Проклятие размерности.</strong> Вторая проблема называется проклятие размерности. Дадим определение. Проклятие размерности — это явление, при котором с ростом числа признаков расстояния между объектами становятся всё более похожими друг на друга. И расстояние теряет смысл. Как это понять.</p>
+            <p>Поясним на примере. В двумерном пространстве точки могут быть близко или далеко. Разброс расстояний большой. В десятимерном пространстве точки уже менее различны. А в сотомерном пространстве все точки находятся примерно на одинаковом расстоянии друг от друга. И тогда непонятно, кто из них ближайший сосед. Метод к-ближайших соседей перестаёт работать.</p>
+            <p>Как решить эту проблему. Есть несколько способов. Первый — уменьшить число признаков. Это можно сделать с помощью отбора признаков. Или с помощью методов снижения размерности, например, метода главных компонент. Второй способ — использовать другие алгоритмы, которые лучше работают в многомерном пространстве. Например, деревья решений или нейронные сети.</p>
+            <p><strong>Дисбаланс классов.</strong> Третья проблема называется дисбаланс классов. Дадим определение. Дисбаланс классов — это ситуация, когда одних классов в данных гораздо больше, чем других. Например, девяносто пять процентов клиентов лояльны, а пять процентов — нелояльны.</p>
+            <p>Почему это проблема для метода к-ближайших соседей. Потому что при голосовании доминирует частый класс. Если из пяти соседей четверо лояльны и один нелоялен — алгоритм предскажет лояльность. Хотя новый клиент может быть ближе именно к нелояльным соседям. Просто их мало в данных.</p>
+            <p>Как решить эту проблему. Есть несколько способов. Первый — использовать взвешенное голосование. Соседи взвешиваются по расстоянию. Близкие соседи влияют сильнее. Второй способ — пересэмплирование. Можно уменьшить число объектов частого класса. Или увеличить число объектов редкого класса. Третий способ — использовать специальные метрики качества, которые учитывают дисбаланс.</p>
+            <h4>Когда метод к-ближайших соседей работает хорошо</h4>
+            <p>Первое условие — данных немного. Если обучающая выборка небольшая — метод к-ближайших соседей работает быстро. Проблема с медленным предсказанием на больших данных здесь не возникает.</p>
+            <p>Второе условие — признаков немного. Если признаков десяток или меньше — проклятие размерности не так страшно. Расстояния сохраняют смысл. Если признаков сотни — нужно снижать размерность.</p>
+            <p>Третье условие — задача нелинейная, но локально структура сохраняется. Метод к-ближайших соседей не предполагает линейной зависимости. Он работает с локальной структурой. Если в окрестности каждого объекта закономерность примерно постоянна — алгоритм справится хорошо.</p>
+            <p>Четвёртое условие — важна интерпретируемость. Хотя метод менее интерпретируем, чем линейная регрессия, его можно объяснить. Для каждого предсказания можно показать, какие соседи повлияли на решение. Это полезно в некоторых задачах.</p>
+            <h4>Примеры применения по ролям аналитиков</h4>
+            <p><strong>Аналитик данных</strong> использует метод к-ближайших соседей в задачах, где нужна быстрая классификация без сложной модели. Типичная задача — поиск похожих клиентов. Для нового клиента нужно найти клиентов с похожим поведением. Чтобы предложить ему похожие товары или услуги. Ещё одна задача — заполнение пропущенных значений. Если у клиента не указан доход, можно найти похожих клиентов и взять средний доход по ним.</p>
+            <p><strong>Финансовый аналитик</strong> использует метод для оценки кредитного риска. Для нового заёмщика находятся похожие клиенты в исторических данных. И по их поведению оценивается риск. Ещё одна задача — поиск аномалий в финансовых операциях. Если операция сильно отличается от всех соседей в пространстве признаков — это может быть мошенничество.</p>
+            <p><strong>Продуктовый аналитик</strong> использует метод для рекомендательных систем. Типичная задача — рекомендовать пользователю товары, которые понравились похожим пользователям. Логика проста: если пользователи с похожим поведением покупали определённые товары — новому пользователю с похожим поведением эти товары тоже могут понравиться. Ещё одна задача — сегментация пользователей по схожему поведению.</p>
+            <p><strong>Веб-аналитик</strong> использует метод для анализа поведения на сайте. Типичная задача — предсказание, совершит ли пользователь покупку. На основе его поведения на сайте находятся похожие пользователи в исторических данных. Ещё одна задача — поиск похожих страниц. Если пользователь просматривает одну страницу — можно рекомендовать другие страницы, которые просматривали похожие пользователи.</p>
+            <p><strong>Специалист по аналитике бизнес-данных</strong> использует метод для поиска аномалий в отчётности. Типичная задача — выявление подозрительных транзакций или значений. Если значение сильно отличается от значений похожих объектов — это повод для проверки. Ещё одна задача — заполнение пропусков в отчётах на основе похожих записей.</p>
+            <p><strong>Аналитик больших данных</strong> использует метод реже. Потому что на больших данных этот метод медленный. Но есть задачи, где он остаётся полезным. Например, поиск ближайших соседей в пространстве эмбеддингов. Это нужно для рекомендательных систем и для поиска похожих документов. Кроме того, применяются приближённые методы поиска соседей. Они работают быстрее точного метода.</p>
+            <p><strong>Маркетинговый аналитик</strong> использует метод для таргетинга рекламы. Типичная задача — найти аудиторию, похожую на существующих покупателей. Это называется поиск похожих аудиторий. Ещё одна задача — оценка эффективности рекламных кампаний. Метод помогает найти контрольную группу — пользователей, похожих на тех, кому показывали рекламу, но которым её не показывали.</p>
+            <p><strong>Бизнес-аналитик</strong> использует метод для поиска похожих бизнес-процессов. Типичная задача — найти процессы, которые похожи на новый процесс. И использовать их как образец для оптимизации. Ещё одна задача — оценка рисков. Метод помогает найти похожие проекты в истории компании. И по их результатам оценить вероятность успеха нового проекта.</p>
+            <p><strong>Системный аналитик</strong> использует метод в задачах анализа логов. Типичная задача — поиск похожих ошибок. Если в логах есть ошибка, похожая на известные — можно быстро найти её причину. Ещё одна задача — прогнозирование нагрузки на систему. На основе исторических данных о нагрузке находятся похожие периоды.</p>
+            <p><strong>Специалист по анализу пользовательского опыта</strong> использует метод для анализа поведения пользователей. Типичная задача — найти пользователей с похожим опытом. Например, тех, кто столкнулся с похожими проблемами в интерфейсе. Ещё одна задача — прогнозирование удовлетворённости. На основе характеристик пользователя находятся похожие пользователи. И по их оценкам прогнозируется удовлетворённость нового пользователя.</p>
+            <h4>Подведём итог блока</h4>
+            <p>Давайте соберём всё вместе. Мы разобрали метод к-ближайших соседей. Мы увидели его идею. Чтобы предсказать значение для нового объекта — нужно найти похожие объекты и использовать их ответы. Мы разобрали три метрики расстояния. Евклидово, манхэттенское и косинусное. Мы познакомились с понятием ленивого обучения. И увидели, что у этого метода нет явной фазы обучения. Мы разобрали гиперпараметр к. И увидели, как маленькое и большое значение влияет на модель. Мы узнали о трёх проблемах. Чувствительность к масштабу, проклятие размерности и дисбаланс классов. И мы увидели конкретные примеры применения в работе разных аналитиков.</p>
+            <p>Запомните главное. Метод к-ближайших соседей — это не «лучший» алгоритм. Это один из инструментов. Он хорош в одних задачах. И плох в других. Его главное преимущество — простота и интуитивность. Его главные ограничения — медленное предсказание на больших данных и проклятие размерности. Но понимание этого метода даёт важный урок. Модель — это не всегда набор параметров. Иногда модель — это сами данные.</p>
+
+            <div class="dark-block">
+                <div class="dark-block-title">📖 Словарь терминов и аббревиатур</div>
+                <table class="dark-table">
+                    <thead>
+                        <tr><th style="width:22%;">Термин</th><th style="width:30%;">Расшифровка</th><th>Пояснение</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="term">Метод k-ближайших соседей</td><td>k-Nearest Neighbors (k-NN)</td><td>Алгоритм, основанный на поиске похожих объектов</td></tr>
+                        <tr><td class="term">Сосед</td><td>Neighbor</td><td>Объект из обучающей выборки с минимальным расстоянием до нового</td></tr>
+                        <tr><td class="term">Евклидово расстояние</td><td>Euclidean Distance</td><td>Длина прямой между точками</td></tr>
+                        <tr><td class="term">Манхэттенское расстояние</td><td>Manhattan Distance</td><td>Сумма модулей разностей по каждой оси</td></tr>
+                        <tr><td class="term">Косинусное расстояние</td><td>Cosine Distance</td><td>Угол между векторами, не зависит от длины</td></tr>
+                        <tr><td class="term">Ленивое обучение</td><td>Lazy Learning</td><td>Модель не строится заранее, вычисления при предсказании</td></tr>
+                        <tr><td class="term">Голосование</td><td>Voting</td><td>Выбор класса по большинству голосов соседей</td></tr>
+                        <tr><td class="term">Взвешенное голосование</td><td>Weighted Voting</td><td>Близкие соседи влияют сильнее далёких</td></tr>
+                        <tr><td class="term">Проклятие размерности</td><td>Curse of Dimensionality</td><td>Расстояния теряют смысл при росте числа признаков</td></tr>
+                        <tr><td class="term">Стандартизация</td><td>Standardization</td><td>Приведение признаков к единому масштабу</td></tr>
+                        <tr><td class="term">Дисбаланс классов</td><td>Class Imbalance</td><td>Одних классов в данных гораздо больше других</td></tr>
+                        <tr><td class="term">Импутация</td><td>Imputation</td><td>Заполнение пропущенных значений</td></tr>
+                        <tr><td class="term">Эмбеддинг</td><td>Embedding</td><td>Векторное представление объекта в многомерном пространстве</td></tr>
+                        <tr><td class="term">Похожая аудитория</td><td>Look-alike Audience</td><td>Пользователи, похожие на существующих клиентов</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function changeVideo(embedUrl) {
+            document.getElementById('lecture-player').src = embedUrl;
+        }
+    </script>
+
+   <!-- НАВИГАЦИЯ МЕЖДУ ЛЕКЦИЯМИ -->
+<nav class="lecture-nav" id="lectureNav">
+    <div class="nav-progress" id="navProgress" style="width: 0%;"></div>
+    <a href="Лекция (N-1).html" class="nav-btn-arrow" id="prevBtn">
+        <span class="arrow-icon">←</span>
+        <span class="arrow-label">
+            <small>Назад</small>
+            <span class="arrow-title" id="prevTitle">Лекция (N-1)</span>
+        </span>
+    </a>
+    <div class="nav-center">
+        <div class="nav-counter">Лекция <span id="currentNum">N</span> <span>из 21</span></div>
+        <a href="index.html" class="nav-index-link">📚 К содержанию</a>
+    </div>
+    <a href="Лекция (N+1).html" class="nav-btn-arrow" id="nextBtn">
+        <span class="arrow-label" style="align-items: flex-end;">
+            <small>Вперёд</small>
+            <span class="arrow-title" id="nextTitle">Лекция (N+1)</span>
+        </span>
+        <span class="arrow-icon">→</span>
+    </a>
+</nav>
+
+
+
+<script>
+(function () {
+    'use strict';
+
+    const TOTAL_LECTURES = 21;
+    const totalDurationMs = (24 * 60 + 30) * 1000;
+    const autoNextDelayMs = 2000;
+    const AUTOSTART_PARAM = 'autostart';
+
+    const fileName = decodeURIComponent(location.pathname.split('/').pop() || '');
+    let currentLecture = 14;
+    const match = fileName.match(/Лекция\s*(\d+)\.html/i);
+    if (match) {
+        currentLecture = parseInt(match[1], 10);
+    } else {
+        const el = document.getElementById('currentNum');
+        if (el) currentLecture = parseInt(el.textContent, 10) || 14;
+    }
+    if (isNaN(currentLecture) || currentLecture < 1) currentLecture = 1;
+    if (currentLecture > TOTAL_LECTURES) currentLecture = TOTAL_LECTURES;
+
+    const prev = currentLecture > 1 ? currentLecture - 1 : null;
+    const next = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+
+    const currentNumEl = document.getElementById('currentNum');
+    if (currentNumEl) currentNumEl.textContent = currentLecture;
+
+    const navProgress = document.getElementById('navProgress');
+    if (navProgress) {
+        navProgress.style.width = (currentLecture / TOTAL_LECTURES * 100) + '%';
+    }
+
+    const prevBtn = document.getElementById('prevBtn');
+    if (prevBtn) {
+        if (prev) {
+            prevBtn.href = 'Лекция ' + prev + '.html';
+            const t = document.getElementById('prevTitle');
+            if (t) t.textContent = 'Лекция ' + prev;
+            prevBtn.style.opacity = '1';
+            prevBtn.style.cursor = 'pointer';
+            prevBtn.onclick = null;
+        } else {
+            prevBtn.removeAttribute('href');
+            prevBtn.style.opacity = '0.35';
+            prevBtn.style.cursor = 'not-allowed';
+            prevBtn.onclick = (e) => e.preventDefault();
+            const t = document.getElementById('prevTitle');
+            if (t) t.textContent = 'Это первая лекция';
+        }
+    }
+
+    const nextBtn = document.getElementById('nextBtn');
+    if (nextBtn) {
+        if (next) {
+            nextBtn.href = 'Лекция ' + next + '.html';
+            const t = document.getElementById('nextTitle');
+            if (t) t.textContent = 'Лекция ' + next;
+            nextBtn.style.opacity = '1';
+            nextBtn.style.cursor = 'pointer';
+            nextBtn.onclick = null;
+        } else {
+            nextBtn.removeAttribute('href');
+            nextBtn.style.opacity = '0.35';
+            nextBtn.style.cursor = 'not-allowed';
+            nextBtn.onclick = (e) => e.preventDefault();
+            const t = document.getElementById('nextTitle');
+            if (t) t.textContent = 'Это последняя лекция';
+        }
+    }
+
+    document.addEventListener('keydown', (e) => {
+        const tag = e.target && e.target.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+        if (e.key === 'ArrowLeft' && prev) {
+            window.location.href = 'Лекция ' + prev + '.html';
+        } else if (e.key === 'ArrowRight' && next) {
+            window.location.href = 'Лекция ' + next + '.html';
+        } else if (e.key === 'Home') {
+            window.location.href = 'index.html';
+        }
+    });
+
+    function initScroll() {
+        const studentBlock = document.querySelector('.student-view');
+        const speakerBlock = document.querySelector('.speaker-notes');
+        const badge = document.getElementById('scroll-status-badge');
+        const audio = document.getElementById('lecture-audio');
+        if (!studentBlock || !speakerBlock) return;
+
+        const studentBehavior = studentBlock.style.scrollBehavior;
+        const speakerBehavior = speakerBlock.style.scrollBehavior;
+        let isRunning = false, completed = false, pausedElapsed = 0, startedAt = 0, rafId = null;
+        let startS = 0, startP = 0, maxS = 0, maxP = 0;
+
+        function setBadge(text, color) {
+            if (!badge) return;
+            badge.style.display = 'block';
+            badge.textContent = text;
+            badge.style.borderColor = color;
+        }
+        function measure() {
+            maxS = Math.max(studentBlock.scrollHeight - studentBlock.clientHeight, 0);
+            maxP = Math.max(speakerBlock.scrollHeight - speakerBlock.clientHeight, 0);
+        }
+        function fmt(ms) {
+            const m = Math.floor(ms / 60000);
+            const s = Math.floor((ms % 60000) / 1000);
+            return m + ':' + String(s).padStart(2, '0');
+        }
+        function playAudio() {
+            if (!audio) return;
+            const p = audio.play();
+            if (p && typeof p.catch === 'function') {
+                p.catch(err => {
+                    console.warn('[AutoAudio]', err.message);
+                    setBadge('▶ ИДЕТ ПРОКРУТКА (звук заблокирован)', '#eab308');
+                });
+            }
+        }
+        function pauseAudio() { if (audio) try { audio.pause(); } catch (_) {} }
+        function resetAudio() { if (audio) try { audio.pause(); audio.currentTime = 0; } catch (_) {} }
+
+        function animate() {
+            if (!isRunning) return;
+            const elapsed = pausedElapsed + (performance.now() - startedAt);
+            const fraction = Math.min(elapsed / totalDurationMs, 1);
+            measure();
+            studentBlock.scrollTop = startS + (maxS - startS) * fraction;
+            speakerBlock.scrollTop = startP + (maxP - startP) * fraction;
+            if (badge) {
+                badge.textContent = '▶ ' + fmt(elapsed) + ' / ' + fmt(totalDurationMs);
+                badge.style.borderColor = '#16a34a';
+            }
+            if (fraction >= 1) { finish(); return; }
+            rafId = requestAnimationFrame(animate);
+        }
+
+        function startOrResume() {
+            if (completed) {
+                pausedElapsed = 0; completed = false;
+                studentBlock.scrollTop = 0; speakerBlock.scrollTop = 0;
+                resetAudio();
+            }
+            measure();
+            startS = studentBlock.scrollTop;
+            startP = speakerBlock.scrollTop;
+            startedAt = performance.now();
+            isRunning = true;
+            studentBlock.style.scrollBehavior = 'auto';
+            speakerBlock.style.scrollBehavior = 'auto';
+            cancelAnimationFrame(rafId);
+            rafId = requestAnimationFrame(animate);
+            playAudio();
+        }
+        function pause() {
+            if (isRunning) pausedElapsed += performance.now() - startedAt;
+            isRunning = false;
+            cancelAnimationFrame(rafId);
+            setBadge('⏸ ПАУЗА ' + fmt(pausedElapsed), '#dc2626');
+            studentBlock.style.scrollBehavior = studentBehavior;
+            speakerBlock.style.scrollBehavior = speakerBehavior;
+            pauseAudio();
+        }
+        function finish() {
+            isRunning = false; completed = true;
+            cancelAnimationFrame(rafId);
+            measure();
+            studentBlock.scrollTop = maxS;
+            speakerBlock.scrollTop = maxP;
+            studentBlock.style.scrollBehavior = studentBehavior;
+            speakerBlock.style.scrollBehavior = speakerBehavior;
+
+            const nextLec = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+            if (nextLec) {
+                setBadge('✅ ГОТОВО → Лекция ' + nextLec, '#16a34a');
+                setTimeout(() => {
+                    location.href = 'Лекция ' + nextLec + '.html?' + AUTOSTART_PARAM + '=1';
+                }, autoNextDelayMs);
+            } else {
+                setBadge('✅ КУРС ЗАВЕРШЕН', '#16a34a');
+                pauseAudio();
+            }
+        }
+        function toggle() { isRunning ? pause() : startOrResume(); }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.repeat) return;
+            const t = e.target; const tag = t && t.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+            if (e.code === 'Space' || e.key === ' ') {
+                e.preventDefault();
+                toggle();
+            }
+        }, true);
+
+        if (badge) badge.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+        [studentBlock, speakerBlock].forEach(el => {
+            el.addEventListener('click', (e) => {
+                if (e.target.closest('a,button,iframe,input,textarea,select,video,audio')) return;
+                if (window.getSelection().toString().length > 0) return;
+                toggle();
+            });
+        });
+
+        const params = new URLSearchParams(location.search);
+        if (params.get(AUTOSTART_PARAM) === '1') {
+            params.delete(AUTOSTART_PARAM);
+            const clean = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
+            history.replaceState(null, '', clean);
+            setTimeout(startOrResume, 500);
+        } else {
+            setBadge('▶ ПРОБЕЛ / КЛИК — старт', '#4a5568');
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initScroll, { once: true });
+    } else {
+        initScroll();
+    }
+})();
+</script>
+
+</body>
+</html>
