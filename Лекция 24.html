@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Лекция 24. Продуктовая аналитика: как измерять продукт и принимать решения</title>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #ffffff; }
+
+    .student-view { width: 66.66%; height: 100vh; background: #ffffff; padding: 35px 40px; display: flex; flex-direction: column; justify-content: space-between; border-right: 2px solid #e2e8f0; overflow-y: auto; scroll-behavior: smooth; }
+    .speaker-notes { width: 33.34%; height: 100%; background: #1a202c; color: #edf2f7; padding: 30px; overflow-y: auto; }
+
+    .slide-header { font-size: 26px; color: #0f172a; font-weight: bold; line-height: 1.3; margin-bottom: 18px; border-bottom: 4px solid #2563eb; padding-bottom: 12px; }
+    .slide-body { flex-grow: 1; display: flex; flex-direction: column; gap: 18px; padding: 5px 0; }
+    .slide-footer { font-size: 13px; color: #64748b; text-align: right; margin-top: 12px; }
+
+    .chart-box { background: #f8fafc; border: 2.5px dashed #94a3b8; padding: 20px; border-radius: 12px; }
+    .chart-box strong { font-size: 17px; display: block; margin-bottom: 8px; color: #0f172a; }
+    .chart-box p { font-size: 14px; color: #1e293b; line-height: 1.5; }
+
+    .viz-card { background: #ffffff; border: 2px solid #cbd5e0; border-radius: 12px; padding: 18px; box-shadow: 0 4px 10px rgba(15,23,42,0.06); }
+    .viz-title { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .viz-caption { font-size: 13px; color: #1e293b; margin-top: 10px; line-height: 1.6; }
+    .viz-caption strong { color: #0f172a; font-weight: 700; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+
+    .compare-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .compare-table th { background: #0f172a; color: white; padding: 10px 12px; text-align: left; font-weight: 700; }
+    .compare-table td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; color: #1e293b; vertical-align: top; line-height: 1.45; }
+    .compare-table tr:nth-child(even) td { background: #f8fafc; }
+
+    .role-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .role-table th { background: #0f172a; color: white; padding: 10px 12px; text-align: left; font-weight: 700; }
+    .role-table td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; color: #1e293b; vertical-align: top; line-height: 1.45; }
+    .role-table tr:nth-child(even) td { background: #f8fafc; }
+    .role-table .role-emoji { font-size: 16px; }
+
+    .callout { background: #fffbeb; border-left: 5px solid #d97706; padding: 14px 18px; border-radius: 6px; }
+    .callout strong { color: #78350f; font-size: 14px; }
+    .callout p { font-size: 13px; color: #451a03; margin-top: 4px; line-height: 1.5; }
+    .callout.warn { background: #fef2f2; border-left-color: #dc2626; }
+    .callout.warn strong { color: #991b1b; }
+    .callout.warn p { color: #7f1d1d; }
+    .callout.ok { background: #f0fdf4; border-left-color: #16a34a; }
+    .callout.ok strong { color: #166534; }
+    .callout.ok p { color: #14532d; }
+
+    /* SVG styles */
+    .axis { stroke: #334155; stroke-width: 2; }
+    .grid-line { stroke: #cbd5e0; stroke-width: 1; }
+    .label { font-family: 'Segoe UI', sans-serif; font-size: 13px; fill: #1e293b; font-weight: 600; }
+    .label-strong { font-family: 'Segoe UI', sans-serif; font-size: 15px; font-weight: 700; fill: #0f172a; }
+    .label-small { font-family: 'Segoe UI', sans-serif; font-size: 12px; fill: #475569; font-weight: 500; }
+    .label-white { font-family: 'Segoe UI', sans-serif; font-size: 13px; fill: #ffffff; font-weight: 700; }
+    .label-white-sm { font-family: 'Segoe UI', sans-serif; font-size: 11px; fill: #ffffff; opacity: 0.95; font-weight: 600; }
+
+    .video-section { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 5px; }
+    .video-container { width: 100%; max-width: 580px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: #000; aspect-ratio: 16 / 9; }
+    .links-hub { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .video-btn { text-decoration: none; padding: 9px 14px; border-radius: 6px; font-size: 13px; font-weight: bold; color: white; display: flex; align-items: center; gap: 6px; transition: transform 0.2s, background 0.2s; cursor: pointer; border: none; }
+    .video-btn:hover { transform: translateY(-2px); }
+    .rt-btn { background: #00a877; }
+    .rt-btn:hover { background: #008f65; }
+    .stop-btn { background: #dc2626; }
+    .stop-btn:hover { background: #b91c1c; }
+
+    .notes-header { font-size: 17px; color: #63b3ed; font-weight: bold; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a5568; padding-bottom: 10px; }
+    .lecture-text { font-size: 14.5px; line-height: 1.65; color: #e2e8f0; text-align: justify; }
+    .lecture-text p { margin-bottom: 14px; }
+    .lecture-text h3 { color: #63b3ed; font-size: 15px; margin: 18px 0 10px; border-bottom: 1px solid #2d3748; padding-bottom: 5px; }
+    .lecture-text h4 { color: #90cdf4; font-size: 13.5px; margin: 14px 0 8px; }
+    .lecture-text ul { margin: 8px 0 14px 18px; }
+    .lecture-text li { margin-bottom: 6px; }
+
+    .dark-block { background: #2d3748; border: 1px solid #4a5568; border-radius: 10px; padding: 16px 18px; margin-top: 20px; }
+    .dark-block-title { font-size: 14px; font-weight: bold; color: #63b3ed; margin-bottom: 12px; border-bottom: 2px solid #4a5568; padding-bottom: 8px; }
+    .dark-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+    .dark-table th { background: #1a202c; color: #90cdf4; padding: 7px 9px; text-align: left; font-weight: 600; border-bottom: 1px solid #4a5568; }
+    .dark-table td { padding: 6px 9px; border-bottom: 1px solid #2d3748; color: #cbd5e0; vertical-align: top; line-height: 1.4; }
+    .dark-table tr:nth-child(even) td { background: #2a3242; }
+    .dark-table .term { font-weight: bold; color: #90cdf4; white-space: nowrap; }
+
+    .lecture-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(12px); border-top: 2px solid rgba(255, 255, 255, 0.08); padding: 12px 20px; display: flex; align-items: center; justify-content: center; gap: 12px; z-index: 9999; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25); }
+    .lecture-nav .nav-progress { position: absolute; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899); border-radius: 0 3px 3px 0; }
+    .lecture-nav .nav-btn-arrow { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); border: 1.5px solid rgba(255, 255, 255, 0.15); color: #e2e8f0; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; }
+    .lecture-nav .nav-btn-arrow:hover:not(:disabled) { background: rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.6); color: white; transform: translateY(-2px); }
+    .lecture-nav .nav-btn-arrow:disabled { opacity: 0.35; cursor: not-allowed; }
+    .lecture-nav .nav-btn-arrow .arrow-icon { font-size: 16px; line-height: 1; }
+    .lecture-nav .nav-btn-arrow .arrow-label { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+    .lecture-nav .nav-btn-arrow .arrow-label small { font-size: 9.5px; font-weight: 400; opacity: 0.7; text-transform: uppercase; }
+    .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { font-size: 12px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lecture-nav .nav-center { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 20px; color: #94a3b8; font-size: 11px; border-left: 1px solid rgba(255, 255, 255, 0.1); border-right: 1px solid rgba(255, 255, 255, 0.1); }
+    .lecture-nav .nav-counter { font-size: 15px; font-weight: 900; color: #f1f5f9; }
+    .lecture-nav .nav-counter span { color: #64748b; font-size: 12px; font-weight: 600; }
+    .lecture-nav .nav-index-link { color: #60a5fa; text-decoration: none; font-size: 11px; font-weight: 600; }
+    .lecture-nav .nav-index-link:hover { color: #93c5fd; text-decoration: underline; }
+    body { padding-bottom: 80px !important; }
+    @media (max-width: 900px) {
+        .lecture-nav { padding: 10px 12px; gap: 8px; }
+        .lecture-nav .nav-btn-arrow { padding: 8px 12px; }
+        .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { max-width: 90px; font-size: 11px; }
+        .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    }
+
+    @keyframes pulseAlert {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+    }
+    .pulse-alert { animation: pulseAlert 1.5s ease-in-out infinite; }
+
+    @keyframes flowData {
+        0% { stroke-dashoffset: 0; }
+        100% { stroke-dashoffset: -20; }
+    }
+    .flow-data { animation: flowData 2s linear infinite; }
+</style>
+</head>
+<body>
+
+    <div class="student-view">
+        <div class="slide-header">
+            Лекция 24. Продуктовая аналитика: как измерять продукт и принимать решения
+        </div>
+
+        <div class="slide-body">
+
+            <!-- HERO -->
+            <div class="chart-box" style="background: #faf5ff; border-color: #d8b4fe;">
+                <strong style="color: #6b21a8;">🎯 Главная идея</strong>
+                <p>Продуктовый аналитик — это не тот, кто считает метрики. Это тот, кто отвечает на вопрос: <strong>«Почему пользователи ведут себя так, а не иначе, и что нужно изменить в продукте»</strong>. Метрики — это инструмент. Фреймворки — это карта. Статистика и ML — это точные приборы. Гипотезы — это маршрут. Решение — это результат.</p>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 1: РОЛИ -->
+            <div class="viz-card">
+                <div class="viz-title">👥 Кто есть кто: продуктовый аналитик на фоне других ролей</div>
+                <svg viewBox="0 0 540 280" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="280" fill="#ffffff"/>
+
+                    <!-- Central hub -->
+                    <circle cx="270" cy="140" r="50" fill="#1e40af"/>
+                    <text x="270" y="134" text-anchor="middle" class="label-white" style="font-size: 13px;">Продуктовый</text>
+                    <text x="270" y="150" text-anchor="middle" class="label-white" style="font-size: 13px;">аналитик</text>
+
+                    <!-- Data analyst -->
+                    <circle cx="80" cy="60" r="40" fill="#eff6ff" stroke="#2563eb" stroke-width="2.5"/>
+                    <text x="80" y="55" text-anchor="middle" class="label-strong" style="font-size: 11px;">Аналитик</text>
+                    <text x="80" y="69" text-anchor="middle" class="label-strong" style="font-size: 11px;">данных</text>
+                    <line x1="110" y1="85" x2="230" y2="115" stroke="#2563eb" stroke-width="2"/>
+
+                    <!-- Marketing analyst -->
+                    <circle cx="460" cy="60" r="40" fill="#fffbeb" stroke="#d97706" stroke-width="2.5"/>
+                    <text x="460" y="55" text-anchor="middle" class="label-strong" style="font-size: 10px;">Маркетинговый</text>
+                    <text x="460" y="69" text-anchor="middle" class="label-strong" style="font-size: 10px;">аналитик</text>
+                    <line x1="430" y1="85" x2="310" y2="115" stroke="#d97706" stroke-width="2"/>
+
+                    <!-- Financial analyst -->
+                    <circle cx="80" cy="220" r="40" fill="#f0fdf4" stroke="#16a34a" stroke-width="2.5"/>
+                    <text x="80" y="215" text-anchor="middle" class="label-strong" style="font-size: 11px;">Финансовый</text>
+                    <text x="80" y="229" text-anchor="middle" class="label-strong" style="font-size: 11px;">аналитик</text>
+                    <line x1="110" y1="195" x2="230" y2="165" stroke="#16a34a" stroke-width="2"/>
+
+                    <!-- UX researcher -->
+                    <circle cx="460" cy="220" r="40" fill="#fef2f2" stroke="#dc2626" stroke-width="2.5"/>
+                    <text x="460" y="215" text-anchor="middle" class="label-strong" style="font-size: 11px;">UX-</text>
+                    <text x="460" y="229" text-anchor="middle" class="label-strong" style="font-size: 11px;">исследователь</text>
+                    <line x1="430" y1="195" x2="310" y2="165" stroke="#dc2626" stroke-width="2"/>
+
+                    <!-- BI / Data Engineer -->
+                    <circle cx="270" cy="255" r="22" fill="#faf5ff" stroke="#7c3aed" stroke-width="2.5"/>
+                    <text x="270" y="252" text-anchor="middle" class="label-small" style="font-size: 10px;">BI / Data</text>
+                    <text x="270" y="264" text-anchor="middle" class="label-small" style="font-size: 10px;">Engineer</text>
+                    <line x1="270" y1="233" x2="270" y2="192" stroke="#7c3aed" stroke-width="2"/>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Продуктовый аналитик</strong> стоит на пересечении <strong>данных, продукта и бизнеса</strong>. Аналитик данных отвечает «что произошло?». Маркетинговый — «откуда пришли и сколько стоит?». Финансовый — «прибыльно ли в целом?». UX-исследователь работает с качественными методами. Продуктовый аналитик <strong>переводит данные в продуктовые решения</strong>: его работа начинается с вопроса «почему», а не «сколько».
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 2: JTBD -->
+            <div class="viz-card">
+                <div class="viz-title">🧭 JTBD — Jobs To Be Done: какую работу выполняет продукт</div>
+                <svg viewBox="0 0 540 230" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="230" fill="#ffffff"/>
+
+                    <!-- Functional -->
+                    <rect x="20" y="20" width="160" height="190" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="2.5"/>
+                    <text x="100" y="48" text-anchor="middle" class="label-strong" fill="#1e40af">Functional</text>
+                    <text x="100" y="68" text-anchor="middle" class="label-small">практическая задача</text>
+                    <text x="100" y="110" text-anchor="middle" class="label-small">«повесить полку»</text>
+                    <text x="100" y="130" text-anchor="middle" class="label-small">«быстро поесть»</text>
+                    <text x="100" y="150" text-anchor="middle" class="label-small">«перевести деньги»</text>
+
+                    <!-- Emotional -->
+                    <rect x="190" y="20" width="160" height="190" rx="10" fill="#f0fdf4" stroke="#16a34a" stroke-width="2.5"/>
+                    <text x="270" y="48" text-anchor="middle" class="label-strong" fill="#166534">Emotional</text>
+                    <text x="270" y="68" text-anchor="middle" class="label-small">чувства</text>
+                    <text x="270" y="110" text-anchor="middle" class="label-small">«чувствовать</text>
+                    <text x="270" y="130" text-anchor="middle" class="label-small">себя уверенно»</text>
+                    <text x="270" y="150" text-anchor="middle" class="label-small">«не тревожиться»</text>
+
+                    <!-- Social -->
+                    <rect x="360" y="20" width="160" height="190" rx="10" fill="#fffbeb" stroke="#d97706" stroke-width="2.5"/>
+                    <text x="440" y="48" text-anchor="middle" class="label-strong" fill="#92400e">Social</text>
+                    <text x="440" y="68" text-anchor="middle" class="label-small">как видят другие</text>
+                    <text x="440" y="110" text-anchor="middle" class="label-small">«выглядеть</text>
+                    <text x="440" y="130" text-anchor="middle" class="label-small">статусно»</text>
+                    <text x="440" y="150" text-anchor="middle" class="label-small">«быть в тренде»</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>JTBD</strong> отвечает на вопрос: какую «работу» выполняет пользователь, когда «нанимает» продукт. Работы бывают <strong>functional</strong> (повесить полку), <strong>emotional</strong> (чувствовать себя уверенно), <strong>social</strong> (выглядеть статусно). Пример: пользователь не «покупает дрель» — он «хочет повесить полку». Дрель — инструмент. Если появится инструмент лучше, пользователь уйдёт. Задача аналитика — понять, какую работу выполняет продукт, и измерить, насколько хорошо он с ней справляется.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 3: CJM -->
+            <div class="viz-card">
+                <div class="viz-title">🗺️ CJM — Customer Journey Map: путь пользователя</div>
+                <svg viewBox="0 0 540 150" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="150" fill="#ffffff"/>
+
+                    <!-- Steps -->
+                    <circle cx="70" cy="70" r="28" fill="#eff6ff" stroke="#2563eb" stroke-width="2.5"/>
+                    <text x="70" y="66" text-anchor="middle" class="label-strong" fill="#1e40af" style="font-size: 11px;">1. Узнал</text>
+                    <text x="70" y="82" text-anchor="middle" class="label-small" fill="#1e40af">CTR</text>
+
+                    <line x1="98" y1="70" x2="132" y2="70" stroke="#334155" stroke-width="2"/>
+                    <polygon points="132,70 125,66 125,74" fill="#334155"/>
+
+                    <circle cx="160" cy="70" r="28" fill="#f0fdf4" stroke="#16a34a" stroke-width="2.5"/>
+                    <text x="160" y="66" text-anchor="middle" class="label-strong" fill="#166534" style="font-size: 11px;">2. Зашёл</text>
+                    <text x="160" y="82" text-anchor="middle" class="label-small" fill="#166534">bounce</text>
+
+                    <line x1="188" y1="70" x2="222" y2="70" stroke="#334155" stroke-width="2"/>
+                    <polygon points="222,70 215,66 215,74" fill="#334155"/>
+
+                    <circle cx="250" cy="70" r="28" fill="#fffbeb" stroke="#d97706" stroke-width="2.5"/>
+                    <text x="250" y="66" text-anchor="middle" class="label-strong" fill="#92400e" style="font-size: 11px;">3. Попроб.</text>
+                    <text x="250" y="82" text-anchor="middle" class="label-small" fill="#92400e">просмотры</text>
+
+                    <line x1="278" y1="70" x2="312" y2="70" stroke="#334155" stroke-width="2"/>
+                    <polygon points="312,70 305,66 305,74" fill="#334155"/>
+
+                    <circle cx="340" cy="70" r="28" fill="#faf5ff" stroke="#7c3aed" stroke-width="2.5"/>
+                    <text x="340" y="66" text-anchor="middle" class="label-strong" fill="#6b21a8" style="font-size: 11px;">4. Купил</text>
+                    <text x="340" y="82" text-anchor="middle" class="label-small" fill="#6b21a8">conversion</text>
+
+                    <line x1="368" y1="70" x2="402" y2="70" stroke="#334155" stroke-width="2"/>
+                    <polygon points="402,70 395,66 395,74" fill="#334155"/>
+
+                    <circle cx="430" cy="70" r="28" fill="#fef2f2" stroke="#dc2626" stroke-width="2.5"/>
+                    <text x="430" y="66" text-anchor="middle" class="label-strong" fill="#991b1b" style="font-size: 11px;">5. Верн.</text>
+                    <text x="430" y="82" text-anchor="middle" class="label-small" fill="#991b1b">retention</text>
+
+                    <text x="270" y="135" text-anchor="middle" class="label-strong" fill="#0f172a">на каждом этапе — своя метрика и свой барьер</text>
+                </svg>
+                <div class="viz-caption">
+                    Путь пользователя — последовательность этапов от первого касания до повторной покупки. Пример интернет-магазина: узнал из рекламы (CTR) → зашёл (bounce rate) → посмотрел товар (просмотры) → добавил в корзину (add-to-cart rate) → купил (conversion rate) → вернулся (retention). Задача аналитика — измерить конверсию между этапами, найти узкое место и предложить гипотезу, почему пользователи уходят.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 4: HEART -->
+            <div class="viz-card">
+                <div class="viz-title">❤️ HEART — пять измерений продуктового опыта</div>
+                <svg viewBox="0 0 540 230" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="230" fill="#ffffff"/>
+
+                    <!-- Goal -> Signal -> Metric -->
+                    <text x="270" y="20" text-anchor="middle" class="label-strong" fill="#0f172a">Goal → Signal → Metric</text>
+
+                    <!-- 5 blocks -->
+                    <rect x="15" y="40" width="98" height="170" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+                    <text x="64" y="62" text-anchor="middle" class="label-strong" fill="#1e40af" style="font-size: 11px;">😊 Happiness</text>
+                    <text x="64" y="90" text-anchor="middle" class="label-small">NPS</text>
+                    <text x="64" y="107" text-anchor="middle" class="label-small">CSAT</text>
+                    <text x="64" y="124" text-anchor="middle" class="label-small">CES</text>
+
+                    <rect x="121" y="40" width="98" height="170" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+                    <text x="170" y="62" text-anchor="middle" class="label-strong" fill="#166534" style="font-size: 11px;">🎯 Engagement</text>
+                    <text x="170" y="90" text-anchor="middle" class="label-small">DAU/MAU</text>
+                    <text x="170" y="107" text-anchor="middle" class="label-small">session depth</text>
+                    <text x="170" y="124" text-anchor="middle" class="label-small">time in app</text>
+
+                    <rect x="227" y="40" width="98" height="170" rx="8" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+                    <text x="276" y="62" text-anchor="middle" class="label-strong" fill="#92400e" style="font-size: 11px;">🚀 Adoption</text>
+                    <text x="276" y="90" text-anchor="middle" class="label-small">feature adoption</text>
+                    <text x="276" y="107" text-anchor="middle" class="label-small">activation rate</text>
+
+                    <rect x="333" y="40" width="98" height="170" rx="8" fill="#faf5ff" stroke="#7c3aed" stroke-width="2"/>
+                    <text x="382" y="62" text-anchor="middle" class="label-strong" fill="#6b21a8" style="font-size: 11px;">🔁 Retention</text>
+                    <text x="382" y="90" text-anchor="middle" class="label-small">retention rate</text>
+                    <text x="382" y="107" text-anchor="middle" class="label-small">churn rate</text>
+
+                    <rect x="439" y="40" width="98" height="170" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="2"/>
+                    <text x="488" y="62" text-anchor="middle" class="label-strong" fill="#991b1b" style="font-size: 10px;">✅ Task Success</text>
+                    <text x="488" y="90" text-anchor="middle" class="label-small">completion rate</text>
+                    <text x="488" y="107" text-anchor="middle" class="label-small">error rate</text>
+                    <text x="488" y="124" text-anchor="middle" class="label-small">time on task</text>
+                </svg>
+                <div class="viz-caption">
+                    HEART (Google, Rodden et al., 2010) — это не просто пять букв, а процесс <strong>Goal → Signal → Metric</strong>: сначала цель, потом сигнал поведения, потом метрика. Пять измерений: Happiness (удовлетворённость), Engagement (вовлечённость), Adoption (принятие), Retention (удержание), Task Success (успешность задачи). Для банка важнее Task Success, для соцсети — Engagement, для доставки — Retention. Задача аналитика — выбрать, какие измерения важны для конкретного продукта.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 5: МЕТРИКИ ВОВЛЕЧЕНИЯ -->
+            <div class="viz-card">
+                <div class="viz-title">📊 Метрики вовлечения: глубина и частота использования</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr><th>Метрика</th><th>Что показывает</th><th>Формула / пример</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>DAU / MAU</td><td>Stickiness — как часто возвращаются</td><td>DAU / MAU × 100%. Пример: 30 000 / 100 000 = 30%</td></tr>
+                        <tr><td>Session depth</td><td>Сколько экранов просматривает за сессию</td><td>Среднее число экранов. Пример: 5.2</td></tr>
+                        <tr><td>Session frequency</td><td>Сколько сессий в неделю</td><td>Пример: 3.5 в неделю</td></tr>
+                        <tr><td>Time in app</td><td>Сколько времени проводят в приложении</td><td>Пример: 4 мин 20 сек</td></tr>
+                        <tr><td>Feature usage</td><td>Доля пользователей, использующих фичу</td><td>Пример: 15% используют поиск</td></tr>
+                    </tbody>
+                </table>
+                <div class="viz-caption">
+                    Вовлечение — это не «сколько зашли», а <strong>глубина и частота</strong>. <strong>Оговорка:</strong> DAU/MAU хорошо работает для продуктов с ежедневным использованием (соцсети, мессенджеры), но плохо — для редких продуктов (страхование, туризм, B2B SaaS с месячным циклом). Для страхового приложения DAU/MAU 5% — норма, а не провал. Задача аналитика — найти фичи, которые увеличивают глубину, и продвигать их.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 6: ACTIVATION FUNNEL -->
+            <div class="viz-card">
+                <div class="viz-title">🚀 Activation funnel: путь от регистрации до привычки</div>
+                <svg viewBox="0 0 540 280" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="280" fill="#ffffff"/>
+
+                    <rect x="170" y="15" width="200" height="40" rx="6" fill="#1e40af"/>
+                    <text x="270" y="40" text-anchor="middle" class="label-white">📝 Регистрация: 10 000 (100%)</text>
+
+                    <line x1="270" y1="55" x2="270" y2="78" stroke="#334155" stroke-width="2"/>
+                    <polygon points="270,78 265,70 275,70" fill="#334155"/>
+                    <text x="305" y="70" class="label-small">40%</text>
+
+                    <rect x="170" y="78" width="200" height="40" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+                    <text x="270" y="103" text-anchor="middle" class="label-strong" fill="#1e40af">⚡ Первое ключевое действие: 4 000</text>
+
+                    <line x1="270" y1="118" x2="270" y2="141" stroke="#dc2626" stroke-width="2.5" stroke-dasharray="4 3"/>
+                    <polygon points="270,141 265,133 275,133" fill="#dc2626"/>
+                    <text x="340" y="133" class="label-small" fill="#991b1b" style="font-weight:700;">50% ← узкое место</text>
+
+                    <rect x="170" y="141" width="200" height="40" rx="6" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+                    <text x="270" y="166" text-anchor="middle" class="label-strong" fill="#92400e">🔁 Второе действие: 2 000</text>
+
+                    <line x1="270" y1="181" x2="270" y2="204" stroke="#334155" stroke-width="2"/>
+                    <polygon points="270,204 265,196 275,196" fill="#334155"/>
+                    <text x="305" y="196" class="label-small">60%</text>
+
+                    <rect x="170" y="204" width="200" height="40" rx="6" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+                    <text x="270" y="229" text-anchor="middle" class="label-strong" fill="#166534">🧲 Привычка: 800 (8%)</text>
+
+                    <text x="270" y="265" text-anchor="middle" class="label-strong" fill="#0f172a">Activation rate = 8%</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Первый ключевой действие</strong> — то, что пользователь должен сделать, чтобы понять ценность продукта. Это «Aha-moment». Пример доставки еды: регистрация → первый заказ → повторный заказ → заказ каждую неделю. Aha-moment — первый заказ. В примере узкое место — переход от первого действия ко второму (50%). Задача аналитика — найти узкое место и предложить гипотезу (например, онбординг с подсказками на втором шаге).
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 7: FEATURE ADOPTION vs RETENTION -->
+            <div class="viz-card">
+                <div class="viz-title">🧩 Feature adoption и feature retention: прижилась ли фича</div>
+                <div class="grid-2">
+                    <div style="background: #eff6ff; border: 2px solid #2563eb; border-radius: 10px; padding: 14px;">
+                        <div style="font-weight: 700; color: #1e40af; margin-bottom: 6px;">📊 Feature adoption</div>
+                        <div style="font-size: 13px; color: #1e293b; line-height: 1.6;">Adoption = Пользователи фичи / Все пользователи<br>Пример: 1 500 / 10 000 = <strong>15%</strong></div>
+                    </div>
+                    <div style="background: #f0fdf4; border: 2px solid #16a34a; border-radius: 10px; padding: 14px;">
+                        <div style="font-weight: 700; color: #166534; margin-bottom: 6px;">🔁 Feature retention</div>
+                        <div style="font-size: 13px; color: #1e293b; line-height: 1.6;">Retention = Вернувшиеся / Попробовавшие<br>Пример: 300 / 1 500 = <strong>20%</strong></div>
+                    </div>
+                </div>
+                <div class="callout warn" style="margin-top: 12px;">
+                    <strong>⚠️ Ловушка</strong>
+                    <p>Высокий feature adoption не значит, что фича полезна. Если пользователи попробовали и не вернулись — фича не решает их проблему. Смотрите на feature retention. Пример: мобильный банк запустил раздел инвестиций. Adoption 25%, но retention 5%. Пользователи попробовали и ушли — нужно упростить интерфейс и добавить обучение.</p>
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 8: СЕГМЕНТАЦИЯ -->
+            <div class="viz-card">
+                <div class="viz-title">👥 Поведенческая сегментация: какие пользователи бывают</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr><th>Сегмент</th><th>Как определить</th><th>Что делать</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>🏆 Чемпионы</td><td>Заходят каждый день, используют много фич</td><td>VIP-программа, ранний доступ</td></tr>
+                        <tr><td>💙 Лояльные</td><td>Заходят регулярно, основные фичи</td><td>Апсейл, программа лояльности</td></tr>
+                        <tr><td>🌱 Новички</td><td>Зарегистрировались недавно</td><td>Онбординг, помощь на старте</td></tr>
+                        <tr><td>⚠️ Под угрозой</td><td>Были активными, но заходят реже</td><td>Реактивация, опрос</td></tr>
+                        <tr><td>😴 Спящие</td><td>Заходили давно, но перестали</td><td>Реактивация или отказ</td></tr>
+                    </tbody>
+                </table>
+                <div class="viz-caption">
+                    Это <strong>эвристическая</strong> сегментация — правила задаёт человек. В современной аналитике её дополняет <strong>ML-кластеризация (K-Means)</strong>, которая автоматически находит скрытые паттерны по десяткам признаков. Подробнее — в блоке 11.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 9: NPS/CSAT/CES -->
+            <div class="viz-card">
+                <div class="viz-title">💬 Качественные методы: NPS, CSAT, CES</div>
+                <div class="grid-3">
+                    <div style="background: #eff6ff; border: 2px solid #2563eb; border-radius: 10px; padding: 14px;">
+                        <div style="font-weight: 700; color: #1e40af; text-align: center;">💙 NPS</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.5; margin-top: 8px;">«Порекомендуете ли вы нас другу?» (0–10)<br>% промоутеров (9–10) − % критиков (0–6)<br>Пример: <strong>NPS = 40</strong></div>
+                    </div>
+                    <div style="background: #f0fdf4; border: 2px solid #16a34a; border-radius: 10px; padding: 14px;">
+                        <div style="font-weight: 700; color: #166534; text-align: center;">😊 CSAT</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.5; margin-top: 8px;">«Насколько вы удовлетворены?» (1–5)<br>% оценок 4–5<br>Пример: <strong>CSAT = 80%</strong></div>
+                    </div>
+                    <div style="background: #fffbeb; border: 2px solid #d97706; border-radius: 10px; padding: 14px;">
+                        <div style="font-weight: 700; color: #92400e; text-align: center;">⚡ CES</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.5; margin-top: 8px;">«Насколько легко было решить задачу?» (1–7)<br>Среднее по шкале<br>Пример: <strong>CES = 5.5</strong></div>
+                    </div>
+                </div>
+                <div class="callout warn" style="margin-top: 12px;">
+                    <strong>⚠️ Ограничения NPS</strong>
+                    <p>NPS критикуется за слабую связь с реальным ростом, чувствительность к формулировке вопроса и культурные различия в шкале. «Промоутеры» не всегда реально рекомендуют. NPS — полезный сигнал, но не «серебряная пуля». Пример: retention высокий, но NPS низкий — пользователи остаются, потому что нет альтернативы, а не потому что любят продукт. Аналитик копает глубже: интервью, опросы.</p>
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 10: СТАТИСТИКА -->
+            <div class="viz-card">
+                <div class="viz-title">📐 Статистическая строгость: отличаем сигнал от шума</div>
+                <div class="grid-2">
+                    <div style="background: #eff6ff; border: 2px solid #2563eb; border-radius: 10px; padding: 14px;">
+                        <div style="font-weight: 700; color: #1e40af; margin-bottom: 6px;">🎲 p-value</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.5;">Вероятность наблюдать столь же или более экстремальный результат <strong>при условии, что нулевая гипотеза верна</strong>. Если p &lt; 0.05 — эффект статистически значим. <strong>Важно:</strong> p-value — не «вероятность, что эффект случайный».</div>
+                    </div>
+                    <div style="background: #f0fdf4; border: 2px solid #16a34a; border-radius: 10px; padding: 14px;">
+                        <div style="font-weight: 700; color: #166534; margin-bottom: 6px;">📏 Доверительный интервал</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.5;">«С вероятностью 95% истинный Retention лежит в диапазоне 38.5% – 41.5%». Если интервалы двух когорт пересекаются — разницы статистически нет.</div>
+                    </div>
+                    <div style="background: #fffbeb; border: 2px solid #d97706; border-radius: 10px; padding: 14px;">
+                        <div style="font-weight: 700; color: #92400e; margin-bottom: 6px;">🎯 MDE</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.5;">Minimum Detectable Effect — минимальный эффект, который способен обнаружить A/B-тест. Чем меньше MDE, тем дольше и дороже тест. Чтобы заметить рост на 1% — нужны десятки тысяч пользователей; на 10% — сотни.</div>
+                    </div>
+                    <div style="background: #faf5ff; border: 2px solid #7c3aed; border-radius: 10px; padding: 14px;">
+                        <div style="font-weight: 700; color: #6b21a8; margin-bottom: 6px;">📊 Размер выборки и power</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.5;">Размер выборки рассчитывается от MDE, базового уровня и <strong>power</strong> (обычно 80%). Без power-расчёта тест может не найти реальный эффект.</div>
+                    </div>
+                </div>
+                <div class="callout warn" style="margin-top: 12px;">
+                    <strong>⚠️ Главная ловушка: «после» не значит «вследствие»</strong>
+                    <p>Латинский принцип <em>post hoc ergo propter hoc</em> («после — значит вследствие») — классическая ошибка. Если метрика выросла после запуска фичи, это не значит, что фича сработала: мог начаться сезонный рост или конкурент отключил рекламу. Только корректный A/B-тест с контролем статистической значимости доказывает causality.</p>
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 11: ML -->
+            <div class="viz-card">
+                <div class="viz-title">🤖 Machine Learning в продуктовой аналитике: 3 применения</div>
+                <div class="grid-3">
+                    <div style="background: #eff6ff; border: 2px solid #2563eb; border-radius: 10px; padding: 14px;">
+                        <div style="font-weight: 700; color: #1e40af; text-align: center;">🔮 Predictive Churn</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.5; margin-top: 8px;">Random Forest, XGBoost, LogReg. Анализируют сотни поведенческих признаков и дают <strong>Churn Score</strong> — вероятность ухода от 0 до 1 — за неделю до того, как пользователь перестанет заходить.</div>
+                    </div>
+                    <div style="background: #f0fdf4; border: 2px solid #16a34a; border-radius: 10px; padding: 14px;">
+                        <div style="font-weight: 700; color: #166534; text-align: center;">🧩 K-Means</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.5; margin-top: 8px;">Автоматически находит скрытые кластеры в многомерном пространстве признаков (RFM + поведение), без заранее заданных правил. Может обнаружить неочевидный сегмент, который человек не придумал бы.</div>
+                    </div>
+                    <div style="background: #fffbeb; border: 2px solid #d97706; border-radius: 10px; padding: 14px;">
+                        <div style="font-weight: 700; color: #92400e; text-align: center;">🎯 Propensity</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.5; margin-top: 8px;">Предсказывает <strong>вероятность активации конкретного пользователя</strong> на основе первых 5 минут поведения. Используется для персонализации онбординга: кому показать подсказки, а кому не мешать.</div>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    <strong>Важно разграничивать:</strong> propensity-модель предсказывает вероятность активации <em>конкретного пользователя</em>, а не «долю застревающих». Утверждение «60% новичков застревают на втором шаге» — это результат <strong>воронки/когортного анализа</strong>, а не propensity-модели. Propensity — прогнозный инструмент, воронка — диагностический. Пример propensity: новый пользователь с вероятностью активации 30% получает расширенный онбординг; с вероятностью 80% — не получает, чтобы не мешать. Пример churn: пользователь с Churn Score 0.85 не заходил 3 дня — система отправляет персональный бонус, отток снижен проактивно.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 12: RICE/ICE -->
+            <div class="viz-card">
+                <div class="viz-title">🧪 Приоритизация гипотез: RICE и ICE</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr><th>Система</th><th>Компоненты и шкалы</th><th>Формула</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>RICE</td><td>Reach (пользователи/мес), Impact (0.25 / 0.5 / 1 / 2 / 3), Confidence (0–1), Effort (человеко-месяцы)</td><td>(Reach × Impact × Confidence) / Effort</td></tr>
+                        <tr><td>ICE</td><td>Impact (1–10), Confidence (1–10), Ease (1–10)</td><td>Impact × Confidence × Ease</td></tr>
+                    </tbody>
+                </table>
+                <div class="viz-caption">
+                    <strong>Пример RICE:</strong> новый онбординг. Reach = 10 000, Impact = 2, Confidence = 0.8, Effort = 0.75 человеко-месяца (≈3 недели). RICE = (10 000 × 2 × 0.8) / 0.75 = <strong>21 333</strong>. <strong>Пример ICE:</strong> изменить кнопку. Impact = 8, Confidence = 7, Ease = 9. ICE = 8 × 7 × 9 = <strong>504</strong>. <strong>Важно:</strong> в RICE Effort измеряется в человеко-месяцах, иначе единицы несопоставимы. Пример условный. RICE строже (учитывает охват), ICE проще (влияние, уверенность, лёгкость). Задача аналитика — приоритизировать гипотезы, иначе команда тестирует случайные идеи.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 13: ДАШБОРДЫ -->
+            <div class="viz-card">
+                <div class="viz-title">📊 Продуктовые дашборды: три уровня</div>
+                <svg viewBox="0 0 540 220" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="220" fill="#ffffff"/>
+
+                    <rect x="30" y="30" width="150" height="160" rx="10" fill="#faf5ff" stroke="#7c3aed" stroke-width="2.5"/>
+                    <text x="105" y="55" text-anchor="middle" class="label-strong" fill="#6b21a8">Уровень 1</text>
+                    <text x="105" y="75" text-anchor="middle" class="label-small" fill="#6b21a8">Руководство</text>
+                    <text x="105" y="105" text-anchor="middle" class="label-small">North Star Metric</text>
+                    <text x="105" y="122" text-anchor="middle" class="label-small">5–7 ключевых</text>
+                    <text x="105" y="139" text-anchor="middle" class="label-small">метрик</text>
+
+                    <rect x="195" y="30" width="150" height="160" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="2.5"/>
+                    <text x="270" y="55" text-anchor="middle" class="label-strong" fill="#1e40af">Уровень 2</text>
+                    <text x="270" y="75" text-anchor="middle" class="label-small" fill="#1e40af">Команда</text>
+                    <text x="270" y="105" text-anchor="middle" class="label-small">вовлечение</text>
+                    <text x="270" y="122" text-anchor="middle" class="label-small">удержание</text>
+                    <text x="270" y="139" text-anchor="middle" class="label-small">активация</text>
+
+                    <rect x="360" y="30" width="150" height="160" rx="10" fill="#f0fdf4" stroke="#16a34a" stroke-width="2.5"/>
+                    <text x="435" y="55" text-anchor="middle" class="label-strong" fill="#166534">Уровень 3</text>
+                    <text x="435" y="75" text-anchor="middle" class="label-small" fill="#166534">Аналитик</text>
+                    <text x="435" y="105" text-anchor="middle" class="label-small">сегменты, когорты</text>
+                    <text x="435" y="122" text-anchor="middle" class="label-small">фичи</text>
+                    <text x="435" y="139" text-anchor="middle" class="label-small">ML-метрики</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>North Star Metric</strong> — ключевая метрика продукта, отражающая ценность для пользователя (не revenue). Примеры: Airbnb — nights booked, Spotify — time spent listening, Slack — messages sent. <strong>Правило:</strong> не смешивайте уровни. Руководству не нужны 50 метрик, аналитику не хватит одной цифры.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 14: РОАДМАП -->
+            <div class="viz-card">
+                <div class="viz-title">🗺️ Влияние на роадмап: от данных к решению</div>
+                <svg viewBox="0 0 540 120" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="120" fill="#ffffff"/>
+
+                    <rect x="15" y="30" width="115" height="60" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+                    <text x="72" y="55" text-anchor="middle" class="label-strong" fill="#1e40af" style="font-size: 11px;">📊 Данные</text>
+                    <text x="72" y="75" text-anchor="middle" class="label-small">метрики, сегменты</text>
+
+                    <line x1="130" y1="60" x2="145" y2="60" stroke="#334155" stroke-width="2"/>
+                    <polygon points="145,60 138,56 138,64" fill="#334155"/>
+
+                    <rect x="145" y="30" width="115" height="60" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+                    <text x="202" y="55" text-anchor="middle" class="label-strong" fill="#166534" style="font-size: 11px;">💡 Инсайт</text>
+                    <text x="202" y="75" text-anchor="middle" class="label-small">почему уходят</text>
+
+                    <line x1="260" y1="60" x2="275" y2="60" stroke="#334155" stroke-width="2"/>
+                    <polygon points="275,60 268,56 268,64" fill="#334155"/>
+
+                    <rect x="275" y="30" width="115" height="60" rx="8" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+                    <text x="332" y="55" text-anchor="middle" class="label-strong" fill="#92400e" style="font-size: 11px;">🧪 Гипотеза</text>
+                    <text x="332" y="75" text-anchor="middle" class="label-small">что изменить</text>
+
+                    <line x1="390" y1="60" x2="405" y2="60" stroke="#334155" stroke-width="2"/>
+                    <polygon points="405,60 398,56 398,64" fill="#334155"/>
+
+                    <rect x="405" y="30" width="115" height="60" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="2"/>
+                    <text x="462" y="55" text-anchor="middle" class="label-strong" fill="#991b1b" style="font-size: 11px;">✅ Решение</text>
+                    <text x="462" y="75" text-anchor="middle" class="label-small">A/B → роадмап</text>
+                </svg>
+                <div class="viz-caption">
+                    Цепочка: данные → инсайт → гипотеза → решение. Пример: аналитик видит падение retention M1, копает глубже, находит низкую активацию у новых, строит гипотезу про онбординг, запускает A/B-тест. Если успешно — изменение попадает в роадмап. Задача аналитика — не просто отчитаться о падении, а <strong>предложить решение</strong>.
+                </div>
+            </div>
+
+            <!-- КЕЙС -->
+            <div class="viz-card" style="border-color: #d8b4fe;">
+                <div class="viz-title" style="color: #6b21a8;">💼 Практический кейс: от падения retention к решению</div>
+                <div style="background: #faf5ff; border-radius: 10px; padding: 16px; font-size: 13.5px; line-height: 1.7; color: #1e293b;">
+                    <p><strong style="color: #6b21a8;">Проблема:</strong> Retention M1 упал с 40% до 30% за 2 месяца.</p>
+                    <p><strong style="color: #6b21a8;">Анализ:</strong> воронка показала: активация (доля дошедших до привычки) упала с 12% до 8%. Новые пользователи хуже осваиваются.</p>
+                    <p><strong style="color: #6b21a8;">ML-инсайт:</strong> propensity-модель показала, что у 60% новичков <em>вероятность активации ниже 20%</em> — они «застревают» на втором шаге (это диагностика воронки, подтверждённая моделью).</p>
+                    <p><strong style="color: #6b21a8;">Гипотеза:</strong> новый онбординг с подсказками поднимет активацию на 4 п.п. (с 8% до 12%).</p>
+                    <p><strong style="color: #6b21a8;">Проверка:</strong> A/B-тест. MDE = 4 п.п., базовый уровень 8%, power = 80% → размер выборки 50 000 пользователей, длительность 2 недели.</p>
+                    <p><strong style="color: #6b21a8;">Результат:</strong> activation rate вырос с 8% до 12.5% (+4.5 п.п.). p-value = 0.02, ДИ прироста 1.5–7.5 п.п. Retention M1 вернулся к 38%.</p>
+                    <p style="font-size: 12px; color: #64748b; margin-top: 8px;"><em>Кейс упрощён для учебных целей: baseline согласован (8% в блоке 6 и в кейсе), но полный power-расчёт и проверка арифметики требуют реальных данных.</em></p>
+                </div>
+            </div>
+
+            <!-- ГЛАВНЫЙ ВЫВОД -->
+            <div class="callout warn">
+                <strong>⚠️ Главный вывод</strong>
+                <p>Продуктовый аналитик — это не «человек с дашбордом». Это специалист, который соединяет <strong>данные, продукт, бизнес, статистику и ML</strong>. Он знает фреймворки (JTBD, CJM, HEART), умеет измерять вовлечение, удержание и активацию, проверяет гипотезы через статистически значимые A/B-тесты, использует ML для прогнозирования оттока и персонализации, приоритизирует гипотезы через RICE и ICE, строит дашборды в три уровня и влияет на роадмап. Без него продуктовая команда работает на интуиции. С ним — на данных.</p>
+            </div>
+
+            <!-- ВИДЕОПЛЕЕР -->
+            <div class="video-section">
+                <div class="video-container">
+                    <iframe id="lecture-player" src="https://rutube.ru" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+                </div>
+                <div class="links-hub">
+                    <button onclick="changeVideo('https://rutube.ru/')" class="video-btn stop-btn">⏹ СТОП</button>
+                    <button onclick="changeVideo('https://rutube.ru/play/embed/')" class="video-btn rt-btn">📜 Лекция 24. Продуктовая аналитика</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="slide-footer">
+            Направление «Менеджмент» | Курс: Аналитика данных | Лекция 24: «Продуктовая аналитика: как измерять продукт и принимать решения»
+        </div>
+    </div>
+
+    <!-- ПРАВАЯ ПАНЕЛЬ: СКРИПТ ПРЕПОДАВАТЕЛЯ -->
+    <div class="speaker-notes">
+        <div style="position: sticky; top: 0; background: #1a202c; padding: 20px 20px 10px 20px; border-bottom: 1px solid #4a5568; width: 100%; z-index: 100;">
+            <div class="notes-header" style="display: block; padding-bottom: 15px;">
+                <audio id="lecture-audio" preload="auto" controls
+                       src="https://archive.org/download/03_20261110_20261110/20.mp3"
+                       style="width: 100%; height: 32px; border-radius: 4px;"></audio>
+            </div>
+            <div style="width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                <iframe id="right-lecture-player" src="https://archive.org/embed/20261020_20261020_0955?autoplay=true&loop=true&muted=true" allow="clipboard-write; autoplay" width="100%" height="100%" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="border: none;"></iframe>
+            </div>
+        </div>
+
+        <div class="lecture-text" style="margin-top: 20px;">
+
+            <h3>📌 Введение. Зачем нужна продуктовая аналитика</h3>
+
+            <p>Добрый день, коллеги. В предыдущей лекции мы разобрали маркетинговую аналитику: атрибуцию, инкрементальность, MMM, ROMI. Мы увидели, откуда приходят клиенты и сколько они стоят. Но остался важный вопрос: <strong>а что происходит с клиентом внутри продукта? Почему он остаётся или уходит? И как это измерить?</strong></p>
+
+            <p>Сегодня мы говорим о продуктовой аналитике. И сразу предупрежу о заблуждении. Многие думают, что продуктовый аналитик — это человек, который сидит в Amplitude или Mixpanel и составляет отчёты для продакт-менеджеров. Это не так. Продуктовый аналитик отвечает на гораздо более сложный вопрос: <strong>«Почему пользователи ведут себя так, а не иначе, и что нужно изменить в продукте?»</strong></p>
+
+            <div class="callout" style="margin-bottom: 14px;">
+                <strong>Аналогия из жизни</strong>
+                <p>Представьте врача. Пациент приходит с головной болью. Можно измерить температуру, давление, пульс и записать цифры в карту — это работа «аналитика данных». А можно поставить диагноз: «У вас мигрень из-за стресса, вот план лечения» — это работа «продуктового аналитика». Он не просто измеряет симптомы, он находит причину и предлагает решение.</p>
+            </div>
+
+            <p>Главная мысль лекции: продуктовый аналитик — это не тот, кто считает метрики. Это тот, кто отвечает на вопрос, почему пользователи ведут себя так, и что нужно изменить. Метрики — инструмент. Фреймворки — карта. Статистика и ML — точные приборы. Гипотезы — маршрут. Решение — результат.</p>
+
+            <p>Мы разберём пятнадцать блоков: роль аналитика, три фреймворка (JTBD, CJM, HEART), метрики вовлечения, активации, feature adoption, сегментацию, качественные методы, статистику, ML, приоритизацию, дашборды, роадмап и кейс.</p>
+
+            <h3>📌 Блок 1. Кто такой продуктовый аналитик</h3>
+
+            <p>На схеме слева — пять ролей вокруг продуктового аналитика. Разберём каждую.</p>
+
+            <p><strong>Аналитик данных</strong> отвечает на вопрос «что произошло?». Строит отчёты, дашборды, считает метрики. Его работа заканчивается на цифре.</p>
+
+            <p><strong>Маркетинговый аналитик</strong> отвечает на вопрос «откуда пришли клиенты и сколько это стоит?». Его зона — до того, как клиент попал в продукт.</p>
+
+            <p><strong>Финансовый аналитик</strong> отвечает на вопрос «прибыльно ли это в целом?». Смотрит на P&L, EBITDA, ROI.</p>
+
+            <p><strong>UX-исследователь</strong> работает с качественными методами: интервью, юзабилити-тесты. Понимает, как пользователь воспринимает продукт, но не измеряет поведение в масштабе.</p>
+
+            <p>А <strong>продуктовый аналитик</strong> отвечает на вопрос «почему пользователи ведут себя так, и что нужно изменить?». Он стоит на пересечении данных, продукта и бизнеса. Он не просто отчитывается о метриках — он <strong>предлагает решения</strong>. Его работа начинается с вопроса «почему», а не «сколько».</p>
+
+            <div class="callout" style="margin-bottom: 14px;">
+                <strong>Живой пример</strong>
+                <p>В мобильном банке упал retention. Аналитик данных построил отчёт: retention упал на 10%. Маркетинговый аналитик проверил каналы: всё в норме. UX-исследователь провёл интервью: пользователи жалуются на сложный перевод. Продуктовый аналитик собрал всё вместе: построил activation funnel, нашёл узкое место, предложил гипотезу и запустил A/B-тест. И только после этого изменение попало в роадмап.</p>
+            </div>
+
+            <h3>📌 Блок 2. JTBD — Jobs To Be Done</h3>
+
+            <p>На схеме слева — три типа работ: <strong>functional</strong> (практическая задача: «повесить полку», «быстро поесть», «перевести деньги»), <strong>emotional</strong> (чувства: «чувствовать себя уверенно», «не тревожиться»), <strong>social</strong> (как видят другие: «выглядеть статусно», «быть в тренде»).</p>
+
+            <p>Идея простая. Пользователь не покупает продукт. Пользователь <strong>нанимает</strong> продукт, чтобы выполнить работу. Пользователь не покупает дрель — он хочет повесить полку. Дрель — инструмент. Если появится инструмент лучше, пользователь уйдёт.</p>
+
+            <div class="callout" style="margin-bottom: 14px;">
+                <strong>Пример из жизни</strong>
+                <p>Сервис доставки еды. Пользователь не «покупает еду» — он хочет быстро поесть, не тратя время на готовку. Работа — утолить голод (functional). Но есть и emotional: «не чувствовать вины за то, что не готовлю». И social: «выглядеть как человек, который ценит время». Если сервис доставляет за 15 минут, он справляется лучше конкурента за 40 минут — пользователь остаётся.</p>
+            </div>
+
+            <p>Задача аналитика — понять, какую работу выполняет продукт, и измерить, насколько хорошо он с ней справляется. Метрики: время доставки, процент опозданий, NPS после заказа.</p>
+
+            <div class="callout" style="margin-bottom: 14px;">
+                <strong>Аналогия из жизни</strong>
+                <p>Владелец кофейни. Люди приходят не «пить кофе». Они приходят «проснуться утром перед работой» (functional), «провести деловую встречу» (social), «отдохнуть с друзьями» (emotional). Это разные работы — и для каждой нужен свой продукт: быстрый кофе с собой, тихий зал с розетками, удобные диваны и музыка. JTBD помогает понять, какую именно работу вы выполняете для клиента.</p>
+            </div>
+
+            <h3>📌 Блок 3. CJM — Customer Journey Map</h3>
+
+            <p>На схеме слева — пять этапов: узнал (CTR) → зашёл (bounce rate) → попробовал (просмотры) → купил (conversion rate) → вернулся (retention). На каждом этапе — своя метрика и свой барьер.</p>
+
+            <p>Путь пользователя — последовательность этапов от первого касания до повторной покупки. Задача аналитика — измерить конверсию между этапами, найти узкое место и предложить гипотезу, почему пользователи уходят.</p>
+
+            <div class="callout" style="margin-bottom: 14px;">
+                <strong>Живой пример</strong>
+                <p>В интернет-магазине конверсия из просмотра в корзину — 20%. Это узкое место. Аналитик предполагает: кнопка «Добавить в корзину» плохо видна на мобильных. Запускает A/B-тест. Конверсия вырастает до 35%.</p>
+            </div>
+
+            <div class="callout" style="margin-bottom: 14px;">
+                <strong>Аналогия из жизни</strong>
+                <p>CJM — как карта метро. Вы видите все станции (этапы) и пересадки (конверсии). Если на какой-то станции всегда толпа и люди не могут пройти — это узкое место. Задача аналитика — найти эту станцию и расширить проход.</p>
+            </div>
+
+            <h3>📌 Блок 4. HEART — пять измерений продуктового опыта</h3>
+
+            <p>На схеме слева — пять блоков и надпись <strong>Goal → Signal → Metric</strong>. Это важно: HEART (Rodden et al., Google, 2010) — не просто пять букв, а процесс. Сначала цель (Goal), потом сигнал поведения (Signal), потом метрика (Metric).</p>
+
+            <p><strong>Happiness</strong> — удовлетворённость (NPS, CSAT, CES). <strong>Engagement</strong> — вовлечённость (DAU/MAU, session depth, time in app). <strong>Adoption</strong> — принятие (feature adoption, activation rate). <strong>Retention</strong> — удержание (retention rate, churn rate). <strong>Task Success</strong> — успешность задачи (completion rate, error rate, time on task).</p>
+
+            <div class="callout" style="margin-bottom: 14px;">
+                <strong>Пример из жизни</strong>
+                <p>Мобильный банк. Happiness — NPS 45. Engagement — DAU/MAU 40%. Adoption — 25% попробовали раздел инвестиций. Retention — 85% вернулись через месяц. Task Success — 95% переводов прошли успешно. Для банка важнее Task Success, для соцсети — Engagement, для доставки — Retention. Задача аналитика — выбрать, какие измерения важны для конкретного продукта.</p>
+            </div>
+
+            <h3>📌 Блок 5. Метрики вовлечения</h3>
+
+            <p>В таблице слева — пять метрик. <strong>DAU/MAU</strong> = stickiness: 30 000 / 100 000 = 30%. <strong>Session depth</strong> — сколько экранов за сессию (5.2). <strong>Session frequency</strong> — сессий в неделю (3.5). <strong>Time in app</strong> — 4 мин 20 сек. <strong>Feature usage</strong> — 15% используют поиск.</p>
+
+            <div class="callout warn" style="margin-bottom: 14px;">
+                <strong>⚠️ Оговорка</strong>
+                <p>DAU/MAU хорошо работает для продуктов с ежедневным использованием (соцсети, мессенджеры), но плохо — для редких продуктов (страхование, туризм, B2B SaaS с месячным циклом). Для страхового приложения DAU/MAU 5% — норма, а не провал. Нельзя требовать от всех продуктов одинаковой stickiness.</p>
+            </div>
+
+            <div class="callout" style="margin-bottom: 14px;">
+                <strong>Аналогия из жизни</strong>
+                <p>Две кофейни, по 100 посетителей в день. В первой люди сидят 10 минут и уходят, во второй — 2 часа, заказывают десерты и возвращаются с друзьями. По «количеству посетителей» они равны. Но по «глубине вовлечения» вторая в разы лучше.</p>
+            </div>
+
+            <h3>📌 Блок 6. Activation funnel</h3>
+
+            <p>На схеме слева — воронка: регистрация 10 000 → 40% → первое ключевое действие 4 000 → 50% (узкое место) → второе действие 2 000 → 60% → привычка 800. Activation rate = 8%.</p>
+
+            <p><strong>Первый ключевой действие</strong> — то, что пользователь должен сделать, чтобы понять ценность продукта. Это «Aha-moment». Пример доставки еды: регистрация → первый заказ → повторный заказ → заказ каждую неделю. Aha-moment — первый заказ.</p>
+
+            <div class="callout" style="margin-bottom: 14px;">
+                <strong>Аналогия из жизни</strong>
+                <p>Activation funnel — как путь туриста от аэропорта до отеля. Регистрация — прилёт. Первое действие — такси до города. Второе — заселение. Привычка — когда турист вернулся в этот отель на следующий год. Если на каком-то этапе турист теряется (не может найти такси) — вы теряете клиента. Задача аналитика — найти этот этап и поставить указатели.</p>
+            </div>
+
+            <h3>📌 Блок 7. Feature adoption и feature retention</h3>
+
+            <p>На схеме слева — две карточки. <strong>Feature adoption</strong> = пользователи фичи / все пользователи = 1 500 / 10 000 = 15%. <strong>Feature retention</strong> = вернувшиеся / попробовавшие = 300 / 1 500 = 20%.</p>
+
+            <div class="callout warn" style="margin-bottom: 14px;">
+                <strong>⚠️ Ловушка</strong>
+                <p>Высокий feature adoption не значит, что фича полезна. Если пользователи попробовали и не вернулись — фича не решает их проблему. Смотрите на feature retention. Пример: мобильный банк запустил раздел инвестиций. Adoption 25%, но retention 5%. Пользователи попробовали и ушли — нужно упростить интерфейс и добавить обучение.</p>
+            </div>
+
+            <h3>📌 Блок 8. Поведенческая сегментация</h3>
+
+            <p>В таблице слева — пять сегментов: <strong>чемпионы</strong> (каждый день, много фич), <strong>лояльные</strong> (регулярно, основные фичи), <strong>новички</strong> (недавно), <strong>под угрозой</strong> (были активными, заходят реже), <strong>спящие</strong> (не заходили больше месяца). Стратегия для каждого — разная: VIP, апсейл, онбординг, реактивация, отказ или реактивация.</p>
+
+            <p><strong>Важно:</strong> это <strong>эвристическая</strong> сегментация — правила задаёт человек. В современной аналитике её дополняет <strong>ML-кластеризация (K-Means)</strong>, которая автоматически находит скрытые паттерны по десяткам признаков. Подробнее — в блоке 11.</p>
+
+            <h3>📌 Блок 9. Качественные методы</h3>
+
+            <p>На схеме слева — три карточки. <strong>NPS</strong>: «Порекомендуете ли вы нас другу?» (0–10), % промоутеров − % критиков. Пример: 60% промоутеров, 20% критиков → NPS = 40. <strong>CSAT</strong>: «Насколько удовлетворены?» (1–5), % оценок 4–5. Пример: CSAT = 80%. <strong>CES</strong>: «Насколько легко было решить задачу?» (1–7), среднее. Пример: CES = 5.5.</p>
+
+            <div class="callout warn" style="margin-bottom: 14px;">
+                <strong>⚠️ Ограничения NPS</strong>
+                <p>NPS критикуется за слабую связь с реальным ростом, чувствительность к формулировке вопроса и культурные различия в шкале. «Промоутеры» не всегда реально рекомендуют. NPS — полезный сигнал, но не «серебряная пуля». Пример: retention высокий, но NPS низкий — пользователи остаются, потому что нет альтернативы, а не потому что любят продукт. Аналитик копает глубже: интервью, опросы.</p>
+            </div>
+
+            <h3>📌 Блок 10. Статистическая строгость: отличаем сигнал от шума</h3>
+
+            <p>На схеме слева — четыре карточки. Разберём каждую.</p>
+
+            <p><strong>p-value.</strong> Это вероятность наблюдать столь же или более экстремальный результат <strong>при условии, что нулевая гипотеза верна</strong>. Если p &lt; 0.05 — эффект статистически значим. <strong>Важно:</strong> p-value — не «вероятность, что эффект случайный». Это классическая, но неверная интерпретация.</p>
+
+            <div class="callout" style="margin-bottom: 14px;">
+                <strong>Аналогия из жизни</strong>
+                <p>Вы подбрасываете монетку 100 раз и получаете 60 орлов. Это странно, но ещё может быть случайностью. 70 орлов из 100 — уже очень странно, и вы подозреваете, что монетка нечестная. p-value — вероятность такой странности при условии, что монетка честная.</p>
+            </div>
+
+            <p><strong>Доверительный интервал.</strong> Вместо «Retention = 40%» аналитик говорит: «С вероятностью 95% истинный Retention лежит в 38.5–41.5%». Если интервалы двух когорт пересекаются — разницы статистически нет.</p>
+
+            <p><strong>MDE.</strong> Minimum Detectable Effect — минимальный эффект, который способен обнаружить тест. Чем меньше MDE, тем дольше и дороже тест. Чтобы заметить рост на 1% — нужны десятки тысяч пользователей; на 10% — сотни.</p>
+
+            <p><strong>Размер выборки и power.</strong> Размер выборки рассчитывается от MDE, базового уровня и power (обычно 80%). Без power-расчёта тест может не найти реальный эффект.</p>
+
+            <div class="callout warn" style="margin-bottom: 14px;">
+                <strong>⚠️ Главная ловушка: «после» не значит «вследствие»</strong>
+                <p>Латинский принцип <em>post hoc ergo propter hoc</em> («после — значит вследствие») — классическая ошибка. Если метрика выросла после запуска фичи, это не значит, что фича сработала: мог начаться сезонный рост или конкурент отключил рекламу. Только корректный A/B-тест с контролем статистической значимости доказывает causality.</p>
+            </div>
+
+            <h3>📌 Блок 11. Machine Learning в продуктовой аналитике</h3>
+
+            <p>На схеме слева — три карточки. Разберём каждую.</p>
+
+            <p><strong>Predictive Churn.</strong> Алгоритмы классификации (Random Forest, XGBoost, LogReg) анализируют сотни поведенческих признаков и дают <strong>Churn Score</strong> — вероятность ухода от 0 до 1 — за неделю до того, как пользователь перестанет заходить. Пример: пользователь с Churn Score 0.85 не заходил 3 дня — система отправляет персональный бонус, отток снижен проактивно.</p>
+
+            <p><strong>K-Means.</strong> Автоматически находит скрытые кластеры в многомерном пространстве признаков (RFM + поведение), без заранее заданных правил. Может обнаружить неочевидный сегмент, который человек не придумал бы (например, «заходят редко, но тратят много времени на одну сложную фичу»).</p>
+
+            <p><strong>Propensity.</strong> Предсказывает <strong>вероятность активации конкретного пользователя</strong> на основе первых 5 минут поведения. Используется для персонализации онбординга: кому показать подсказки, а кому не мешать.</p>
+
+            <div class="callout warn" style="margin-bottom: 14px;">
+                <strong>⚠️ Важно разграничивать</strong>
+                <p>Propensity-модель предсказывает вероятность активации <em>конкретного пользователя</em>, а не «долю застревающих». Утверждение «60% новичков застревают на втором шаге» — это результат <strong>воронки/когортного анализа</strong>, а не propensity-модели. Propensity — прогнозный инструмент, воронка — диагностический. Пример propensity: новый пользователь с вероятностью активации 30% получает расширенный онбординг; с вероятностью 80% — не получает, чтобы не мешать.</p>
+            </div>
+
+            <h3>📌 Блок 12. Приоритизация гипотез: RICE и ICE</h3>
+
+            <p>В таблице слева — две системы и их шкалы. <strong>RICE</strong>: Reach (пользователи/мес), Impact (0.25 / 0.5 / 1 / 2 / 3), Confidence (0–1), Effort (<strong>человеко-месяцы</strong>). Формула: (Reach × Impact × Confidence) / Effort. <strong>ICE</strong>: Impact (1–10), Confidence (1–10), Ease (1–10). Формула: Impact × Confidence × Ease.</p>
+
+            <div class="callout warn" style="margin-bottom: 14px;">
+                <strong>⚠️ Важно про единицы</strong>
+                <p>В RICE Effort измеряется в человеко-месяцах, иначе единицы несопоставимы. Пример: новый онбординг. Reach = 10 000, Impact = 2, Confidence = 0.8, Effort = 0.75 человеко-месяца (≈3 недели). RICE = (10 000 × 2 × 0.8) / 0.75 = <strong>21 333</strong>. Пример ICE: изменить кнопку. Impact = 8, Confidence = 7, Ease = 9. ICE = 8 × 7 × 9 = <strong>504</strong>. Пример условный. RICE строже (учитывает охват), ICE проще. Задача аналитика — приоритизировать гипотезы, иначе команда тестирует случайные идеи.</p>
+            </div>
+
+            <h3>📌 Блок 13. Продуктовые дашборды</h3>
+
+            <p>На схеме слева — три уровня. <strong>Уровень 1 (руководство):</strong> North Star Metric и 5–7 ключевых метрик. <strong>Уровень 2 (команда):</strong> вовлечение, удержание, активация. <strong>Уровень 3 (аналитик):</strong> сегменты, когорты, фичи, ML-метрики.</p>
+
+            <p><strong>North Star Metric</strong> — ключевая метрика продукта, отражающая ценность для пользователя (не revenue). Примеры: Airbnb — nights booked, Spotify — time spent listening, Slack — messages sent. <strong>Правило:</strong> не смешивайте уровни. Руководству не нужны 50 метрик, аналитику не хватит одной цифры.</p>
+
+            <h3>📌 Блок 14. Влияние на роадмап</h3>
+
+            <p>На схеме слева — четыре шага: данные → инсайт → гипотеза → решение. Пример: аналитик видит падение retention M1, копает глубже, находит низкую активацию у новых, строит гипотезу про онбординг, запускает A/B-тест. Если успешно — изменение попадает в роадмап. Задача аналитика — не просто отчитаться о падении, а <strong>предложить решение</strong>.</p>
+
+            <h3>📌 Блок 15. Практический кейс</h3>
+
+            <p>На карточке слева — кейс. Приложение доставки еды. Retention M1 упал с 40% до 30% за 2 месяца. Анализ: воронка показала, что активация (доля дошедших до привычки) упала с 12% до 8%. ML-инсайт: propensity-модель показала, что у 60% новичков вероятность активации ниже 20% — они «застревают» на втором шаге (это диагностика воронки, подтверждённая моделью). Гипотеза: новый онбординг с подсказками поднимет активацию на 4 п.п. (с 8% до 12%). Проверка: A/B-тест, MDE = 4 п.п., базовый уровень 8%, power = 80% → размер выборки 50 000 пользователей, длительность 2 недели. Результат: activation rate вырос с 8% до 12.5% (+4.5 п.п.), p-value = 0.02, ДИ прироста 1.5–7.5 п.п. Retention M1 вернулся к 38%.</p>
+
+            <p><strong>Оговорка:</strong> кейс упрощён для учебных целей. Baseline согласован (8% в блоке 6 и в кейсе), но полный power-расчёт и проверка арифметики требуют реальных данных.</p>
+
+            <h3>📌 Заключение</h3>
+
+            <p>Мы разобрали роль продуктового аналитика, три фреймворка (JTBD, CJM, HEART), метрики вовлечения, активации, feature adoption, сегментацию, качественные методы, статистику, ML, приоритизацию, дашборды, роадмап и кейс.</p>
+
+            <p>Главный вывод: продуктовый аналитик — это не «человек с дашбордом». Это специалист, который соединяет данные, продукт, бизнес, статистику и ML. Он знает фреймворки, умеет измерять вовлечение и удержание, проверяет гипотезы через статистически значимые A/B-тесты, использует ML для прогнозирования оттока и персонализации, приоритизирует гипотезы и влияет на роадмап. Без него продуктовая команда работает на интуиции. С ним — на данных.</p>
+
+            <p>В следующей лекции мы поговорим о финансовой аналитике: P&L, EBITDA, ROI — как продуктовые и маркетинговые решения сходятся в деньги компании. Спасибо за внимание, готов ответить на ваши вопросы.</p>
+
+            <!-- СЛОВАРЬ ТЕРМИНОВ -->
+            <div class="dark-block">
+                <div class="dark-block-title">📖 Словарь терминов и аббревиатур</div>
+                <table class="dark-table">
+                    <thead>
+                        <tr><th style="width:22%;">Термин</th><th style="width:30%;">Расшифровка</th><th>Пояснение</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="term">JTBD</td><td>Jobs To Be Done</td><td>Какую работу выполняет продукт</td></tr>
+                        <tr><td class="term">Functional job</td><td>Functional job</td><td>Практическая задача</td></tr>
+                        <tr><td class="term">Emotional job</td><td>Emotional job</td><td>Чувства, которые хочет испытать пользователь</td></tr>
+                        <tr><td class="term">Social job</td><td>Social job</td><td>Как пользователь хочет выглядеть в глазах других</td></tr>
+                        <tr><td class="term">CJM</td><td>Customer Journey Map</td><td>Карта пути пользователя</td></tr>
+                        <tr><td class="term">HEART</td><td>Happiness, Engagement, Adoption, Retention, Task Success</td><td>Пять измерений + Goal → Signal → Metric</td></tr>
+                        <tr><td class="term">DAU/MAU</td><td>Daily/Monthly Active Users</td><td>Stickiness; не универсальна для редких продуктов</td></tr>
+                        <tr><td class="term">Aha-moment</td><td>Aha-moment</td><td>Момент, когда пользователь понял ценность</td></tr>
+                        <tr><td class="term">Activation rate</td><td>Activation rate</td><td>Доля дошедших до привычки</td></tr>
+                        <tr><td class="term">Feature adoption</td><td>Feature adoption</td><td>Доля попробовавших фичу</td></tr>
+                        <tr><td class="term">Feature retention</td><td>Feature retention</td><td>Доля вернувшихся к фиче</td></tr>
+                        <tr><td class="term">NPS</td><td>Net Promoter Score</td><td>% промоутеров − % критиков; имеет ограничения</td></tr>
+                        <tr><td class="term">CSAT</td><td>Customer Satisfaction Score</td><td>% оценок 4–5</td></tr>
+                        <tr><td class="term">CES</td><td>Customer Effort Score</td><td>Среднее по шкале лёгкости</td></tr>
+                        <tr><td class="term">p-value</td><td>p-value</td><td>Вероятность результата при верной нулевой гипотезе</td></tr>
+                        <tr><td class="term">MDE</td><td>Minimum Detectable Effect</td><td>Минимальный обнаруживаемый эффект</td></tr>
+                        <tr><td class="term">Power</td><td>Statistical power</td><td>Вероятность найти реальный эффект (обычно 80%)</td></tr>
+                        <tr><td class="term">Post hoc</td><td>Post hoc ergo propter hoc</td><td>«После — значит вследствие»; ошибка</td></tr>
+                        <tr><td class="term">Churn Score</td><td>Churn Score</td><td>Вероятность ухода пользователя</td></tr>
+                        <tr><td class="term">Propensity</td><td>Propensity Model</td><td>Вероятность активации конкретного пользователя</td></tr>
+                        <tr><td class="term">K-Means</td><td>K-Means</td><td>Кластеризация аудитории</td></tr>
+                        <tr><td class="term">RFM</td><td>Recency, Frequency, Monetary</td><td>Сегментация по давности, частоте, сумме</td></tr>
+                        <tr><td class="term">RICE</td><td>Reach, Impact, Confidence, Effort</td><td>Приоритизация; Effort в человеко-месяцах</td></tr>
+                        <tr><td class="term">ICE</td><td>Impact, Confidence, Ease</td><td>Упрощённая приоритизация</td></tr>
+                        <tr><td class="term">North Star Metric</td><td>North Star Metric</td><td>Ключевая метрика ценности для пользователя</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function changeVideo(embedUrl) {
+            document.getElementById('lecture-player').src = embedUrl;
+        }
+    </script>
+
+    <!-- НАВИГАЦИЯ МЕЖДУ ЛЕКЦИЯМИ -->
+    <nav class="lecture-nav" id="lectureNav">
+        <div class="nav-progress" id="navProgress" style="width: 0%;"></div>
+        <a href="Лекция 23.html" class="nav-btn-arrow" id="prevBtn">
+            <span class="arrow-icon">←</span>
+            <span class="arrow-label">
+                <small>Назад</small>
+                <span class="arrow-title" id="prevTitle">Лекция 23</span>
+            </span>
+        </a>
+        <div class="nav-center">
+            <div class="nav-counter">Лекция <span id="currentNum">24</span> <span>из 24</span></div>
+            <a href="index.html" class="nav-index-link">📚 К содержанию</a>
+        </div>
+        <a href="Лекция 25.html" class="nav-btn-arrow" id="nextBtn">
+            <span class="arrow-label" style="align-items: flex-end;">
+                <small>Вперёд</small>
+                <span class="arrow-title" id="nextTitle">Лекция 25</span>
+            </span>
+            <span class="arrow-icon">→</span>
+        </a>
+    </nav>
+
+    <script>
+    (function () {
+        'use strict';
+
+        const TOTAL_LECTURES = 24;
+        const totalDurationMs = (32 * 60 + 30) * 1000;
+        const autoNextDelayMs = 2000;
+        const AUTOSTART_PARAM = 'autostart';
+
+        const fileName = decodeURIComponent(location.pathname.split('/').pop() || '');
+        let currentLecture = 24;
+        const match = fileName.match(/Лекция\s*(\d+)\.html/i);
+        if (match) {
+            currentLecture = parseInt(match[1], 10);
+        } else {
+            const el = document.getElementById('currentNum');
+            if (el) currentLecture = parseInt(el.textContent, 10) || 24;
+        }
+        if (isNaN(currentLecture) || currentLecture < 1) currentLecture = 1;
+        if (currentLecture > TOTAL_LECTURES) currentLecture = TOTAL_LECTURES;
+
+        const prev = currentLecture > 1 ? currentLecture - 1 : null;
+        const next = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+
+        const currentNumEl = document.getElementById('currentNum');
+        if (currentNumEl) currentNumEl.textContent = currentLecture;
+
+        const navProgress = document.getElementById('navProgress');
+        if (navProgress) {
+            navProgress.style.width = (currentLecture / TOTAL_LECTURES * 100) + '%';
+        }
+
+        const prevBtn = document.getElementById('prevBtn');
+        if (prevBtn) {
+            if (prev) {
+                prevBtn.href = 'Лекция ' + prev + '.html';
+                const t = document.getElementById('prevTitle');
+                if (t) t.textContent = 'Лекция ' + prev;
+                prevBtn.style.opacity = '1';
+                prevBtn.style.cursor = 'pointer';
+                prevBtn.onclick = null;
+            } else {
+                prevBtn.removeAttribute('href');
+                prevBtn.style.opacity = '0.35';
+                prevBtn.style.cursor = 'not-allowed';
+                prevBtn.onclick = (e) => e.preventDefault();
+                const t = document.getElementById('prevTitle');
+                if (t) t.textContent = 'Это первая лекция';
+            }
+        }
+
+        const nextBtn = document.getElementById('nextBtn');
+        if (nextBtn) {
+            if (next) {
+                nextBtn.href = 'Лекция ' + next + '.html';
+                const t = document.getElementById('nextTitle');
+                if (t) t.textContent = 'Лекция ' + next;
+                nextBtn.style.opacity = '1';
+                nextBtn.style.cursor = 'pointer';
+                nextBtn.onclick = null;
+            } else {
+                nextBtn.removeAttribute('href');
+                nextBtn.style.opacity = '0.35';
+                nextBtn.style.cursor = 'not-allowed';
+                nextBtn.onclick = (e) => e.preventDefault();
+                const t = document.getElementById('nextTitle');
+                if (t) t.textContent = 'Это последняя лекция';
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            const tag = e.target && e.target.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+            if (e.key === 'ArrowLeft' && prev) window.location.href = 'Лекция ' + prev + '.html';
+            else if (e.key === 'ArrowRight' && next) window.location.href = 'Лекция ' + next + '.html';
+            else if (e.key === 'Home') window.location.href = 'index.html';
+        });
+
+        function initScroll() {
+            const studentBlock = document.querySelector('.student-view');
+            const speakerBlock = document.querySelector('.speaker-notes');
+            const badge = document.getElementById('scroll-status-badge');
+            const audio = document.getElementById('lecture-audio');
+            if (!studentBlock || !speakerBlock) return;
+
+            const studentBehavior = studentBlock.style.scrollBehavior;
+            const speakerBehavior = speakerBlock.style.scrollBehavior;
+            let isRunning = false, completed = false, pausedElapsed = 0, startedAt = 0, rafId = null;
+            let startS = 0, startP = 0, maxS = 0, maxP = 0;
+
+            function setBadge(text, color) { if (!badge) return; badge.style.display = 'block'; badge.textContent = text; badge.style.borderColor = color; }
+            function measure() { maxS = Math.max(studentBlock.scrollHeight - studentBlock.clientHeight, 0); maxP = Math.max(speakerBlock.scrollHeight - speakerBlock.clientHeight, 0); }
+            function fmt(ms) { const m = Math.floor(ms / 60000); const s = Math.floor((ms % 60000) / 1000); return m + ':' + String(s).padStart(2, '0'); }
+            function playAudio() { if (!audio) return; const p = audio.play(); if (p && typeof p.catch === 'function') { p.catch(err => { console.warn('[AutoAudio]', err.message); setBadge('▶ ИДЕТ ПРОКРУТКА (звук заблокирован)', '#eab308'); }); } }
+            function pauseAudio() { if (audio) try { audio.pause(); } catch (_) {} }
+            function resetAudio() { if (audio) try { audio.pause(); audio.currentTime = 0; } catch (_) {} }
+
+            function animate() {
+                if (!isRunning) return;
+                const elapsed = pausedElapsed + (performance.now() - startedAt);
+                const fraction = Math.min(elapsed / totalDurationMs, 1);
+                measure();
+                studentBlock.scrollTop = startS + (maxS - startS) * fraction;
+                speakerBlock.scrollTop = startP + (maxP - startP) * fraction;
+                if (badge) { badge.textContent = '▶ ' + fmt(elapsed) + ' / ' + fmt(totalDurationMs); badge.style.borderColor = '#16a34a'; }
+                if (fraction >= 1) { finish(); return; }
+                rafId = requestAnimationFrame(animate);
+            }
+
+            function startOrResume() {
+                if (completed) { pausedElapsed = 0; completed = false; studentBlock.scrollTop = 0; speakerBlock.scrollTop = 0; resetAudio(); }
+                measure(); startS = studentBlock.scrollTop; startP = speakerBlock.scrollTop;
+                startedAt = performance.now(); isRunning = true;
+                studentBlock.style.scrollBehavior = 'auto'; speakerBlock.style.scrollBehavior = 'auto';
+                cancelAnimationFrame(rafId); rafId = requestAnimationFrame(animate);
+                playAudio();
+            }
+            function pause() {
+                if (isRunning) pausedElapsed += performance.now() - startedAt;
+                isRunning = false; cancelAnimationFrame(rafId);
+                setBadge('⏸ ПАУЗА ' + fmt(pausedElapsed), '#dc2626');
+                studentBlock.style.scrollBehavior = studentBehavior; speakerBlock.style.scrollBehavior = speakerBehavior;
+                pauseAudio();
+            }
+            function finish() {
+                isRunning = false; completed = true; cancelAnimationFrame(rafId);
+                measure(); studentBlock.scrollTop = maxS; speakerBlock.scrollTop = maxP;
+                studentBlock.style.scrollBehavior = studentBehavior; speakerBlock.style.scrollBehavior = speakerBehavior;
+                const nextLec = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+                if (nextLec) {
+                    setBadge('✅ ГОТОВО → Лекция ' + nextLec, '#16a34a');
+                    setTimeout(() => { location.href = 'Лекция ' + nextLec + '.html?' + AUTOSTART_PARAM + '=1'; }, autoNextDelayMs);
+                } else {
+                    setBadge('✅ КУРС ЗАВЕРШЕН', '#16a34a');
+                    pauseAudio();
+                }
+            }
+            function toggle() { isRunning ? pause() : startOrResume(); }
+
+            window.addEventListener('keydown', (e) => {
+                if (e.repeat) return;
+                const t = e.target; const tag = t && t.tagName;
+                if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+                if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); toggle(); }
+            }, true);
+
+            if (badge) badge.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+            [studentBlock, speakerBlock].forEach(el => {
+                el.addEventListener('click', (e) => {
+                    if (e.target.closest('a,button,iframe,input,textarea,select,video,audio')) return;
+                    if (window.getSelection().toString().length > 0) return;
+                    toggle();
+                });
+            });
+
+            const params = new URLSearchParams(location.search);
+            if (params.get(AUTOSTART_PARAM) === '1') {
+                params.delete(AUTOSTART_PARAM);
+                const clean = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
+                history.replaceState(null, '', clean);
+                setTimeout(startOrResume, 500);
+            } else { setBadge('▶ ПРОБЕЛ / КЛИК — старт', '#4a5568'); }
+        }
+
+        if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initScroll, { once: true }); }
+        else { initScroll(); }
+    })();
+    </script>
+
+</body>
+</html>
