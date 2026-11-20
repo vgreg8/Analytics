@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Лекция 23. Маркетинговая аналитика: как измерять каналы и распределять бюджет</title>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #ffffff; }
+
+    .student-view { width: 66.66%; height: 100vh; background: #ffffff; padding: 35px 40px; display: flex; flex-direction: column; justify-content: space-between; border-right: 2px solid #e2e8f0; overflow-y: auto; scroll-behavior: smooth; }
+    .speaker-notes { width: 33.34%; height: 100%; background: #1a202c; color: #edf2f7; padding: 30px; overflow-y: auto; }
+
+    .slide-header { font-size: 26px; color: #0f172a; font-weight: bold; line-height: 1.3; margin-bottom: 18px; border-bottom: 4px solid #2563eb; padding-bottom: 12px; }
+    .slide-body { flex-grow: 1; display: flex; flex-direction: column; gap: 18px; padding: 5px 0; }
+    .slide-footer { font-size: 13px; color: #64748b; text-align: right; margin-top: 12px; }
+
+    .chart-box { background: #f8fafc; border: 2.5px dashed #94a3b8; padding: 20px; border-radius: 12px; }
+    .chart-box strong { font-size: 17px; display: block; margin-bottom: 8px; color: #0f172a; }
+    .chart-box p { font-size: 14px; color: #1e293b; line-height: 1.5; }
+
+    .viz-card { background: #ffffff; border: 2px solid #cbd5e0; border-radius: 12px; padding: 18px; box-shadow: 0 4px 10px rgba(15,23,42,0.06); }
+    .viz-title { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .viz-caption { font-size: 13px; color: #1e293b; margin-top: 10px; line-height: 1.6; }
+    .viz-caption strong { color: #0f172a; font-weight: 700; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+
+    .compare-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .compare-table th { background: #0f172a; color: white; padding: 10px 12px; text-align: left; font-weight: 700; }
+    .compare-table td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; color: #1e293b; vertical-align: top; line-height: 1.45; }
+    .compare-table tr:nth-child(even) td { background: #f8fafc; }
+
+    .role-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .role-table th { background: #0f172a; color: white; padding: 10px 12px; text-align: left; font-weight: 700; }
+    .role-table td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; color: #1e293b; vertical-align: top; line-height: 1.45; }
+    .role-table tr:nth-child(even) td { background: #f8fafc; }
+    .role-table .role-emoji { font-size: 16px; }
+
+    .callout { background: #fffbeb; border-left: 5px solid #d97706; padding: 14px 18px; border-radius: 6px; }
+    .callout strong { color: #78350f; font-size: 14px; }
+    .callout p { font-size: 13px; color: #451a03; margin-top: 4px; line-height: 1.5; }
+    .callout.warn { background: #fef2f2; border-left-color: #dc2626; }
+    .callout.warn strong { color: #991b1b; }
+    .callout.warn p { color: #7f1d1d; }
+    .callout.ok { background: #f0fdf4; border-left-color: #16a34a; }
+    .callout.ok strong { color: #166534; }
+    .callout.ok p { color: #14532d; }
+
+    /* SVG styles */
+    .axis { stroke: #334155; stroke-width: 2; }
+    .grid-line { stroke: #cbd5e0; stroke-width: 1; }
+    .label { font-family: 'Segoe UI', sans-serif; font-size: 13px; fill: #1e293b; font-weight: 600; }
+    .label-strong { font-family: 'Segoe UI', sans-serif; font-size: 15px; font-weight: 700; fill: #0f172a; }
+    .label-small { font-family: 'Segoe UI', sans-serif; font-size: 12px; fill: #475569; font-weight: 500; }
+    .label-white { font-family: 'Segoe UI', sans-serif; font-size: 13px; fill: #ffffff; font-weight: 700; }
+    .label-white-sm { font-family: 'Segoe UI', sans-serif; font-size: 11px; fill: #ffffff; opacity: 0.95; font-weight: 600; }
+
+    .video-section { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 5px; }
+    .video-container { width: 100%; max-width: 580px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: #000; aspect-ratio: 16 / 9; }
+    .links-hub { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .video-btn { text-decoration: none; padding: 9px 14px; border-radius: 6px; font-size: 13px; font-weight: bold; color: white; display: flex; align-items: center; gap: 6px; transition: transform 0.2s, background 0.2s; cursor: pointer; border: none; }
+    .video-btn:hover { transform: translateY(-2px); }
+    .rt-btn { background: #00a877; }
+    .rt-btn:hover { background: #008f65; }
+    .stop-btn { background: #dc2626; }
+    .stop-btn:hover { background: #b91c1c; }
+
+    .notes-header { font-size: 17px; color: #63b3ed; font-weight: bold; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a5568; padding-bottom: 10px; }
+    .lecture-text { font-size: 14.5px; line-height: 1.65; color: #e2e8f0; text-align: justify; }
+    .lecture-text p { margin-bottom: 14px; }
+    .lecture-text h3 { color: #63b3ed; font-size: 15px; margin: 18px 0 10px; border-bottom: 1px solid #2d3748; padding-bottom: 5px; }
+    .lecture-text h4 { color: #90cdf4; font-size: 13.5px; margin: 14px 0 8px; }
+    .lecture-text ul { margin: 8px 0 14px 18px; }
+    .lecture-text li { margin-bottom: 6px; }
+
+    .dark-block { background: #2d3748; border: 1px solid #4a5568; border-radius: 10px; padding: 16px 18px; margin-top: 20px; }
+    .dark-block-title { font-size: 14px; font-weight: bold; color: #63b3ed; margin-bottom: 12px; border-bottom: 2px solid #4a5568; padding-bottom: 8px; }
+    .dark-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+    .dark-table th { background: #1a202c; color: #90cdf4; padding: 7px 9px; text-align: left; font-weight: 600; border-bottom: 1px solid #4a5568; }
+    .dark-table td { padding: 6px 9px; border-bottom: 1px solid #2d3748; color: #cbd5e0; vertical-align: top; line-height: 1.4; }
+    .dark-table tr:nth-child(even) td { background: #2a3242; }
+    .dark-table .term { font-weight: bold; color: #90cdf4; white-space: nowrap; }
+
+    .lecture-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(12px); border-top: 2px solid rgba(255, 255, 255, 0.08); padding: 12px 20px; display: flex; align-items: center; justify-content: center; gap: 12px; z-index: 9999; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25); }
+    .lecture-nav .nav-progress { position: absolute; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899); border-radius: 0 3px 3px 0; }
+    .lecture-nav .nav-btn-arrow { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); border: 1.5px solid rgba(255, 255, 255, 0.15); color: #e2e8f0; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; }
+    .lecture-nav .nav-btn-arrow:hover:not(:disabled) { background: rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.6); color: white; transform: translateY(-2px); }
+    .lecture-nav .nav-btn-arrow:disabled { opacity: 0.35; cursor: not-allowed; }
+    .lecture-nav .nav-btn-arrow .arrow-icon { font-size: 16px; line-height: 1; }
+    .lecture-nav .nav-btn-arrow .arrow-label { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+    .lecture-nav .nav-btn-arrow .arrow-label small { font-size: 9.5px; font-weight: 400; opacity: 0.7; text-transform: uppercase; }
+    .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { font-size: 12px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lecture-nav .nav-center { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 20px; color: #94a3b8; font-size: 11px; border-left: 1px solid rgba(255, 255, 255, 0.1); border-right: 1px solid rgba(255, 255, 255, 0.1); }
+    .lecture-nav .nav-counter { font-size: 15px; font-weight: 900; color: #f1f5f9; }
+    .lecture-nav .nav-counter span { color: #64748b; font-size: 12px; font-weight: 600; }
+    .lecture-nav .nav-index-link { color: #60a5fa; text-decoration: none; font-size: 11px; font-weight: 600; }
+    .lecture-nav .nav-index-link:hover { color: #93c5fd; text-decoration: underline; }
+    body { padding-bottom: 80px !important; }
+    @media (max-width: 900px) {
+        .lecture-nav { padding: 10px 12px; gap: 8px; }
+        .lecture-nav .nav-btn-arrow { padding: 8px 12px; }
+        .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { max-width: 90px; font-size: 11px; }
+        .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    }
+
+    @keyframes pulseAlert {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+    }
+    .pulse-alert { animation: pulseAlert 1.5s ease-in-out infinite; }
+
+    @keyframes flowData {
+        0% { stroke-dashoffset: 0; }
+        100% { stroke-dashoffset: -20; }
+    }
+    .flow-data { animation: flowData 2s linear infinite; }
+</style>
+</head>
+<body>
+
+    <div class="student-view">
+        <div class="slide-header">
+            Лекция 23. Маркетинговая аналитика: как измерять каналы и распределять бюджет
+        </div>
+
+        <div class="slide-body">
+
+            <!-- HERO -->
+            <div class="chart-box" style="background: #faf5ff; border-color: #d8b4fe;">
+                <strong style="color: #6b21a8;">🎯 Главная идея</strong>
+                <p>Маркетинговый аналитик — это не тот, кто считает клики и лиды. Это тот, кто отвечает на вопрос: <strong>«Какие каналы действительно приносят клиентов и прибыль, и куда перераспределить бюджет»</strong>. Метрики — это инструмент. Модели атрибуции — это карта. Статистика и ML — это точные приборы. Эксперименты — это маршрут. Бюджет — это результат.</p>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 1: РОЛИ АНАЛИТИКОВ -->
+            <div class="viz-card">
+                <div class="viz-title">👥 Кто есть кто: маркетинговый аналитик на фоне других ролей</div>
+                <svg viewBox="0 0 540 280" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="280" fill="#ffffff"/>
+
+                    <!-- Central hub -->
+                    <circle cx="270" cy="140" r="50" fill="#1e40af"/>
+                    <text x="270" y="134" text-anchor="middle" class="label-white" style="font-size: 13px;">Маркетинговый</text>
+                    <text x="270" y="150" text-anchor="middle" class="label-white" style="font-size: 13px;">аналитик</text>
+
+                    <!-- 5 surrounding roles -->
+                    <!-- Data analyst -->
+                    <circle cx="80" cy="60" r="40" fill="#eff6ff" stroke="#2563eb" stroke-width="2.5"/>
+                    <text x="80" y="55" text-anchor="middle" class="label-strong" style="font-size: 11px;">Аналитик</text>
+                    <text x="80" y="69" text-anchor="middle" class="label-strong" style="font-size: 11px;">данных</text>
+                    <line x1="110" y1="85" x2="230" y2="115" stroke="#2563eb" stroke-width="2"/>
+
+                    <!-- Product analyst -->
+                    <circle cx="460" cy="60" r="40" fill="#f0fdf4" stroke="#16a34a" stroke-width="2.5"/>
+                    <text x="460" y="55" text-anchor="middle" class="label-strong" style="font-size: 11px;">Продуктовый</text>
+                    <text x="460" y="69" text-anchor="middle" class="label-strong" style="font-size: 11px;">аналитик</text>
+                    <line x1="430" y1="85" x2="310" y2="115" stroke="#16a34a" stroke-width="2"/>
+
+                    <!-- Financial analyst -->
+                    <circle cx="80" cy="220" r="40" fill="#fffbeb" stroke="#d97706" stroke-width="2.5"/>
+                    <text x="80" y="215" text-anchor="middle" class="label-strong" style="font-size: 11px;">Финансовый</text>
+                    <text x="80" y="229" text-anchor="middle" class="label-strong" style="font-size: 11px;">аналитик</text>
+                    <line x1="110" y1="195" x2="230" y2="165" stroke="#d97706" stroke-width="2"/>
+
+                    <!-- Performance marketer -->
+                    <circle cx="460" cy="220" r="40" fill="#fef2f2" stroke="#dc2626" stroke-width="2.5"/>
+                    <text x="460" y="215" text-anchor="middle" class="label-strong" style="font-size: 10px;">Performance-</text>
+                    <text x="460" y="229" text-anchor="middle" class="label-strong" style="font-size: 10px;">маркетолог</text>
+                    <line x1="430" y1="195" x2="310" y2="165" stroke="#dc2626" stroke-width="2"/>
+
+                    <!-- BI / data engineer -->
+                    <circle cx="270" cy="255" r="22" fill="#faf5ff" stroke="#7c3aed" stroke-width="2.5"/>
+                    <text x="270" y="252" text-anchor="middle" class="label-small" style="font-size: 10px;">BI / Data</text>
+                    <text x="270" y="264" text-anchor="middle" class="label-small" style="font-size: 10px;">Engineer</text>
+                    <line x1="270" y1="233" x2="270" y2="192" stroke="#7c3aed" stroke-width="2"/>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Маркетинговый аналитик</strong> стоит на пересечении <strong>трафика, денег и клиента</strong>. Аналитик данных отвечает «что произошло?». Продуктовый — «что с клиентом внутри продукта?». Финансовый — «прибыльно ли в целом?». Performance-маркетолог оптимизирует <strong>внутри</strong> одного канала. Маркетинговый аналитик смотрит <strong>между</strong> каналами и проверяет, не приписывают ли кабинеты себе чужие продажи. Его работа начинается с вопроса «а что было бы без этой рекламы?», а не «сколько продаж показал кабинет?».
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 2: AARRR ВОРОНКА -->
+            <div class="viz-card">
+                <div class="viz-title">🧭 AARRR — воронка «пиратских метрик»</div>
+                <svg viewBox="0 0 540 300" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="300" fill="#ffffff"/>
+
+                    <!-- Funnel steps as trapezoids -->
+                    <!-- Acquisition -->
+                    <polygon points="40,30 500,30 460,70 80,70" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+                    <text x="270" y="55" text-anchor="middle" class="label-strong" fill="#1e40af">🚪 Acquisition — привлечение</text>
+                    <text x="270" y="85" text-anchor="middle" class="label-small">трафик, CAC, CPL</text>
+
+                    <!-- Activation -->
+                    <polygon points="80,95 460,95 420,135 120,135" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+                    <text x="270" y="120" text-anchor="middle" class="label-strong" fill="#166534">⚡ Activation — активация</text>
+                    <text x="270" y="150" text-anchor="middle" class="label-small">activation rate, первый заказ</text>
+
+                    <!-- Retention -->
+                    <polygon points="120,160 420,160 380,200 160,200" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+                    <text x="270" y="185" text-anchor="middle" class="label-strong" fill="#92400e">🔁 Retention — удержание</text>
+                    <text x="270" y="215" text-anchor="middle" class="label-small">retention, repeat rate</text>
+
+                    <!-- Referral -->
+                    <polygon points="160,225 380,225 340,265 200,265" fill="#faf5ff" stroke="#7c3aed" stroke-width="2"/>
+                    <text x="270" y="250" text-anchor="middle" class="label-strong" fill="#6b21a8">🗣️ Referral — рекомендации</text>
+                    <text x="270" y="278" text-anchor="middle" class="label-small" fill="#4c1d95">K-фактор, доля «по совету»</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>AARRR</strong> — пять этапов: Acquisition, Activation, Retention, Referral, Revenue. Задача аналитика — оценивать канал не по цене клика, а по <strong>качеству когорты на всей воронке</strong>. Дешёвый трафик с нулевой активацией дороже «дорогого» трафика с высоким LTV.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 3: АТРИБУЦИЯ -->
+            <div class="viz-card">
+                <div class="viz-title">🗺️ Атрибуция: один заказ — четыре касания</div>
+                <svg viewBox="0 0 540 230" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="230" fill="#ffffff"/>
+
+                    <!-- Timeline -->
+                    <line x1="40" y1="110" x2="500" y2="110" stroke="#334155" stroke-width="3"/>
+                    <polygon points="500,110 490,105 490,115" fill="#334155"/>
+
+                    <!-- Touch 1: Social -->
+                    <circle cx="90" cy="110" r="18" fill="#eff6ff" stroke="#2563eb" stroke-width="3"/>
+                    <text x="90" y="115" text-anchor="middle" class="label-white-sm" fill="#1e40af">1</text>
+                    <text x="90" y="75" text-anchor="middle" class="label-small" fill="#1e40af">соцсеть</text>
+                    <text x="90" y="150" text-anchor="middle" class="label-small">день 1</text>
+
+                    <!-- Touch 2: Search -->
+                    <circle cx="210" cy="110" r="18" fill="#f0fdf4" stroke="#16a34a" stroke-width="3"/>
+                    <text x="210" y="115" text-anchor="middle" class="label-white-sm" fill="#166534">2</text>
+                    <text x="210" y="75" text-anchor="middle" class="label-small" fill="#166534">поиск</text>
+                    <text x="210" y="150" text-anchor="middle" class="label-small">день 3</text>
+
+                    <!-- Touch 3: Email -->
+                    <circle cx="330" cy="110" r="18" fill="#fffbeb" stroke="#d97706" stroke-width="3"/>
+                    <text x="330" y="115" text-anchor="middle" class="label-white-sm" fill="#92400e">3</text>
+                    <text x="330" y="75" text-anchor="middle" class="label-small" fill="#92400e">email</text>
+                    <text x="330" y="150" text-anchor="middle" class="label-small">день 7</text>
+
+                    <!-- Touch 4: Direct + purchase -->
+                    <circle cx="450" cy="110" r="22" fill="#fef2f2" stroke="#dc2626" stroke-width="3"/>
+                    <text x="450" y="115" text-anchor="middle" class="label-white-sm" fill="#991b1b">4</text>
+                    <text x="450" y="72" text-anchor="middle" class="label-small" fill="#991b1b">прямой</text>
+                    <text x="450" y="155" text-anchor="middle" class="label-small" fill="#991b1b">день 8 — покупка</text>
+
+                    <!-- Result label -->
+                    <text x="270" y="200" text-anchor="middle" class="label-strong" fill="#0f172a">4 касания → 1 заказ на 10 000 ₽</text>
+                </svg>
+                <div class="viz-caption">
+                    Каждый кабинет (соцсеть, поиск, email) <strong>припишет продажу себе</strong>. Если сложить «продажи по каналам», получится больше реальной выручки. Атрибуция — правила, по которым заслуга делится между касаниями. <strong>Last click</strong> — вся заслуга последнему касанию (просто, но обнуляет верх воронки). <strong>First click</strong> — первому (игнорирует низ). <strong>Linear</strong> — поровну. <strong>Time decay</strong> — ближе к покупке больше. <strong>U-shape (40/20/40)</strong> — первому и последнему по 40%, середине 20% (при 3 касаниях; при 4 — 40/10/10/40). <strong>Data-driven</strong> — модель считает вклад по данным путей.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 4: MMM -->
+            <div class="viz-card">
+                <div class="viz-title">📺 MMM — Marketing Mix Modeling: взгляд сверху</div>
+                <svg viewBox="0 0 540 260" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="260" fill="#ffffff"/>
+
+                    <!-- Central model box -->
+                    <rect x="200" y="95" width="140" height="70" rx="10" fill="#1e40af"/>
+                    <text x="270" y="125" text-anchor="middle" class="label-white" style="font-size: 14px;">MMM</text>
+                    <text x="270" y="145" text-anchor="middle" class="label-white-sm">регрессия</text>
+
+                    <!-- Inputs -->
+                    <!-- Media -->
+                    <rect x="20" y="20" width="130" height="45" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+                    <text x="85" y="40" text-anchor="middle" class="label-strong" fill="#1e40af" style="font-size: 12px;">📡 Медиа-давление</text>
+                    <text x="85" y="56" text-anchor="middle" class="label-small">расходы + adstock</text>
+                    <line x1="150" y1="42" x2="200" y2="110" stroke="#2563eb" stroke-width="2"/>
+
+                    <!-- Baseline -->
+                    <rect x="20" y="80" width="130" height="45" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+                    <text x="85" y="100" text-anchor="middle" class="label-strong" fill="#166534" style="font-size: 12px;">🧱 Baseline</text>
+                    <text x="85" y="116" text-anchor="middle" class="label-small">бренд, дистрибуция</text>
+                    <line x1="150" y1="102" x2="200" y2="120" stroke="#16a34a" stroke-width="2"/>
+
+                    <!-- Seasonality -->
+                    <rect x="20" y="140" width="130" height="45" rx="8" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+                    <text x="85" y="160" text-anchor="middle" class="label-strong" fill="#92400e" style="font-size: 12px;">📅 Сезонность</text>
+                    <text x="85" y="176" text-anchor="middle" class="label-small">праздники, тренд</text>
+                    <line x1="150" y1="162" x2="200" y2="140" stroke="#d97706" stroke-width="2"/>
+
+                    <!-- Price/promo -->
+                    <rect x="20" y="200" width="130" height="45" rx="8" fill="#faf5ff" stroke="#7c3aed" stroke-width="2"/>
+                    <text x="85" y="220" text-anchor="middle" class="label-strong" fill="#6b21a8" style="font-size: 12px;">🏷️ Цена / промо</text>
+                    <text x="85" y="236" text-anchor="middle" class="label-small">скидки, акции</text>
+                    <line x1="150" y1="222" x2="200" y2="155" stroke="#7c3aed" stroke-width="2"/>
+
+                    <!-- External -->
+                    <rect x="380" y="20" width="140" height="45" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="2"/>
+                    <text x="450" y="40" text-anchor="middle" class="label-strong" fill="#991b1b" style="font-size: 12px;">🌍 Внешние</text>
+                    <text x="450" y="56" text-anchor="middle" class="label-small">конкуренты, погода, курс</text>
+                    <line x1="380" y1="42" x2="340" y2="110" stroke="#dc2626" stroke-width="2"/>
+
+                    <!-- Output -->
+                    <rect x="380" y="120" width="140" height="45" rx="8" fill="#ffffff" stroke="#0f172a" stroke-width="2.5"/>
+                    <text x="450" y="140" text-anchor="middle" class="label-strong" fill="#0f172a" style="font-size: 12px;">📈 Вклад каналов</text>
+                    <text x="450" y="156" text-anchor="middle" class="label-small">+ кривая насыщения</text>
+                    <line x1="340" y1="130" x2="380" y2="140" stroke="#0f172a" stroke-width="2"/>
+                </svg>
+                <div class="viz-caption">
+                    MMM — эконометрическая модель на агрегированных данных (2–3 года по неделям). Продажи объясняются рекламой (<strong>adstock</strong> — эффект тянется неделями), <strong>baseline</strong> (без рекламы), сезонностью, ценой/промо и внешними факторами. <strong>Ограничения:</strong> агрегация теряет granularity; MMM показывает <strong>корреляцию, а не причинность</strong>; результат зависит от выбора adstock/насыщения (Hill-функция); модель нужно регулярно переобучать. Технически — множественная регрессия; при мультиколлинеарности применяют <strong>Ridge-регрессию</strong> или <strong>Байесовские иерархические модели</strong> (PyMC, Prophet).
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 5: ВОРОНКА БЮДЖЕТА -->
+            <div class="viz-card">
+                <div class="viz-title">💰 Воронка бюджета и юнит-экономика канала</div>
+                <svg viewBox="0 0 540 320" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="320" fill="#ffffff"/>
+
+                    <!-- Budget -->
+                    <rect x="170" y="15" width="200" height="40" rx="6" fill="#1e40af"/>
+                    <text x="270" y="40" text-anchor="middle" class="label-white">💼 Бюджет: 500 000 ₽</text>
+
+                    <!-- Arrow -->
+                    <line x1="270" y1="55" x2="270" y2="80" stroke="#334155" stroke-width="2"/>
+                    <polygon points="270,80 265,72 275,72" fill="#334155"/>
+                    <text x="305" y="72" class="label-small">CPM 200 ₽</text>
+
+                    <!-- Impressions -->
+                    <rect x="170" y="80" width="200" height="40" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+                    <text x="270" y="105" text-anchor="middle" class="label-strong" fill="#1e40af">👁️ Показы: 2 500 000</text>
+
+                    <line x1="270" y1="120" x2="270" y2="145" stroke="#334155" stroke-width="2"/>
+                    <polygon points="270,145 265,137 275,137" fill="#334155"/>
+                    <text x="305" y="137" class="label-small">CTR 1%</text>
+
+                    <!-- Clicks -->
+                    <rect x="170" y="145" width="200" height="40" rx="6" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+                    <text x="270" y="170" text-anchor="middle" class="label-strong" fill="#166534">👆 Клики: 25 000</text>
+                    <text x="270" y="182" text-anchor="middle" class="label-small">CPC 20 ₽</text>
+
+                    <line x1="270" y1="185" x2="270" y2="210" stroke="#dc2626" stroke-width="2.5" stroke-dasharray="4 3"/>
+                    <polygon points="270,210 265,202 275,202" fill="#dc2626"/>
+                    <text x="340" y="202" class="label-small" fill="#991b1b" style="font-weight:700;">CR 5% ← узкое место</text>
+
+                    <!-- Leads -->
+                    <rect x="170" y="210" width="200" height="40" rx="6" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+                    <text x="270" y="235" text-anchor="middle" class="label-strong" fill="#92400e">📝 Заявки: 1 250</text>
+                    <text x="270" y="247" text-anchor="middle" class="label-small">CPL 400 ₽</text>
+
+                    <line x1="270" y1="250" x2="270" y2="275" stroke="#334155" stroke-width="2"/>
+                    <polygon points="270,275 265,267 275,267" fill="#334155"/>
+                    <text x="305" y="267" class="label-small">CR 10%</text>
+
+                    <!-- Clients -->
+                    <rect x="170" y="275" width="200" height="40" rx="6" fill="#fef2f2" stroke="#dc2626" stroke-width="2"/>
+                    <text x="270" y="300" text-anchor="middle" class="label-strong" fill="#991b1b">🎯 Клиенты: 125 → CAC 4 000 ₽</text>
+                </svg>
+                <div class="viz-caption">
+                    Бюджет → показы → клики → заявки → клиенты. На каждом переходе своя конверсия и своя цена. В примере <strong>узкое место — переход «клик → заявка» (5%)</strong>: 95% оплаченного трафика уходит в никуда. Гипотеза: длинная форма заказа. A/B-тест короткой формы поднимает конверсию до 6% → 150 клиентов → <strong>CAC падает до 3 333 ₽ без роста бюджета</strong>. LTV по марже = 12 000 ₽ → <strong>LTV/CAC = 3</strong> — ориентир здоровой юнит-экономики (но порог зависит от маржи, срока окупаемости и стоимости капитала, а не универсален). Payback period — за сколько заказов окупается CAC — отдельная метрика, её не путают с LTV/CAC.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 6: ROAS vs ROMI -->
+            <div class="viz-card">
+                <div class="viz-title">🧩 ROAS и ROMI: выручка ≠ прибыль</div>
+                <svg viewBox="0 0 540 240" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="240" fill="#ffffff"/>
+
+                    <!-- ROAS card -->
+                    <rect x="20" y="20" width="240" height="200" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="2.5"/>
+                    <text x="140" y="48" text-anchor="middle" class="label-strong" fill="#1e40af">📈 ROAS</text>
+                    <text x="140" y="70" text-anchor="middle" class="label-small" fill="#1e40af">Return On Ad Spend</text>
+                    <text x="140" y="105" text-anchor="middle" class="label" fill="#1e293b">Выручка / Расход</text>
+                    <text x="140" y="135" text-anchor="middle" class="label-strong" fill="#1e40af">2 000 000 / 500 000</text>
+                    <text x="140" y="165" text-anchor="middle" class="label-strong" fill="#1e40af" style="font-size: 20px;">= 400%</text>
+                    <text x="140" y="195" text-anchor="middle" class="label-small">4 ₽ выручки на 1 ₽ рекламы</text>
+
+                    <!-- ROMI card -->
+                    <rect x="280" y="20" width="240" height="200" rx="10" fill="#f0fdf4" stroke="#16a34a" stroke-width="2.5"/>
+                    <text x="400" y="48" text-anchor="middle" class="label-strong" fill="#166534">💰 ROMI</text>
+                    <text x="400" y="70" text-anchor="middle" class="label-small" fill="#166534">Return On Marketing Investment</text>
+                    <text x="400" y="105" text-anchor="middle" class="label" fill="#1e293b">(Маржа − Расход) / Расход</text>
+                    <text x="400" y="135" text-anchor="middle" class="label-strong" fill="#166534">(800 000 − 500 000) / 500 000</text>
+                    <text x="400" y="165" text-anchor="middle" class="label-strong" fill="#166534" style="font-size: 20px;">= 60%</text>
+                    <text x="400" y="195" text-anchor="middle" class="label-small">маржа 40% → прибыль 300 000 ₽</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Ловушка маржи:</strong> ROAS 400% звучит отлично, но при марже 20% прибыль всего 400 000 ₽ против расхода 500 000 ₽ → ROMI = <strong>−20%</strong>. Вы в убытке! Точка безубыточности: <strong>ROAS = 1 / маржа</strong> (при марже 20% нужен ROAS 500%, а не 400%). Вывод: кабинеты показывают выручку, бизнес живёт на прибыль. Задача аналитика — всегда переводить ROAS в ROMI через маржу. И помнить, что формула верна при данной структуре затрат — при изменении COGS или возвратов её нужно пересчитывать.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 7: СЕГМЕНТАЦИЯ КАНАЛОВ -->
+            <div class="viz-card">
+                <div class="viz-title">👥 Сегментация каналов: роль каждого в миксе</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr><th>Сегмент каналов</th><th>Как определить</th><th>Что делать</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>🔍 Брендовый поиск</td><td>Ищут ваш бренд</td><td>Высокий ROAS, но низкая инкрементальность — «снимает сливки». <strong>Исключение:</strong> если конкуренты перекупают бренд в аукционе, защита бренда может быть инкрементальной</td></tr>
+                        <tr><td>🧭 Небрендовый поиск</td><td>Ищут категорию</td><td>Горячий новый спрос. Масштабировать по CAC</td></tr>
+                        <tr><td>📱 Охватные соцсети</td><td>Не искали, увидели</td><td>Создают спрос. Оценивать по инкрементальности и LTV когорты, а не по last click</td></tr>
+                        <tr><td>🔁 Ретаргетинг</td><td>Были на сайте, не купили</td><td>Догревает, но каннибализирует органику. Следите за частотой и проверяйте geo-тестом</td></tr>
+                        <tr><td>✉️ Email / CRM</td><td>Своя база</td><td>Самые дешёвые повторные продажи</td></tr>
+                        <tr><td>🌱 Органика и прямые</td><td>Пришли сами</td><td>Результат бренда и SEO. Не отдавайте их заслугу платным каналам</td></tr>
+                    </tbody>
+                </table>
+                <div class="viz-caption">
+                    Каналы играют разные роли. Не требуйте от всех одинакового ROAS. Задача аналитика — оценивать канал по его работе в миксе, а не по одной метрике.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 8: ГОЛОС РЫНКА -->
+            <div class="viz-card">
+                <div class="viz-title">💬 Голос рынка: три метода услышать то, чего нет в трекинге</div>
+                <div class="grid-3">
+                    <div style="background: #eff6ff; border: 2px solid #2563eb; border-radius: 10px; padding: 14px;">
+                        <div style="font-size: 26px; text-align: center;">🗣️</div>
+                        <div style="font-weight: 700; color: #1e40af; text-align: center; margin: 6px 0;">Post-purchase survey</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.5;">Вопрос после покупки: «Откуда вы о нас узнали?» Ловит блогеров, подкасты, сарафан, dark social. <strong>Ограничение:</strong> память искажает.</div>
+                    </div>
+                    <div style="background: #f0fdf4; border: 2px solid #16a34a; border-radius: 10px; padding: 14px;">
+                        <div style="font-size: 26px; text-align: center;">📺</div>
+                        <div style="font-weight: 700; color: #166534; text-align: center; margin: 6px 0;">Brand Lift Study</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.5;">Опрос видевших и не видевших рекламу: узнаваемость, ad recall, consideration. Подходит для охватных кампаний, где кликов нет.</div>
+                    </div>
+                    <div style="background: #fffbeb; border: 2px solid #d97706; border-radius: 10px; padding: 14px;">
+                        <div style="font-size: 26px; text-align: center;">🔎</div>
+                        <div style="font-weight: 700; color: #92400e; text-align: center; margin: 6px 0;">Share of Search</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.5;">Доля бренда в поисковых запросах категории. Дешёвый прокси спроса. <strong>Оговорка:</strong> корреляция с долей рынка ≠ причинность.</div>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    Пример связки: атрибуция говорит «ТВ не работает», опросы — «о ТВ узнали 30% новых клиентов», Share of Search растёт. Вывод: ТВ работает, но атрибуция его не видит.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 9: СТАТИСТИКА -->
+            <div class="viz-card">
+                <div class="viz-title">📐 Статистическая строгость: от корреляции к причинности</div>
+                <div class="grid-2">
+                    <div style="background: #eff6ff; border: 2px solid #2563eb; border-radius: 10px; padding: 14px;">
+                        <div style="font-weight: 700; color: #1e40af; margin-bottom: 6px;">🎲 p-value</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.5;">Вероятность наблюдать столь же или более экстремальный результат <strong>при условии, что нулевая гипотеза верна</strong>. Если p &lt; 0.05 — эффект статистически значим. <strong>Важно:</strong> p-value — не «вероятность, что эффект случайный».</div>
+                    </div>
+                    <div style="background: #f0fdf4; border: 2px solid #16a34a; border-radius: 10px; padding: 14px;">
+                        <div style="font-weight: 700; color: #166534; margin-bottom: 6px;">📏 Доверительный интервал</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.5;">«С вероятностью 95% реальный CAC лежит в диапазоне 3 800–4 200 ₽». Честнее одной цифры и полезнее для решений.</div>
+                    </div>
+                    <div style="background: #fffbeb; border: 2px solid #d97706; border-radius: 10px; padding: 14px;">
+                        <div style="font-weight: 700; color: #92400e; margin-bottom: 6px;">🎯 MDE</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.5;">Minimum Detectable Effect — минимальный эффект, который способен обнаружить тест. Чем меньше MDE, тем дольше и дороже тест. Если хотите поймать рост CAC на 1% — нужны десятки тысяч клиентов; на 10% — достаточно сотни.</div>
+                    </div>
+                    <div style="background: #faf5ff; border: 2px solid #7c3aed; border-radius: 10px; padding: 14px;">
+                        <div style="font-weight: 700; color: #6b21a8; margin-bottom: 6px;">🔗 Мультиколлинеарность</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.5;">Расходы на каналы растут синхронно — простая корреляция врёт. Решается Ridge-регрессией или Байесовскими методами в MMM.</div>
+                    </div>
+                </div>
+                <div class="callout warn" style="margin-top: 12px;">
+                    <strong>⚠️ Главная ловушка: «Корреляция ≠ причинность»</strong>
+                    <p>Рост продаж может совпасть с рекламой, но быть вызван сезонностью, акцией конкурента или удачей. Только эксперимент (A/B или geo-holdout) доказывает causality.</p>
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 10: ИНКРЕМЕНТАЛЬНОСТЬ -->
+            <div class="viz-card">
+                <div class="viz-title">🧪 Инкрементальность: главный вопрос маркетинговой аналитики</div>
+                <svg viewBox="0 0 540 260" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="260" fill="#ffffff"/>
+
+                    <!-- Geo A (control) -->
+                    <rect x="30" y="30" width="200" height="200" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="2.5"/>
+                    <text x="130" y="58" text-anchor="middle" class="label-strong" fill="#1e40af">Город А (контроль)</text>
+                    <text x="130" y="78" text-anchor="middle" class="label-small">реклама выключена</text>
+                    <text x="130" y="130" text-anchor="middle" class="label-strong" fill="#1e40af" style="font-size: 32px;">900</text>
+                    <text x="130" y="155" text-anchor="middle" class="label-small">заказов</text>
+                    <text x="130" y="195" text-anchor="middle" class="label-small" fill="#475569">базовый спрос</text>
+
+                    <!-- Geo B (test) -->
+                    <rect x="310" y="30" width="200" height="200" rx="10" fill="#f0fdf4" stroke="#16a34a" stroke-width="2.5"/>
+                    <text x="410" y="58" text-anchor="middle" class="label-strong" fill="#166534">Город Б (тест)</text>
+                    <text x="410" y="78" text-anchor="middle" class="label-small">реклама работает</text>
+                    <text x="410" y="130" text-anchor="middle" class="label-strong" fill="#166534" style="font-size: 32px;">1 200</text>
+                    <text x="410" y="155" text-anchor="middle" class="label-small">заказов</text>
+                    <text x="410" y="195" text-anchor="middle" class="label-small" fill="#475569">+300 инкрементальных</text>
+
+                    <!-- Arrow -->
+                    <line x1="240" y1="130" x2="300" y2="130" stroke="#dc2626" stroke-width="3"/>
+                    <polygon points="300,130 292,125 292,135" fill="#dc2626"/>
+                    <text x="270" y="115" text-anchor="middle" class="label-small" fill="#991b1b" style="font-weight:700;">прирост</text>
+                </svg>
+                <div class="viz-caption">
+                    Не «сколько продаж приписал канал», а <strong>«сколько продаж было бы БЕЗ него»</strong>. Пример: город А — 900 заказов, город Б — 1 200. Прирост = <strong>300 заказов</strong>. Расход 600 000 ₽ → <strong>iCAC = 2 000 ₽</strong>. А атрибуция приписала 1 000 заказов (CPA 600 ₽). Реальность в 3 раза дороже отчёта! <strong>Важно:</strong> geo-тест требует оговорки про <strong>spillover</strong> (люди ездят между городами, доставка стирает границы) и <strong>мощность теста</strong> (sample size планируется от MDE). Для e-commerce geo-тест часто слаб именно из-за spillover.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 11: ML В МАРКЕТИНГЕ -->
+            <div class="viz-card">
+                <div class="viz-title">🤖 Machine Learning в маркетинге: 4 главных применения</div>
+                <svg viewBox="0 0 540 300" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="300" fill="#ffffff"/>
+
+                    <!-- Uplift 4 quadrants -->
+                    <text x="270" y="22" text-anchor="middle" class="label-strong" fill="#0f172a">Uplift: 4 группы аудитории</text>
+                    <rect x="30" y="40" width="230" height="110" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+                    <text x="145" y="68" text-anchor="middle" class="label-strong" fill="#166534">🎯 Persuadables</text>
+                    <text x="145" y="88" text-anchor="middle" class="label-small">купят только с рекламой</text>
+                    <text x="145" y="108" text-anchor="middle" class="label-small" fill="#166534">наша цель!</text>
+
+                    <rect x="280" y="40" width="230" height="110" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+                    <text x="395" y="68" text-anchor="middle" class="label-strong" fill="#1e40af">✅ Sure Things</text>
+                    <text x="395" y="88" text-anchor="middle" class="label-small">купят и так</text>
+                    <text x="395" y="108" text-anchor="middle" class="label-small" fill="#1e40af">деньги на ветер</text>
+
+                    <rect x="30" y="165" width="230" height="110" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="2"/>
+                    <text x="145" y="193" text-anchor="middle" class="label-strong" fill="#991b1b">😴 Sleeping Dogs</text>
+                    <text x="145" y="213" text-anchor="middle" class="label-small">реклама раздражает</text>
+                    <text x="145" y="233" text-anchor="middle" class="label-small" fill="#991b1b">может навредить</text>
+
+                    <rect x="280" y="165" width="230" height="110" rx="8" fill="#faf5ff" stroke="#7c3aed" stroke-width="2"/>
+                    <text x="395" y="193" text-anchor="middle" class="label-strong" fill="#6b21a8">🚫 Lost Causes</text>
+                    <text x="395" y="213" text-anchor="middle" class="label-small">не купят в любом случае</text>
+                    <text x="395" y="233" text-anchor="middle" class="label-small" fill="#6b21a8">бессмысленно</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Uplift Modeling</strong> предсказывает не «кто купит», а «на кого подействует реклама». <strong>Пример:</strong> ретаргетинг показывает ROAS 800% на 100 000 человек. Uplift показывает: 40% — Sure Things, 30% — Persuadables, 10% — Sleeping Dogs, 20% — Lost Causes. Отключаем рекламу для Sure Things и Sleeping Dogs — продажи падают всего на 10%, экономия бюджета существенная. <em>Цифры иллюстративные — в реальности зависят от данных.</em> Другие ML-применения: <strong>pLTV</strong> (BG/NBD, CatBoost, XGBoost — прогноз LTV на 365 дней по 7 дням данных); <strong>алгоритмическая атрибуция</strong> (цепи Маркова — «эффект удаления»; значения Шепли — маржинальный вклад); <strong>кластеризация</strong> (RFM + K-Means — сегменты по поведению, а не демографии).
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 12: ДАШБОРДЫ -->
+            <div class="viz-card">
+                <div class="viz-title">📊 Маркетинговые дашборды: три уровня</div>
+                <svg viewBox="0 0 540 220" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="220" fill="#ffffff"/>
+
+                    <!-- Level 1: CMO -->
+                    <rect x="30" y="30" width="150" height="160" rx="10" fill="#faf5ff" stroke="#7c3aed" stroke-width="2.5"/>
+                    <text x="105" y="55" text-anchor="middle" class="label-strong" fill="#6b21a8">Уровень 1</text>
+                    <text x="105" y="75" text-anchor="middle" class="label-small" fill="#6b21a8">CMO</text>
+                    <text x="105" y="105" text-anchor="middle" class="label-small">ROMI</text>
+                    <text x="105" y="122" text-anchor="middle" class="label-small">blended CAC</text>
+                    <text x="105" y="139" text-anchor="middle" class="label-small">ДРР</text>
+                    <text x="105" y="156" text-anchor="middle" class="label-small">LTV/CAC</text>
+                    <text x="105" y="173" text-anchor="middle" class="label-small" fill="#475569">5–7 метрик</text>
+
+                    <!-- Level 2: Team -->
+                    <rect x="195" y="30" width="150" height="160" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="2.5"/>
+                    <text x="270" y="55" text-anchor="middle" class="label-strong" fill="#1e40af">Уровень 2</text>
+                    <text x="270" y="75" text-anchor="middle" class="label-small" fill="#1e40af">Команда</text>
+                    <text x="270" y="105" text-anchor="middle" class="label-small">расход, план/факт</text>
+                    <text x="270" y="122" text-anchor="middle" class="label-small">CTR, CPC, CPL</text>
+                    <text x="270" y="139" text-anchor="middle" class="label-small">CAC, ROAS</text>
+                    <text x="270" y="156" text-anchor="middle" class="label-small">по каналам</text>
+
+                    <!-- Level 3: Analyst -->
+                    <rect x="360" y="30" width="150" height="160" rx="10" fill="#f0fdf4" stroke="#16a34a" stroke-width="2.5"/>
+                    <text x="435" y="55" text-anchor="middle" class="label-strong" fill="#166534">Уровень 3</text>
+                    <text x="435" y="75" text-anchor="middle" class="label-small" fill="#166534">Аналитик</text>
+                    <text x="435" y="105" text-anchor="middle" class="label-small">когорты, креативы</text>
+                    <text x="435" y="122" text-anchor="middle" class="label-small">geo-тесты</text>
+                    <text x="435" y="139" text-anchor="middle" class="label-small">модели атрибуции</text>
+                    <text x="435" y="156" text-anchor="middle" class="label-small">MMM, ML-метрики</text>
+                </svg>
+                <div class="viz-caption">
+                    Не смешивайте уровни. Руководству не нужны 50 метрик, аналитику не хватит одной цифры. И главное — <strong>одна версия правды</strong>: определения CAC и выручки согласованы с финансами, иначе на совете директоров будет три разных числа.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 13: ВЛИЯНИЕ НА МЕДИАПЛАН -->
+            <div class="viz-card">
+                <div class="viz-title">🗺️ Влияние на медиаплан: от данных к бюджету</div>
+                <svg viewBox="0 0 540 120" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="120" fill="#ffffff"/>
+
+                    <!-- Step 1 -->
+                    <rect x="15" y="30" width="115" height="60" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+                    <text x="72" y="55" text-anchor="middle" class="label-strong" fill="#1e40af" style="font-size: 11px;">📊 Данные</text>
+                    <text x="72" y="75" text-anchor="middle" class="label-small">расходы, заказы</text>
+
+                    <line x1="130" y1="60" x2="145" y2="60" stroke="#334155" stroke-width="2"/>
+                    <polygon points="145,60 138,56 138,64" fill="#334155"/>
+
+                    <!-- Step 2 -->
+                    <rect x="145" y="30" width="115" height="60" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+                    <text x="202" y="55" text-anchor="middle" class="label-strong" fill="#166534" style="font-size: 11px;">💡 Инсайт</text>
+                    <text x="202" y="75" text-anchor="middle" class="label-small">неинкрементальность</text>
+
+                    <line x1="260" y1="60" x2="275" y2="60" stroke="#334155" stroke-width="2"/>
+                    <polygon points="275,60 268,56 268,64" fill="#334155"/>
+
+                    <!-- Step 3 -->
+                    <rect x="275" y="30" width="115" height="60" rx="8" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+                    <text x="332" y="55" text-anchor="middle" class="label-strong" fill="#92400e" style="font-size: 11px;">🧪 Гипотеза</text>
+                    <text x="332" y="75" text-anchor="middle" class="label-small">перенос 20%</text>
+
+                    <line x1="390" y1="60" x2="405" y2="60" stroke="#334155" stroke-width="2"/>
+                    <polygon points="405,60 398,56 398,64" fill="#334155"/>
+
+                    <!-- Step 4 -->
+                    <rect x="405" y="30" width="115" height="60" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="2"/>
+                    <text x="462" y="55" text-anchor="middle" class="label-strong" fill="#991b1b" style="font-size: 11px;">✅ Решение</text>
+                    <text x="462" y="75" text-anchor="middle" class="label-small">geo-тест → бюджет</text>
+                </svg>
+                <div class="viz-caption">
+                    Цепочка: данные → инсайт → гипотеза → решение. Без аналитика бюджет строится по отчётам кабинетов — каждый канал «эффективен», а суммарный CAC растёт. С аналитиком — по инкрементальности и юнит-экономике.
+                </div>
+            </div>
+
+            <!-- ПРАКТИЧЕСКИЙ КЕЙС -->
+            <div class="viz-card" style="border-color: #d8b4fe;">
+                <div class="viz-title" style="color: #6b21a8;">💼 Практический кейс: от «отличного ROAS» к перераспределению бюджета</div>
+                <div style="background: #faf5ff; border-radius: 10px; padding: 16px; font-size: 13.5px; line-height: 1.7; color: #1e293b;">
+                    <p><strong style="color: #6b21a8;">Проблема:</strong> blended CAC вырос с 3 000 до 4 500 ₽ за квартал. ROAS в кабинетах «отличный».</p>
+                    <p><strong style="color: #6b21a8;">Анализ:</strong> ретаргетинг ROAS 800%, но geo-holdout: инкрементальность 25%.</p>
+                    <p><strong style="color: #6b21a8;">ML-инсайт:</strong> Uplift-модель показала, что 40% аудитории ретаргетинга — Sure Things (купили бы и так).</p>
+                    <p><strong style="color: #6b21a8;">Гипотеза:</strong> перенести 30% бюджета в prospecting → +20% новых клиентов.</p>
+                    <p><strong style="color: #6b21a8;">Проверка:</strong> geo-тест на 6 недель, p-value &lt; 0.01, ДИ прироста 15–25%.</p>
+                    <p><strong style="color: #6b21a8;">Результат:</strong> новых клиентов +20%, blended CAC 3 750 ₽, ROMI вырос с 40% до 65%.</p>
+                    <p style="font-size: 12px; color: #64748b; margin-top: 8px;"><em>Кейс упрощён для учебных целей: не указаны общий бюджет, число каналов и размер выборки, поэтому арифметику нельзя проверить до конца. В реальности нужен полный расчёт с учётом saturation и diminishing returns.</em></p>
+                </div>
+            </div>
+
+            <!-- ГЛАВНЫЙ ВЫВОД -->
+            <div class="callout warn">
+                <strong>⚠️ Главный вывод</strong>
+                <p>Маркетинговый аналитик — это не «человек с отчётом по каналам». Это специалист, который соединяет <strong>трафик, деньги, клиента, статистику и ML</strong>. Он знает фреймворки (AARRR, атрибуция, MMM), считает CAC, ROAS и ROMI через маржу, проверяет каналы на инкрементальность через статистически значимые эксперименты, использует ML для предсказания LTV и таргетинга Persuadables, строит дашборды в три уровня и влияет на медиаплан. Без него бюджет распределяется по тому, кто громче отчитался. С ним — по тому, кто реально приносит прибыль.</p>
+            </div>
+
+            <!-- ВИДЕОПЛЕЕР -->
+            <div class="video-section">
+                <div class="video-container">
+                    <iframe id="lecture-player" src="https://rutube.ru" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+                </div>
+                <div class="links-hub">
+                    <button onclick="changeVideo('https://rutube.ru/')" class="video-btn stop-btn">⏹ СТОП</button>
+                    <button onclick="changeVideo('https://rutube.ru/play/embed/')" class="video-btn rt-btn">📜 Лекция 22. Маркетинговая аналитика</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="slide-footer">
+            Направление «Менеджмент» | Курс: Аналитика данных | Лекция 22: «Маркетинговая аналитика: как измерять каналы и распределять бюджет»
+        </div>
+    </div>
+
+    <!-- ПРАВАЯ ПАНЕЛЬ: СКРИПТ ПРЕПОДАВАТЕЛЯ -->
+    <div class="speaker-notes">
+        <div style="position: sticky; top: 0; background: #1a202c; padding: 20px 20px 10px 20px; border-bottom: 1px solid #4a5568; width: 100%; z-index: 100;">
+            <div class="notes-header" style="display: block; padding-bottom: 15px;">
+                <audio id="lecture-audio" preload="auto" controls
+                       src="https://archive.org/download/03_20261110_20261110/20.mp3"
+                       style="width: 100%; height: 32px; border-radius: 4px;"></audio>
+            </div>
+            <div style="width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                <iframe id="right-lecture-player" src="https://archive.org/embed/20261020_20261020_0955?autoplay=true&loop=true&muted=true" allow="clipboard-write; autoplay" width="100%" height="100%" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="border: none;"></iframe>
+            </div>
+        </div>
+
+        <div class="lecture-text" style="margin-top: 20px;">
+
+            <h3>📌 Введение. Зачем нужна маркетинговая аналитика</h3>
+
+            <p>Добрый день, коллеги. Мы начинаем очередную лекцию нашего курса. В предыдущей лекции мы разобрали, как внедрять модели и мониторить их качество: пакетный, онлайн и встроенный инференс, четыре уровня мониторинга, дрейф данных и дрейф концепции, стратегии обновления и этику. Мы увидели, что модель — это живой инструмент, который требует постоянного внимания.</p>
+
+            <p>Сегодня мы применяем эти идеи к конкретной области — маркетингу. И сразу предупрежу о распространённом заблуждении. Многие думают, что маркетинговый аналитик — это человек, который сидит в Яндекс.Метрике, смотрит на клики, CTR и CPC, и составляет отчёты для маркетологов. Это не так. Маркетинговый аналитик отвечает на гораздо более сложный вопрос: <strong>«Какие каналы действительно приносят клиентов и прибыль, и куда перераспределить бюджет?»</strong></p>
+
+            <div class="callout" style="margin-bottom: 14px;">
+                <strong>Пример из жизни</strong>
+                <p>Представьте сеть кофеен. У вас 10 способов привлечь клиентов: реклама в метро, листовки, Instagram, радио, рекомендации, вывеска. Каждый канал утверждает, что привёл больше всех. Но если сложить их отчёты, клиентов окажется в 3 раза больше, чем реально пришло. Как понять, кто врёт? Вот для этого и нужен маркетинговый аналитик.</p>
+            </div>
+
+            <p>Главная мысль лекции: маркетинговый аналитик — это не тот, кто считает клики. Это тот, кто отвечает на вопрос, какие каналы приносят клиентов и прибыль, и куда перераспределить бюджет. Метрики — инструмент. Модели атрибуции — карта. Статистика и ML — точные приборы. Эксперименты — маршрут. Бюджет — результат.</p>
+
+            <p>Мы разберём пятнадцать блоков: роль аналитика, три фреймворка (AARRR, атрибуция, MMM), метрики стоимости, юнит-экономику, ловушку ROAS, сегментацию каналов, голос рынка, статистику, инкрементальность, ML, дашборды, медиаплан и практический кейс.</p>
+
+            <h3>📌 Блок 1. Кто такой маркетинговый аналитик</h3>
+
+            <p>На схеме слева вы видите пять ролей вокруг маркетингового аналитика. Давайте разберём каждую.</p>
+
+            <p><strong>Аналитик данных</strong> отвечает на вопрос «что произошло?». Он строит отчёты, дашборды, считает метрики. Его работа заканчивается на цифре.</p>
+
+            <p><strong>Продуктовый аналитик</strong> отвечает на вопрос «что происходит с клиентом внутри продукта?». Он работает с retention, активацией, feature adoption. Его зона — после того, как клиент уже привлечён.</p>
+
+            <p><strong>Финансовый аналитик</strong> отвечает на вопрос «прибыльно ли это в целом?». Он смотрит на P&L, EBITDA, ROI компании.</p>
+
+            <p><strong>Performance-маркетолог</strong> отвечает на вопрос «как настроить кампанию эффективнее?». Он оптимизирует ставки, креативы, аудитории <strong>внутри</strong> одного канала.</p>
+
+            <p>А <strong>маркетинговый аналитик</strong> отвечает на вопрос «какие каналы приносят клиентов и прибыль, и куда двигать бюджет?». Он смотрит <strong>между</strong> каналами и проверяет, не приписывают ли кабинеты себе чужие продажи. Его работа начинается с вопроса «а что было бы без этой рекламы?», а не «сколько продаж показал кабинет?».</p>
+
+            <div class="callout" style="margin-bottom: 14px;">
+                <strong>Живой пример</strong>
+                <p>В интернет-магазине CAC растёт, а все каналы в отчётах «эффективны». Маркетологи просят ещё бюджет. Аналитик запускает geo-тест и выясняет: половину продаж ретаргетинг приписал себе, но эти люди купили бы и так. Бюджет перераспределяют — CAC падает без дополнительных денег.</p>
+            </div>
+
+            <h3>📌 Блок 2. AARRR — воронка «пиратских метрик»</h3>
+
+            <p>На схеме слева — воронка из пяти этапов. <strong>Acquisition</strong> — привлечение (трафик, CAC, CPL). <strong>Activation</strong> — активация (activation rate, первый заказ). <strong>Retention</strong> — удержание (retention, repeat rate). <strong>Referral</strong> — рекомендации (K-фактор, доля «по совету»). <strong>Revenue</strong> — доход (ARPU, LTV, маржа).</p>
+
+            <p>Идея фреймворка: <strong>канал оценивается не по цене клика, а по качеству когорты на всей воронке</strong>. Дешёвый трафик с нулевой активацией дороже «дорогого» трафика с высоким LTV.</p>
+
+            <div class="callout" style="margin-bottom: 14px;">
+                <strong>Пример из жизни</strong>
+                <p>Магазин привлёк 10 000 пользователей из канала А (CPC 5 ₽) и 5 000 из канала Б (CPC 50 ₽). Канал А: 200 заказов (2%), 40 повторных (20%), LTV когорты 3 000 ₽. Канал Б: 750 заказов (15%), 300 повторных (40%), LTV когорты 18 000 ₽. По деньгам канал Б в разы эффективнее, хотя CPC в 10 раз выше.</p>
+            </div>
+
+            <p><strong>Оговорка:</strong> AARRR — популярный, но критикуемый фреймворк. Он плохо отражает B2B-циклы, не учитывает качество выручки, порядок этапов условен. Альтернативы — RARRA (retention-first) и HEART (для UX). Для маркетингового анализа AARRR удобен как отправная точка, но не как догма.</p>
+
+            <h3>📌 Блок 3. Атрибуция: путь клиента и модели распределения заслуги</h3>
+
+            <p>На схеме слева — путь клиента: день 1 — соцсеть, день 3 — поиск, день 7 — email, день 8 — прямой заход и покупка на 10 000 ₽. Четыре касания — один заказ. Каждый кабинет припишет продажу себе. Атрибуция — правила, по которым заслуга делится.</p>
+
+            <p>Разберём модели. <strong>Last click</strong> — вся заслуга последнему касанию. Просто, но обнуляет верх воронки. <strong>First click</strong> — первому. Игнорирует низ. <strong>Linear</strong> — поровну. <strong>Time decay</strong> — ближе к покупке больше. <strong>U-shape (40/20/40)</strong> — первому и последнему по 40%, середине 20%. Важно: это раскладка для трёх касаний; при четырёх касаниях середина делится между двумя средними — 40/10/10/40. <strong>Data-driven</strong> — модель считает вклад по данным путей.</p>
+
+            <div class="callout warn" style="margin-bottom: 14px;">
+                <strong>⚠️ Ловушка</strong>
+                <p>Last click обнуляет верх воронки. Команда режет охватные каналы, которые создавали спрос, — и через месяц падает даже «эффективный» поиск. Задача аналитика — показать разброс оценок между моделями и не принимать бюджетных решений по одной модели.</p>
+            </div>
+
+            <h3>📌 Блок 4. MMM — Marketing Mix Modeling: взгляд сверху</h3>
+
+            <p>На схеме слева — пять входов MMM: медиа-давление (расходы + adstock), baseline (бренд, дистрибуция), сезонность, цена/промо, внешние факторы. Выход — вклад каналов и кривая насыщения.</p>
+
+            <p>MMM — эконометрическая модель на агрегированных данных (2–3 года по неделям). <strong>Adstock</strong> — эффект рекламы тянется неделями. <strong>Baseline</strong> — продажи без рекламы (обычно 30–50%). <strong>Кривая насыщения</strong> — каждый следующий рубль приносит меньше предыдущего.</p>
+
+            <div class="callout warn" style="margin-bottom: 14px;">
+                <strong>⚠️ Ограничения MMM (часто забывают)</strong>
+                <p>Агрегация по неделям теряет granularity. MMM не различает каналы внутри одной платформы. Результат зависит от выбора adstock-функции и насыщения (Hill-функция). Модель нужно регулярно переобучать. И главное — MMM показывает <strong>корреляцию, а не причинность</strong>. Поэтому MMM используют для стратегии (квартал/год), атрибуцию — для тактики (день/неделя), а эксперименты — для проверки правды.</p>
+            </div>
+
+            <p><strong>Техническая сторона.</strong> Классический MMM — множественная линейная регрессия. При мультиколлинеарности (расходы на каналы растут синхронно) применяют <strong>Ridge-регрессию</strong> (L2) или <strong>Байесовские иерархические модели</strong> (PyMC, Prophet). Они дают устойчивые коэффициенты.</p>
+
+            <h3>📌 Блок 5. Метрики трафика и стоимости</h3>
+
+            <p>Разберём формулы. <strong>CPM</strong> = расход / показы × 1 000. Пример: 500 000 / 2 500 000 × 1 000 = 200 ₽. <strong>CTR</strong> = клики / показы × 100%. Пример: 25 000 / 2 500 000 = 1%. <strong>CPC</strong> = расход / клики. Пример: 500 000 / 25 000 = 20 ₽. <strong>CPL</strong> = расход / лиды. Пример: 500 000 / 1 250 = 400 ₽. <strong>CAC</strong> = расход / новые клиенты. Пример: 500 000 / 125 = 4 000 ₽. <strong>ДРР</strong> = расход / выручка × 100%. Пример: 500 000 / 2 000 000 = 25%.</p>
+
+            <div class="callout warn" style="margin-bottom: 14px;">
+                <strong>⚠️ Важно</strong>
+                <p>Дешёвый клик — не значит дешёвый клиент. Канал с CPC 5 ₽ и конверсией 0,1% даёт CAC 5 000 ₽. Канал с CPC 50 ₽ и конверсией 2% — CAC 2 500 ₽. Доводите сравнение до CAC и LTV, а не останавливайтесь на CTR и CPC.</p>
+            </div>
+
+            <h3>📌 Блок 6. Воронка бюджета и юнит-экономика канала</h3>
+
+            <p>На схеме слева — воронка: бюджет 500 000 ₽ → CPM 200 ₽ → 2 500 000 показов → CTR 1% → 25 000 кликов (CPC 20 ₽) → CR 5% → 1 250 заявок (CPL 400 ₽) → CR 10% → 125 клиентов (CAC 4 000 ₽).</p>
+
+            <p>LTV по марже = 12 000 ₽ → <strong>LTV/CAC = 3</strong>. Ориентир ≥ 3 — популярная эвристика, но <strong>не универсальная</strong>: порог зависит от маржи, срока окупаемости (payback period), стоимости капитала и отрасли. Payback period — за сколько заказов окупается CAC — отдельная метрика, её не путают с LTV/CAC.</p>
+
+            <div class="callout" style="margin-bottom: 14px;">
+                <strong>Пример из жизни</strong>
+                <p>Узкое место — переход «клик → заявка» (5%). 95% оплаченного трафика уходит в никуда. Гипотеза: длинная форма заказа. A/B-тест короткой формы поднимает конверсию до 6% → 150 клиентов → CAC падает до 3 333 ₽ без роста бюджета. Это часто дешевле, чем покупать больше трафика.</p>
+            </div>
+
+            <h3>📌 Блок 7. ROAS и ROMI: выручка ≠ прибыль</h3>
+
+            <p>На схеме слева — две карточки. <strong>ROAS</strong> = выручка / расход × 100%. Пример: 2 000 000 / 500 000 = 400%. <strong>ROMI</strong> = (маржа − расход) / расход × 100%. Пример: маржа 40% → 800 000 ₽; (800 000 − 500 000) / 500 000 = 60%.</p>
+
+            <div class="callout warn" style="margin-bottom: 14px;">
+                <strong>⚠️ Ловушка маржи</strong>
+                <p>ROAS 400% звучит отлично. Но при марже 20% прибыль всего 400 000 ₽ против расхода 500 000 ₽ → ROMI = −20%. Вы в убытке! Точка безубыточности: <strong>ROAS = 1 / маржа</strong>. При марже 20% нужен ROAS 500%, а не 400%. Вывод в одну строку: маржа = ROAS × маржинальность − 1; при ROAS = 1/маржа маржа = 0. Формула верна при данной структуре затрат — при изменении COGS или возвратов её нужно пересчитывать.</p>
+            </div>
+
+            <h3>📌 Блок 8. Сегментация каналов: роль каждого в миксе</h3>
+
+            <p>В таблице слева — шесть сегментов. <strong>Брендовый поиск</strong> — высокий ROAS, но низкая инкрементальность. <strong>Оговорка:</strong> если конкуренты перекупают ваш бренд в аукционе, защита бренда может быть инкрементальной. <strong>Небрендовый поиск</strong> — горячий новый спрос, масштабировать по CAC. <strong>Охватные соцсети</strong> — создают спрос, оценивать по инкрементальности и LTV когорты. <strong>Ретаргетинг</strong> — догревает, но каннибализирует органику; следите за частотой и проверяйте geo-тестом. <strong>Email/CRM</strong> — дешёвые повторные продажи. <strong>Органика и прямые</strong> — результат бренда и SEO, не отдавайте их заслугу платным каналам.</p>
+
+            <p>Задача аналитика — не требовать от всех одинакового ROAS. У каждого канала своя работа.</p>
+
+            <h3>📌 Блок 9. Голос рынка: три метода услышать то, чего нет в трекинге</h3>
+
+            <p>На схеме слева — три карточки. <strong>Post-purchase survey</strong> — вопрос после покупки «Откуда вы о нас узнали?». Ловит блогеров, подкасты, сарафан, dark social. Ограничение: память искажает. <strong>Brand Lift Study</strong> — опрос видевших и не видевших рекламу: узнаваемость, ad recall, consideration. Подходит для охватных кампаний, где кликов нет. <strong>Share of Search</strong> — доля бренда в поисковых запросах категории. Дешёвый прокси спроса.</p>
+
+            <div class="callout warn" style="margin-bottom: 14px;">
+                <strong>⚠️ Оговорка</strong>
+                <p>Share of Search коррелирует с долей рынка (исследования Les Binet), но корреляция не равна причинности. В лекции, где красной нитью идёт «корреляция ≠ причинность», этот тезис нельзя подавать без оговорки.</p>
+            </div>
+
+            <p><strong>Пример связки:</strong> атрибуция говорит «ТВ не работает», опросы — «о ТВ узнали 30% новых клиентов», Share of Search растёт. Вывод: ТВ работает, но атрибуция его не видит.</p>
+
+            <h3>📌 Блок 10. Статистическая строгость: от корреляции к причинности</h3>
+
+            <p>На схеме слева — четыре карточки. Разберём каждую.</p>
+
+            <p><strong>p-value.</strong> Это вероятность наблюдать столь же или более экстремальный результат <strong>при условии, что нулевая гипотеза верна</strong>. Если p &lt; 0.05 — эффект статистически значим. <strong>Важно:</strong> p-value — не «вероятность, что эффект случайный». Это классическая, но неверная интерпретация.</p>
+
+            <div class="callout" style="margin-bottom: 14px;">
+                <strong>Аналогия из жизни</strong>
+                <p>Вы подбрасываете монетку 100 раз и получаете 60 орлов. Это странно, но ещё может быть случайностью. 70 орлов из 100 — уже очень странно, и вы подозреваете, что монетка нечестная. p-value — вероятность такой странности при условии, что монетка честная.</p>
+            </div>
+
+            <p><strong>Доверительный интервал.</strong> Вместо «CAC = 4 000 ₽» аналитик говорит: «С вероятностью 95% реальный CAC лежит в 3 800–4 200 ₽». Честнее и полезнее для решений.</p>
+
+            <p><strong>MDE.</strong> Minimum Detectable Effect — минимальный эффект, который способен обнаружить тест. Чем меньше MDE, тем дольше и дороже тест. Если хотите поймать рост CAC на 1% — нужны десятки тысяч клиентов; на 10% — достаточно сотни. MDE помогает планировать бюджет и сроки теста.</p>
+
+            <p><strong>Мультиколлинеарность.</strong> Расходы на каналы растут синхронно — простая корреляция врёт. Решается Ridge-регрессией или Байесовскими методами в MMM.</p>
+
+            <div class="callout warn" style="margin-bottom: 14px;">
+                <strong>⚠️ Главная ловушка</strong>
+                <p>«Корреляция не означает причинно-следственную связь». Рост продаж может совпасть с рекламой, но быть вызван сезонностью, акцией конкурента или удачей. Только эксперимент (A/B или geo-holdout) доказывает causality.</p>
+            </div>
+
+            <h3>📌 Блок 11. Инкрементальность: главный вопрос маркетинговой аналитики</h3>
+
+            <p>На схеме слева — geo-тест: город А (контроль) — 900 заказов, город Б (тест) — 1 200. Прирост 300 заказов. Расход 600 000 ₽ → iCAC = 2 000 ₽. Атрибуция приписала 1 000 заказов (CPA 600 ₽). Реальность в 3 раза дороже отчёта!</p>
+
+            <p><strong>Важно:</strong> geo-тест требует оговорки про <strong>spillover</strong> (люди ездят между городами, доставка стирает границы) и <strong>мощность теста</strong> (sample size планируется от MDE, о котором мы говорили в блоке 10). Для e-commerce geo-тест часто слаб именно из-за spillover — в таком случае используют ghost ads или conversion lift.</p>
+
+            <div class="callout warn" style="margin-bottom: 14px;">
+                <strong>⚠️ Ловушка ретаргетинга</strong>
+                <p>Ретаргетинг «покупает» тех, кто и так купил бы. В отчёте — герой с ROAS 800%, в эксперименте — почти ноль инкрементальности.</p>
+            </div>
+
+            <p>Правило триангуляции: <strong>MMM (стратегия) + атрибуция (тактика) + эксперименты (проверка правды)</strong>. Двигайте бюджет по инкрементальному CAC (iCAC), а не по цифрам кабинетов. И разграничивайте термины: CPA — cost per acquisition (может быть заказ, лид), CAC — cost per customer, iCAC — инкрементальный CAC.</p>
+
+            <h3>📌 Блок 12. Machine Learning в маркетинге: 4 главных применения</h3>
+
+            <p>На схеме слева — четыре квадранта Uplift. <strong>Persuadables</strong> — купят только с рекламой (наша цель!). <strong>Sure Things</strong> — купят и так (деньги на ветер). <strong>Sleeping Dogs</strong> — реклама раздражает (может навредить). <strong>Lost Causes</strong> — не купят в любом случае (бессмысленно).</p>
+
+            <div class="callout" style="margin-bottom: 14px;">
+                <strong>Пример из жизни</strong>
+                <p>Ретаргетинг показывает ROAS 800% на 100 000 человек. Uplift-модель показывает: 40% — Sure Things, 30% — Persuadables, 10% — Sleeping Dogs, 20% — Lost Causes. Отключаем рекламу для Sure Things и Sleeping Dogs — продажи падают всего на 10%, экономия бюджета существенная. Цифры иллюстративные — в реальности зависят от данных. Часто цитируемая цифра «до 30% бюджета» — тоже иллюстрация, а не норма.</p>
+            </div>
+
+            <p><strong>pLTV.</strong> Прогноз LTV на 365 дней по 7 дням данных. Модели: BG/NBD (вероятностная, с 2005 года), CatBoost, XGBoost. Пример: новый пользователь сделал заказ на 1 000 ₽, модель предсказывает LTV 15 000 ₽ — система повышает ставку в аукционе.</p>
+
+            <p><strong>Алгоритмическая атрибуция.</strong> <strong>Цепи Маркова</strong> — «эффект удаления» канала из графа путей. <strong>Значения Шепли</strong> — маржинальный вклад канала во все комбинации касаний. Самый «честный» способ, но требует много данных.</p>
+
+            <p><strong>Кластеризация.</strong> RFM-анализ (Recency, Frequency, Monetary) + K-Means. Пример: k=5 находит кластеры «чемпионы», «лояльные», «новички», «под угрозой», «спящие». Для каждого — своя стратегия коммуникации.</p>
+
+            <h3>📌 Блок 13. Маркетинговые дашборды: три уровня</h3>
+
+            <p>На схеме слева — три карточки. <strong>Уровень 1 (CMO):</strong> ROMI, blended CAC, ДРР, LTV/CAC, доля новых клиентов — 5–7 метрик. <strong>Уровень 2 (команда):</strong> по каналам расход, план/факт, CTR, CPC, CPL, CAC, ROAS. <strong>Уровень 3 (аналитик):</strong> когорты, креативы, geo-тесты, модели атрибуции, MMM, ML-метрики.</p>
+
+            <p><strong>Правило:</strong> не смешивайте уровни. Руководству не нужны 50 метрик, аналитику не хватит одной цифры. И главное — <strong>одна версия правды</strong>: определения CAC и выручки согласованы с финансами, иначе на совете директоров будет три разных числа.</p>
+
+            <h3>📌 Блок 14. Влияние на медиаплан: от данных к бюджету</h3>
+
+            <p>На схеме слева — четыре шага: данные → инсайт → гипотеза → решение. Без аналитика бюджет строится по отчётам кабинетов — каждый канал «эффективен», а суммарный CAC растёт. С аналитиком — по инкрементальности и юнит-экономике.</p>
+
+            <p>Задача аналитика — не просто отчитаться о ROAS, а предложить, куда переложить деньги, и доказать это экспериментом.</p>
+
+            <h3>📌 Блок 15. Практический кейс: от «отличного ROAS» к перераспределению бюджета</h3>
+
+            <p>На карточке слева — кейс. Blended CAC вырос с 3 000 до 4 500 ₽ за квартал. ROAS в кабинетах «отличный». Анализ: ретаргетинг ROAS 800%, но geo-holdout — инкрементальность 25%. Uplift: 40% аудитории — Sure Things. Гипотеза: перенести 30% бюджета в prospecting → +20% новых клиентов. Проверка: geo-тест на 6 недель, p-value &lt; 0.01, ДИ 15–25%. Результат: +20% новых клиентов, CAC 3 750 ₽, ROMI 40% → 65%.</p>
+
+            <p><strong>Оговорка:</strong> кейс упрощён для учебных целей. Не указаны общий бюджет, число каналов и размер выборки, поэтому арифметику нельзя проверить до конца. В реальности нужен полный расчёт с учётом saturation и diminishing returns.</p>
+
+            <h3>📌 Заключение</h3>
+
+            <p>Мы разобрали роль маркетингового аналитика, три фреймворка (AARRR, атрибуция, MMM), метрики стоимости, юнит-экономику, ловушку ROAS, сегментацию каналов, голос рынка, статистику, инкрементальность, ML, дашборды, медиаплан и кейс.</p>
+
+            <p>Главный вывод: маркетинговый аналитик — это не «человек с отчётом по каналам». Это специалист, который соединяет трафик, деньги, клиента, статистику и ML. Он знает фреймворки, считает CAC, ROAS и ROMI через маржу, проверяет каналы на инкрементальность через статистически значимые эксперименты, использует ML для предсказания LTV и таргетинга Persuadables, строит дашборды в три уровня и влияет на медиаплан.</p>
+
+            <p>Без него бюджет распределяется по тому, кто громче отчитался. С ним — по тому, кто реально приносит прибыль.</p>
+
+            <p>В следующей лекции мы поговорим о финансовой аналитике: P&L, EBITDA, ROI — как маркетинговые и продуктовые решения сходятся в деньги компании. Спасибо за внимание, готов ответить на ваши вопросы.</p>
+
+            <!-- СЛОВАРЬ ТЕРМИНОВ -->
+            <div class="dark-block">
+                <div class="dark-block-title">📖 Словарь терминов и аббревиатур</div>
+                <table class="dark-table">
+                    <thead>
+                        <tr><th style="width:22%;">Термин</th><th style="width:30%;">Расшифровка</th><th>Пояснение</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="term">AARRR</td><td>Pirate Metrics</td><td>Воронка: Acquisition, Activation, Retention, Referral, Revenue</td></tr>
+                        <tr><td class="term">Атрибуция</td><td>Attribution</td><td>Распределение заслуги между касаниями</td></tr>
+                        <tr><td class="term">MMM</td><td>Marketing Mix Modeling</td><td>Эконометрическая модель на агрегированных данных</td></tr>
+                        <tr><td class="term">Adstock</td><td>Adstock</td><td>Эффект рекламы, тянущийся неделями</td></tr>
+                        <tr><td class="term">Baseline</td><td>Baseline</td><td>Продажи без рекламы</td></tr>
+                        <tr><td class="term">CPM</td><td>Cost Per Mille</td><td>Цена 1 000 показов</td></tr>
+                        <tr><td class="term">CTR</td><td>Click-Through Rate</td><td>Кликабельность объявления</td></tr>
+                        <tr><td class="term">CPC</td><td>Cost Per Click</td><td>Цена клика</td></tr>
+                        <tr><td class="term">CPL</td><td>Cost Per Lead</td><td>Цена заявки</td></tr>
+                        <tr><td class="term">CPA</td><td>Cost Per Acquisition</td><td>Цена действия (заказ, лид)</td></tr>
+                        <tr><td class="term">CAC</td><td>Customer Acquisition Cost</td><td>Цена нового клиента</td></tr>
+                        <tr><td class="term">iCAC</td><td>Incremental CAC</td><td>Инкрементальная цена клиента</td></tr>
+                        <tr><td class="term">ДРР</td><td>Доля рекламных расходов</td><td>Расход / выручка × 100%</td></tr>
+                        <tr><td class="term">ROAS</td><td>Return On Ad Spend</td><td>Выручка / расход × 100%</td></tr>
+                        <tr><td class="term">ROMI</td><td>Return On Marketing Investment</td><td>(Маржа − расход) / расход × 100%</td></tr>
+                        <tr><td class="term">LTV</td><td>Lifetime Value</td><td>Пожизненная ценность клиента</td></tr>
+                        <tr><td class="term">pLTV</td><td>Predictive LTV</td><td>Прогноз LTV</td></tr>
+                        <tr><td class="term">Uplift</td><td>Uplift Modeling</td><td>Моделирование прироста от рекламы</td></tr>
+                        <tr><td class="term">p-value</td><td>p-value</td><td>Вероятность результата при верной нулевой гипотезе</td></tr>
+                        <tr><td class="term">MDE</td><td>Minimum Detectable Effect</td><td>Минимальный обнаруживаемый эффект</td></tr>
+                        <tr><td class="term">Geo-holdout</td><td>Geo-holdout</td><td>Выключение канала в части городов</td></tr>
+                        <tr><td class="term">Ghost ads</td><td>Ghost ads / PSA</td><td>Заглушка вместо рекламы для контроля</td></tr>
+                        <tr><td class="term">Conversion lift</td><td>Conversion lift</td><td>Тест/контроль внутри платформы</td></tr>
+                        <tr><td class="term">Цепи Маркова</td><td>Markov Chains</td><td>Алгоритмическая атрибуция через «эффект удаления»</td></tr>
+                        <tr><td class="term">Значения Шепли</td><td>Shapley Values</td><td>Маржинальный вклад канала</td></tr>
+                        <tr><td class="term">RFM</td><td>Recency, Frequency, Monetary</td><td>Сегментация по давности, частоте, сумме</td></tr>
+                        <tr><td class="term">K-Means</td><td>K-Means</td><td>Кластеризация аудитории</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function changeVideo(embedUrl) {
+            document.getElementById('lecture-player').src = embedUrl;
+        }
+    </script>
+
+    <!-- НАВИГАЦИЯ МЕЖДУ ЛЕКЦИЯМИ -->
+    <nav class="lecture-nav" id="lectureNav">
+        <div class="nav-progress" id="navProgress" style="width: 0%;"></div>
+        <a href="Лекция 21.html" class="nav-btn-arrow" id="prevBtn">
+            <span class="arrow-icon">←</span>
+            <span class="arrow-label">
+                <small>Назад</small>
+                <span class="arrow-title" id="prevTitle">Лекция 22</span>
+            </span>
+        </a>
+        <div class="nav-center">
+            <div class="nav-counter">Лекция <span id="currentNum">23</span> <span>из 25</span></div>
+            <a href="index.html" class="nav-index-link">📚 К содержанию</a>
+        </div>
+        <a href="Лекция 23.html" class="nav-btn-arrow" id="nextBtn">
+            <span class="arrow-label" style="align-items: flex-end;">
+                <small>Вперёд</small>
+                <span class="arrow-title" id="nextTitle">Лекция 24</span>
+            </span>
+            <span class="arrow-icon">→</span>
+        </a>
+    </nav>
+
+    <script>
+    (function () {
+        'use strict';
+
+        const TOTAL_LECTURES = 25;
+        const totalDurationMs = (32 * 60 + 30) * 1000;
+        const autoNextDelayMs = 2000;
+        const AUTOSTART_PARAM = 'autostart';
+
+        const fileName = decodeURIComponent(location.pathname.split('/').pop() || '');
+        let currentLecture = 23;
+        const match = fileName.match(/Лекция\s*(\d+)\.html/i);
+        if (match) {
+            currentLecture = parseInt(match[1], 10);
+        } else {
+            const el = document.getElementById('currentNum');
+            if (el) currentLecture = parseInt(el.textContent, 10) || 23;
+        }
+        if (isNaN(currentLecture) || currentLecture < 1) currentLecture = 1;
+        if (currentLecture > TOTAL_LECTURES) currentLecture = TOTAL_LECTURES;
+
+        const prev = currentLecture > 1 ? currentLecture - 1 : null;
+        const next = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+
+        const currentNumEl = document.getElementById('currentNum');
+        if (currentNumEl) currentNumEl.textContent = currentLecture;
+
+        const navProgress = document.getElementById('navProgress');
+        if (navProgress) {
+            navProgress.style.width = (currentLecture / TOTAL_LECTURES * 100) + '%';
+        }
+
+        const prevBtn = document.getElementById('prevBtn');
+        if (prevBtn) {
+            if (prev) {
+                prevBtn.href = 'Лекция ' + prev + '.html';
+                const t = document.getElementById('prevTitle');
+                if (t) t.textContent = 'Лекция ' + prev;
+                prevBtn.style.opacity = '1';
+                prevBtn.style.cursor = 'pointer';
+                prevBtn.onclick = null;
+            } else {
+                prevBtn.removeAttribute('href');
+                prevBtn.style.opacity = '0.35';
+                prevBtn.style.cursor = 'not-allowed';
+                prevBtn.onclick = (e) => e.preventDefault();
+                const t = document.getElementById('prevTitle');
+                if (t) t.textContent = 'Это первая лекция';
+            }
+        }
+
+        const nextBtn = document.getElementById('nextBtn');
+        if (nextBtn) {
+            if (next) {
+                nextBtn.href = 'Лекция ' + next + '.html';
+                const t = document.getElementById('nextTitle');
+                if (t) t.textContent = 'Лекция ' + next;
+                nextBtn.style.opacity = '1';
+                nextBtn.style.cursor = 'pointer';
+                nextBtn.onclick = null;
+            } else {
+                nextBtn.removeAttribute('href');
+                nextBtn.style.opacity = '0.35';
+                nextBtn.style.cursor = 'not-allowed';
+                nextBtn.onclick = (e) => e.preventDefault();
+                const t = document.getElementById('nextTitle');
+                if (t) t.textContent = 'Это последняя лекция';
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            const tag = e.target && e.target.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+            if (e.key === 'ArrowLeft' && prev) window.location.href = 'Лекция ' + prev + '.html';
+            else if (e.key === 'ArrowRight' && next) window.location.href = 'Лекция ' + next + '.html';
+            else if (e.key === 'Home') window.location.href = 'index.html';
+        });
+
+        function initScroll() {
+            const studentBlock = document.querySelector('.student-view');
+            const speakerBlock = document.querySelector('.speaker-notes');
+            const badge = document.getElementById('scroll-status-badge');
+            const audio = document.getElementById('lecture-audio');
+            if (!studentBlock || !speakerBlock) return;
+
+            const studentBehavior = studentBlock.style.scrollBehavior;
+            const speakerBehavior = speakerBlock.style.scrollBehavior;
+            let isRunning = false, completed = false, pausedElapsed = 0, startedAt = 0, rafId = null;
+            let startS = 0, startP = 0, maxS = 0, maxP = 0;
+
+            function setBadge(text, color) { if (!badge) return; badge.style.display = 'block'; badge.textContent = text; badge.style.borderColor = color; }
+            function measure() { maxS = Math.max(studentBlock.scrollHeight - studentBlock.clientHeight, 0); maxP = Math.max(speakerBlock.scrollHeight - speakerBlock.clientHeight, 0); }
+            function fmt(ms) { const m = Math.floor(ms / 60000); const s = Math.floor((ms % 60000) / 1000); return m + ':' + String(s).padStart(2, '0'); }
+            function playAudio() { if (!audio) return; const p = audio.play(); if (p && typeof p.catch === 'function') { p.catch(err => { console.warn('[AutoAudio]', err.message); setBadge('▶ ИДЕТ ПРОКРУТКА (звук заблокирован)', '#eab308'); }); } }
+            function pauseAudio() { if (audio) try { audio.pause(); } catch (_) {} }
+            function resetAudio() { if (audio) try { audio.pause(); audio.currentTime = 0; } catch (_) {} }
+
+            function animate() {
+                if (!isRunning) return;
+                const elapsed = pausedElapsed + (performance.now() - startedAt);
+                const fraction = Math.min(elapsed / totalDurationMs, 1);
+                measure();
+                studentBlock.scrollTop = startS + (maxS - startS) * fraction;
+                speakerBlock.scrollTop = startP + (maxP - startP) * fraction;
+                if (badge) { badge.textContent = '▶ ' + fmt(elapsed) + ' / ' + fmt(totalDurationMs); badge.style.borderColor = '#16a34a'; }
+                if (fraction >= 1) { finish(); return; }
+                rafId = requestAnimationFrame(animate);
+            }
+
+            function startOrResume() {
+                if (completed) { pausedElapsed = 0; completed = false; studentBlock.scrollTop = 0; speakerBlock.scrollTop = 0; resetAudio(); }
+                measure(); startS = studentBlock.scrollTop; startP = speakerBlock.scrollTop;
+                startedAt = performance.now(); isRunning = true;
+                studentBlock.style.scrollBehavior = 'auto'; speakerBlock.style.scrollBehavior = 'auto';
+                cancelAnimationFrame(rafId); rafId = requestAnimationFrame(animate);
+                playAudio();
+            }
+            function pause() {
+                if (isRunning) pausedElapsed += performance.now() - startedAt;
+                isRunning = false; cancelAnimationFrame(rafId);
+                setBadge('⏸ ПАУЗА ' + fmt(pausedElapsed), '#dc2626');
+                studentBlock.style.scrollBehavior = studentBehavior; speakerBlock.style.scrollBehavior = speakerBehavior;
+                pauseAudio();
+            }
+            function finish() {
+                isRunning = false; completed = true; cancelAnimationFrame(rafId);
+                measure(); studentBlock.scrollTop = maxS; speakerBlock.scrollTop = maxP;
+                studentBlock.style.scrollBehavior = studentBehavior; speakerBlock.style.scrollBehavior = speakerBehavior;
+                const nextLec = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+                if (nextLec) {
+                    setBadge('✅ ГОТОВО → Лекция ' + nextLec, '#16a34a');
+                    setTimeout(() => { location.href = 'Лекция ' + nextLec + '.html?' + AUTOSTART_PARAM + '=1'; }, autoNextDelayMs);
+                } else {
+                    setBadge('✅ КУРС ЗАВЕРШЕН', '#16a34a');
+                    pauseAudio();
+                }
+            }
+            function toggle() { isRunning ? pause() : startOrResume(); }
+
+            window.addEventListener('keydown', (e) => {
+                if (e.repeat) return;
+                const t = e.target; const tag = t && t.tagName;
+                if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+                if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); toggle(); }
+            }, true);
+
+            if (badge) badge.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+            [studentBlock, speakerBlock].forEach(el => {
+                el.addEventListener('click', (e) => {
+                    if (e.target.closest('a,button,iframe,input,textarea,select,video,audio')) return;
+                    if (window.getSelection().toString().length > 0) return;
+                    toggle();
+                });
+            });
+
+            const params = new URLSearchParams(location.search);
+            if (params.get(AUTOSTART_PARAM) === '1') {
+                params.delete(AUTOSTART_PARAM);
+                const clean = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
+                history.replaceState(null, '', clean);
+                setTimeout(startOrResume, 500);
+            } else { setBadge('▶ ПРОБЕЛ / КЛИК — старт', '#4a5568'); }
+        }
+
+        if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initScroll, { once: true }); }
+        else { initScroll(); }
+    })();
+    </script>
+
+</body>
+</html>
