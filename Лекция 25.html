@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Лекция 25. Аналитик больших данных: от терабайтов к решениям</title>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #ffffff; }
+
+    .student-view { width: 66.66%; height: 100vh; background: #ffffff; padding: 35px 40px; display: flex; flex-direction: column; justify-content: space-between; border-right: 2px solid #e2e8f0; overflow-y: auto; scroll-behavior: smooth; }
+    .speaker-notes { width: 33.34%; height: 100%; background: #1a202c; color: #edf2f7; padding: 30px; overflow-y: auto; }
+
+    .slide-header { font-size: 26px; color: #0f172a; font-weight: bold; line-height: 1.3; margin-bottom: 18px; border-bottom: 4px solid #2563eb; padding-bottom: 12px; }
+    .slide-body { flex-grow: 1; display: flex; flex-direction: column; gap: 18px; padding: 5px 0; }
+    .slide-footer { font-size: 13px; color: #64748b; text-align: right; margin-top: 12px; }
+
+    .chart-box { background: #f8fafc; border: 2.5px dashed #94a3b8; padding: 20px; border-radius: 12px; }
+    .chart-box strong { font-size: 17px; display: block; margin-bottom: 8px; color: #0f172a; }
+    .chart-box p { font-size: 14px; color: #1e293b; line-height: 1.5; }
+
+    .viz-card { background: #ffffff; border: 2px solid #cbd5e0; border-radius: 12px; padding: 18px; box-shadow: 0 4px 10px rgba(15,23,42,0.06); }
+    .viz-title { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .viz-caption { font-size: 13px; color: #1e293b; margin-top: 10px; line-height: 1.6; }
+    .viz-caption strong { color: #0f172a; font-weight: 700; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+
+    .compare-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .compare-table th { background: #0f172a; color: white; padding: 10px 12px; text-align: left; font-weight: 700; }
+    .compare-table td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; color: #1e293b; vertical-align: top; line-height: 1.45; }
+    .compare-table tr:nth-child(even) td { background: #f8fafc; }
+
+    .role-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .role-table th { background: #0f172a; color: white; padding: 10px 12px; text-align: left; font-weight: 700; }
+    .role-table td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; color: #1e293b; vertical-align: top; line-height: 1.45; }
+    .role-table tr:nth-child(even) td { background: #f8fafc; }
+    .role-table .role-emoji { font-size: 16px; }
+
+    .callout { background: #fffbeb; border-left: 5px solid #d97706; padding: 14px 18px; border-radius: 6px; }
+    .callout strong { color: #78350f; font-size: 14px; }
+    .callout p { font-size: 13px; color: #451a03; margin-top: 4px; line-height: 1.5; }
+    .callout.warn { background: #fef2f2; border-left-color: #dc2626; }
+    .callout.warn strong { color: #991b1b; }
+    .callout.warn p { color: #7f1d1d; }
+    .callout.ok { background: #f0fdf4; border-left-color: #16a34a; }
+    .callout.ok strong { color: #166534; }
+    .callout.ok p { color: #14532d; }
+
+    /* SVG styles */
+    .axis { stroke: #334155; stroke-width: 2; }
+    .grid-line { stroke: #cbd5e0; stroke-width: 1; }
+    .label { font-family: 'Segoe UI', sans-serif; font-size: 13px; fill: #1e293b; font-weight: 600; }
+    .label-strong { font-family: 'Segoe UI', sans-serif; font-size: 15px; font-weight: 700; fill: #0f172a; }
+    .label-small { font-family: 'Segoe UI', sans-serif; font-size: 12px; fill: #475569; font-weight: 500; }
+    .label-white { font-family: 'Segoe UI', sans-serif; font-size: 13px; fill: #ffffff; font-weight: 700; }
+    .label-white-sm { font-family: 'Segoe UI', sans-serif; font-size: 11px; fill: #ffffff; opacity: 0.95; font-weight: 600; }
+
+    pre { background: #0f172a; color: #e2e8f0; padding: 16px 20px; border-radius: 10px; overflow-x: auto; font-size: 12px; line-height: 1.6; margin: 10px 0; font-family: 'Consolas', 'Courier New', monospace; }
+    pre .kw { color: #c792ea; font-weight: 600; }
+    pre .cm { color: #64748b; font-style: italic; }
+    pre .st { color: #c3e88d; }
+
+    .video-section { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 5px; }
+    .video-container { width: 100%; max-width: 580px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: #000; aspect-ratio: 16 / 9; }
+    .links-hub { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .video-btn { text-decoration: none; padding: 9px 14px; border-radius: 6px; font-size: 13px; font-weight: bold; color: white; display: flex; align-items: center; gap: 6px; transition: transform 0.2s, background 0.2s; cursor: pointer; border: none; }
+    .video-btn:hover { transform: translateY(-2px); }
+    .rt-btn { background: #00a877; }
+    .rt-btn:hover { background: #008f65; }
+    .stop-btn { background: #dc2626; }
+    .stop-btn:hover { background: #b91c1c; }
+
+    .notes-header { font-size: 17px; color: #63b3ed; font-weight: bold; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a5568; padding-bottom: 10px; }
+    .lecture-text { font-size: 14.5px; line-height: 1.65; color: #e2e8f0; text-align: justify; }
+    .lecture-text p { margin-bottom: 14px; }
+    .lecture-text h3 { color: #63b3ed; font-size: 15px; margin: 18px 0 10px; border-bottom: 1px solid #2d3748; padding-bottom: 5px; }
+    .lecture-text h4 { color: #90cdf4; font-size: 13.5px; margin: 14px 0 8px; }
+    .lecture-text ul { margin: 8px 0 14px 18px; }
+    .lecture-text li { margin-bottom: 6px; }
+
+    .dark-block { background: #2d3748; border: 1px solid #4a5568; border-radius: 10px; padding: 16px 18px; margin-top: 20px; }
+    .dark-block-title { font-size: 14px; font-weight: bold; color: #63b3ed; margin-bottom: 12px; border-bottom: 2px solid #4a5568; padding-bottom: 8px; }
+    .dark-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+    .dark-table th { background: #1a202c; color: #90cdf4; padding: 7px 9px; text-align: left; font-weight: 600; border-bottom: 1px solid #4a5568; }
+    .dark-table td { padding: 6px 9px; border-bottom: 1px solid #2d3748; color: #cbd5e0; vertical-align: top; line-height: 1.4; }
+    .dark-table tr:nth-child(even) td { background: #2a3242; }
+    .dark-table .term { font-weight: bold; color: #90cdf4; white-space: nowrap; }
+
+    .lecture-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(12px); border-top: 2px solid rgba(255, 255, 255, 0.08); padding: 12px 20px; display: flex; align-items: center; justify-content: center; gap: 12px; z-index: 9999; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25); }
+    .lecture-nav .nav-progress { position: absolute; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899); border-radius: 0 3px 3px 0; }
+    .lecture-nav .nav-btn-arrow { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); border: 1.5px solid rgba(255, 255, 255, 0.15); color: #e2e8f0; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; }
+    .lecture-nav .nav-btn-arrow:hover:not(:disabled) { background: rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.6); color: white; transform: translateY(-2px); }
+    .lecture-nav .nav-btn-arrow:disabled { opacity: 0.35; cursor: not-allowed; }
+    .lecture-nav .nav-btn-arrow .arrow-icon { font-size: 16px; line-height: 1; }
+    .lecture-nav .nav-btn-arrow .arrow-label { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+    .lecture-nav .nav-btn-arrow .arrow-label small { font-size: 9.5px; font-weight: 400; opacity: 0.7; text-transform: uppercase; }
+    .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { font-size: 12px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lecture-nav .nav-center { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 20px; color: #94a3b8; font-size: 11px; border-left: 1px solid rgba(255, 255, 255, 0.1); border-right: 1px solid rgba(255, 255, 255, 0.1); }
+    .lecture-nav .nav-counter { font-size: 15px; font-weight: 900; color: #f1f5f9; }
+    .lecture-nav .nav-counter span { color: #64748b; font-size: 12px; font-weight: 600; }
+    .lecture-nav .nav-index-link { color: #60a5fa; text-decoration: none; font-size: 11px; font-weight: 600; }
+    .lecture-nav .nav-index-link:hover { color: #93c5fd; text-decoration: underline; }
+    body { padding-bottom: 80px !important; }
+    @media (max-width: 900px) {
+        .lecture-nav { padding: 10px 12px; gap: 8px; }
+        .lecture-nav .nav-btn-arrow { padding: 8px 12px; }
+        .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { max-width: 90px; font-size: 11px; }
+        .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    }
+
+    @keyframes pulseAlert {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+    }
+    .pulse-alert { animation: pulseAlert 1.5s ease-in-out infinite; }
+
+    @keyframes flowData {
+        0% { stroke-dashoffset: 0; }
+        100% { stroke-dashoffset: -20; }
+    }
+    .flow-data { animation: flowData 2s linear infinite; }
+</style>
+</head>
+<body>
+
+    <div class="student-view">
+        <div class="slide-header">
+            Лекция 25. Аналитик больших данных: от терабайтов к решениям
+        </div>
+
+        <div class="slide-body">
+
+            <!-- HERO -->
+            <div class="chart-box" style="background: #faf5ff; border-color: #d8b4fe;">
+                <strong style="color: #6b21a8;">🎯 Главная идея</strong>
+                <p>Аналитик больших данных — это не тот, кто «работает с большими таблицами». Это тот, кто отвечает на вопрос: <strong>«Как извлекать инсайты из данных, которые не помещаются в один компьютер, за приемлемое время и с разумной стоимостью»</strong>. Объём — это вызов. Распределённые вычисления — это инструмент. Архитектура — это фундамент. Качество — это страховка. Стоимость — это ограничение. Инсайт — это результат.</p>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 1: РОЛИ -->
+            <div class="viz-card">
+                <div class="viz-title">👥 Кто есть кто: аналитик Big Data на фоне других ролей</div>
+                <svg viewBox="0 0 540 300" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="300" fill="#ffffff"/>
+
+                    <!-- Central hub -->
+                    <circle cx="270" cy="150" r="52" fill="#1e40af"/>
+                    <text x="270" y="144" text-anchor="middle" class="label-white" style="font-size: 12px;">Аналитик</text>
+                    <text x="270" y="160" text-anchor="middle" class="label-white" style="font-size: 12px;">Big Data</text>
+
+                    <!-- Classic analyst -->
+                    <circle cx="80" cy="60" r="42" fill="#eff6ff" stroke="#2563eb" stroke-width="2.5"/>
+                    <text x="80" y="55" text-anchor="middle" class="label-strong" style="font-size: 10px;">Классический</text>
+                    <text x="80" y="69" text-anchor="middle" class="label-strong" style="font-size: 10px;">аналитик</text>
+                    <line x1="112" y1="85" x2="225" y2="125" stroke="#2563eb" stroke-width="2"/>
+
+                    <!-- Data Engineer -->
+                    <circle cx="460" cy="60" r="42" fill="#f0fdf4" stroke="#16a34a" stroke-width="2.5"/>
+                    <text x="460" y="55" text-anchor="middle" class="label-strong" style="font-size: 10px;">Data</text>
+                    <text x="460" y="69" text-anchor="middle" class="label-strong" style="font-size: 10px;">Engineer</text>
+                    <line x1="428" y1="85" x2="315" y2="125" stroke="#16a34a" stroke-width="2"/>
+
+                    <!-- Data Scientist -->
+                    <circle cx="80" cy="240" r="42" fill="#fffbeb" stroke="#d97706" stroke-width="2.5"/>
+                    <text x="80" y="235" text-anchor="middle" class="label-strong" style="font-size: 10px;">Data</text>
+                    <text x="80" y="249" text-anchor="middle" class="label-strong" style="font-size: 10px;">Scientist</text>
+                    <line x1="112" y1="215" x2="225" y2="175" stroke="#d97706" stroke-width="2"/>
+
+                    <!-- Data Architect -->
+                    <circle cx="460" cy="240" r="42" fill="#fef2f2" stroke="#dc2626" stroke-width="2.5"/>
+                    <text x="460" y="235" text-anchor="middle" class="label-strong" style="font-size: 10px;">Data</text>
+                    <text x="460" y="249" text-anchor="middle" class="label-strong" style="font-size: 10px;">Architect</text>
+                    <line x1="428" y1="215" x2="315" y2="175" stroke="#dc2626" stroke-width="2"/>
+
+                    <!-- FinOps -->
+                    <circle cx="270" cy="275" r="22" fill="#faf5ff" stroke="#7c3aed" stroke-width="2.5"/>
+                    <text x="270" y="272" text-anchor="middle" class="label-small" style="font-size: 9px;">FinOps</text>
+                    <text x="270" y="284" text-anchor="middle" class="label-small" style="font-size: 9px;">аналитик</text>
+                    <line x1="270" y1="253" x2="270" y2="202" stroke="#7c3aed" stroke-width="2"/>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Аналитик Big Data</strong> — мост между классическим аналитиком и инженером данных. Классический — «что произошло?» (до 100 ГБ). Data Engineer — «как доставить данные надёжно?» (ТБ–ПБ). Data Scientist — «что предсказать?». Data Architect — «как спроектировать систему?». FinOps — «сколько стоит инфраструктура?». <strong>Границы роли:</strong> аналитик Big Data отвечает за выбор инструмента, запрос и интерпретацию; инженер — за пайплайн и доставку; архитектор — за стандарты. Конфликт «кто отвечает за витрину» — самый частый в командах; лучше зафиксировать это заранее (RACI).
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 2: 5V -->
+            <div class="viz-card">
+                <div class="viz-title">📏 Что такое Big Data: 5V (с метриками)</div>
+                <svg viewBox="0 0 540 240" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="240" fill="#ffffff"/>
+
+                    <!-- 5 blocks -->
+                    <rect x="15" y="20" width="98" height="200" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+                    <text x="64" y="42" text-anchor="middle" class="label-strong" fill="#1e40af" style="font-size: 11px;">📦 Volume</text>
+                    <text x="64" y="62" text-anchor="middle" class="label-small" fill="#1e40af">объём</text>
+                    <text x="64" y="90" text-anchor="middle" class="label-small">КБ → ПБ</text>
+                    <text x="64" y="108" text-anchor="middle" class="label-small" style="font-size: 10px;">метрика:</text>
+                    <text x="64" y="124" text-anchor="middle" class="label-small" style="font-size: 10px;">ТБ/день</text>
+
+                    <rect x="121" y="20" width="98" height="200" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+                    <text x="170" y="42" text-anchor="middle" class="label-strong" fill="#166534" style="font-size: 11px;">⚡ Velocity</text>
+                    <text x="170" y="62" text-anchor="middle" class="label-small" fill="#166534">скорость</text>
+                    <text x="170" y="90" text-anchor="middle" class="label-small">событий/сек</text>
+                    <text x="170" y="108" text-anchor="middle" class="label-small" style="font-size: 10px;">метрика:</text>
+                    <text x="170" y="124" text-anchor="middle" class="label-small" style="font-size: 10px;">100k/сек</text>
+
+                    <rect x="227" y="20" width="98" height="200" rx="8" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+                    <text x="276" y="42" text-anchor="middle" class="label-strong" fill="#92400e" style="font-size: 11px;">🎨 Variety</text>
+                    <text x="276" y="62" text-anchor="middle" class="label-small" fill="#92400e">разнообразие</text>
+                    <text x="276" y="90" text-anchor="middle" class="label-small">структ.</text>
+                    <text x="276" y="108" text-anchor="middle" class="label-small">полуструкт.</text>
+                    <text x="276" y="124" text-anchor="middle" class="label-small">неструкт.</text>
+
+                    <rect x="333" y="20" width="98" height="200" rx="8" fill="#faf5ff" stroke="#7c3aed" stroke-width="2"/>
+                    <text x="382" y="42" text-anchor="middle" class="label-strong" fill="#6b21a8" style="font-size: 11px;">✅ Veracity</text>
+                    <text x="382" y="62" text-anchor="middle" class="label-small" fill="#6b21a8">достоверность</text>
+                    <text x="382" y="90" text-anchor="middle" class="label-small" style="font-size: 10px;">метрики:</text>
+                    <text x="382" y="108" text-anchor="middle" class="label-small" style="font-size: 10px;">% пропусков</text>
+                    <text x="382" y="124" text-anchor="middle" class="label-small" style="font-size: 10px;">% дублей</text>
+
+                    <rect x="439" y="20" width="98" height="200" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="2"/>
+                    <text x="488" y="42" text-anchor="middle" class="label-strong" fill="#991b1b" style="font-size: 11px;">💎 Value</text>
+                    <text x="488" y="62" text-anchor="middle" class="label-small" fill="#991b1b">ценность</text>
+                    <text x="488" y="90" text-anchor="middle" class="label-small" style="font-size: 10px;">метрика:</text>
+                    <text x="488" y="108" text-anchor="middle" class="label-small" style="font-size: 10px;">ROI</text>
+                    <text x="488" y="124" text-anchor="middle" class="label-small" style="font-size: 10px;">на ПБ</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Volume</strong> — объём (ТБ/день). <strong>Velocity</strong> — скорость (100k событий/сек). <strong>Variety</strong> — разнообразие (структ./полуструкт./неструкт.). <strong>Veracity</strong> — достоверность: измеряется долей пропусков и дублей. <strong>Value</strong> — ценность: измеряется ROI на петабайт. Без метрик 5V — просто список слов. <strong>Big Data определяется задачей, а не размером диска:</strong> 100 ГБ с высокой скоростью — это Big Data, а 10 ТБ «спящих» архивов — нет.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 3: MapReduce / Spark -->
+            <div class="viz-card">
+                <div class="viz-title">⚙️ Распределённые вычисления: Map → Shuffle → Reduce</div>
+                <svg viewBox="0 0 540 200" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="200" fill="#ffffff"/>
+
+                    <!-- Input -->
+                    <rect x="15" y="70" width="80" height="60" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+                    <text x="55" y="95" text-anchor="middle" class="label-strong" fill="#1e40af" style="font-size: 11px;">Данные</text>
+                    <text x="55" y="112" text-anchor="middle" class="label-small">1 ТБ</text>
+
+                    <line x1="95" y1="100" x2="120" y2="100" stroke="#334155" stroke-width="2"/>
+                    <polygon points="120,100 113,96 113,104" fill="#334155"/>
+
+                    <!-- Map -->
+                    <rect x="120" y="40" width="90" height="120" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+                    <text x="165" y="65" text-anchor="middle" class="label-strong" fill="#166534">Map</text>
+                    <text x="165" y="85" text-anchor="middle" class="label-small">разбить</text>
+                    <text x="165" y="102" text-anchor="middle" class="label-small">на части</text>
+                    <text x="165" y="125" text-anchor="middle" class="label-small" style="font-size: 10px;">параллельно</text>
+                    <text x="165" y="140" text-anchor="middle" class="label-small" style="font-size: 10px;">по узлам</text>
+
+                    <line x1="210" y1="100" x2="235" y2="100" stroke="#334155" stroke-width="2"/>
+                    <polygon points="235,100 228,96 228,104" fill="#334155"/>
+
+                    <!-- Shuffle -->
+                    <rect x="235" y="40" width="90" height="120" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="2.5"/>
+                    <text x="280" y="65" text-anchor="middle" class="label-strong" fill="#991b1b">Shuffle</text>
+                    <text x="280" y="85" text-anchor="middle" class="label-small">перегруппи-</text>
+                    <text x="280" y="102" text-anchor="middle" class="label-small">ровать</text>
+                    <text x="280" y="125" text-anchor="middle" class="label-small" style="font-size: 10px;">самый</text>
+                    <text x="280" y="140" text-anchor="middle" class="label-small" style="font-size: 10px;">дорогой</text>
+
+                    <line x1="325" y1="100" x2="350" y2="100" stroke="#334155" stroke-width="2"/>
+                    <polygon points="350,100 343,96 343,104" fill="#334155"/>
+
+                    <!-- Reduce -->
+                    <rect x="350" y="40" width="90" height="120" rx="8" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+                    <text x="395" y="65" text-anchor="middle" class="label-strong" fill="#92400e">Reduce</text>
+                    <text x="395" y="85" text-anchor="middle" class="label-small">объединить</text>
+                    <text x="395" y="102" text-anchor="middle" class="label-small">результаты</text>
+                    <text x="395" y="125" text-anchor="middle" class="label-small" style="font-size: 10px;">финальный</text>
+                    <text x="395" y="140" text-anchor="middle" class="label-small" style="font-size: 10px;">ответ</text>
+
+                    <line x1="440" y1="100" x2="465" y2="100" stroke="#334155" stroke-width="2"/>
+                    <polygon points="465,100 458,96 458,104" fill="#334155"/>
+
+                    <!-- Output -->
+                    <rect x="465" y="70" width="60" height="60" rx="8" fill="#faf5ff" stroke="#7c3aed" stroke-width="2"/>
+                    <text x="495" y="95" text-anchor="middle" class="label-strong" fill="#6b21a8" style="font-size: 10px;">Итог</text>
+                    <text x="495" y="112" text-anchor="middle" class="label-small" style="font-size: 10px;">отчёт</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Map</strong> — разбить данные и обработать каждую часть независимо. <strong>Shuffle</strong> — перегруппировать по ключу. <strong>Reduce</strong> — объединить результаты. <strong>Важно:</strong> Shuffle — это не отдельная фаза, а этап между Map и Reduce; в Hadoop он встроен, в Spark он тоже есть — и это <strong>самый дорогой этап</strong> (sort, groupBy, join). Правило аналитика: «избегай лишних shuffle» важнее, чем «знай MapReduce». Spark держит данные в памяти между операциями (in-memory), что даёт ускорение в 10–100× против MapReduce.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 4: ДВИЖКИ -->
+            <div class="viz-card">
+                <div class="viz-title">🗂️ Четыре движка обработки: что выбрать</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr><th>Движок</th><th>Для чего</th><th>Когда выбирать</th><th>Ограничение</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Apache Spark</td><td>Сложные ETL, ML, графы</td><td>Петабайты, сложная логика, итеративные алгоритмы</td><td>Дорогой shuffle, требует памяти</td></tr>
+                        <tr><td>Apache Hive</td><td>SQL поверх Hadoop</td><td>Пакетная обработка, знакомый SQL</td><td>Медленный на ad-hoc</td></tr>
+                        <tr><td>Presto / Trino</td><td>Интерактивные SQL-запросы</td><td>Ad-hoc аналитика, federated queries</td><td>Не для тяжёлых ETL</td></tr>
+                        <tr><td>ClickHouse</td><td>OLAP-аналитика</td><td>Молниеносные агрегаты, дашборды</td><td>Не для OLTP, не для JOIN больших таблиц</td></tr>
+                        <tr><td>Apache Flink</td><td>Стриминг в реальном времени</td><td>События с задержкой &lt; секунды</td><td>Сложнее в разработке и эксплуатации</td></tr>
+                    </tbody>
+                </table>
+                <div class="viz-caption">
+                    Выбор движка — это компромисс между скоростью, стоимостью и сложностью. Spark — для сложной логики и ML; Hive — для пакетной обработки; Presto — для ad-hoc; ClickHouse — для OLAP-дашбордов; Flink — для стриминга. Неправильный выбор — это либо очень медленно, либо очень дорого, либо и то, и другое.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 5: АРХИТЕКТУРЫ -->
+            <div class="viz-card">
+                <div class="viz-title">🏗️ Три архитектуры: Lake, Lakehouse, Mesh</div>
+                <svg viewBox="0 0 540 220" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="220" fill="#ffffff"/>
+
+                    <!-- Lake -->
+                    <rect x="20" y="20" width="160" height="180" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="2.5"/>
+                    <text x="100" y="48" text-anchor="middle" class="label-strong" fill="#1e40af">🏞️ Data Lake</text>
+                    <text x="100" y="72" text-anchor="middle" class="label-small">сырые данные в S3</text>
+                    <text x="100" y="92" text-anchor="middle" class="label-small">дёшево, масштабируемо</text>
+                    <text x="100" y="120" text-anchor="middle" class="label-small" fill="#991b1b">риск: «болото»</text>
+                    <text x="100" y="140" text-anchor="middle" class="label-small" fill="#991b1b">без governance</text>
+
+                    <!-- Lakehouse -->
+                    <rect x="190" y="20" width="160" height="180" rx="10" fill="#f0fdf4" stroke="#16a34a" stroke-width="2.5"/>
+                    <text x="270" y="48" text-anchor="middle" class="label-strong" fill="#166534">🏠 Lakehouse</text>
+                    <text x="270" y="72" text-anchor="middle" class="label-small">Lake + управление</text>
+                    <text x="270" y="92" text-anchor="middle" class="label-small">ACID, версионирование</text>
+                    <text x="270" y="120" text-anchor="middle" class="label-small">Delta Lake</text>
+                    <text x="270" y="140" text-anchor="middle" class="label-small">Apache Iceberg</text>
+                    <text x="270" y="165" text-anchor="middle" class="label-small" fill="#166534">современный стандарт</text>
+
+                    <!-- Mesh -->
+                    <rect x="360" y="20" width="160" height="180" rx="10" fill="#fffbeb" stroke="#d97706" stroke-width="2.5"/>
+                    <text x="440" y="48" text-anchor="middle" class="label-strong" fill="#92400e">🕸️ Data Mesh</text>
+                    <text x="440" y="72" text-anchor="middle" class="label-small">децентрализация</text>
+                    <text x="440" y="92" text-anchor="middle" class="label-small">данные как продукт</text>
+                    <text x="440" y="120" text-anchor="middle" class="label-small">федеративная</text>
+                    <text x="440" y="140" text-anchor="middle" class="label-small">governance</text>
+                    <text x="440" y="165" text-anchor="middle" class="label-small" fill="#92400e">для крупных компаний</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Data Lake</strong> — дёшево и масштабируемо, но без трёх слоёв и governance превращается в «болото». <strong>Lakehouse</strong> — озеро + управление как в DWH (транзакции, ACID, версионирование) — современный стандарт (Delta Lake, Iceberg). <strong>Data Mesh</strong> — каждый домен владеет своими данными как продуктом, федеративная governance; для очень крупных компаний. Внутри любой архитектуры — <strong>три слоя:</strong> Bronze (сырые), Silver (очищенные), Gold (витрины для бизнеса).
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 6: ТРИ СЛОЯ -->
+            <div class="viz-card">
+                <div class="viz-title">🥉🥈🥇 Три слоя данных: Bronze → Silver → Gold</div>
+                <svg viewBox="0 0 540 160" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="160" fill="#ffffff"/>
+
+                    <rect x="20" y="30" width="150" height="100" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2.5"/>
+                    <text x="95" y="55" text-anchor="middle" class="label-strong" fill="#92400e">🥉 Bronze</text>
+                    <text x="95" y="78" text-anchor="middle" class="label-small">сырые данные</text>
+                    <text x="95" y="96" text-anchor="middle" class="label-small">«как есть»</text>
+                    <text x="95" y="118" text-anchor="middle" class="label-small" style="font-size: 10px;">без изменений</text>
+
+                    <line x1="170" y1="80" x2="190" y2="80" stroke="#334155" stroke-width="2"/>
+                    <polygon points="190,80 183,76 183,84" fill="#334155"/>
+
+                    <rect x="190" y="30" width="150" height="100" rx="10" fill="#e2e8f0" stroke="#64748b" stroke-width="2.5"/>
+                    <text x="265" y="55" text-anchor="middle" class="label-strong" fill="#334155">🥈 Silver</text>
+                    <text x="265" y="78" text-anchor="middle" class="label-small">очищенные</text>
+                    <text x="265" y="96" text-anchor="middle" class="label-small">дедуплицированные</text>
+                    <text x="265" y="118" text-anchor="middle" class="label-small" style="font-size: 10px;">с типами</text>
+
+                    <line x1="340" y1="80" x2="360" y2="80" stroke="#334155" stroke-width="2"/>
+                    <polygon points="360,80 353,76 353,84" fill="#334155"/>
+
+                    <rect x="360" y="30" width="160" height="100" rx="10" fill="#fef9c3" stroke="#eab308" stroke-width="2.5"/>
+                    <text x="440" y="55" text-anchor="middle" class="label-strong" fill="#854d0e">🥇 Gold</text>
+                    <text x="440" y="78" text-anchor="middle" class="label-small">витрины</text>
+                    <text x="440" y="96" text-anchor="middle" class="label-small">агрегаты, метрики</text>
+                    <text x="440" y="118" text-anchor="middle" class="label-small" style="font-size: 10px;">для BI и ML</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Bronze</strong> — сырые данные «как есть» из источников. <strong>Silver</strong> — очищенные, дедуплицированные, с правильными типами. <strong>Gold</strong> — витрины для бизнеса: агрегаты, метрики. Именно из Gold читают BI-инструменты и ML-модели. Без трёх слоёв озеро превращается в болото: через год никто не знает, где правда.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 7: ФОРМАТЫ -->
+            <div class="viz-card">
+                <div class="viz-title">📦 Форматы хранения: почему Parquet изменил всё</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr><th>Формат</th><th>Тип</th><th>Когда использовать</th><th>Ограничение</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>CSV / JSON</td><td>Текстовый</td><td>Обмен с внешними системами</td><td>Медленно, нет схемы, нет сжатия</td></tr>
+                        <tr><td>Parquet</td><td>Колоночный</td><td>Аналитика (80% случаев)</td><td>Не для OLTP, small files problem, эволюция схемы ограничена</td></tr>
+                        <tr><td>ORC</td><td>Колоночный</td><td>Hadoop-экосистема</td><td>Аналог Parquet, оптимизирован под Hive</td></tr>
+                        <tr><td>Avro</td><td>Строчный</td><td>Стриминг (Kafka)</td><td>Не для аналитики, медленнее колоночных</td></tr>
+                        <tr><td>Delta Lake</td><td>Над Parquet</td><td>Lakehouse</td><td>ACID, time travel; требует движка</td></tr>
+                        <tr><td>Apache Iceberg</td><td>Над Parquet</td><td>Lakehouse</td><td>Скрытое партиционирование, эволюция</td></tr>
+                    </tbody>
+                </table>
+                <div class="viz-caption">
+                    <strong>Почему колоночные форматы?</strong> Запрос <code>SELECT avg(amount) FROM orders</code> в CSV читает все колонки; в Parquet — только <code>amount</code>. На таблице с 100 колонками — ускорение в 20–50× и сжатие в 5–10×. <strong>Минусы Parquet:</strong> плохо подходит для точечных обновлений (нужна перезапись файла — отсюда Delta/Iceberg); не для стриминга (мелкие файлы убивают производительность — «small files problem»); схема фиксируется при записи. <strong>Правило: аналитика = Parquet, стриминг = Avro, обмен = CSV/JSON.</strong>
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 8: ETL vs ELT -->
+            <div class="viz-card">
+                <div class="viz-title">🔄 ETL vs ELT и оркестрация</div>
+                <svg viewBox="0 0 540 220" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="220" fill="#ffffff"/>
+
+                    <!-- ETL -->
+                    <text x="130" y="20" text-anchor="middle" class="label-strong" fill="#0f172a">ETL (классический)</text>
+                    <rect x="20" y="35" width="70" height="50" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+                    <text x="55" y="65" text-anchor="middle" class="label-small">Extract</text>
+                    <line x1="90" y1="60" x2="105" y2="60" stroke="#334155" stroke-width="2"/>
+                    <polygon points="105,60 98,56 98,64" fill="#334155"/>
+                    <rect x="105" y="35" width="70" height="50" rx="6" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+                    <text x="140" y="65" text-anchor="middle" class="label-small">Transform</text>
+                    <line x1="175" y1="60" x2="190" y2="60" stroke="#334155" stroke-width="2"/>
+                    <polygon points="190,60 183,56 183,64" fill="#334155"/>
+                    <rect x="190" y="35" width="70" height="50" rx="6" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+                    <text x="225" y="65" text-anchor="middle" class="label-small">Load</text>
+                    <text x="140" y="105" text-anchor="middle" class="label-small" fill="#475569" style="font-size: 11px;">трансформация на отдельном сервере</text>
+
+                    <!-- ELT -->
+                    <text x="400" y="20" text-anchor="middle" class="label-strong" fill="#0f172a">ELT (современный)</text>
+                    <rect x="290" y="35" width="70" height="50" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+                    <text x="325" y="65" text-anchor="middle" class="label-small">Extract</text>
+                    <line x1="360" y1="60" x2="375" y2="60" stroke="#334155" stroke-width="2"/>
+                    <polygon points="375,60 368,56 368,64" fill="#334155"/>
+                    <rect x="375" y="35" width="70" height="50" rx="6" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+                    <text x="410" y="65" text-anchor="middle" class="label-small">Load</text>
+                    <line x1="445" y1="60" x2="460" y2="60" stroke="#334155" stroke-width="2"/>
+                    <polygon points="460,60 453,56 453,64" fill="#334155"/>
+                    <rect x="460" y="35" width="70" height="50" rx="6" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+                    <text x="495" y="65" text-anchor="middle" class="label-small">Transform</text>
+                    <text x="400" y="105" text-anchor="middle" class="label-small" fill="#475569" style="font-size: 11px;">трансформация внутри хранилища</text>
+
+                    <!-- Pipeline -->
+                    <text x="270" y="145" text-anchor="middle" class="label-strong" fill="#0f172a">Конвейер: Extract → Load → Transform → Serve</text>
+                    <rect x="20" y="160" width="110" height="40" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+                    <text x="75" y="185" text-anchor="middle" class="label-small">📥 Extract</text>
+                    <line x1="130" y1="180" x2="145" y2="180" stroke="#334155" stroke-width="2"/>
+                    <polygon points="145,180 138,176 138,184" fill="#334155"/>
+                    <rect x="145" y="160" width="110" height="40" rx="6" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+                    <text x="200" y="185" text-anchor="middle" class="label-small">💾 Load</text>
+                    <line x1="255" y1="180" x2="270" y2="180" stroke="#334155" stroke-width="2"/>
+                    <polygon points="270,180 263,176 263,184" fill="#334155"/>
+                    <rect x="270" y="160" width="110" height="40" rx="6" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+                    <text x="325" y="185" text-anchor="middle" class="label-small">🔧 Transform</text>
+                    <line x1="380" y1="180" x2="395" y2="180" stroke="#334155" stroke-width="2"/>
+                    <polygon points="395,180 388,176 388,184" fill="#334155"/>
+                    <rect x="395" y="160" width="110" height="40" rx="6" fill="#faf5ff" stroke="#7c3aed" stroke-width="2"/>
+                    <text x="450" y="185" text-anchor="middle" class="label-small">🎯 Serve</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>ETL</strong> — трансформация на отдельном сервере; для классических DWH. <strong>ELT</strong> — трансформация внутри хранилища; гибче, но <strong>требует мощного хранилища</strong> (Snowflake, BigQuery, Databricks) и перекладывает стоимость на него: при неумелом использовании счёт растёт быстрее, чем при ETL. <strong>Airflow</strong> — стандарт оркестрации: DAG описывает зависимости задач, следит за порядком, перезапускает упавшие, алертит.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 9: SQL -->
+            <div class="viz-card">
+                <div class="viz-title">💻 SQL на больших данных: четыре диалекта</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr><th>Диалект</th><th>Движок</th><th>Специализация</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>HiveQL</td><td>Hive</td><td>Пакетная обработка, совместим с Hadoop</td></tr>
+                        <tr><td>Presto SQL</td><td>Presto / Trino</td><td>Интерактивные запросы, federated queries</td></tr>
+                        <tr><td>Spark SQL</td><td>Spark</td><td>Сложная логика, интеграция с Python</td></tr>
+                        <tr><td>ClickHouse SQL</td><td>ClickHouse</td><td>OLAP-агрегаты, материализованные представления</td></tr>
+                    </tbody>
+                </table>
+                <div class="viz-caption">
+                    SQL — универсальный язык, но на больших данных у него есть диалекты. <strong>Правило:</strong> никогда не делайте <code>SELECT *</code> на больших таблицах; всегда фильтруйте по партиции; всегда указывайте только нужные колонки. Один <code>SELECT *</code> на таблице в 50 ТБ может стоить $2000 за запуск.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 10: СТРИМИНГ -->
+            <div class="viz-card">
+                <div class="viz-title">📡 Стриминг: Kafka и Flink</div>
+                <svg viewBox="0 0 540 180" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="180" fill="#ffffff"/>
+
+                    <!-- Producer -->
+                    <rect x="20" y="60" width="100" height="60" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+                    <text x="70" y="85" text-anchor="middle" class="label-strong" fill="#1e40af" style="font-size: 12px;">📱 Продюсер</text>
+                    <text x="70" y="105" text-anchor="middle" class="label-small">приложение</text>
+
+                    <line x1="120" y1="90" x2="150" y2="90" stroke="#334155" stroke-width="2" class="flow-data"/>
+                    <polygon points="150,90 143,86 143,94" fill="#334155"/>
+
+                    <!-- Kafka -->
+                    <rect x="150" y="40" width="120" height="100" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="2.5"/>
+                    <text x="210" y="65" text-anchor="middle" class="label-strong" fill="#166534">📨 Kafka</text>
+                    <text x="210" y="88" text-anchor="middle" class="label-small">topic</text>
+                    <text x="210" y="106" text-anchor="middle" class="label-small" style="font-size: 10px;">retention</text>
+                    <text x="210" y="122" text-anchor="middle" class="label-small" style="font-size: 10px;">настраивается</text>
+
+                    <line x1="270" y1="90" x2="300" y2="90" stroke="#334155" stroke-width="2" class="flow-data"/>
+                    <polygon points="300,90 293,86 293,94" fill="#334155"/>
+
+                    <!-- Flink -->
+                    <rect x="300" y="40" width="120" height="100" rx="8" fill="#fffbeb" stroke="#d97706" stroke-width="2.5"/>
+                    <text x="360" y="65" text-anchor="middle" class="label-strong" fill="#92400e">🌊 Flink</text>
+                    <text x="360" y="88" text-anchor="middle" class="label-small">окна</text>
+                    <text x="360" y="106" text-anchor="middle" class="label-small" style="font-size: 10px;">exactly-once</text>
+                    <text x="360" y="122" text-anchor="middle" class="label-small" style="font-size: 10px;">state</text>
+
+                    <line x1="420" y1="90" x2="450" y2="90" stroke="#334155" stroke-width="2" class="flow-data"/>
+                    <polygon points="450,90 443,86 443,94" fill="#334155"/>
+
+                    <!-- Output -->
+                    <rect x="450" y="40" width="75" height="100" rx="8" fill="#faf5ff" stroke="#7c3aed" stroke-width="2"/>
+                    <text x="487" y="65" text-anchor="middle" class="label-strong" fill="#6b21a8" style="font-size: 11px;">📊</text>
+                    <text x="487" y="85" text-anchor="middle" class="label-small" style="font-size: 10px;">дашборд</text>
+                    <text x="487" y="105" text-anchor="middle" class="label-small" style="font-size: 10px;">+ Data</text>
+                    <text x="487" y="122" text-anchor="middle" class="label-small" style="font-size: 10px;">Lake</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>Kafka</strong> — распределённый журнал событий: продюсеры пишут, консьюмеры читают. <strong>Retention настраивается</strong> (по умолчанию 7 дней; можно часы и годы), поддерживает <strong>compaction</strong> — сохранение последнего значения по ключу. <strong>Flink</strong> — обработка потоков: окна (tumbling, sliding, session), exactly-once, state. <strong>Когда нужен стриминг?</strong> Когда задержка важна: алерты (секунды), рекомендации (сотни мс), мониторинг (минуты). «Посчитать выручку за вчера» — batch дешевле.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 11: КАЧЕСТВО -->
+            <div class="viz-card">
+                <div class="viz-title">🔬 Качество данных на масштабе: 6 проверок</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr><th>Проверка</th><th>Пример</th><th>Инструмент</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1. Свежесть</td><td>Данные не обновлялись 6 часов</td><td>Monte Carlo, Great Expectations</td></tr>
+                        <tr><td>2. Объём</td><td>Пришло 100 строк вместо 1 млн</td><td>Airflow sensors</td></tr>
+                        <tr><td>3. Схема</td><td>Новая колонка сломала downstream</td><td>Schema registry</td></tr>
+                        <tr><td>4. Распределение</td><td>Средний чек упал на 40% за день</td><td>Статистические тесты</td></tr>
+                        <tr><td>5. Дубли</td><td>0,5% дублей order_id</td><td>SQL-проверки</td></tr>
+                        <tr><td>6. Связи</td><td>Заказы без пользователей</td><td>Foreign key checks</td></tr>
+                    </tbody>
+                </table>
+                <div class="viz-caption">
+                    <strong>Data Observability</strong> — наблюдение за данными как за продуктом. <strong>Важно:</strong> пять измерений (свежесть, распределение, объём, схема, lineage) — это <strong>подход Monte Carlo</strong>, а не единственный стандарт. Альтернативы: <strong>Great Expectations</strong> (expectations), <strong>dbt tests</strong>. На больших данных проверка должна быть автоматической: один сломанный пайплайн портит все downstream-отчёты за часы.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 12: GOVERNANCE -->
+            <div class="viz-card">
+                <div class="viz-title">🏛️ Data Governance и безопасность</div>
+                <div class="grid-2">
+                    <div style="background: #eff6ff; border: 2px solid #2563eb; border-radius: 10px; padding: 14px;">
+                        <div style="font-weight: 700; color: #1e40af; margin-bottom: 6px;">🔐 Доступы</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.5;">RBAC, principle of least privilege. Аналитик продукта не видит PII, если это не нужно для задачи.</div>
+                    </div>
+                    <div style="background: #f0fdf4; border: 2px solid #16a34a; border-radius: 10px; padding: 14px;">
+                        <div style="font-weight: 700; color: #166534; margin-bottom: 6px;">🏷️ Каталог данных</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.5;">DataHub, Amundsen. Поиск таблиц, владельцев, описаний, lineage. Без каталога через год никто не найдёт нужную таблицу.</div>
+                    </div>
+                    <div style="background: #fffbeb; border: 2px solid #d97706; border-radius: 10px; padding: 14px;">
+                        <div style="font-weight: 700; color: #92400e; margin-bottom: 6px;">🔗 Lineage</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.5;">Откуда пришли и куда ушли данные. Сломался источник — знаем, какие отчёты задеты.</div>
+                    </div>
+                    <div style="background: #fef2f2; border: 2px solid #dc2626; border-radius: 10px; padding: 14px;">
+                        <div style="font-weight: 700; color: #991b1b; margin-bottom: 6px;">🛡️ PII и комплаенс</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.5;">GDPR, 152-ФЗ. Маскирование, анонимизация, аудит. Одна утечка — миллионные штрафы.</div>
+                    </div>
+                </div>
+                <div class="callout warn" style="margin-top: 12px;">
+                    <strong>⚠️ Ловушка</strong>
+                    <p>Без governance Data Lake превращается в «дикую свалку». Таблица <code>tmp_user_data_v2_final</code> — кто владелец? Можно удалить? Кто пользуется? Оказалось — критическая витрина для финансового отчёта. Удали — и квартальная отчётность подвиснет.</p>
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 13: ML -->
+            <div class="viz-card">
+                <div class="viz-title">🤖 ML на больших данных: 4 задачи</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr><th>Задача</th><th>Инструмент</th><th>Пример</th><th>Важно</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Обучение на ТБ</td><td>Spark MLlib, Databricks</td><td>Кластеризация 50 млн клиентов</td><td>Качество данных важнее количества</td></tr>
+                        <tr><td>Feature Store</td><td>Feast, Hopsworks</td><td>Единые признаки для train и inference</td><td>Train/serve skew — главная проблема</td></tr>
+                        <tr><td>MLOps</td><td>MLflow, Kubeflow</td><td>Версионирование моделей</td><td>Откат к предыдущей версии</td></tr>
+                        <tr><td>Inference на потоке</td><td>Flink + модель</td><td>Скоринг мошенничества</td><td>Задержка — критична</td></tr>
+                    </tbody>
+                </table>
+                <div class="viz-caption">
+                    <strong>Feature Store</strong> — центральное хранилище признаков. Главная проблема, которую он решает — <strong>train/serve skew</strong>: признаки для обучения (batch) и для инференса (online) могут расходиться. Feature Store решает это <strong>только если</strong> поддерживает online+offline хранилище и гарантирует консистентность. Без этого он превращается в «общий кэш признаков». <strong>Ловушка:</strong> 1 ТБ мусора даёт худшую модель, чем 10 ГБ чистых данных.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 14: FINOPS -->
+            <div class="viz-card">
+                <div class="viz-title">💰 Стоимость инфраструктуры: FinOps</div>
+                <svg viewBox="0 0 540 200" width="100%" style="display: block;">
+                    <rect x="0" y="0" width="540" height="200" fill="#ffffff"/>
+
+                    <!-- Before -->
+                    <text x="130" y="22" text-anchor="middle" class="label-strong" fill="#991b1b">До оптимизации</text>
+                    <rect x="40" y="35" width="180" height="140" rx="10" fill="#fef2f2" stroke="#dc2626" stroke-width="2.5"/>
+                    <text x="130" y="65" text-anchor="middle" class="label-strong" fill="#991b1b" style="font-size: 22px;">$80 000</text>
+                    <text x="130" y="85" text-anchor="middle" class="label-small">в месяц</text>
+                    <text x="130" y="115" text-anchor="middle" class="label-small">CSV, 15 ТБ</text>
+                    <text x="130" y="135" text-anchor="middle" class="label-small">нет партиций</text>
+                    <text x="130" y="155" text-anchor="middle" class="label-small">on-demand</text>
+
+                    <!-- Arrow -->
+                    <line x1="225" y1="105" x2="275" y2="105" stroke="#dc2626" stroke-width="3"/>
+                    <polygon points="275,105 267,100 267,110" fill="#dc2626"/>
+                    <text x="250" y="95" text-anchor="middle" class="label-small" fill="#991b1b" style="font-weight:700;">аудит</text>
+
+                    <!-- After -->
+                    <text x="410" y="22" text-anchor="middle" class="label-strong" fill="#166534">После оптимизации</text>
+                    <rect x="320" y="35" width="180" height="140" rx="10" fill="#f0fdf4" stroke="#16a34a" stroke-width="2.5"/>
+                    <text x="410" y="65" text-anchor="middle" class="label-strong" fill="#166534" style="font-size: 22px;">$22 000</text>
+                    <text x="410" y="85" text-anchor="middle" class="label-small">в месяц</text>
+                    <text x="410" y="115" text-anchor="middle" class="label-small">Parquet, 1,5 ТБ</text>
+                    <text x="410" y="135" text-anchor="middle" class="label-small">партиции по дате</text>
+                    <text x="410" y="155" text-anchor="middle" class="label-small">spot-инстансы</text>
+
+                    <!-- Savings -->
+                    <text x="270" y="195" text-anchor="middle" class="label-strong" fill="#166534">Экономия ~$696 000/год</text>
+                </svg>
+                <div class="viz-caption">
+                    Шесть рычагов: правильный формат (Parquet, сжатие 10×), партиционирование (ускорение 100×), spot-инстансы (−60–80%), автоостановка кластеров, материализованные представления, очистка «мусорных» таблиц (−20–40%). <strong>Пример:</strong> $80 000/мес → $22 000/мес. Экономия ~$696 000/год (округлено до $700 000). <em>Кейс упрощён: не показано, какой % от общего счёта это составляет, и не выросла ли стоимость чтения/сетевых запросов после перехода на Parquet.</em> <strong>Правило FinOps:</strong> стоимость — это метрика. Запрос за $500 с инсайтом на $50 — плохой запрос.
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 15: ДАШБОРДЫ -->
+            <div class="viz-card">
+                <div class="viz-title">📊 Дашборды и производительность</div>
+                <div class="grid-2">
+                    <div style="background: #eff6ff; border: 2px solid #2563eb; border-radius: 10px; padding: 14px;">
+                        <div style="font-weight: 700; color: #1e40af; margin-bottom: 6px;">⚡ OLAP-движки</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.5;">ClickHouse, Druid, Pinot. Ответ за миллисекунды на миллиардах строк.</div>
+                    </div>
+                    <div style="background: #f0fdf4; border: 2px solid #16a34a; border-radius: 10px; padding: 14px;">
+                        <div style="font-weight: 700; color: #166534; margin-bottom: 6px;">🧱 Материализованные представления</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.5;">Предварительно посчитанные агрегаты. Обновляются по расписанию или инкрементально.</div>
+                    </div>
+                    <div style="background: #fffbeb; border: 2px solid #d97706; border-radius: 10px; padding: 14px;">
+                        <div style="font-weight: 700; color: #92400e; margin-bottom: 6px;">🎯 Агрегационные таблицы</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.5;">Gold-слой: готовые витрины для BI. Дашборд читает их, а не сырые данные.</div>
+                    </div>
+                    <div style="background: #faf5ff; border: 2px solid #7c3aed; border-radius: 10px; padding: 14px;">
+                        <div style="font-weight: 700; color: #6b21a8; margin-bottom: 6px;">📦 Кэширование</div>
+                        <div style="font-size: 12px; color: #1e293b; line-height: 1.5;">Redis, Memcached для повторяющихся запросов.</div>
+                    </div>
+                </div>
+                <div class="callout warn" style="margin-top: 12px;">
+                    <strong>⚠️ Ловушка</strong>
+                    <p>Никогда не давайте BI прямой доступ к сырым таблицам на миллиарды строк. Всегда — через Gold-витрину. Пример: 50 пользователей одновременно открыли дашборд на сырой таблице — <strong>resource contention</strong> (конкурентные запросы, нехватка памяти, отсутствие очереди), кластер «лёг» на 4 часа, все отчёты компании встали.</p>
+                </div>
+            </div>
+
+            <!-- ВИЗУАЛИЗАЦИЯ 16: 8 ОШИБОК -->
+            <div class="viz-card">
+                <div class="viz-title">⚠️ Восемь типичных ошибок аналитика Big Data</div>
+                <table class="compare-table">
+                    <thead>
+                        <tr><th>Ошибка</th><th>Пример</th><th>Как правильно</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1. SELECT * на больших таблицах</td><td>Читаем все колонки, хотя нужны 2</td><td>Указываем только нужные колонки</td></tr>
+                        <tr><td>2. Фильтр после JOIN</td><td>Соединяем 1 ТБ × 1 ТБ, потом фильтруем</td><td>Фильтруем до JOIN</td></tr>
+                        <tr><td>3. Нет партиционирования</td><td>Запрос читает все данные за 5 лет</td><td>Партиции по дате, фильтр по ним</td></tr>
+                        <tr><td>4. CSV вместо Parquet</td><td>Храним 10 ТБ CSV — медленно и дорого</td><td>Parquet: сжатие 10×, ускорение 20×</td></tr>
+                        <tr><td>5. Нет проверки качества</td><td>Пайплайн сломался, все не заметили</td><td>Автоматические алерты на 6 проверок</td></tr>
+                        <tr><td>6. «Всё в одном озере»</td><td>Сырые и витрины в одной папке</td><td>Bronze / Silver / Gold слои</td></tr>
+                        <tr><td>7. Игнорирование стоимости</td><td>Кластер на 100 узлов «на всякий»</td><td>Профилирование, autoscaling, spot</td></tr>
+                        <tr><td>8. Нет lineage</td><td>Сломался источник — ищем пострадавших руками</td><td>Data catalog с lineage</td></tr>
+                    </tbody>
+                </table>
+                <div class="viz-caption">
+                    Каждая ошибка стоит кому-то реальных денег или репутации. Хороший аналитик не тот, кто никогда не наступает на грабли, а тот, кто знает, где они лежат, и обходит их.
+                </div>
+            </div>
+
+            <!-- КЕЙС -->
+            <div class="viz-card" style="border-color: #d8b4fe;">
+                <div class="viz-title" style="color: #6b21a8;">💼 Практический кейс: от 48 часов к 12 минутам</div>
+                <div style="background: #faf5ff; border-radius: 10px; padding: 16px; font-size: 13.5px; line-height: 1.7; color: #1e293b;">
+                    <p><strong style="color: #6b21a8;">Проблема:</strong> отчёт «LTV по когортам и каналам» считается 48 часов. Бизнес не успевает к планёрке. Кластер стоит $40 000/мес.</p>
+                    <p><strong style="color: #6b21a8;">Аудит:</strong> (1) данные в CSV, 15 ТБ; (2) нет партиционирования; (3) JOIN до фильтра; (4) BI читает сырые таблицы.</p>
+                    <p><strong style="color: #6b21a8;">Решение:</strong> (1) Parquet → 1,5 ТБ; (2) партиционирование по месяцу; (3) фильтр до JOIN; (4) Gold-витрина с преагрегатами (2 ГБ); (5) ClickHouse для BI; (6) Airflow DAG + 6 проверок качества; (7) spot-инстансы для batch; (8) <code>.coalesce(1)</code> для записи — чтобы не плодить мелкие файлы.</p>
+                    <p><strong style="color: #6b21a8;">Профиль запроса до:</strong> чтение CSV 15 ТБ (≈30 ч) + JOIN (≈12 ч) + агрегация (≈6 ч) = 48 ч.</p>
+                    <p><strong style="color: #6b21a8;">Профиль запроса после:</strong> чтение Parquet с партицией (2 мин) + фильтр до JOIN (3 мин) + JOIN (4 мин) + агрегация (3 мин) = 12 мин.</p>
+                    <p><strong style="color: #6b21a8;">Результат:</strong> 48 ч → 12 мин. Кластер $40 000 → $14 000/мес. Экономия $312 000/год. Бизнес получает отчёт к 9 утра. Data observability ловит поломку за 15 минут вместо 2 дней.</p>
+                    <p style="font-size: 12px; color: #64748b; margin-top: 8px;"><em>Кейс упрощён для учебных целей: числа профиля запроса иллюстративны, но структура (чтение → фильтр → JOIN → агрегация) отражает реальный порядок оптимизации.</em></p>
+                </div>
+            </div>
+
+            <!-- ГЛАВНЫЙ ВЫВОД -->
+            <div class="callout warn">
+                <strong>⚠️ Главный вывод</strong>
+                <p>Аналитик больших данных — это не «классический аналитик, который работает с большими таблицами». Это специалист, который понимает, что <strong>объём меняет всё</strong>: подход к хранению, выбор движка, стоимость вычислений, качество данных. Он знает распределённые вычисления (Spark, MapReduce), архитектуры (Lake, Lakehouse, Mesh), форматы (Parquet, Delta), движки (Hive, Presto, ClickHouse, Flink), оркестрацию (Airflow), качество данных (data observability), ML на масштабе (Feature Store, MLflow) и экономику инфраструктуры (FinOps). Классический аналитик решает задачу «как посчитать». Аналитик Big Data решает задачу «как посчитать быстро, дёшево и надёжно, когда данных в 1000 раз больше».</p>
+            </div>
+
+            <!-- ВИДЕОПЛЕЕР -->
+            <div class="video-section">
+                <div class="video-container">
+                    <iframe id="lecture-player" src="https://rutube.ru" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+                </div>
+                <div class="links-hub">
+                    <button onclick="changeVideo('https://rutube.ru/')" class="video-btn stop-btn">⏹ СТОП</button>
+                    <button onclick="changeVideo('https://rutube.ru/play/embed/')" class="video-btn rt-btn">📜 Лекция 25. Аналитик больших данных</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="slide-footer">
+            Направление «Менеджмент» | Курс: Аналитика данных | Лекция 25: «Аналитик больших данных: от терабайтов к решениям»
+        </div>
+    </div>
+
+    <!-- ПРАВАЯ ПАНЕЛЬ: СКРИПТ ПРЕПОДАВАТЕЛЯ -->
+    <div class="speaker-notes">
+        <div style="position: sticky; top: 0; background: #1a202c; padding: 20px 20px 10px 20px; border-bottom: 1px solid #4a5568; width: 100%; z-index: 100;">
+            <div class="notes-header" style="display: block; padding-bottom: 15px;">
+                <audio id="lecture-audio" preload="auto" controls
+                       src="https://archive.org/download/03_20261110_20261110/20.mp3"
+                       style="width: 100%; height: 32px; border-radius: 4px;"></audio>
+            </div>
+            <div style="width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                <iframe id="right-lecture-player" src="https://archive.org/embed/20261020_20261020_0955?autoplay=true&loop=true&muted=true" allow="clipboard-write; autoplay" width="100%" height="100%" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="border: none;"></iframe>
+            </div>
+        </div>
+
+        <div class="lecture-text" style="margin-top: 20px;">
+
+            <h3>📌 Введение. Зачем нужна отдельная лекция про большие данные</h3>
+
+            <p>Добрый день, коллеги. В предыдущих лекциях мы разобрали классического аналитика, метрики и эксперименты, продуктовую и маркетинговую аналитику. Во всех этих лекциях мы неявно предполагали, что данные помещаются в один компьютер, что SQL-запрос выполняется за секунды, что хранилище стоит копейки. Сегодня мы эти предположения ломаем.</p>
+
+            <p>Сразу предупрежу о двух крайностях. Первая: «большие данные — это просто много данных, я напишу запрос покрупнее». Вторая: «большие данные — это какая-то магия, Hadoop, Spark, мне это не нужно». Обе неверны.</p>
+
+            <div class="callout" style="margin-bottom: 14px;">
+                <strong>Аналогия из жизни</strong>
+                <p>Представьте, что вы повар. В обычной кухне вы готовите на одной плите для десяти гостей. Это классический аналитик. А теперь представьте, что вы готовите на свадьбе на 500 человек. Вам нужна не одна плита побольше, а совсем другая кухня: несколько плит, конвейер, бригады поваров, логистика продуктов. Это и есть большие данные. Нельзя решить задачу «просто взять плиту побольше» — нужна другая организация работы.</p>
+            </div>
+
+            <p>Главная мысль лекции: аналитик больших данных — это не тот, кто работает с большими таблицами. Это тот, кто отвечает на вопрос, как извлечь инсайт из данных, которые не помещаются в один компьютер, за приемлемое время и с разумной стоимостью. Объём — вызов. Распределённые вычисления — инструмент. Архитектура — фундамент. Качество — страховка. Стоимость — ограничение. Инсайт — результат.</p>
+
+            <p>Мы разберём пятнадцать блоков: роль аналитика, 5V, распределённые вычисления, архитектуры, форматы, ETL/ELT, SQL, стриминг, качество данных, governance, ML, FinOps, дашборды, восемь ошибок и практический кейс.</p>
+
+            <div class="callout" style="margin-bottom: 14px;">
+                <strong>Мотивирующий пример</strong>
+                <p>Компания тратит 48 часов на отчёт «LTV по когортам и каналам». Бизнес не успевает к планёрке. Кластер стоит $40 000/мес. К концу лекции мы разберём, как решить задачу за 12 минут при $14 000/мес. И это будет не «магия Spark», а системная работа с архитектурой, форматами, запросами и стоимостью.</p>
+            </div>
+
+            <h3>📌 Блок 1. Кто такой аналитик больших данных</h3>
+
+            <p>На схеме слева — шесть ролей вокруг аналитика Big Data. Разберём каждую.</p>
+
+            <p><strong>Классический аналитик</strong> — работает с данными, которые помещаются в один компьютер (до 100 ГБ). Пишет SQL, считает метрики, строит дашборды.</p>
+
+            <p><strong>Аналитик Big Data</strong> — герой нашей лекции. Работает с данными от терабайт до петабайт. Его задача — не просто посчитать, а посчитать быстро, дёшево и надёжно. Знает SQL и статистику как классик, но понимает распределённые системы и умеет выбирать инструмент под задачу.</p>
+
+            <p><strong>Data Engineer</strong> — строитель. Проектирует и строит пайплайны доставки данных. Аналитик Big Data часто работает в паре с инженером: аналитик говорит «мне нужна такая витрина», инженер строит пайплайн.</p>
+
+            <p><strong>Data Scientist</strong> — учёный. Строит модели машинного обучения. На больших данных ему нужны те же инструменты: Spark, Feature Store, MLflow.</p>
+
+            <p><strong>Data Architect</strong> — градостроитель. Проектирует, как вся система данных устроена в компании.</p>
+
+            <p><strong>FinOps-аналитик</strong> — бухгалтер облачной инфраструктуры. Следит, чтобы счета за AWS или Yandex Cloud не взлетали до небес. Аналитик Big Data обязан думать о стоимости.</p>
+
+            <div class="callout warn" style="margin-bottom: 14px;">
+                <strong>⚠️ Важно про границы роли</strong>
+                <p>Не сказано, где заканчивается зона аналитика и начинается зона инженера. На практике это самый частый конфликт в командах: кто отвечает за пайплайн, кто за витрину, кто за качество. Лучше зафиксировать это заранее (RACI-подобно): аналитик Big Data отвечает за выбор инструмента, запрос и интерпретацию; инженер — за пайплайн и доставку; архитектор — за стандарты. Иначе через месяц вы будете спорить, кто виноват, что витрина не обновилась.</p>
+            </div>
+
+            <h3>📌 Блок 2. Что такое Big Data: 5V</h3>
+
+            <p>На схеме слева — пять «V» с метриками. Разберём каждое.</p>
+
+            <p><strong>Volume — объём.</strong> От килобайт до петабайт. Метрика: ТБ/день. Пример: логи мобильного приложения — 5 ТБ/день.</p>
+
+            <p><strong>Velocity — скорость.</strong> Как быстро поступают данные. Метрика: событий/сек. Пример: 100 000 событий в секунду от IoT-датчиков.</p>
+
+            <p><strong>Variety — разнообразие.</strong> Структурированные (таблицы), полуструктурированные (JSON, XML), неструктурированные (изображения, видео, текст).</p>
+
+            <p><strong>Veracity — достоверность.</strong> Качество данных. <strong>Метрики:</strong> доля пропусков, доля дублей, расхождение с источником. Без измерения Veracity — это просто слово.</p>
+
+            <p><strong>Value — ценность.</strong> Какую бизнес-ценность извлекаем. <strong>Метрика:</strong> ROI на петабайт. Можно хранить петабайты, но если они не приносят пользы — это дорогое хранилище.</p>
+
+            <div class="callout warn" style="margin-bottom: 14px;">
+                <strong>⚠️ Главная ловушка</strong>
+                <p>«Большие данные» — это не всегда про объём. Иногда 100 ГБ с высокой скоростью и сложной обработкой — это Big Data. А 10 ТБ «спящих» архивов, которые никто не трогает, — нет. Big Data определяется задачей, а не размером диска. Если вы можете решить задачу за разумное время на обычном компьютере — это не Big Data, даже если данных много.</p>
+            </div>
+
+            <div class="callout" style="margin-bottom: 14px;">
+                <strong>Аналогия из жизни</strong>
+                <p>Библиотека. 100 книг — домашняя. 100 000 — уже вызов: нужен каталог, стеллажи, библиотекарь. 10 миллионов — национальная библиотека: оцифровка, поисковые системы, реставраторы. Объём меняет подход. Так и с данными: от гигабайт до петабайт меняется не только размер, но и вся организация работы.</p>
+            </div>
+
+            <h3>📌 Блок 3. Распределённые вычисления: MapReduce и Spark</h3>
+
+            <p>На схеме слева — конвейер: данные → Map → Shuffle → Reduce → итог. Разберём.</p>
+
+            <p><strong>Map</strong> — разбить данные на части и обработать каждую независимо. Например, посчитать количество заказов в каждом файле отдельно.</p>
+
+            <p><strong>Shuffle</strong> — перегруппировать данные по ключу. Например, собрать все заказы одного клиента вместе, даже если они были в разных файлах.</p>
+
+            <p><strong>Reduce</strong> — объединить результаты. Например, посчитать общую сумму заказов каждого клиента.</p>
+
+            <div class="callout warn" style="margin-bottom: 14px;">
+                <strong>⚠️ Важное уточнение</strong>
+                <p>Shuffle — это не отдельная фаза, а <strong>этап между Map и Reduce</strong>; в Hadoop он встроен, в Spark он тоже есть — и это <strong>самый дорогой этап</strong> (sort, groupBy, join). Правило аналитика: «избегай лишних shuffle» важнее, чем «знай MapReduce». Именно shuffle — главный источник дорогих операций, и именно поэтому оптимизация JOIN и GROUP BY критична.</p>
+            </div>
+
+            <p><strong>Apache Spark</strong> — современный движок. Держит данные в памяти (in-memory), что даёт ускорение в 10–100× против MapReduce. Интерфейсы: PySpark (Python), Spark SQL, Spark MLlib.</p>
+
+            <div class="callout" style="margin-bottom: 14px;">
+                <strong>Живой пример выбора движка</strong>
+                <p>Задача «Посчитай конверсию по когортам за 5 лет» — пакетная, сложная логика → Spark. Задача «Покажи дашборд с выручкой по дням» — OLAP → ClickHouse. Задача «Посчитай в реальном времени, сколько пользователей сейчас в приложении» — стриминг → Flink. Неправильный выбор — либо очень медленно, либо очень дорого, либо и то, и другое.</p>
+            </div>
+
+            <h3>📌 Блок 4. Архитектура данных: Lake, Lakehouse, Mesh</h3>
+
+            <p>На схеме слева — три архитектуры. Разберём каждую.</p>
+
+            <p><strong>Data Lake</strong> — сырые данные в объектном хранилище (S3, GCS, Yandex Object Storage). Дёшево, масштабируемо, принимает любые форматы. Риск: без контроля озеро превращается в болото.</p>
+
+            <p><strong>Lakehouse</strong> — гибрид: дешевизна озера + управление как в DWH (транзакции, ACID, версионирование). Примеры: Delta Lake, Apache Iceberg. Современный стандарт де-факто.</p>
+
+            <p><strong>Data Mesh</strong> — децентрализация: каждая бизнес-область владеет своими данными как продуктом, федеративная governance. Для очень крупных компаний.</p>
+
+            <p>На второй схеме — три слоя: <strong>Bronze</strong> (сырые данные «как есть»), <strong>Silver</strong> (очищенные, дедуплицированные, с типами), <strong>Gold</strong> (витрины для бизнеса: агрегаты, метрики). Именно из Gold читают BI и ML.</p>
+
+            <div class="callout warn" style="margin-bottom: 14px;">
+                <strong>⚠️ Ловушка Lake-архитектуры</strong>
+                <p>Без трёх слоёв и governance озеро превращается в болото. Я видел компании, где в S3 лежало 500 ТБ данных, но никто не мог сказать, какие из них актуальны, кто владелец, и можно ли удалить старые таблицы. Стоимость хранения росла, а полезность падала.</p>
+            </div>
+
+            <div class="callout" style="margin-bottom: 14px;">
+                <strong>Аналогия из жизни</strong>
+                <p>Data Lake — огромный склад. Сваливать всё без разбора — через год не найдёте ничего. Организовать стеллажи, подписать полки, назначить ответственных — склад работает. Lakehouse — склад с современной системой управления: штрихкоды, автоматизация, учёт. Data Mesh — сеть складов, где каждый филиал отвечает за свою категорию, но все соблюдают единые стандарты.</p>
+            </div>
+
+            <h3>📌 Блок 5. Форматы хранения: почему Parquet изменил всё</h3>
+
+            <p>В таблице слева — шесть форматов. Разберём.</p>
+
+            <p><strong>CSV и JSON</strong> — текстовые. Хороши для обмена, читаются человеком. Для аналитики ужасны: нет сжатия, нет схемы, медленно.</p>
+
+            <p><strong>Parquet</strong> — колоночный бинарный формат. Революция: аналитические запросы читают несколько колонок из многих, а Parquet хранит по колонкам. Сжатие 5–10×, predicate pushdown.</p>
+
+            <p><strong>ORC</strong> — аналог Parquet под Hive.</p>
+
+            <p><strong>Avro</strong> — строчный, для стриминга (Kafka). Эволюция схемы.</p>
+
+            <p><strong>Delta Lake и Apache Iceberg</strong> — надстройки над Parquet: ACID, версионирование, time travel. Основа Lakehouse.</p>
+
+            <div class="callout warn" style="margin-bottom: 14px;">
+                <strong>⚠️ Минусы Parquet (часто забывают)</strong>
+                <p>Parquet подан как безусловное благо, но у него есть ограничения. <strong>Плохо подходит для точечных обновлений</strong> — нужна перезапись файла, отсюда и появились Delta/Iceberg. <strong>Не для стриминга</strong> — мелкие файлы убивают производительность («small files problem»). <strong>Схема фиксируется при записи</strong> — эволюция ограничена. <strong>Не человекочитаем</strong> — для отладки нужны инструменты. Parquet — для аналитики, но не для OLTP и не для мелких файлов.</p>
+            </div>
+
+            <div class="callout" style="margin-bottom: 14px;">
+                <strong>Числовой пример</strong>
+                <p>Таблица orders — 10 млрд строк, 100 колонок. В CSV — 15 ТБ. В Parquet — 1,5 ТБ (сжатие 10×). Запрос «средний чек по месяцам» в CSV — 4 часа. В Parquet — 3 минуты. Разница в 80 раз! И это не магия, это правильный формат.</p>
+            </div>
+
+            <h3>📌 Блок 6. ETL vs ELT и оркестрация</h3>
+
+            <p>На схеме слева — два подхода. <strong>ETL</strong> — Extract → Transform → Load: трансформация на отдельном сервере, для классических DWH. <strong>ELT</strong> — Extract → Load → Transform: трансформация внутри хранилища, для Lake/Lakehouse.</p>
+
+            <div class="callout warn" style="margin-bottom: 14px;">
+                <strong>⚠️ ELT — не всегда «дешевле и лучше»</strong>
+                <p>ELT подан как «современный и лучший». Но ELT <strong>требует мощного хранилища</strong> (Snowflake, BigQuery, Databricks) — иначе трансформация внутри хранилища дороже, чем на отдельном сервере. Плюс ELT <strong>перекладывает стоимость на хранилище</strong>, и при неумелом использовании счёт растёт быстрее, чем при ETL. Для лекции по FinOps это важное упущение: «ELT дешевле» — не всегда.</p>
+            </div>
+
+            <p>Конвейер: <strong>Extract</strong> (API, БД, логи) → <strong>Load</strong> (Bronze) → <strong>Transform</strong> (Silver → Gold) → <strong>Serve</strong> (BI, ML, API). <strong>Airflow</strong> — стандарт оркестрации: DAG описывает зависимости задач, следит за порядком, перезапускает упавшие, алертит.</p>
+
+            <div class="callout" style="margin-bottom: 14px;">
+                <strong>Живой пример Airflow DAG</strong>
+                <p>Каждый день в 2 часа ночи: (1) загрузить данные из API рекламных кабинетов в Bronze; (2) очистить, дедуплицировать, привести к единой схеме — в Silver; (3) посчитать витрину «выручка по каналам» — в Gold; (4) обновить дашборд в BI. Если на шаге 2 ошибка — шаги 3 и 4 не запускаются, приходит алерт аналитику. Весь DAG занимает 40 минут, и к 3 утра все отчёты готовы.</p>
+            </div>
+
+            <h3>📌 Блок 7. SQL на больших данных</h3>
+
+            <p>В таблице слева — четыре диалекта: HiveQL (пакетная обработка), Presto SQL (интерактивные, federated), Spark SQL (сложная логика + Python), ClickHouse SQL (OLAP-агрегаты).</p>
+
+            <div class="callout warn" style="margin-bottom: 14px;">
+                <strong>⚠️ Правило аналитика Big Data</strong>
+                <p>Никогда не делайте <code>SELECT *</code> на больших таблицах. Всегда фильтруйте по партиции. Всегда указывайте только нужные колонки. Иначе вы сожжёте бюджет кластера впустую. Я видел, как один <code>SELECT *</code> на таблице в 50 ТБ стоил компании $2000 за один запуск.</p>
+            </div>
+
+            <div class="callout warn" style="margin-bottom: 14px;">
+                <strong>⚠️ Про ClickHouse `uniq()`</strong>
+                <p><code>uniq()</code> в ClickHouse — приближённая функция (HyperLogLog). Погрешность <strong>зависит от кардинальности</strong> и может быть выше 1% на малых выборках. Утверждение «менее 1%» — оптимистично. Для точного подсчёта есть <code>uniqExact()</code>, который медленнее. Приближённые функции — это выбор, а не бесплатный сыр.</p>
+            </div>
+
+            <h3>📌 Блок 8. Стриминг: Kafka и Flink</h3>
+
+            <p>На схеме слева — конвейер: продюсер → Kafka topic → Flink → дашборд + Data Lake. Разберём.</p>
+
+            <p><strong>Kafka</strong> — распределённый журнал событий. Продюсеры пишут, консьюмеры читают. <strong>Retention настраивается</strong> (по умолчанию 7 дней; можно часы и годы), поддерживает <strong>compaction</strong> — сохранение последнего значения по ключу (для event sourcing).</p>
+
+            <p><strong>Flink</strong> — обработка потоков: окна (tumbling, sliding, session), exactly-once, state сохраняется при перезапуске.</p>
+
+            <div class="callout" style="margin-bottom: 14px;">
+                <strong>Когда нужен стриминг?</strong>
+                <p>Когда задержка имеет значение: алерты на мошенничество (секунды), рекомендации (сотни мс), мониторинг (минуты). Если задача «посчитать выручку за вчера» — стриминг избыточен, batch дешевле и проще. Стриминг — это не «круче», это «другое».</p>
+            </div>
+
+            <div class="callout" style="margin-bottom: 14px;">
+                <strong>Живой пример</strong>
+                <p>Банк ловит мошеннические операции в реальном времени. Пользователь платит картой в 14:32. Flink job получает событие, смотрит историю (из Feature Store), считает вероятность мошенничества. Если &gt; 80% — блокирует и шлёт алерт. Вся цепочка — 200 мс. Без стриминга batch дал бы результат через час, когда деньги уже ушли.</p>
+            </div>
+
+            <h3>📌 Блок 9. Качество данных на масштабе</h3>
+
+            <p>В таблице слева — шесть проверок: свежесть, объём, схема, распределение, дубли, связи. Каждая с примером и инструментом.</p>
+
+            <div class="callout warn" style="margin-bottom: 14px;">
+                <strong>⚠️ Data Observability — это подход вендора, а не единственный стандарт</strong>
+                <p>Пять измерений (freshness, distribution, volume, schema, lineage) — это <strong>маркетинговая рамка Monte Carlo</strong>, а не академический стандарт. Полезно, но стоит помнить, что есть альтернативы: <strong>Great Expectations</strong> (expectations), <strong>dbt tests</strong>. Иначе студент решит, что это единственно верная модель.</p>
+            </div>
+
+            <div class="callout" style="margin-bottom: 14px;">
+                <strong>Правило</strong>
+                <p>На больших данных проверка качества должна быть автоматической. Один сломанный пайплайн может испортить все downstream-отчёты за часы. Я видел случай, когда из-за бага в ETL все отчёты по выручке за месяц были завышены на 15%. Обнаружили через 3 недели, когда бухгалтерия сверилась с банком. Потеря репутации — бесценна.</p>
+            </div>
+
+            <h3>📌 Блок 10. Data Governance и безопасность</h3>
+
+            <p>На схеме слева — четыре карточки: доступы (RBAC, least privilege), каталог данных (DataHub, Amundsen), lineage, PII и комплаенс (GDPR, 152-ФЗ, маскирование, аудит).</p>
+
+            <div class="callout warn" style="margin-bottom: 14px;">
+                <strong>⚠️ Ловушка</strong>
+                <p>Без governance Data Lake превращается в «дикую свалку». Я видел компанию, где аналитик нашёл таблицу <code>tmp_user_data_v2_final</code>, не знал, кому она принадлежит, можно ли её удалить, и кто ей пользуется. Оказалось, это критическая витрина для финансового отчёта. Удали — и квартальная отчётность подвиснет. Без governance такие ситуации — норма.</p>
+            </div>
+
+            <h3>📌 Блок 11. ML на больших данных</h3>
+
+            <p>В таблице слева — четыре задачи: обучение на ТБ (Spark MLlib, Databricks), Feature Store (Feast, Hopsworks), MLOps (MLflow, Kubeflow), inference на потоке (Flink + модель).</p>
+
+            <div class="callout warn" style="margin-bottom: 14px;">
+                <strong>⚠️ Главная проблема Feature Store — train/serve skew</strong>
+                <p>Признаки, посчитанные для обучения (batch), и признаки, посчитанные для инференса (online), могут расходиться. Feature Store решает это <strong>только если</strong> поддерживает online+offline хранилище и гарантирует консистентность. Без этого он превращается в «общий кэш признаков». Это главная причина, по которой Feature Store вообще нужен — и её нельзя опускать.</p>
+            </div>
+
+            <div class="callout warn" style="margin-bottom: 14px;">
+                <strong>⚠️ Ловушка</strong>
+                <p>Обучение на больших данных ≠ «взять побольше признаков». Качество данных важнее количества. 1 ТБ мусора даёт худшую модель, чем 10 ГБ чистых данных. Сначала качество, потом масштаб.</p>
+            </div>
+
+            <h3>📌 Блок 12. Стоимость инфраструктуры: FinOps</h3>
+
+            <p>На схеме слева — «до» и «после»: $80 000/мес → $22 000/мес. Шесть рычагов: правильный формат, партиционирование, spot-инстансы, автоостановка, материализованные представления, очистка мусорных таблиц.</p>
+
+            <div class="callout warn" style="margin-bottom: 14px;">
+                <strong>⚠️ Про кейс с $700 000</strong>
+                <p>$80 000/мес → $22 000/мес = экономия $58 000/мес × 12 = <strong>$696 000/год</strong> (округлено до $700 000). Арифметически верно, но не показано: какой процент от общего облачного счёта это составляет (5% или 80%?), не выросла ли стоимость чтения/сетевых запросов после перехода на Parquet (сжатие снижает хранение, но чтение может вырасти), как проверяли «без потери качества отчётов». Для учебного кейса допустимо, но стоит пометить «упрощённо».</p>
+            </div>
+
+            <div class="callout warn" style="margin-bottom: 14px;">
+                <strong>Правило FinOps</strong>
+                <p>Стоимость инфраструктуры — это метрика. Если запрос стоит $500, а приносит инсайт на $50 — это плохой запрос. Аналитик Big Data обязан думать о стоимости. Инженер данных — тоже.</p>
+            </div>
+
+            <h3>📌 Блок 13. Дашборды и производительность</h3>
+
+            <p>На схеме слева — четыре инструмента: OLAP-движки (ClickHouse, Druid, Pinot), материализованные представления, агрегационные таблицы (Gold), кэширование (Redis, Memcached).</p>
+
+            <div class="callout warn" style="margin-bottom: 14px;">
+                <strong>⚠️ Ловушка — объяснение «кластер лёг»</strong>
+                <p>Никогда не давайте BI прямой доступ к сырым таблицам на миллиарды строк. Всегда — через Gold-витрину. Пример: 50 пользователей одновременно открыли дашборд на сырой таблице — <strong>resource contention</strong> (конкурентные запросы, нехватка памяти, OOM, отсутствие очереди запросов), кластер «лёг» на 4 часа. Без объяснения механизма это страшилка, а не урок. Правильная архитектура: сырые данные (5 ТБ) → Silver (1 ТБ) → Gold-витрина (10 ГБ) → ClickHouse → BI. Дашборд читает 10 ГБ, ответ — 200 мс.</p>
+            </div>
+
+            <h3>📌 Блок 14. Восемь типичных ошибок аналитика Big Data</h3>
+
+            <p>В таблице слева — восемь ошибок с примерами и лечением. Разберём все.</p>
+
+            <p><strong>1. SELECT *</strong> — читаем все колонки, хотя нужны 2. Лечение: только нужные колонки. <strong>2. Фильтр после JOIN</strong> — соединяем 1 ТБ × 1 ТБ, потом фильтруем. Лечение: WHERE до JOIN. <strong>3. Нет партиционирования</strong> — читаем все 5 лет. Лечение: партиции по дате. <strong>4. CSV вместо Parquet</strong> — медленно и дорого. Лечение: Parquet. <strong>5. Нет проверки качества</strong> — пайплайн сломался, все не заметили. Лечение: автоалерты. <strong>6. «Всё в одном озере»</strong> — сырые и витрины в одной папке. Лечение: Bronze/Silver/Gold. <strong>7. Игнорирование стоимости</strong> — кластер на 100 узлов «на всякий». Лечение: профилирование, autoscaling, spot. <strong>8. Нет lineage</strong> — сломался источник, ищем пострадавших руками. Лечение: data catalog с lineage.</p>
+
+            <div class="callout" style="margin-bottom: 14px;">
+                <strong>Аналогия из жизни</strong>
+                <p>Эти восемь ошибок — как восемь граблей, на которые наступают все, кто начинает работать с большими данными. Хороший аналитик не тот, кто никогда не наступает, а тот, кто знает, где эти грабли лежат, и обходит их.</p>
+            </div>
+
+            <h3>📌 Блок 15. Практический кейс: от 48 часов к 12 минутам</h3>
+
+            <p>На карточке слева — кейс. Возвращаемся к нашему сквозному примеру и разбираем его полностью, применяя всё, что прошли.</p>
+
+            <p><strong>Ситуация.</strong> Отчёт «LTV по когортам и каналам» считается 48 часов. Бизнес не успевает к планёрке. Кластер стоит $40 000/мес.</p>
+
+            <p><strong>Аудит.</strong> (1) данные в CSV, 15 ТБ; (2) нет партиционирования; (3) JOIN до фильтра; (4) BI читает сырые таблицы.</p>
+
+            <p><strong>Решение.</strong> (1) Parquet → 1,5 ТБ; (2) партиционирование по месяцу; (3) фильтр до JOIN; (4) Gold-витрина с преагрегатами (2 ГБ); (5) ClickHouse для BI; (6) Airflow DAG + 6 проверок качества; (7) spot-инстансы для batch; (8) <code>.coalesce(1)</code> для записи — чтобы не плодить мелкие файлы (small files problem).</p>
+
+            <div class="callout warn" style="margin-bottom: 14px;">
+                <strong>⚠️ Разбивка «12 минут»</strong>
+                <p>Без разбивки «48 ч → 12 мин» — это магия, а не инженерия. <strong>Профиль запроса до:</strong> чтение CSV 15 ТБ (≈30 ч) + JOIN (≈12 ч) + агрегация (≈6 ч) = 48 ч. <strong>Профиль запроса после:</strong> чтение Parquet с партицией (2 мин) + фильтр до JOIN (3 мин) + JOIN (4 мин) + агрегация (3 мин) = 12 мин. Именно профиль запроса до/после — главное обучение: вы видите, какой шаг сколько стоит и что оптимизировать первым.</p>
+            </div>
+
+            <p><strong>Результат.</strong> 48 ч → 12 мин. Кластер $40 000 → $14 000/мес. Экономия $312 000/год. Бизнес получает отчёт к 9 утра. Data observability ловит поломку за 15 минут вместо 2 дней. Аналитик перестал быть «человеком, который ждёт отчёт», и стал владельцем быстрой и надёжной системы.</p>
+
+            <p>Обратите внимание: в этом кейсе нет никакой магии. Это системная работа с архитектурой, форматами, запросами и стоимостью. Именно так и выглядит реальная работа аналитика больших данных: 70% фундамент (форматы, партиционирование, фильтрация), 30% продвинутые методы (Spark, ClickHouse, Airflow).</p>
+
+            <p><em>Кейс упрощён для учебных целей: числа профиля запроса иллюстративны, но структура (чтение → фильтр → JOIN → агрегация) отражает реальный порядок оптимизации.</em></p>
+
+            <h3>📌 Заключение</h3>
+
+            <p>Мы разобрали роль аналитика Big Data и его отличие от классического аналитика, инженера данных, data scientist'а и архитектора. Мы разобрали 5V с метриками. Мы изучили распределённые вычисления: MapReduce и Spark, и поняли, что shuffle — главный источник дорогих операций. Мы разобрали три архитектуры: Lake, Lakehouse, Mesh, и три слоя: Bronze/Silver/Gold. Мы изучили форматы и поняли, почему Parquet — революция, но с ограничениями (не для OLTP, small files problem). Мы разобрали ETL и ELT с оговоркой, что ELT требует мощного хранилища. Мы изучили SQL-диалекты, стриминг (Kafka с retention и compaction, Flink), качество данных (Data Observability как подход Monte Carlo + альтернативы), governance, ML (Feature Store с train/serve skew), FinOps и стоимость инфраструктуры, дашборды (resource contention) и восемь типичных ошибок. И закончили кейсом с профилем запроса до/после.</p>
+
+            <p>Главный вывод. Аналитик больших данных — это не «классический аналитик, который работает с большими таблицами». Это специалист, который понимает, что объём меняет всё: подход к хранению, выбор движка, стоимость вычислений, качество данных. Он знает распределённые вычисления, архитектуры, форматы, движки, оркестрацию, качество данных, ML на масштабе и экономику инфраструктуры. Классический аналитик решает задачу «как посчитать». Аналитик Big Data решает задачу «как посчитать быстро, дёшево и надёжно, когда данных в 1000 раз больше».</p>
+
+            <p>В следующей лекции мы поговорим о финансовой аналитике: P&L, EBITDA, ROI — как продуктовые, маркетинговые и Big Data решения сходятся в деньги компании. Спасибо за внимание, готов ответить на ваши вопросы.</p>
+
+            <!-- СЛОВАРЬ ТЕРМИНОВ -->
+            <div class="dark-block">
+                <div class="dark-block-title">📖 Словарь терминов и аббревиатур</div>
+                <table class="dark-table">
+                    <thead>
+                        <tr><th style="width:22%;">Термин</th><th style="width:30%;">Расшифровка</th><th>Пояснение</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="term">5V</td><td>Volume, Velocity, Variety, Veracity, Value</td><td>Пять измерений Big Data</td></tr>
+                        <tr><td class="term">MapReduce</td><td>MapReduce</td><td>Модель распределённых вычислений: Map → Shuffle → Reduce</td></tr>
+                        <tr><td class="term">Shuffle</td><td>Shuffle</td><td>Этап между Map и Reduce; самый дорогой</td></tr>
+                        <tr><td class="term">Spark</td><td>Apache Spark</td><td>Движок in-memory, ускорение 10–100×</td></tr>
+                        <tr><td class="term">Data Lake</td><td>Data Lake</td><td>Сырые данные в объектном хранилище</td></tr>
+                        <tr><td class="term">Lakehouse</td><td>Lakehouse</td><td>Lake + ACID, версионирование</td></tr>
+                        <tr><td class="term">Data Mesh</td><td>Data Mesh</td><td>Децентрализация, данные как продукт</td></tr>
+                        <tr><td class="term">Bronze/Silver/Gold</td><td>Medallion Architecture</td><td>Три слоя данных</td></tr>
+                        <tr><td class="term">Parquet</td><td>Apache Parquet</td><td>Колоночный формат; не для OLTP</td></tr>
+                        <tr><td class="term">Small files problem</td><td>Small files problem</td><td>Много мелких файлов убивают производительность</td></tr>
+                        <tr><td class="term">ETL / ELT</td><td>Extract-Transform-Load / Extract-Load-Transform</td><td>ELT требует мощного хранилища</td></tr>
+                        <tr><td class="term">Airflow</td><td>Apache Airflow</td><td>Оркестрация через DAG</td></tr>
+                        <tr><td class="term">Kafka</td><td>Apache Kafka</td><td>Журнал событий; retention настраивается; compaction</td></tr>
+                        <tr><td class="term">Flink</td><td>Apache Flink</td><td>Стриминг: окна, exactly-once, state</td></tr>
+                        <tr><td class="term">Data Observability</td><td>Data Observability</td><td>Подход Monte Carlo + альтернативы (Great Expectations, dbt tests)</td></tr>
+                        <tr><td class="term">Lineage</td><td>Data Lineage</td><td>Откуда пришли и куда ушли данные</td></tr>
+                        <tr><td class="term">Feature Store</td><td>Feature Store</td><td>Хранилище признаков; решает train/serve skew</td></tr>
+                        <tr><td class="term">Train/serve skew</td><td>Train/serve skew</td><td>Расхождение признаков batch и online</td></tr>
+                        <tr><td class="term">MLflow</td><td>MLflow</td><td>MLOps: версионирование моделей</td></tr>
+                        <tr><td class="term">FinOps</td><td>FinOps</td><td>Экономика облачной инфраструктуры</td></tr>
+                        <tr><td class="term">OLAP</td><td>OLAP</td><td>Аналитическая обработка; ClickHouse, Druid, Pinot</td></tr>
+                        <tr><td class="term">Resource contention</td><td>Resource contention</td><td>Конкурентные запросы, OOM, нет очереди</td></tr>
+                        <tr><td class="term">uniq()</td><td>uniq()</td><td>Приближённая функция; uniqExact() для точности</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function changeVideo(embedUrl) {
+            document.getElementById('lecture-player').src = embedUrl;
+        }
+    </script>
+
+    <!-- НАВИГАЦИЯ МЕЖДУ ЛЕКЦИЯМИ -->
+    <nav class="lecture-nav" id="lectureNav">
+        <div class="nav-progress" id="navProgress" style="width: 0%;"></div>
+        <a href="Лекция 24.html" class="nav-btn-arrow" id="prevBtn">
+            <span class="arrow-icon">←</span>
+            <span class="arrow-label">
+                <small>Назад</small>
+                <span class="arrow-title" id="prevTitle">Лекция 24</span>
+            </span>
+        </a>
+        <div class="nav-center">
+            <div class="nav-counter">Лекция <span id="currentNum">25</span> <span>из 25</span></div>
+            <a href="index.html" class="nav-index-link">📚 К содержанию</a>
+        </div>
+        <a href="Лекция 26.html" class="nav-btn-arrow" id="nextBtn">
+            <span class="arrow-label" style="align-items: flex-end;">
+                <small>Вперёд</small>
+                <span class="arrow-title" id="nextTitle">Лекция 26</span>
+            </span>
+            <span class="arrow-icon">→</span>
+        </a>
+    </nav>
+
+    <script>
+    (function () {
+        'use strict';
+
+        const TOTAL_LECTURES = 25;
+        const totalDurationMs = (32 * 60 + 30) * 1000;
+        const autoNextDelayMs = 2000;
+        const AUTOSTART_PARAM = 'autostart';
+
+        const fileName = decodeURIComponent(location.pathname.split('/').pop() || '');
+        let currentLecture = 25;
+        const match = fileName.match(/Лекция\s*(\d+)\.html/i);
+        if (match) {
+            currentLecture = parseInt(match[1], 10);
+        } else {
+            const el = document.getElementById('currentNum');
+            if (el) currentLecture = parseInt(el.textContent, 10) || 25;
+        }
+        if (isNaN(currentLecture) || currentLecture < 1) currentLecture = 1;
+        if (currentLecture > TOTAL_LECTURES) currentLecture = TOTAL_LECTURES;
+
+        const prev = currentLecture > 1 ? currentLecture - 1 : null;
+        const next = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+
+        const currentNumEl = document.getElementById('currentNum');
+        if (currentNumEl) currentNumEl.textContent = currentLecture;
+
+        const navProgress = document.getElementById('navProgress');
+        if (navProgress) {
+            navProgress.style.width = (currentLecture / TOTAL_LECTURES * 100) + '%';
+        }
+
+        const prevBtn = document.getElementById('prevBtn');
+        if (prevBtn) {
+            if (prev) {
+                prevBtn.href = 'Лекция ' + prev + '.html';
+                const t = document.getElementById('prevTitle');
+                if (t) t.textContent = 'Лекция ' + prev;
+                prevBtn.style.opacity = '1';
+                prevBtn.style.cursor = 'pointer';
+                prevBtn.onclick = null;
+            } else {
+                prevBtn.removeAttribute('href');
+                prevBtn.style.opacity = '0.35';
+                prevBtn.style.cursor = 'not-allowed';
+                prevBtn.onclick = (e) => e.preventDefault();
+                const t = document.getElementById('prevTitle');
+                if (t) t.textContent = 'Это первая лекция';
+            }
+        }
+
+        const nextBtn = document.getElementById('nextBtn');
+        if (nextBtn) {
+            if (next) {
+                nextBtn.href = 'Лекция ' + next + '.html';
+                const t = document.getElementById('nextTitle');
+                if (t) t.textContent = 'Лекция ' + next;
+                nextBtn.style.opacity = '1';
+                nextBtn.style.cursor = 'pointer';
+                nextBtn.onclick = null;
+            } else {
+                nextBtn.removeAttribute('href');
+                nextBtn.style.opacity = '0.35';
+                nextBtn.style.cursor = 'not-allowed';
+                nextBtn.onclick = (e) => e.preventDefault();
+                const t = document.getElementById('nextTitle');
+                if (t) t.textContent = 'Это последняя лекция';
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            const tag = e.target && e.target.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+            if (e.key === 'ArrowLeft' && prev) window.location.href = 'Лекция ' + prev + '.html';
+            else if (e.key === 'ArrowRight' && next) window.location.href = 'Лекция ' + next + '.html';
+            else if (e.key === 'Home') window.location.href = 'index.html';
+        });
+
+        function initScroll() {
+            const studentBlock = document.querySelector('.student-view');
+            const speakerBlock = document.querySelector('.speaker-notes');
+            const badge = document.getElementById('scroll-status-badge');
+            const audio = document.getElementById('lecture-audio');
+            if (!studentBlock || !speakerBlock) return;
+
+            const studentBehavior = studentBlock.style.scrollBehavior;
+            const speakerBehavior = speakerBlock.style.scrollBehavior;
+            let isRunning = false, completed = false, pausedElapsed = 0, startedAt = 0, rafId = null;
+            let startS = 0, startP = 0, maxS = 0, maxP = 0;
+
+            function setBadge(text, color) { if (!badge) return; badge.style.display = 'block'; badge.textContent = text; badge.style.borderColor = color; }
+            function measure() { maxS = Math.max(studentBlock.scrollHeight - studentBlock.clientHeight, 0); maxP = Math.max(speakerBlock.scrollHeight - speakerBlock.clientHeight, 0); }
+            function fmt(ms) { const m = Math.floor(ms / 60000); const s = Math.floor((ms % 60000) / 1000); return m + ':' + String(s).padStart(2, '0'); }
+            function playAudio() { if (!audio) return; const p = audio.play(); if (p && typeof p.catch === 'function') { p.catch(err => { console.warn('[AutoAudio]', err.message); setBadge('▶ ИДЕТ ПРОКРУТКА (звук заблокирован)', '#eab308'); }); } }
+            function pauseAudio() { if (audio) try { audio.pause(); } catch (_) {} }
+            function resetAudio() { if (audio) try { audio.pause(); audio.currentTime = 0; } catch (_) {} }
+
+            function animate() {
+                if (!isRunning) return;
+                const elapsed = pausedElapsed + (performance.now() - startedAt);
+                const fraction = Math.min(elapsed / totalDurationMs, 1);
+                measure();
+                studentBlock.scrollTop = startS + (maxS - startS) * fraction;
+                speakerBlock.scrollTop = startP + (maxP - startP) * fraction;
+                if (badge) { badge.textContent = '▶ ' + fmt(elapsed) + ' / ' + fmt(totalDurationMs); badge.style.borderColor = '#16a34a'; }
+                if (fraction >= 1) { finish(); return; }
+                rafId = requestAnimationFrame(animate);
+            }
+
+            function startOrResume() {
+                if (completed) { pausedElapsed = 0; completed = false; studentBlock.scrollTop = 0; speakerBlock.scrollTop = 0; resetAudio(); }
+                measure(); startS = studentBlock.scrollTop; startP = speakerBlock.scrollTop;
+                startedAt = performance.now(); isRunning = true;
+                studentBlock.style.scrollBehavior = 'auto'; speakerBlock.style.scrollBehavior = 'auto';
+                cancelAnimationFrame(rafId); rafId = requestAnimationFrame(animate);
+                playAudio();
+            }
+            function pause() {
+                if (isRunning) pausedElapsed += performance.now() - startedAt;
+                isRunning = false; cancelAnimationFrame(rafId);
+                setBadge('⏸ ПАУЗА ' + fmt(pausedElapsed), '#dc2626');
+                studentBlock.style.scrollBehavior = studentBehavior; speakerBlock.style.scrollBehavior = speakerBehavior;
+                pauseAudio();
+            }
+            function finish() {
+                isRunning = false; completed = true; cancelAnimationFrame(rafId);
+                measure(); studentBlock.scrollTop = maxS; speakerBlock.scrollTop = maxP;
+                studentBlock.style.scrollBehavior = studentBehavior; speakerBlock.style.scrollBehavior = speakerBehavior;
+                const nextLec = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+                if (nextLec) {
+                    setBadge('✅ ГОТОВО → Лекция ' + nextLec, '#16a34a');
+                    setTimeout(() => { location.href = 'Лекция ' + nextLec + '.html?' + AUTOSTART_PARAM + '=1'; }, autoNextDelayMs);
+                } else {
+                    setBadge('✅ КУРС ЗАВЕРШЕН', '#16a34a');
+                    pauseAudio();
+                }
+            }
+            function toggle() { isRunning ? pause() : startOrResume(); }
+
+            window.addEventListener('keydown', (e) => {
+                if (e.repeat) return;
+                const t = e.target; const tag = t && t.tagName;
+                if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+                if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); toggle(); }
+            }, true);
+
+            if (badge) badge.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+            [studentBlock, speakerBlock].forEach(el => {
+                el.addEventListener('click', (e) => {
+                    if (e.target.closest('a,button,iframe,input,textarea,select,video,audio')) return;
+                    if (window.getSelection().toString().length > 0) return;
+                    toggle();
+                });
+            });
+
+            const params = new URLSearchParams(location.search);
+            if (params.get(AUTOSTART_PARAM) === '1') {
+                params.delete(AUTOSTART_PARAM);
+                const clean = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
+                history.replaceState(null, '', clean);
+                setTimeout(startOrResume, 500);
+            } else { setBadge('▶ ПРОБЕЛ / КЛИК — старт', '#4a5568'); }
+        }
+
+        if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initScroll, { once: true }); }
+        else { initScroll(); }
+    })();
+    </script>
+
+</body>
+</html>
