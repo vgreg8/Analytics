@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лекция 22. Классический аналитик данных: от сырых данных к проверенному выводу</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #ffffff; }
+
+        .student-view { width: 66.66%; height: 100vh; background: #ffffff; padding: 35px 40px; display: flex; flex-direction: column; justify-content: space-between; border-right: 2px solid #e2e8f0; overflow-y: auto; scroll-behavior: smooth; }
+        .speaker-notes { width: 33.34%; height: 100%; background: #1a202c; color: #edf2f7; padding: 30px; overflow-y: auto; }
+
+        .slide-header { font-size: 26px; color: #0f172a; font-weight: bold; line-height: 1.3; margin-bottom: 18px; border-bottom: 4px solid #2563eb; padding-bottom: 12px; }
+        .slide-body { flex-grow: 1; display: flex; flex-direction: column; gap: 18px; padding: 5px 0; }
+        .slide-footer { font-size: 13px; color: #64748b; text-align: right; margin-top: 12px; }
+
+        .chart-box { background: #f8fafc; border: 2.5px dashed #94a3b8; padding: 20px; border-radius: 12px; }
+        .chart-box strong { font-size: 17px; display: block; margin-bottom: 8px; color: #0f172a; }
+        .chart-box p { font-size: 14px; color: #1e293b; line-height: 1.5; }
+
+        .viz-card { background: #ffffff; border: 2px solid #cbd5e0; border-radius: 12px; padding: 18px; box-shadow: 0 4px 10px rgba(15,23,42,0.06); }
+        .viz-title { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .viz-caption { font-size: 13px; color: #1e293b; margin-top: 10px; line-height: 1.6; }
+        .viz-caption strong { color: #0f172a; font-weight: 700; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+
+        .callout { background: #fffbeb; border-left: 5px solid #d97706; padding: 14px 18px; border-radius: 6px; }
+        .callout strong { color: #78350f; font-size: 14px; }
+        .callout p { font-size: 13px; color: #451a03; margin-top: 4px; line-height: 1.5; }
+        .callout.warn { background: #fef2f2; border-left-color: #dc2626; }
+        .callout.warn strong { color: #991b1b; }
+        .callout.warn p { color: #7f1d1d; }
+        .callout.ok { background: #f0fdf4; border-left-color: #16a34a; }
+        .callout.ok strong { color: #166534; }
+        .callout.ok p { color: #14532d; }
+
+        .role-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .role-table th { background: #0f172a; color: white; padding: 10px 12px; text-align: left; font-weight: 700; }
+        .role-table td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; color: #1e293b; vertical-align: top; line-height: 1.45; }
+        .role-table tr:nth-child(even) td { background: #f8fafc; }
+        .role-table .role-emoji { font-size: 16px; }
+
+        .compare-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .compare-table th { background: #0f172a; color: white; padding: 10px 12px; text-align: left; font-weight: 700; }
+        .compare-table td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; color: #1e293b; vertical-align: top; line-height: 1.45; }
+        .compare-table tr:nth-child(even) td { background: #f8fafc; }
+
+        .axis { stroke: #334155; stroke-width: 2; }
+        .grid-line { stroke: #cbd5e0; stroke-width: 1; }
+        .label { font-family: 'Segoe UI', sans-serif; font-size: 13px; fill: #1e293b; font-weight: 600; }
+        .label-strong { font-family: 'Segoe UI', sans-serif; font-size: 15px; font-weight: 700; fill: #0f172a; }
+        .label-small { font-family: 'Segoe UI', sans-serif; font-size: 12px; fill: #475569; font-weight: 500; }
+        .label-white { font-family: 'Segoe UI', sans-serif; font-size: 13px; fill: #ffffff; font-weight: 700; }
+        .label-white-sm { font-family: 'Segoe UI', sans-serif; font-size: 11px; fill: #ffffff; opacity: 0.95; font-weight: 600; }
+
+        pre { background: #0f172a; color: #e2e8f0; border-radius: 10px; padding: 16px 18px; font-family: 'Consolas', 'Courier New', monospace; font-size: 12.5px; line-height: 1.55; overflow-x: auto; margin: 10px 0; }
+        pre .cm { color: #94a3b8; font-style: italic; }
+        pre .kw { color: #93c5fd; font-weight: 700; }
+        pre .st { color: #86efac; }
+        code { background: #f1f5f9; padding: 1px 5px; border-radius: 4px; font-size: 12px; color: #0f172a; }
+
+        .notes-header { font-size: 17px; color: #63b3ed; font-weight: bold; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a5568; padding-bottom: 10px; }
+        .lecture-text { font-size: 14.5px; line-height: 1.65; color: #e2e8f0; text-align: justify; }
+        .lecture-text p { margin-bottom: 14px; }
+        .lecture-text h3 { color: #63b3ed; font-size: 15px; margin: 18px 0 10px; border-bottom: 1px solid #2d3748; padding-bottom: 5px; }
+        .lecture-text h4 { color: #90cdf4; font-size: 13.5px; margin: 14px 0 8px; }
+        .lecture-text ul { margin: 8px 0 14px 18px; }
+        .lecture-text li { margin-bottom: 6px; }
+
+        .dark-block { background: #2d3748; border: 1px solid #4a5568; border-radius: 10px; padding: 16px 18px; margin-top: 20px; }
+        .dark-block-title { font-size: 14px; font-weight: bold; color: #63b3ed; margin-bottom: 12px; border-bottom: 2px solid #4a5568; padding-bottom: 8px; }
+        .dark-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+        .dark-table th { background: #1a202c; color: #90cdf4; padding: 7px 9px; text-align: left; font-weight: 600; border-bottom: 1px solid #4a5568; }
+        .dark-table td { padding: 6px 9px; border-bottom: 1px solid #2d3748; color: #cbd5e0; vertical-align: top; line-height: 1.4; }
+        .dark-table tr:nth-child(even) td { background: #2a3242; }
+        .dark-table .term { font-weight: bold; color: #90cdf4; white-space: nowrap; }
+
+        .video-section { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 5px; }
+        .video-container { width: 100%; max-width: 580px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: #000; aspect-ratio: 16 / 9; }
+        .links-hub { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .video-btn { text-decoration: none; padding: 9px 14px; border-radius: 6px; font-size: 13px; font-weight: bold; color: white; display: flex; align-items: center; gap: 6px; transition: transform 0.2s, background 0.2s; cursor: pointer; border: none; }
+        .video-btn:hover { transform: translateY(-2px); }
+        .rt-btn { background: #00a877; }
+        .rt-btn:hover { background: #008f65; }
+        .stop-btn { background: #dc2626; }
+        .stop-btn:hover { background: #b91c1c; }
+
+        .lecture-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(12px); border-top: 2px solid rgba(255, 255, 255, 0.08); padding: 12px 20px; display: flex; align-items: center; justify-content: center; gap: 12px; z-index: 9999; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25); }
+        .lecture-nav .nav-progress { position: absolute; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899); border-radius: 0 3px 3px 0; }
+        .lecture-nav .nav-btn-arrow { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); border: 1.5px solid rgba(255, 255, 255, 0.15); color: #e2e8f0; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; }
+        .lecture-nav .nav-btn-arrow:hover:not(:disabled) { background: rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.6); color: white; transform: translateY(-2px); }
+        .lecture-nav .nav-btn-arrow:disabled { opacity: 0.35; cursor: not-allowed; }
+        .lecture-nav .nav-btn-arrow .arrow-icon { font-size: 16px; line-height: 1; }
+        .lecture-nav .nav-btn-arrow .arrow-label { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+        .lecture-nav .nav-btn-arrow .arrow-label small { font-size: 9.5px; font-weight: 400; opacity: 0.7; text-transform: uppercase; }
+        .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { font-size: 12px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lecture-nav .nav-center { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 20px; color: #94a3b8; font-size: 11px; border-left: 1px solid rgba(255, 255, 255, 0.1); border-right: 1px solid rgba(255, 255, 255, 0.1); }
+        .lecture-nav .nav-counter { font-size: 15px; font-weight: 900; color: #f1f5f9; }
+        .lecture-nav .nav-counter span { color: #64748b; font-size: 12px; font-weight: 600; }
+        .lecture-nav .nav-index-link { color: #60a5fa; text-decoration: none; font-size: 11px; font-weight: 600; }
+        .lecture-nav .nav-index-link:hover { color: #93c5fd; text-decoration: underline; }
+        body { padding-bottom: 80px !important; }
+        @media (max-width: 900px) {
+            .lecture-nav { padding: 10px 12px; gap: 8px; }
+            .lecture-nav .nav-btn-arrow { padding: 8px 12px; }
+            .lecture-nav .nav-btn-arrow .arrow-label .arrow-title { max-width: 90px; font-size: 11px; }
+            .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+        }
+
+        @keyframes pulseAlert { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .pulse-alert { animation: pulseAlert 1.5s ease-in-out infinite; }
+        @keyframes flowData { 0% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -20; } }
+        .flow-data { animation: flowData 2s linear infinite; }
+    </style>
+</head>
+<body>
+
+    <!-- ЛЕВАЯ КОЛОНКА: СЛАЙДЫ -->
+    <div class="student-view">
+        <div class="slide-header">
+            Лекция 22. Классический аналитик данных: от сырых данных к проверенному выводу
+        </div>
+
+        <div class="slide-body">
+
+            <!-- HERO -->
+            <div class="chart-box" style="background: #faf5ff; border-color: #d8b4fe;">
+                <strong style="color: #6b21a8;">🎯 Главная идея</strong>
+                <p>Аналитик данных — это не тот, кто «выгружает цифры по запросу». Это тот, кто отвечает на вопрос: <strong>«Можно ли верить этим данным, что в них происходит и какое решение из этого следует»</strong>. Данные — сырьё. SQL — добыча. Проверки качества — фильтр. Статистика — измерительный прибор. ML — телескоп. Рекомендация — результат.</p>
+            </div>
+
+            <!-- БЛОК 1: РОЛИ -->
+            <div class="viz-card">
+                <div class="viz-title">🧑‍💼 Блок 1. Кто такой аналитик данных и чем он отличается от других</div>
+                <table class="compare-table">
+                    <thead><tr><th>Роль</th><th>Главный вопрос</th><th>Инструменты</th><th>Результат</th></tr></thead>
+                    <tbody>
+                        <tr><td>📈 Аналитик данных</td><td>Что произошло? Можно ли верить данным? Что делать?</td><td>SQL, Python, статистика, BI</td><td>Проверенный вывод + рекомендация</td></tr>
+                        <tr><td>📊 Продуктовый аналитик</td><td>Почему пользователи ведут себя так?</td><td>Воронки, retention, A/B, ML</td><td>Продуктовое решение</td></tr>
+                        <tr><td>📣 Маркетинговый аналитик</td><td>Какие каналы приносят прибыль?</td><td>Атрибуция, MMM, CAC, ROAS</td><td>Медиаплан, бюджет</td></tr>
+                        <tr><td>🛠️ Data Engineer</td><td>Как доставить данные надёжно?</td><td>ETL/ELT, Airflow, DWH</td><td>Работающий пайплайн</td></tr>
+                        <tr><td>🤖 Data Scientist</td><td>Что предсказать / автоматизировать?</td><td>ML, эксперименты, causal</td><td>Модель в продакшене</td></tr>
+                        <tr><td>📊 BI-аналитик</td><td>Как показать всем одну картину?</td><td>Модель данных, дашборды</td><td>Единый дашборд</td></tr>
+                    </tbody>
+                </table>
+                <div class="viz-caption"><strong>Аналитик данных</strong> — универсальная база курса. Остальные роли — специализации поверх неё. Без SQL, проверок качества и статистики любая специализация превращается в пересказ чужих отчётов.</div>
+            </div>
+
+            <!-- КОНВЕЙЕР -->
+            <div class="viz-card">
+                <div class="viz-title">🔄 Конвейер: от вопроса бизнеса к проверенному выводу</div>
+                <svg viewBox="0 0 560 120" width="100%" style="display:block;">
+                    <rect x="0" y="0" width="560" height="120" fill="#ffffff"/>
+                    <rect x="10" y="30" width="95" height="60" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+                    <text x="57" y="55" text-anchor="middle" class="label-strong" fill="#1e40af" style="font-size: 10px;">1. Вопрос</text>
+                    <text x="57" y="75" text-anchor="middle" class="label-small">бизнеса</text>
+                    <line x1="105" y1="60" x2="120" y2="60" stroke="#334155" stroke-width="2"/>
+                    <polygon points="120,60 113,56 113,64" fill="#334155"/>
+                    <rect x="120" y="30" width="95" height="60" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+                    <text x="167" y="55" text-anchor="middle" class="label-strong" fill="#166534" style="font-size: 10px;">2. Данные</text>
+                    <text x="167" y="75" text-anchor="middle" class="label-small">гранулярность</text>
+                    <line x1="215" y1="60" x2="230" y2="60" stroke="#334155" stroke-width="2"/>
+                    <polygon points="230,60 223,56 223,64" fill="#334155"/>
+                    <rect x="230" y="30" width="95" height="60" rx="8" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+                    <text x="277" y="55" text-anchor="middle" class="label-strong" fill="#92400e" style="font-size: 10px;">3. Качество</text>
+                    <text x="277" y="75" text-anchor="middle" class="label-small">пропуски, дубли</text>
+                    <line x1="325" y1="60" x2="340" y2="60" stroke="#334155" stroke-width="2"/>
+                    <polygon points="340,60 333,56 333,64" fill="#334155"/>
+                    <rect x="340" y="30" width="95" height="60" rx="8" fill="#faf5ff" stroke="#7c3aed" stroke-width="2"/>
+                    <text x="387" y="55" text-anchor="middle" class="label-strong" fill="#6b21a8" style="font-size: 10px;">4. Анализ</text>
+                    <text x="387" y="75" text-anchor="middle" class="label-small">EDA, разрезы</text>
+                    <line x1="435" y1="60" x2="450" y2="60" stroke="#334155" stroke-width="2"/>
+                    <polygon points="450,60 443,56 443,64" fill="#334155"/>
+                    <rect x="450" y="30" width="100" height="60" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="2"/>
+                    <text x="500" y="55" text-anchor="middle" class="label-strong" fill="#991b1b" style="font-size: 10px;">5. Вывод</text>
+                    <text x="500" y="75" text-anchor="middle" class="label-small">+ рекомендация</text>
+                </svg>
+            </div>
+
+            <!-- БЛОК 2: ИСТОЧНИКИ -->
+            <div class="viz-card">
+                <div class="viz-title">🗄️ Блок 2. Источники данных и событийная модель</div>
+                <svg viewBox="0 0 560 230" width="100%" style="display:block;">
+                    <rect x="0" y="0" width="560" height="230" fill="#ffffff"/>
+                    <rect x="20" y="20" width="150" height="70" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="2.5"/>
+                    <text x="95" y="44" text-anchor="middle" class="label-strong" fill="#1e40af">users</text>
+                    <text x="95" y="62" text-anchor="middle" class="label-small">1 строка = 1 юзер</text>
+                    <text x="95" y="78" text-anchor="middle" class="label-small">user_id, city, channel</text>
+                    <rect x="205" y="20" width="150" height="70" rx="10" fill="#f0fdf4" stroke="#16a34a" stroke-width="2.5"/>
+                    <text x="280" y="44" text-anchor="middle" class="label-strong" fill="#166534">events</text>
+                    <text x="280" y="62" text-anchor="middle" class="label-small">1 строка = 1 событие</text>
+                    <text x="280" y="78" text-anchor="middle" class="label-small">user_id, event_time</text>
+                    <rect x="390" y="20" width="150" height="70" rx="10" fill="#fffbeb" stroke="#d97706" stroke-width="2.5"/>
+                    <text x="465" y="44" text-anchor="middle" class="label-strong" fill="#92400e">orders</text>
+                    <text x="465" y="62" text-anchor="middle" class="label-small">1 строка = 1 заказ</text>
+                    <text x="465" y="78" text-anchor="middle" class="label-small">order_id, amount, status</text>
+                    <rect x="205" y="140" width="150" height="70" rx="10" fill="#faf5ff" stroke="#7c3aed" stroke-width="2.5"/>
+                    <text x="280" y="164" text-anchor="middle" class="label-strong" fill="#6b21a8">order_items</text>
+                    <text x="280" y="182" text-anchor="middle" class="label-small">1 строка = 1 позиция</text>
+                    <text x="280" y="198" text-anchor="middle" class="label-small">order_id, product_id, qty</text>
+                    <rect x="390" y="140" width="150" height="70" rx="10" fill="#fef2f2" stroke="#dc2626" stroke-width="2.5"/>
+                    <text x="465" y="164" text-anchor="middle" class="label-strong" fill="#991b1b">ad_costs</text>
+                    <text x="465" y="182" text-anchor="middle" class="label-small">1 строка = канал × день</text>
+                    <text x="465" y="198" text-anchor="middle" class="label-small">spend, impressions, clicks</text>
+                    <line x1="170" y1="55" x2="203" y2="55" stroke="#334155" stroke-width="2.5" class="flow-data"/>
+                    <polygon points="203,55 196,52 196,58" fill="#334155"/>
+                    <line x1="355" y1="55" x2="388" y2="55" stroke="#334155" stroke-width="2.5" class="flow-data"/>
+                    <polygon points="388,55 381,52 381,58" fill="#334155"/>
+                    <line x1="465" y1="90" x2="465" y2="138" stroke="#334155" stroke-width="2.5" class="flow-data"/>
+                    <polygon points="465,138 461,131 469,131" fill="#334155"/>
+                    <line x1="355" y1="175" x2="388" y2="175" stroke="#334155" stroke-width="2.5" class="flow-data"/>
+                    <polygon points="388,175 381,172 381,178" fill="#334155"/>
+                </svg>
+                <div class="callout warn" style="margin-top:12px;">
+                    <strong>⚠️ Главная ловушка новичка: fan-out</strong>
+                    <p>В таблице <code>orders</code> один заказ — одна строка. В <code>order_items</code> один заказ может занимать 3 строки (3 товара). Если соединить напрямую — каждый заказ «размножится» на 3 строки, и <code>SUM(amount)</code> утроится. Реальный кейс: менеджер увидел выручку 36 млн ₽ вместо 12 млн ₽ и готовил отчёт для инвесторов. Сначала агрегируем <code>order_items</code> до уровня заказа, потом соединяем.</p>
+                </div>
+                <div class="callout ok" style="margin-top:10px;">
+                    <strong>✅ Tracking plan</strong>
+                    <p>Документ, где зафиксировано: какое событие как называется, когда отправляется, какие параметры несёт. Без него <code>purchase</code>, <code>order_paid</code> и <code>success_payment</code> — три «разных» события об одном факте. Реальный кейс: после ребрендинга разработчики переименовали <code>purchase</code> в <code>order_paid</code>, и дашборд конверсии показывал −40% две недели, пока не нашли причину.</p>
+                </div>
+            </div>
+
+            <!-- БЛОК 3: SQL -->
+            <div class="viz-card">
+                <div class="viz-title">💻 Блок 3. SQL: фундамент аналитика данных</div>
+                <table class="compare-table">
+                    <thead><tr><th>Инструмент</th><th>Зачем</th><th>Типовая ошибка</th></tr></thead>
+                    <tbody>
+                        <tr><td>GROUP BY + агрегаты</td><td>Свернуть строки в метрику</td><td>Считать среднее от средних</td></tr>
+                        <tr><td>JOIN (LEFT/INNER)</td><td>Соединить сущности</td><td>Fan-out: дубли после соединения</td></tr>
+                        <tr><td>COUNT(DISTINCT …)</td><td>Уникальные пользователи</td><td>COUNT(*) вместо DISTINCT</td></tr>
+                        <tr><td>Оконные функции</td><td>Retention, накопительные суммы, ранги</td><td>Путать ROW_NUMBER и RANK</td></tr>
+                        <tr><td>CTE (WITH)</td><td>Читаемость, шаги расчёта</td><td>Один нечитаемый запрос на 200 строк</td></tr>
+                    </tbody>
+                </table>
+<pre><span class="cm">-- Выручка по месяцам: сначала правильная гранулярность</span>
+<span class="kw">SELECT</span> date_trunc(<span class="st">'month'</span>, created_at) <span class="kw">AS</span> month,
+       <span class="kw">COUNT</span>(<span class="kw">DISTINCT</span> order_id)        <span class="kw">AS</span> orders,
+       <span class="kw">SUM</span>(amount)                     <span class="kw">AS</span> revenue
+<span class="kw">FROM</span> orders
+<span class="kw">WHERE</span> status = <span class="st">'paid'</span>          <span class="cm">-- только оплаченные</span>
+<span class="kw">GROUP BY</span> 1
+<span class="kw">ORDER BY</span> 1;</pre>
+<pre><span class="cm">-- Retention M1 через оконную функцию</span>
+<span class="kw">WITH</span> first_order <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> user_id,
+         <span class="kw">MIN</span>(date_trunc(<span class="st">'month'</span>, created_at)) <span class="kw">AS</span> cohort
+  <span class="kw">FROM</span> orders <span class="kw">WHERE</span> status = <span class="st">'paid'</span>
+  <span class="kw">GROUP BY</span> 1
+)
+<span class="kw">SELECT</span> f.cohort,
+       <span class="kw">COUNT</span>(<span class="kw">DISTINCT</span> f.user_id) <span class="kw">AS</span> cohort_size,
+       <span class="kw">COUNT</span>(<span class="kw">DISTINCT</span> o.user_id) <span class="kw">AS</span> returned_m1
+<span class="kw">FROM</span> first_order f
+<span class="kw">LEFT JOIN</span> orders o
+  <span class="kw">ON</span> o.user_id = f.user_id
+ <span class="kw">AND</span> date_trunc(<span class="st">'month'</span>, o.created_at) = f.cohort + <span class="kw">INTERVAL</span> <span class="st">'1 month'</span>
+<span class="kw">GROUP BY</span> 1;</pre>
+                <div class="callout warn" style="margin-top:10px;">
+                    <strong>⚠️ Перед тяжёлым запросом — EXPLAIN</strong>
+                    <p><code>EXPLAIN</code> показывает план: читает ли запрос все партиции, есть ли full scan, какой JOIN выбран. Без него вы не знаете, почему запрос идёт 40 минут. Правило: сначала <code>EXPLAIN</code>, потом запуск.</p>
+                </div>
+            </div>
+
+            <!-- БЛОК 3а: NULL-СЕМАНТИКА -->
+            <div class="viz-card">
+                <div class="viz-title">🕳️ Блок 3а. NULL-семантика и JOIN-типы: скрытые ловушки</div>
+                <div class="grid-2">
+                    <div class="callout warn"><strong>🕳️ NULL ≠ NULL</strong><p><code>NULL = NULL</code> возвращает <code>NULL</code>, а не <code>TRUE</code>. <code>WHERE col = NULL</code> не находит ничего. Правильно: <code>WHERE col IS NULL</code>. Реальный кейс: фильтр «заказы без промокода» вернул 0 строк, хотя таких было 40%.</p></div>
+                    <div class="callout ok"><strong>🔢 COUNT(*) vs COUNT(col)</strong><p><code>COUNT(*)</code> считает строки, <code>COUNT(col)</code> — только не-NULL. Реальный кейс: «10 000 клиентов» по COUNT(*), а с email — 6 200.</p></div>
+                    <div class="callout"><strong>🚫 NOT IN с NULL</strong><p><code>WHERE id NOT IN (SELECT id FROM t)</code> вернёт пусто, если в подзапросе есть NULL. Используйте <code>NOT EXISTS</code>. Реальный кейс: анти-джойн «клиенты без заказов» вернул 0 вместо 8 000.</p></div>
+                    <div class="callout warn"><strong>🔗 INNER JOIN теряет строки</strong><p><code>INNER JOIN</code> users ↔ orders выбросит пользователей без заказов. Для «всех + их заказы» нужен <code>LEFT JOIN</code>. Реальный кейс: retention считали по INNER JOIN — «выжившие» дали завышенный retention в 2 раза.</p></div>
+                </div>
+                <div class="callout warn" style="margin-top:12px;">
+                    <strong>⚠️ Как проверить потерю строк после JOIN</strong>
+                    <p>Сверьте <code>COUNT</code> до и после. Меньше — потеряли пользователей без связанных записей. Больше — fan-out. Оба случая искажают метрику.</p>
+                </div>
+            </div>
+
+            <!-- БЛОК 4: КАЧЕСТВО -->
+            <div class="viz-card">
+                <div class="viz-title">✅ Блок 4. Качество данных: шесть обязательных проверок</div>
+                <div class="grid-3">
+                    <div class="callout ok"><strong>1. Пропуски 🕳️</strong><p>3% заказов без user_id → не попадают в retention.</p></div>
+                    <div class="callout"><strong>2. Дубли 👥</strong><p>0,5% дублей order_id → выручка +0,5%.</p></div>
+                    <div class="callout ok"><strong>3. Типы и значения 🔢</strong><p>amount = −500 (возвраты вперемешку с продажами).</p></div>
+                    <div class="callout"><strong>4. Свежесть ⏱️</strong><p>Данные отстают на 2 дня → «падение» в конце графика.</p></div>
+                    <div class="callout warn"><strong>5. Сходимость ⚖️</strong><p>Сайт 12,4 млн ₽ vs бухгалтерия 11,8 млн ₽.</p></div>
+                    <div class="callout warn"><strong>6. Аномалии 📈</strong><p>Один заказ на 10 млн ₽ поднял средний чек на 40%.</p></div>
+                </div>
+<pre><span class="cm">-- Экспресс-аудит таблицы orders</span>
+<span class="kw">SELECT</span> <span class="kw">COUNT</span>(*)                                   <span class="kw">AS</span> rows_total,
+       <span class="kw">COUNT</span>(<span class="kw">DISTINCT</span> order_id)                  <span class="kw">AS</span> orders_unique,
+       <span class="kw">SUM</span>(<span class="kw">CASE WHEN</span> user_id <span class="kw">IS NULL THEN</span> 1 <span class="kw">ELSE</span> 0 <span class="kw">END</span>) <span class="kw">AS</span> null_users,
+       <span class="kw">MIN</span>(amount) <span class="kw">AS</span> min_amount, <span class="kw">MAX</span>(amount) <span class="kw">AS</span> max_amount,
+       <span class="kw">MAX</span>(created_at)                           <span class="kw">AS</span> last_record
+<span class="kw">FROM</span> orders;
+
+<span class="cm">-- Orphan-проверка: заказы без пользователей</span>
+<span class="kw">SELECT</span> <span class="kw">COUNT</span>(*) <span class="kw">AS</span> orders_without_user
+<span class="kw">FROM</span> orders o
+<span class="kw">LEFT JOIN</span> users u <span class="kw">ON</span> u.user_id = o.user_id
+<span class="kw">WHERE</span> u.user_id <span class="kw">IS NULL</span>;</pre>
+                <div class="callout warn" style="margin-top:10px;">
+                    <strong>⚠️ Правило</strong>
+                    <p>Сначала проверки, потом выводы. Красивый график на грязных данных — это уверенное движение в неправильную сторону.</p>
+                </div>
+            </div>
+
+            <!-- БЛОК 4а: ПРОПУСКИ И ВЫБРОСЫ -->
+            <div class="viz-card">
+                <div class="viz-title">🩹 Блок 4а. Пропуски и выбросы: что делать, а не только найти</div>
+                <div class="grid-2">
+                    <div class="callout"><strong>🗑️ Удалить строки</strong><p>Когда пропусков < 5% и они случайны. Риск: если пропуски не случайны (VIP не заполняют профиль), выборка сместится.</p></div>
+                    <div class="callout ok"><strong>📊 Заполнить медианой</strong><p>Для числовых с выбросами. Риск: занижает дисперсию, «размывает» различия.</p></div>
+                    <div class="callout"><strong>🔤 Заполнить модой / «unknown»</strong><p>Для категориальных. Явная категория «не указано» честнее подстановки. Риск: если «не указано» > 30%, признак бесполезен.</p></div>
+                    <div class="callout ok"><strong>🚩 Флаг is_null</strong><p>Когда сам факт пропуска — сигнал (нет телефона → ниже конверсия). Плюс: сохраняете информацию. Минус: усложняет модель.</p></div>
+                </div>
+                <div class="callout ok" style="margin-top:12px;">
+                    <strong>✅ Реальный кейс с выбросом</strong>
+                    <p>Средний чек вырос на 40% за месяц. Аналитик сначала решил, что сработала промо-акция. Но при проверке оказалось: один B2B-клиент сделал заказ на 10 млн ₽. Если это разовая сделка — её нужно исключить из «среднего чека» или считать медиану. Если это новый сегмент — наоборот, нужно сегментировать отчёт. <strong>Выброс — это не всегда ошибка. Иногда это сигнал.</strong></p>
+                </div>
+            </div>
+
+            <!-- БЛОК 4б: ТИПЫ ДАННЫХ -->
+            <div class="viz-card">
+                <div class="viz-title">🔤 Блок 4б. Типы данных и их влияние на анализ</div>
+                <div class="grid-2">
+                    <div class="callout ok"><strong>🔢 Числовые</strong><p>Выручка, возраст, количество. Можно среднее, медиану, сумму. Среднее — только для числовых!</p></div>
+                    <div class="callout"><strong>🏷️ Категориальные</strong><p>Город, канал, статус. Среднее бессмысленно — считайте доли и моду. «Средний город» не существует.</p></div>
+                    <div class="callout"><strong>📊 Порядковые</strong><p>Оценка 1–5, уровень «новичок/про/эксперт». Можно медиану, но не среднее: расстояние между уровнями неравное.</p></div>
+                    <div class="callout"><strong>📅 Даты и время</strong><p>created_at, event_time. Нужны часовой пояс, формат, гранулярность. UTC vs локальное время — источник расхождений.</p></div>
+                    <div class="callout"><strong>📝 Текст</strong><p>Отзывы, комментарии. Нужна токенизация и категоризация. Нельзя считать среднее по отзывам.</p></div>
+                    <div class="callout warn"><strong>🧹 Грязные категории</strong><p><code>Москва</code>, <code>москва</code>, <code>Moscow</code>, <code>MSK</code> — 4 «разных» города. Нормализация до анализа обязательна.</p></div>
+                </div>
+                <div class="callout warn" style="margin-top:12px;">
+                    <strong>⚠️ Реальный кейс</strong>
+                    <p>В отчёте по городам Москва занимала 25%, «москва» — ещё 8%, «MSK» — 4%. Итого реальная доля Москвы — 37%, а не 25%. Менеджер принял решение о бюджете на основе неверной цифры. Решение: справочник городов + нормализация на этапе загрузки.</p>
+                </div>
+            </div>
+
+            <!-- БЛОК 5: СТАТИСТИКА И EDA -->
+            <div class="viz-card">
+                <div class="viz-title">📐 Блок 5. Описательная статистика и EDA</div>
+                <svg viewBox="0 0 560 250" width="100%" style="display:block;">
+                    <rect x="0" y="0" width="560" height="250" fill="#ffffff"/>
+                    <line x1="50" y1="210" x2="530" y2="210" class="axis"/>
+                    <line x1="50" y1="30" x2="50" y2="210" class="axis"/>
+                    <text x="290" y="240" text-anchor="middle" class="label-strong">Чек магазина, ₽</text>
+                    <text x="22" y="120" text-anchor="middle" class="label-strong" transform="rotate(-90 22 120)">Плотность</text>
+                    <path d="M 50 210 Q 80 205 110 150 Q 140 60 180 55 Q 220 55 260 120 Q 310 190 380 205 Q 450 210 530 210" fill="#bfdbfe" fill-opacity="0.55" stroke="#2563eb" stroke-width="3"/>
+                    <line x1="230" y1="45" x2="230" y2="210" stroke="#dc2626" stroke-width="2.5" stroke-dasharray="6 4"/>
+                    <text x="230" y="38" text-anchor="middle" class="label-small" fill="#991b1b" style="font-weight:700;">среднее 4 200 ₽</text>
+                    <line x1="160" y1="45" x2="160" y2="210" stroke="#16a34a" stroke-width="2.5" stroke-dasharray="6 4"/>
+                    <text x="140" y="38" text-anchor="middle" class="label-small" fill="#166534" style="font-weight:700;">медиана 1 800 ₽</text>
+                    <line x1="360" y1="120" x2="360" y2="210" stroke="#d97706" stroke-width="2" stroke-dasharray="4 3"/>
+                    <text x="375" y="115" text-anchor="middle" class="label-small" fill="#92400e">p90 = 9 000 ₽</text>
+                    <text x="470" y="180" text-anchor="middle" class="label-small" fill="#64748b">длинный хвост</text>
+                </svg>
+                <div class="grid-2" style="margin-top:12px;">
+                    <div class="callout"><strong>Среднее (mean)</strong><p>Центр, чувствителен к выбросам. 4 200 ₽.</p></div>
+                    <div class="callout ok"><strong>Медиана (p50)</strong><p>Типичное значение. 1 800 ₽.</p></div>
+                    <div class="callout"><strong>p90 / p99</strong><p>Хвост распределения. 9 000 ₽ / 45 000 ₽.</p></div>
+                    <div class="callout"><strong>IQR (p75 − p25)</strong><p>Разброс без выбросов. 3 200 − 900 = 2 300 ₽.</p></div>
+                </div>
+                <div class="callout ok" style="margin-top:12px;">
+                    <strong>✅ Реальный кейс (числа условны)</strong>
+                    <p>Среднее 4 200 ₽, медиана 1 800 ₽. Распределение перекошено: несколько крупных заказов тянут среднее вверх. «Типичный клиент тратит 4 200 ₽» — <strong>неправда</strong>. Правильно: «половина клиентов тратит менее 1 800 ₽, а 10% — более 9 000 ₽». Акция «скидка от 4 000 ₽» охватит лишь верхний сегмент — его долю нужно смотреть по p75/p90, а не брать «25%» на глаз.</p>
+                </div>
+            </div>
+
+            <!-- БЛОК 6: ЛОВУШКИ -->
+            <div class="viz-card">
+                <div class="viz-title">🕳️ Блок 6. Шесть ловушек агрегации</div>
+                <div class="grid-2">
+                    <div class="callout warn"><strong>📉 Среднее от средних</strong><p>Канал А: 10 × 100 ₽; канал Б: 1000 × 10 ₽. Среднее средних = 55 ₽, реальное = 10,9 ₽. → Сумма / сумма (взвешенное).</p></div>
+                    <div class="callout warn"><strong>🔀 Парадокс Симпсона</strong><p>В каждом городе конверсия выросла, а общая упала — трафик сместился в «плохой» город. → Смотреть разрезы и веса.</p></div>
+                    <div class="callout warn"><strong>🪦 Survivorship bias</strong><p>LTV только по оставшимся клиентам завышен в 1,5–2 раза. → Вся когорта, включая ушедших.</p></div>
+                    <div class="callout warn"><strong>➗ Не тот знаменатель</strong><p>Retention от всех регистраций vs от активированных — разница в 3 раза. → Фиксировать определение метрики.</p></div>
+                    <div class="callout warn"><strong>🔗 Дубли после JOIN</strong><p>orders × order_items → выручка ×3. → Агрегировать до JOIN.</p></div>
+                    <div class="callout warn"><strong>📅 Смешение периодов</strong><p>Неполный месяц сравниваем с полным → «обвал −30%». → Сопоставимые окна, YoY.</p></div>
+                </div>
+            </div>
+
+            <!-- БЛОК 6а: СТОИМОСТЬ ОШИБКИ -->
+            <div class="viz-card">
+                <div class="viz-title">💸 Блок 6а. Стоимость ошибки: ложноположительный vs ложноотрицательный</div>
+                <div class="grid-2">
+                    <div class="callout warn">
+                        <strong>🔴 Ложноположительный (FP, ошибка I рода)</strong>
+                        <p>Мы решили, что эффект есть, а его нет. <strong>Пример:</strong> промо «работает» — запускаем на всю страну, тратим 5 млн ₽, а рост был сезонным. <strong>Цена:</strong> прямые потери бюджета + репутация.</p>
+                    </div>
+                    <div class="callout">
+                        <strong>🟡 Ложноотрицательный (FN, ошибка II рода)</strong>
+                        <p>Мы решили, что эффекта нет, а он есть. <strong>Пример:</strong> новая механика оплаты реально повышает конверсию на 3%, но мы не заметили из-за шума и откатили. <strong>Цена:</strong> упущенная выгода.</p>
+                    </div>
+                </div>
+                <div class="callout ok" style="margin-top:10px;">
+                    <strong>✅ Правило</strong>
+                    <p>В кредитном скоринге дороже FN (одобрили плохого клиента). В антифроде — FP (заблокировали честного). В маркетинге — FP (потратили бюджет впустую). В брендовых кампаниях FN (не заметили рост узнаваемости) может стоить дороже. <strong>Всегда спрашивайте: какая ошибка дороже именно в этой задаче?</strong></p>
+                </div>
+            </div>
+
+            <!-- БЛОК 7: КОРРЕЛЯЦИЯ И ПРИЧИННОСТЬ -->
+            <div class="viz-card">
+                <div class="viz-title">🔗 Блок 7. Корреляция, причинность и статистическая база</div>
+                <div class="grid-2">
+                    <div class="callout"><strong>📈 Корреляция Пирсона</strong><p>Линейная связь, −1…+1. Пример: расход на рекламу и выручка, r = 0,85.</p></div>
+                    <div class="callout ok"><strong>🪜 Корреляция Спирмена</strong><p>Связь по рангам, устойчива к выбросам и нелинейности.</p></div>
+                    <div class="callout"><strong>📏 Доверительный интервал</strong><p>«Конверсия 5,0% ± 0,4 п.п. при 95%» — честнее одной цифры.</p></div>
+                    <div class="callout warn"><strong>🎲 p-value</strong><p>Вероятность наблюдать столь же или более экстремальный результат <strong>при условии, что нулевая гипотеза верна</strong>. Порог 0,05. Не «вероятность, что эффект случайный».</p></div>
+                </div>
+                <div class="callout warn" style="margin-top:12px;">
+                    <strong>⚠️ Корреляция ≠ причинность</strong>
+                    <p>Продажи мороженого и случаи утопления коррелируют (r ≈ 0,8). Причина — лето, а не мороженое. <strong>Реальный кейс:</strong> аналитик обнаружил корреляцию 0,9 между рассылками и выручкой и предложил увеличить рассылки в 3 раза. На самом деле рассылки отправлялись в дни распродаж — причина была в скидках, а не в письмах.</p>
+                </div>
+                <div class="viz-title" style="margin-top:14px;">Иерархия доказательств</div>
+                <svg viewBox="0 0 560 160" width="100%" style="display:block;">
+                    <rect x="0" y="0" width="560" height="160" fill="#ffffff"/>
+                    <rect x="80" y="10" width="400" height="30" rx="6" fill="#dcfce7" stroke="#86efac" stroke-width="2"/>
+                    <text x="280" y="30" text-anchor="middle" class="label-strong" fill="#166534">🏆 Рандомизированный A/B-тест</text>
+                    <rect x="100" y="48" width="360" height="30" rx="6" fill="#fef3c7" stroke="#fcd34d" stroke-width="2"/>
+                    <text x="280" y="68" text-anchor="middle" class="label-strong" fill="#92400e">🎯 Квази-эксперимент (DiD, IV, RDD)*</text>
+                    <rect x="120" y="86" width="320" height="30" rx="6" fill="#ede9fe" stroke="#c4b5fd" stroke-width="2"/>
+                    <text x="280" y="106" text-anchor="middle" class="label-strong" fill="#6b21a8">📊 Регрессия с контролем факторов**</text>
+                    <rect x="140" y="124" width="280" height="30" rx="6" fill="#dbeafe" stroke="#93c5fd" stroke-width="2"/>
+                    <text x="280" y="144" text-anchor="middle" class="label-strong" fill="#1e40af">🔗 Корреляция</text>
+                </svg>
+                <div class="viz-caption">
+                    <strong>*</strong> DiD требует предпосылки parallel trends; IV и RDD — тоже квази-экспериментальные методы, в экономике часто сильнее обычной регрессии. <strong>**</strong> Регрессия выше корреляции только при правильном выборе контролей: если контролировать collider, можно получить смещение. Детали A/B-тестов (MDE, SRM, peeking) — в лекции 24 (продуктовая аналитика).
+                </div>
+            </div>
+
+            <!-- БЛОК 7а: КОГОРТЫ И СЕЗОННОСТЬ -->
+            <div class="viz-card">
+                <div class="viz-title">📅 Блок 7а. Когорты и сезонность</div>
+                <div class="grid-2">
+                    <div class="callout ok">
+                        <strong>👥 Когорта — группа с общим стартом</strong>
+                        <p>Когорта по месяцу первой покупки. <strong>Пример:</strong> средний retention по всем — 30%. Но по когортам: январь — 40%, февраль — 35%, март — 28%, апрель — 22%. Среднее скрывает деградацию новых когорт. <strong>Углублённо — в лекции 24 (продуктовая аналитика).</strong></p>
+                    </div>
+                    <div class="callout">
+                        <strong>🌦️ Сезонность — регулярные колебания</strong>
+                        <p>Февраль короче января на 3 дня — сравнение «месяц к месяцу» даёт ложный «обвал». <strong>Пример:</strong> выручка марта ниже февраля на 12% — но это не падение, а сезонность. Правильно: YoY (март к марту прошлого года). <strong>Углублённо — в лекции 23 (маркетинговая аналитика).</strong></p>
+                    </div>
+                </div>
+                <div class="callout warn" style="margin-top:10px;">
+                    <strong>⚠️ Правило</strong>
+                    <p>Любую метрику смотрите в трёх разрезах: <strong>по когортам</strong> (кто пришёл когда), <strong>по времени</strong> (YoY, а не MoM), <strong>по сегментам</strong> (канал, город, платформа). Среднее по всем — почти всегда врёт.</p>
+                </div>
+            </div>
+
+            <!-- БЛОК 8: СЛОЙ МЕТРИК -->
+            <div class="viz-card">
+                <div class="viz-title">🧱 Блок 8. Слой метрик: одна версия правды</div>
+                <table class="compare-table">
+                    <thead><tr><th>Метрика</th><th>Спорный вопрос</th><th>Зафиксированное определение</th></tr></thead>
+                    <tbody>
+                        <tr><td>Выручка</td><td>С НДС? С возвратами? С доставкой?</td><td>Оплаченные заказы минус возвраты, без доставки</td></tr>
+                        <tr><td>Активный пользователь</td><td>Зашёл или совершил действие?</td><td>Совершил ≥1 целевое действие за 30 дней</td></tr>
+                        <tr><td>Новый клиент</td><td>Первая регистрация или первый заказ?</td><td>Первый оплаченный заказ</td></tr>
+                        <tr><td>Период</td><td>UTC или локальное время?</td><td>Единый часовой пояс отчётности</td></tr>
+                    </tbody>
+                </table>
+                <div class="callout ok" style="margin-top:10px;">
+                    <strong>✅ Semantic layer</strong>
+                    <p>Место, где определения зафиксированы в коде, а не в головах (dbt, витрины DWH, BI-модель). Один расчёт — много потребителей. <strong>Оговорка:</strong> semantic layer требует owner'а и governance — кто-то должен обновлять определения при изменении бизнес-логики. Без этого он превращается в «ещё одно место, где определения устарели». <strong>Реальный кейс:</strong> маркетинг и финансы показывали выручку с разницей 8% — маркетинг считал с доставкой, финансы без. Semantic layer решает это раз и навсегда — при наличии owner'а.</p>
+                </div>
+            </div>
+
+            <!-- БЛОК 8а: ВОСПРОИЗВОДИМОСТЬ И LINEAGE -->
+            <div class="viz-card">
+                <div class="viz-title">🔁 Блок 8а. Воспроизводимость и data lineage</div>
+                <div class="grid-2">
+                    <div class="callout ok"><strong>📌 Версионирование скриптов</strong><p>SQL и Python — в Git. Каждый отчёт можно воспроизвести через год. Без этого «а как вы посчитали?» остаётся без ответа.</p></div>
+                    <div class="callout"><strong>📅 Фиксация даты среза</strong><p>В отчёте указывайте «данные на 01.11.2026». Реальный кейс: отчёт за октябрь через месяц показывал другие цифры — данные догрузились.</p></div>
+                    <div class="callout ok"><strong>👀 Code review запросов</strong><p>Второй аналитик проверяет логику JOIN и фильтры. Ловит fan-out и потерю строк. Дешевле, чем отчёт для инвесторов с утроенной выручкой.</p></div>
+                    <div class="callout warn"><strong>🧭 Data lineage</strong><p>Карта: откуда взялась цифра в дашборде. <strong>Оговорка:</strong> полезен только при полном покрытии пайплайнов — иначе создаёт ложное чувство безопасности. Реальный кейс: переименовали событие — сломались 4 дашборда. Lineage показал бы это сразу.</p></div>
+                </div>
+            </div>
+
+            <!-- БЛОК 9: ВИЗУАЛИЗАЦИЯ -->
+            <div class="viz-card">
+                <div class="viz-title">📊 Блок 9. Визуализация: какой график для какой задачи</div>
+                <div class="grid-2">
+                    <div class="callout"><strong>📈 Динамика во времени</strong><p>Линия. Избегать: столбики по 60 дням.</p></div>
+                    <div class="callout ok"><strong>📊 Сравнение категорий</strong><p>Горизонтальные бары. Избегать: пирог на 12 сегментов.</p></div>
+                    <div class="callout"><strong>📉 Распределение</strong><p>Гистограмма, box plot. Избегать: только среднее.</p></div>
+                    <div class="callout"><strong>🥧 Часть от целого</strong><p>Stacked bar (2–4 части). Избегать: pie с 10 долями.</p></div>
+                    <div class="callout"><strong>🪜 Воронка / шаги</strong><p>Funnel, waterfall. Избегать: линия по несвязанным шагам.</p></div>
+                    <div class="callout ok"><strong>🔥 Когорты</strong><p>Heatmap. Избегать: таблица без цветовой шкалы.</p></div>
+                    <div class="callout"><strong>🔵 Связь двух величин</strong><p>Scatter plot. Избегать: две оси Y без пояснения.</p></div>
+                    <div class="callout warn"><strong>⚠️ Три способа соврать</strong><p>Обрезать ось Y, неудачный масштаб, спрятать выбросы. Часто это небрежность, а не злой умысел — но результат один: читатель делает неверный вывод.</p></div>
+                </div>
+            </div>
+
+            <!-- БЛОК 9а: ЭТИКА И PII -->
+            <div class="viz-card">
+                <div class="viz-title">⚖️ Блок 9а. Этика и PII в работе аналитика данных</div>
+                <div class="grid-3">
+                    <div class="callout warn"><strong>🔒 PII в дашборде</strong><p>Email, телефон, паспорт не должны попадать в общий дашборд. <strong>Пример:</strong> в отчёте случайно оказалась колонка с телефонами — её увидели 200 сотрудников. Решение: маскирование на уровне витрины.</p></div>
+                    <div class="callout warn"><strong>👥 Чувствительные сегменты</strong><p>Разрезы по полу, возрасту, здоровью, религии могут дискриминировать. <strong>Пример:</strong> отчёт «конверсия по национальности» — даже без злого умысла создаёт риск. Решение: не строить такие разрезы без бизнес-обоснования.</p></div>
+                    <div class="callout warn"><strong>🎯 Дискриминация в анализе</strong><p>Аналитик может усилить предвзятость, выбрав неверный знаменатель. <strong>Пример:</strong> «женщины реже возвращаются» — а на самом деле среди них больше новых клиентов. Решение: контролировать когорту и стаж.</p></div>
+                </div>
+                <div class="callout ok" style="margin-top:10px;">
+                    <strong>✅ Правило + правовые нормы</strong>
+                    <p>GDPR (ЕС), 152-ФЗ (РФ), принцип минимизации данных: собирайте и показывайте только то, что нужно для задачи. Маскирование на уровне витрины — это не только best practice, но и требование закона. Те же принципы, что в лекции 21 для ML-моделей (справедливость, прозрачность, подотчётность, конфиденциальность, безопасность), применимы и к отчётам. <strong>Не навреди.</strong></p>
+                </div>
+            </div>
+
+            <!-- БЛОК 10: СКВОЗНОЙ КЕЙС -->
+            <div class="viz-card">
+                <div class="viz-title">🎯 Блок 10. Сквозной кейс: «выручка упала на 12%» (упрощённо)</div>
+                <div class="grid-2">
+                    <div class="callout"><strong>1. Вопрос</strong><p>«Выручка за март ниже февраля на 12%. Что случилось?» — CEO просит разобраться за 2 дня.</p></div>
+                    <div class="callout ok"><strong>2. Качество данных</strong><p>Свежесть: март полный. Дубли: 0,1% — не влияет. Сходимость с бухгалтерией: 0,3% — ок. Пропуски user_id: 2% — не критично. <strong>Данные чистые, падение реальное.</strong></p></div>
+                    <div class="callout"><strong>3. Разрезы</strong><p>Каналы: органика −5%, платный −25%, email −3%. Города: Москва −8%, регионы −14%. Когорты: новые −20%, старые −4%. <strong>Гипотеза: платный трафик + новые клиенты.</strong></p></div>
+                    <div class="callout warn"><strong>4. Проверка гипотезы</strong><p>Платный трафик: ставки +30% (аукцион), CPL вырос. Новые: конверсия визита в покупку упала с 3,2% до 2,4%. <strong>Причина: дорогой трафик + падение конверсии лендинга.</strong></p></div>
+                    <div class="callout ok"><strong>5. Сезонность</strong><p>YoY: март 2026 vs март 2025 — −3%, а не −12%. Часть падения — сезонность (февраль был аномально высоким из-за распродажи). <strong>Реальное падение — 3%.</strong></p></div>
+                    <div class="callout warn"><strong>6. Рекомендация</strong><p>1) Пересмотреть ставки (целевой CPL — вернуть к январю). 2) A/B-тест нового лендинга. 3) В отчётах использовать YoY, а не MoM. <strong>Как проверить: через 2 недели CPL и конверсия должны вернуться к baseline.</strong></p></div>
+                </div>
+                <div class="callout warn" style="margin-top:10px;">
+                    <strong>⚠️ Оговорка</strong>
+                    <p>Числа кейса иллюстративны: февраль = 10,8 / 0,88 ≈ 12,27 млн ₽; «9 п.п. сезонности» — это утверждение, которое в реальности нужно обосновать (например, «в прошлом году февраль тоже был на 9% выше марта из-за распродажи»); разрезы по каналам/городам/когортам не сходятся с общим −12% без весов. Кейс упрощён для учебных целей.</p>
+                </div>
+            </div>
+
+            <!-- БЛОК 11: СТРУКТУРА ЗАПИСКИ -->
+            <div class="viz-card">
+                <div class="viz-title">📝 Блок 11. Структура аналитической записки: как превратить анализ в решение</div>
+                <div class="grid-2">
+                    <div class="callout"><strong>1. Факт</strong><p>«Выручка за март — 10,8 млн ₽, на 12% ниже февраля». Только цифры, без интерпретации.</p></div>
+                    <div class="callout ok"><strong>2. Интерпретация</strong><p>«Падение на 9 п.п. объясняется сезонностью (февраль — распродажа). Реальное падение — 3%».</p></div>
+                    <div class="callout"><strong>3. Гипотеза</strong><p>«Основная причина — рост CPL в платном трафике на 30% и падение конверсии лендинга».</p></div>
+                    <div class="callout warn"><strong>4. Рекомендация</strong><p>«Пересмотреть ставки, запустить A/B-тест лендинга, перейти на YoY в отчётах».</p></div>
+                </div>
+                <div class="callout warn" style="margin-top:12px;">
+                    <strong>❌ Контрпример плохой записки</strong>
+                    <p>«Выручка упала, потому что мы плохо работаем. Надо срочно всё менять». Здесь смешаны факт и интерпретация, нет гипотезы, нет «как проверить», нет рекомендации. CEO не может принять решение — только тревожиться.</p>
+                </div>
+                <div class="callout ok" style="margin-top:10px;">
+                    <strong>✅ Формат «1 слайд — 1 вывод»</strong>
+                    <p>Каждый слайд отвечает на один вопрос. Факт отделён от интерпретации. Гипотеза помечена как гипотеза. Рекомендация содержит «как проверить». <strong>Ориентир для CEO — 3–5 слайдов.</strong> Реальный кейс: аналитик прислал 40-страничный отчёт — CEO не прочитал. Тот же анализ на 5 слайдах в формате «факт → вывод → рекомендация» — решение приняли за 15 минут.</p>
+                </div>
+            </div>
+
+            <!-- ГЛАВНЫЙ ВЫВОД -->
+            <div class="callout warn">
+                <strong>⚠️ Главный вывод</strong>
+                <p>Аналитик данных — это не «человек с SQL». Это специалист, который соединяет <strong>данные, качество, статистику и бизнес</strong>. Он знает источники и гранулярность, пишет SQL и проверяет план запроса, проводит шесть проверок качества, обрабатывает пропуски и выбросы, отличает среднее от медианы, избегает шести ловушек агрегации, понимает корреляцию и причинность, смотрит метрику в трёх разрезах (когорты, время, сегменты), фиксирует определения в semantic layer, обеспечивает воспроизводимость и lineage, выбирает правильный график, соблюдает этику и PII, и превращает анализ в записку «факт → интерпретация → гипотеза → рекомендация». Без него бизнес принимает решения на интуиции. С ним — на проверенных данных.</p>
+            </div>
+
+            <!-- ВИДЕОПЛЕЕР -->
+            <div class="video-section">
+                <div class="video-container">
+                    <iframe id="lecture-player" src="https://rutube.ru" width="100%" height="100%" frameborder="0" allow="clipboard-write; autoplay" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+                </div>
+                <div class="links-hub">
+                    <button onclick="changeVideo('https://rutube.ru/')" class="video-btn stop-btn">⏹ СТОП</button>
+                    <button onclick="changeVideo('https://rutube.ru/play/embed/')" class="video-btn rt-btn">📜 Лекция 22. Классический аналитик данных</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="slide-footer">
+            Направление «Менеджмент» | Курс: Аналитика данных | Лекция 22: «Классический аналитик данных: от сырых данных к проверенному выводу»
+        </div>
+    </div>
+
+    <!-- ПРАВАЯ ПАНЕЛЬ: СКРИПТ ПРЕПОДАВАТЕЛЯ -->
+    <div class="speaker-notes">
+        <div style="position: sticky; top: 0; background: #1a202c; padding: 20px 20px 10px 20px; border-bottom: 1px solid #4a5568; width: 100%; z-index: 100;">
+            <div class="notes-header" style="display: block; padding-bottom: 15px;">
+                <audio id="lecture-audio" preload="auto" controls
+                       src="https://archive.org/download/03_20261110_20261110/20.mp3"
+                       style="width: 100%; height: 32px; border-radius: 4px;"></audio>
+            </div>
+            <div style="width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                <iframe id="right-lecture-player"
+                        src="https://archive.org/embed/20261020_20261020_0955?autoplay=true&loop=true&muted=true"
+                        width="100%" height="100%" frameborder="0"
+                        allow="clipboard-write; autoplay"
+                        webkitallowfullscreen mozallowfullscreen allowfullscreen
+                        style="border: none;"></iframe>
+            </div>
+        </div>
+
+        <div class="lecture-text" style="margin-top: 20px;">
+            <h3>📌 Введение</h3>
+            <p>Добрый день, коллеги. Сегодня мы начинаем разговор о классическом аналитике данных. Это самая базовая и самая универсальная роль в аналитике. Именно с неё начинают почти все, кто приходит в профессию. И именно на ней держатся все остальные специализации.</p>
+            <p>Главная мысль. Аналитик данных — это не тот, кто «выгружает цифры по запросу». Это тот, кто отвечает на три вопроса. Можно ли верить этим данным? Что в них на самом деле происходит? И какое решение из этого следует?</p>
+            <p>Данные — сырьё. SQL — добыча. Проверки качества — фильтр. Статистика — измерительный прибор. Машинное обучение — телескоп. Рекомендация — результат. Сегодня мы пройдём весь этот путь — от сырых данных к проверенному выводу.</p>
+            <p>Мы разберём роль аналитика данных, источники и событийную модель, SQL как фундамент, качество данных (шесть проверок), что делать с пропусками и выбросами, типы данных, описательную статистику и EDA, шесть ловушек агрегации, стоимость ошибки FP/FN, корреляцию и причинность, когорты и сезонность, слой метрик, воспроизводимость и lineage, визуализацию, этику и PII, сквозной кейс «−12%» и структуру аналитической записки.</p>
+
+            <h3>📌 Блок 1. Кто такой аналитик данных</h3>
+            <p>На схеме слева — таблица ролей. Аналитик данных отвечает на вопрос «что произошло, можно ли верить данным, что делать?». Продуктовый — «почему пользователи ведут себя так?». Маркетинговый — «какие каналы приносят прибыль?». Data Engineer — «как доставить данные надёжно?». Data Scientist — «что предсказать?». BI-аналитик — «как показать всем одну картину?».</p>
+            <p>Аналитик данных — универсальная база. Без SQL, проверок качества и статистики любая специализация превращается в пересказ чужих отчётов.</p>
+            <div class="callout" style="margin-bottom:14px;"><strong>Живой пример</strong><p>Компания хочет понять, почему упала выручка. Аналитик данных берёт данные о продажах, проверяет качество, строит разрезы по каналам, городам, продуктам, находит причину и предлагает решение. Это и есть работа аналитика данных.</p></div>
+
+            <h3>📌 Конвейер</h3>
+            <p>На схеме слева — пять шагов: вопрос бизнеса → данные → проверка качества → анализ → вывод и рекомендация. Это не формальность, а порядок, который защищает от ошибок. Пропустили проверку качества — получили красивый график на грязных данных. Пропустили вопрос — считали не то, что нужно.</p>
+
+            <h3>📌 Блок 2. Источники данных и событийная модель</h3>
+            <p>На схеме слева — пять базовых таблиц. <code>users</code> — одна строка = один пользователь. <code>events</code> — одно событие. <code>orders</code> — один заказ. <code>order_items</code> — одна позиция заказа. <code>ad_costs</code> — канал × день.</p>
+            <p>Ключевое понятие — гранулярность: что описывает одна строка. Смешение гранулярностей при JOIN — главный источник ошибок.</p>
+            <div class="callout warn" style="margin-bottom:14px;"><strong>⚠️ Fan-out</strong><p>В <code>orders</code> один заказ — одна строка. В <code>order_items</code> один заказ может занимать 3 строки. Прямое соединение утраивает сумму выручки. Реальный случай: менеджер увидел 36 млн ₽ вместо 12 млн ₽ и готовил отчёт для инвесторов. Сначала агрегируйте <code>order_items</code> до уровня заказа, потом соединяйте.</p></div>
+            <div class="callout ok" style="margin-bottom:14px;"><strong>✅ Tracking plan</strong><p>Документ, где зафиксировано, какое событие как называется, когда отправляется, какие параметры несёт. Без него <code>purchase</code>, <code>order_paid</code>, <code>success_payment</code> — три «разных» события об одном факте. Реальный случай: после ребрендинга переименовали событие — дашборд конверсии две недели показывал −40%.</p></div>
+
+            <h3>📌 Блок 3. SQL: фундамент аналитика данных</h3>
+            <p>В таблице слева — пять инструментов и типовых ошибок. GROUP BY + агрегаты — свернуть строки в метрику; ошибка — среднее от средних. JOIN — соединить сущности; ошибка — fan-out. COUNT(DISTINCT) — уникальные; ошибка — COUNT(*). Оконные функции — retention, накопительные суммы; ошибка — путать ROW_NUMBER и RANK. CTE — читаемость; ошибка — один нечитаемый запрос на 200 строк.</p>
+            <p>Пример с retention: CTE находит первую покупку каждого пользователя, LEFT JOIN и оконная функция считают, сколько вернулось в следующем месяце. Классический паттерн.</p>
+            <div class="callout warn" style="margin-bottom:14px;"><strong>⚠️ EXPLAIN</strong><p>Перед тяжёлым запросом посмотрите <code>EXPLAIN</code>. Он покажет, читает ли запрос все партиции, есть ли full scan, какой JOIN выбран. Без него вы не знаете, почему запрос идёт 40 минут. Сначала <code>EXPLAIN</code>, потом запуск.</p></div>
+
+            <h3>📌 Блок 3а. NULL-семантика и JOIN-типы</h3>
+            <p>Четыре скрытые ловушки SQL, на которых спотыкаются почти все новички.</p>
+            <p><strong>NULL ≠ NULL.</strong> <code>NULL = NULL</code> возвращает <code>NULL</code>, а не <code>TRUE</code>. <code>WHERE col = NULL</code> не находит ничего. Правильно: <code>WHERE col IS NULL</code>. Реальный случай: фильтр «заказы без промокода» вернул 0 строк, хотя таких было 40%.</p>
+            <p><strong>COUNT(*) vs COUNT(col).</strong> <code>COUNT(*)</code> считает строки, <code>COUNT(col)</code> — только не-NULL. Реальный случай: «10 000 клиентов» по COUNT(*), а с email — 6 200.</p>
+            <p><strong>NOT IN с NULL.</strong> <code>WHERE id NOT IN (SELECT id FROM t)</code> вернёт пусто, если в подзапросе есть NULL. Используйте <code>NOT EXISTS</code>. Реальный случай: анти-джойн «клиенты без заказов» вернул 0 вместо 8 000.</p>
+            <p><strong>INNER JOIN теряет строки.</strong> Пользователи без заказов молча исчезают. Для «всех + их заказы» нужен <code>LEFT JOIN</code>. Реальный случай: retention считали по INNER JOIN — «выжившие» дали завышенный retention в 2 раза.</p>
+            <div class="callout warn" style="margin-bottom:14px;"><strong>⚠️ Как проверить потерю строк</strong><p>Сверьте <code>COUNT</code> до и после JOIN. Меньше — потеряли пользователей без связанных записей. Больше — fan-out. Оба случая искажают метрику.</p></div>
+
+            <h3>📌 Блок 4. Качество данных: шесть обязательных проверок</h3>
+            <p>На схеме слева — шесть проверок. Разберём каждую.</p>
+            <p><strong>1. Пропуски.</strong> Доля NULL в ключевых полях. Если 3% заказов без <code>user_id</code> — они не попадут в retention, метрика исказится.</p>
+            <p><strong>2. Дубли.</strong> Сравните <code>COUNT(*)</code> и <code>COUNT(DISTINCT order_id)</code>. 0,5% дублей → выручка +0,5%.</p>
+            <p><strong>3. Типы и значения.</strong> <code>amount = −500</code> — возвраты вперемешку с продажами. Числовые поля должны быть числами, даты — датами.</p>
+            <p><strong>4. Свежесть.</strong> <code>MAX(created_at)</code> — когда последняя запись. Данные отстают на 2 дня → «падение» в конце графика.</p>
+            <p><strong>5. Сходимость.</strong> Сайт 12,4 млн ₽ vs бухгалтерия 11,8 млн ₽. Расхождение 5% — сигнал, что где-то потеряны возвраты или не оплаченные заказы.</p>
+            <p><strong>6. Аномалии.</strong> Один заказ на 10 млн ₽ поднял средний чек на 40%. Проверяйте min/max и выбросы.</p>
+            <p>В примере кода — экспресс-аудит одной таблицы. И отдельно — orphan-проверка: заказы без пользователей через <code>LEFT JOIN ... WHERE u.user_id IS NULL</code>. Это ловит потерю связей, о которой мы говорили в блоке 3а.</p>
+            <div class="callout warn" style="margin-bottom:14px;"><strong>⚠️ Правило</strong><p>Сначала проверки, потом выводы. Красивый график на грязных данных — это уверенное движение в неправильную сторону.</p></div>
+
+            <h3>📌 Блок 4а. Пропуски и выбросы: что делать</h3>
+            <p>На схеме слева — четыре стратегии. <strong>Удалить строки</strong> — когда пропусков < 5% и они случайны; риск — если пропуски не случайны (VIP не заполняют профиль), выборка сместится. <strong>Заполнить медианой</strong> — для числовых с выбросами; риск — занижает дисперсию. <strong>Заполнить модой / «unknown»</strong> — для категориальных; явная категория «не указано» честнее подстановки; риск — если «не указано» > 30%, признак бесполезен. <strong>Флаг is_null</strong> — когда сам факт пропуска сигнал (нет телефона → ниже конверсия); плюс — сохраняете информацию, минус — усложняет модель.</p>
+            <div class="callout ok" style="margin-bottom:14px;"><strong>✅ Реальный кейс с выбросом</strong><p>Средний чек вырос на 40% за месяц. Аналитик сначала решил, что сработала промо-акция. Но при проверке оказалось: один B2B-клиент сделал заказ на 10 млн ₽. Если это разовая сделка — исключить из «среднего чека» или считать медиану. Если новый сегмент — сегментировать отчёт. Выброс — это не всегда ошибка. Иногда это сигнал.</p></div>
+
+            <h3>📌 Блок 4б. Типы данных</h3>
+            <p>На схеме слева — шесть типов. <strong>Числовые</strong> — среднее, медиана, сумма; среднее только для числовых. <strong>Категориальные</strong> — доли и мода; «средний город» не существует. <strong>Порядковые</strong> — медиана, но не среднее: расстояние между уровнями неравное. <strong>Даты</strong> — часовой пояс, формат, гранулярность; UTC vs локальное — источник расхождений. <strong>Текст</strong> — токенизация, категоризация; нельзя считать среднее по отзывам. <strong>Грязные категории</strong> — <code>Москва</code>, <code>москва</code>, <code>Moscow</code>, <code>MSK</code> — четыре «разных» города; нормализация обязательна.</p>
+            <div class="callout warn" style="margin-bottom:14px;"><strong>⚠️ Реальный кейс</strong><p>В отчёте по городам Москва занимала 25%, «москва» — ещё 8%, «MSK» — 4%. Итого реальная доля Москвы — 37%, а не 25%. Менеджер принял решение о бюджете на основе неверной цифры. Решение: справочник городов + нормализация на этапе загрузки.</p></div>
+
+            <h3>📌 Блок 5. Описательная статистика и EDA</h3>
+            <p>На графике слева — распределение чека с длинным хвостом. Среднее 4 200 ₽, медиана 1 800 ₽, p90 = 9 000 ₽. Среднее чувствительно к выбросам, медиана — типичное значение, p90/p99 — хвост, IQR (p75 − p25) — разброс без выбросов.</p>
+            <div class="callout ok" style="margin-bottom:14px;"><strong>✅ Реальный кейс (числа условны)</strong><p>Среднее 4 200 ₽, медиана 1 800 ₽. Распределение перекошено: несколько крупных заказов тянут среднее вверх. «Типичный клиент тратит 4 200 ₽» — неправда. Правильно: «половина клиентов тратит менее 1 800 ₽, а 10% — более 9 000 ₽». Акция «скидка от 4 000 ₽» охватит лишь верхний сегмент — его долю нужно смотреть по p75/p90, а не брать «25%» на глаз.</p></div>
+            <div class="callout" style="margin-bottom:14px;"><strong>EDA по шагам</strong><p>1) Размер, типы, пропуски. 2) Распределения (гистограмма, квантили). 3) Выбросы (p25 − 1,5·IQR; p75 + 1,5·IQR). 4) Разрезы (канал, город, платформа). 5) Связи (корреляции без причинности).</p></div>
+
+            <h3>📌 Блок 6. Шесть ловушек агрегации</h3>
+            <p>На схеме слева — шесть ловушек. <strong>Среднее от средних</strong> — канал А: 10 × 100 ₽; канал Б: 1000 × 10 ₽; среднее средних 55 ₽, реальное 10,9 ₽; правильно — сумма / сумма. <strong>Парадокс Симпсона</strong> — в каждом городе конверсия выросла, а общая упала; смотреть разрезы и веса. <strong>Survivorship bias</strong> — LTV только по оставшимся завышен в 1,5–2 раза; вся когорта, включая ушедших. <strong>Не тот знаменатель</strong> — retention от всех регистраций vs от активированных, разница в 3 раза; фиксировать определение. <strong>Дубли после JOIN</strong> — orders × order_items → выручка ×3; агрегировать до JOIN. <strong>Смешение периодов</strong> — неполный месяц vs полный → «обвал −30%»; сопоставимые окна, YoY.</p>
+
+            <h3>📌 Блок 6а. Стоимость ошибки: FP vs FN</h3>
+            <p>На схеме слева — две карточки. <strong>Ложноположительный (FP, ошибка I рода)</strong> — решили, что эффект есть, а его нет. Пример: промо «работает» — запускаем на всю страну, тратим 5 млн ₽, а рост был сезонным. Цена — прямые потери бюджета + репутация. <strong>Ложноотрицательный (FN, ошибка II рода)</strong> — решили, что эффекта нет, а он есть. Пример: новая механика оплаты реально повышает конверсию на 3%, но мы не заметили из-за шума и откатили. Цена — упущенная выгода.</p>
+            <div class="callout ok" style="margin-bottom:14px;"><strong>✅ Правило</strong><p>В кредитном скоринге дороже FN (одобрили плохого клиента). В антифроде — FP (заблокировали честного). В маркетинге — FP (потратили бюджет впустую). В брендовых кампаниях FN (не заметили рост узнаваемости) может стоить дороже. Всегда спрашивайте: какая ошибка дороже именно в этой задаче?</p></div>
+
+            <h3>📌 Блок 7. Корреляция, причинность и статистическая база</h3>
+            <p>На схеме слева — четыре карточки. <strong>Корреляция Пирсона</strong> — линейная связь, −1…+1. <strong>Корреляция Спирмена</strong> — по рангам, устойчива к выбросам и нелинейности. <strong>Доверительный интервал</strong> — «конверсия 5,0% ± 0,4 п.п. при 95%» — честнее одной цифры. <strong>p-value</strong> — вероятность наблюдать столь же или более экстремальный результат при условии, что нулевая гипотеза верна. Порог 0,05. Это не «вероятность, что эффект случайный» — классическая, но неверная интерпретация.</p>
+            <div class="callout warn" style="margin-bottom:14px;"><strong>⚠️ Корреляция ≠ причинность</strong><p>Продажи мороженого и случаи утопления коррелируют (r ≈ 0,8). Причина — лето, а не мороженое. Реальный кейс: аналитик обнаружил корреляцию 0,9 между рассылками и выручкой и предложил увеличить рассылки в 3 раза. На самом деле рассылки отправлялись в дни распродаж — причина была в скидках, а не в письмах.</p></div>
+            <p>На второй схеме — иерархия доказательств: A/B → квази-эксперимент (DiD, IV, RDD) → регрессия с контролем → корреляция. <strong>Оговорки:</strong> DiD требует предпосылки parallel trends; IV и RDD — тоже квази-экспериментальные методы, в экономике часто сильнее обычной регрессии; регрессия выше корреляции только при правильном выборе контролей — если контролировать collider, можно получить смещение. Детали A/B-тестов (MDE, SRM, peeking) — в лекции 24 (продуктовая аналитика).</p>
+
+            <h3>📌 Блок 7а. Когорты и сезонность</h3>
+            <p>На схеме слева — две карточки. <strong>Когорта</strong> — группа с общим стартом. Пример: средний retention по всем — 30%, но по когортам: январь — 40%, февраль — 35%, март — 28%, апрель — 22%. Среднее скрывает деградацию новых когорт. Углублённо — в лекции 24 (продуктовая аналитика).</p>
+            <p><strong>Сезонность</strong> — регулярные колебания. Февраль короче января на 3 дня — сравнение «месяц к месяцу» даёт ложный «обвал». Пример: выручка марта ниже февраля на 12% — но это не падение, а сезонность. Правильно: YoY (март к марту прошлого года). Углублённо — в лекции 23 (маркетинговая аналитика).</p>
+            <div class="callout warn" style="margin-bottom:14px;"><strong>⚠️ Правило</strong><p>Любую метрику смотрите в трёх разрезах: по когортам (кто пришёл когда), по времени (YoY, а не MoM), по сегментам (канал, город, платформа). Среднее по всем — почти всегда врёт.</p></div>
+
+            <h3>📌 Блок 8. Слой метрик: одна версия правды</h3>
+            <p>В таблице слева — четыре метрики и их спорные определения. Выручка: с НДС? с возвратами? с доставкой? Зафиксировано: оплаченные заказы минус возвраты, без доставки. Активный пользователь: зашёл или совершил действие? Зафиксировано: ≥1 целевое действие за 30 дней. Новый клиент: первая регистрация или первый заказ? Зафиксировано: первый оплаченный заказ. Период: UTC или локальное? Зафиксировано: единый часовой пояс отчётности.</p>
+            <div class="callout ok" style="margin-bottom:14px;"><strong>✅ Semantic layer</strong><p>Место, где определения зафиксированы в коде, а не в головах (dbt, витрины DWH, BI-модель). Один расчёт — много потребителей. <strong>Оговорка:</strong> semantic layer требует owner'а и governance — кто-то должен обновлять определения при изменении бизнес-логики. Без этого он превращается в «ещё одно место, где определения устарели». Реальный кейс: маркетинг и финансы показывали выручку с разницей 8% — маркетинг считал с доставкой, финансы без. Semantic layer решает это раз и навсегда — при наличии owner'а.</p></div>
+
+            <h3>📌 Блок 8а. Воспроизводимость и data lineage</h3>
+            <p>На схеме слева — четыре карточки. <strong>Версионирование скриптов</strong> — SQL и Python в Git; каждый отчёт можно воспроизвести через год. <strong>Фиксация даты среза</strong> — «данные на 01.11.2026»; реальный кейс: отчёт за октябрь через месяц показывал другие цифры — данные догрузились. <strong>Code review запросов</strong> — второй аналитик проверяет логику JOIN и фильтры; ловит fan-out и потерю строк. <strong>Data lineage</strong> — карта, откуда взялась цифра в дашборде.</p>
+            <div class="callout warn" style="margin-bottom:14px;"><strong>⚠️ Оговорка про lineage</strong><p>Lineage полезен только при полном покрытии пайплайнов — иначе создаёт ложное чувство безопасности. В реальности кто-то строит отчёт в Excel, кто-то в BI, кто-то в блокноте. Реальный кейс: переименовали событие — сломались 4 дашборда. Lineage показал бы это сразу — если бы покрывал все пайплайны.</p></div>
+
+            <h3>📌 Блок 9. Визуализация</h3>
+            <p>На схеме слева — восемь карточек. <strong>Динамика во времени</strong> — линия; избегать столбиков по 60 дням. <strong>Сравнение категорий</strong> — горизонтальные бары; избегать пирога на 12 сегментов. <strong>Распределение</strong> — гистограмма, box plot; избегать только среднего. <strong>Часть от целого</strong> — stacked bar (2–4 части); избегать pie с 10 долями. <strong>Воронка / шаги</strong> — funnel, waterfall; избегать линии по несвязанным шагам. <strong>Когорты</strong> — heatmap; избегать таблицы без цветовой шкалы. <strong>Связь двух величин</strong> — scatter plot; избегать двух осей Y без пояснения. <strong>Три способа соврать</strong> — обрезать ось Y, неудачный масштаб, спрятать выбросы.</p>
+            <div class="callout warn" style="margin-bottom:14px;"><strong>⚠️ Про «три способа соврать»</strong><p>Это классика (How to Lie with Statistics, Huff). Но часто это не злой умысел, а небрежность — и результат один: читатель делает неверный вывод. В лекции, где есть блок 9а про этику, стоит помнить: визуализация — это тоже этический выбор.</p></div>
+
+            <h3>📌 Блок 9а. Этика и PII</h3>
+            <p>На схеме слева — три карточки. <strong>PII в дашборде</strong> — email, телефон, паспорт не должны попадать в общий дашборд. Пример: в отчёте случайно оказалась колонка с телефонами — её увидели 200 сотрудников. Решение: маскирование на уровне витрины. <strong>Чувствительные сегменты</strong> — разрезы по полу, возрасту, здоровью, религии могут дискриминировать. Пример: отчёт «конверсия по национальности» — даже без злого умысла создаёт риск. Решение: не строить такие разрезы без бизнес-обоснования. <strong>Дискриминация в анализе</strong> — аналитик может усилить предвзятость, выбрав неверный знаменатель. Пример: «женщины реже возвращаются» — а на самом деле среди них больше новых клиентов. Решение: контролировать когорту и стаж.</p>
+            <div class="callout ok" style="margin-bottom:14px;"><strong>✅ Правило + правовые нормы</strong><p>GDPR (ЕС), 152-ФЗ (РФ), принцип минимизации данных: собирайте и показывайте только то, что нужно для задачи. Маскирование на уровне витрины — это не только best practice, но и требование закона. Те же принципы, что в лекции 21 для ML-моделей (справедливость, прозрачность, подотчётность, конфиденциальность, безопасность), применимы и к отчётам. Не навреди.</p></div>
+
+            <h3>📌 Блок 10. Сквозной кейс: «выручка упала на 12%»</h3>
+            <p>На схеме слева — шесть шагов. <strong>1. Вопрос:</strong> «Выручка за март ниже февраля на 12%. Что случилось?» — CEO просит разобраться за 2 дня.</p>
+            <p><strong>2. Качество данных:</strong> свежесть — март полный; дубли — 0,1%, не влияет; сходимость с бухгалтерией — 0,3%, ок; пропуски user_id — 2%, не критично. Данные чистые, падение реальное.</p>
+            <p><strong>3. Разрезы:</strong> каналы — органика −5%, платный −25%, email −3%; города — Москва −8%, регионы −14%; когорты — новые −20%, старые −4%. Гипотеза: платный трафик + новые клиенты.</p>
+            <p><strong>4. Проверка гипотезы:</strong> платный трафик — ставки +30% (аукцион), CPL вырос; новые — конверсия визита в покупку упала с 3,2% до 2,4%. Причина: дорогой трафик + падение конверсии лендинга.</p>
+            <p><strong>5. Сезонность:</strong> YoY — март 2026 vs март 2025 — −3%, а не −12%. Часть падения — сезонность (февраль был аномально высоким из-за распродажи). Реальное падение — 3%.</p>
+            <p><strong>6. Рекомендация:</strong> 1) Пересмотреть ставки (целевой CPL — вернуть к январю). 2) A/B-тест нового лендинга. 3) В отчётах использовать YoY, а не MoM. Как проверить: через 2 недели CPL и конверсия должны вернуться к baseline.</p>
+            <div class="callout warn" style="margin-bottom:14px;"><strong>⚠️ Оговорка</strong><p>Числа кейса иллюстративны: февраль = 10,8 / 0,88 ≈ 12,27 млн ₽; «9 п.п. сезонности» — это утверждение, которое в реальности нужно обосновать (например, «в прошлом году февраль тоже был на 9% выше марта из-за распродажи»); разрезы по каналам/городам/когортам не сходятся с общим −12% без весов. Кейс упрощён для учебных целей.</p></div>
+
+            <h3>📌 Блок 11. Структура аналитической записки</h3>
+            <p>На схеме слева — четыре блока. <strong>1. Факт</strong> — «выручка за март — 10,8 млн ₽, на 12% ниже февраля»; только цифры, без интерпретации. <strong>2. Интерпретация</strong> — «падение на 9 п.п. объясняется сезонностью (февраль — распродажа); реальное падение — 3%». <strong>3. Гипотеза</strong> — «основная причина — рост CPL в платном трафике на 30% и падение конверсии лендинга». <strong>4. Рекомендация</strong> — «пересмотреть ставки, запустить A/B-тест лендинга, перейти на YoY в отчётах».</p>
+            <div class="callout warn" style="margin-bottom:14px;"><strong>❌ Контрпример плохой записки</strong><p>«Выручка упала, потому что мы плохо работаем. Надо срочно всё менять». Здесь смешаны факт и интерпретация, нет гипотезы, нет «как проверить», нет рекомендации. CEO не может принять решение — только тревожиться.</p></div>
+            <div class="callout ok" style="margin-bottom:14px;"><strong>✅ Формат «1 слайд — 1 вывод»</strong><p>Каждый слайд отвечает на один вопрос. Факт отделён от интерпретации. Гипотеза помечена как гипотеза. Рекомендация содержит «как проверить». Ориентир для CEO — 3–5 слайдов. Реальный кейс: аналитик прислал 40-страничный отчёт — CEO не прочитал. Тот же анализ на 5 слайдах в формате «факт → вывод → рекомендация» — решение приняли за 15 минут.</p></div>
+
+            <h3>📌 Заключение</h3>
+            <p>Мы разобрали роль аналитика данных, источники и событийную модель, SQL, качество данных (шесть проверок), пропуски и выбросы, типы данных, описательную статистику и EDA, шесть ловушек агрегации, FP/FN, корреляцию и причинность, когорты и сезонность, слой метрик, воспроизводимость и lineage, визуализацию, этику и PII, сквозной кейс «−12%» и структуру записки.</p>
+            <p>Главный вывод: аналитик данных — это не «человек с SQL». Это специалист, который соединяет данные, качество, статистику и бизнес. Без него бизнес принимает решения на интуиции. С ним — на проверенных данных.</p>
+            <p>В следующей лекции мы поговорим о маркетинговой аналитике: атрибуция, инкрементальность, MMM. Спасибо за внимание, готов ответить на ваши вопросы.</p>
+
+            <!-- СЛОВАРЬ ТЕРМИНОВ -->
+            <div class="dark-block">
+                <div class="dark-block-title">📖 Словарь терминов и аббревиатур</div>
+                <table class="dark-table">
+                    <thead>
+                        <tr><th style="width:22%;">Термин</th><th style="width:30%;">Расшифровка</th><th>Пояснение</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="term">Гранулярность</td><td>Granularity</td><td>Что описывает одна строка таблицы</td></tr>
+                        <tr><td class="term">Fan-out</td><td>Fan-out</td><td>Размножение строк после JOIN</td></tr>
+                        <tr><td class="term">Tracking plan</td><td>Tracking plan</td><td>Документ с описанием событий</td></tr>
+                        <tr><td class="term">Orphan-проверка</td><td>Orphan check</td><td>Записи без связанных сущностей</td></tr>
+                        <tr><td class="term">IQR</td><td>Interquartile Range</td><td>p75 − p25, разброс без выбросов</td></tr>
+                        <tr><td class="term">EDA</td><td>Exploratory Data Analysis</td><td>Разведочный анализ данных</td></tr>
+                        <tr><td class="term">Парадокс Симпсона</td><td>Simpson's paradox</td><td>Тренд в подгруппах противоположен общему</td></tr>
+                        <tr><td class="term">Survivorship bias</td><td>Survivorship bias</td><td>Оценка только по «выжившим»</td></tr>
+                        <tr><td class="term">FP / FN</td><td>False Positive / False Negative</td><td>Ошибка I / II рода</td></tr>
+                        <tr><td class="term">p-value</td><td>p-value</td><td>Вероятность результата при верной H0</td></tr>
+                        <tr><td class="term">DiD</td><td>Difference-in-Differences</td><td>Квази-эксперимент; требует parallel trends</td></tr>
+                        <tr><td class="term">IV / RDD</td><td>Instrumental Variables / Regression Discontinuity</td><td>Квази-экспериментальные методы</td></tr>
+                        <tr><td class="term">Collider</td><td>Collider</td><td>Переменная, контроль над которой даёт смещение</td></tr>
+                        <tr><td class="term">Когорта</td><td>Cohort</td><td>Группа с общим стартом</td></tr>
+                        <tr><td class="term">YoY / MoM</td><td>Year-over-Year / Month-over-Month</td><td>Сравнение год к году / месяц к месяцу</td></tr>
+                        <tr><td class="term">Semantic layer</td><td>Semantic layer</td><td>Слой зафиксированных определений метрик</td></tr>
+                        <tr><td class="term">Lineage</td><td>Data lineage</td><td>Карта происхождения данных</td></tr>
+                        <tr><td class="term">PII</td><td>Personally Identifiable Information</td><td>Персональные данные</td></tr>
+                        <tr><td class="term">GDPR / 152-ФЗ</td><td>GDPR / 152-ФЗ</td><td>Правовые нормы о персональных данных</td></tr>
+                        <tr><td class="term">EXPLAIN</td><td>EXPLAIN</td><td>План запроса до запуска</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function changeVideo(embedUrl) {
+            document.getElementById('lecture-player').src = embedUrl;
+        }
+    </script>
+
+    <!-- НАВИГАЦИЯ МЕЖДУ ЛЕКЦИЯМИ -->
+    <nav class="lecture-nav" id="lectureNav">
+        <div class="nav-progress" id="navProgress" style="width: 0%;"></div>
+        <a href="Лекция 21.html" class="nav-btn-arrow" id="prevBtn">
+            <span class="arrow-icon">←</span>
+            <span class="arrow-label">
+                <small>Назад</small>
+                <span class="arrow-title" id="prevTitle">Лекция 21</span>
+            </span>
+        </a>
+        <div class="nav-center">
+            <div class="nav-counter">Лекция <span id="currentNum">22</span> <span>из 25</span></div>
+            <a href="index.html" class="nav-index-link">📚 К содержанию</a>
+        </div>
+        <a href="Лекция 23.html" class="nav-btn-arrow" id="nextBtn">
+            <span class="arrow-label" style="align-items: flex-end;">
+                <small>Вперёд</small>
+                <span class="arrow-title" id="nextTitle">Лекция 23</span>
+            </span>
+            <span class="arrow-icon">→</span>
+        </a>
+    </nav>
+
+    <script>
+    (function () {
+        'use strict';
+
+        const TOTAL_LECTURES = 25;
+        const totalDurationMs = (32 * 60 + 30) * 1000;
+        const autoNextDelayMs = 2000;
+        const AUTOSTART_PARAM = 'autostart';
+
+        const fileName = decodeURIComponent(location.pathname.split('/').pop() || '');
+        let currentLecture = 22;
+        const match = fileName.match(/Лекция\s*(\d+)\.html/i);
+        if (match) {
+            currentLecture = parseInt(match[1], 10);
+        } else {
+            const el = document.getElementById('currentNum');
+            if (el) currentLecture = parseInt(el.textContent, 10) || 22;
+        }
+        if (isNaN(currentLecture) || currentLecture < 1) currentLecture = 1;
+        if (currentLecture > TOTAL_LECTURES) currentLecture = TOTAL_LECTURES;
+
+        const prev = currentLecture > 1 ? currentLecture - 1 : null;
+        const next = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+
+        const currentNumEl = document.getElementById('currentNum');
+        if (currentNumEl) currentNumEl.textContent = currentLecture;
+
+        const navProgress = document.getElementById('navProgress');
+        if (navProgress) {
+            navProgress.style.width = (currentLecture / TOTAL_LECTURES * 100) + '%';
+        }
+
+        const prevBtn = document.getElementById('prevBtn');
+        if (prevBtn) {
+            if (prev) {
+                prevBtn.href = 'Лекция ' + prev + '.html';
+                const t = document.getElementById('prevTitle');
+                if (t) t.textContent = 'Лекция ' + prev;
+                prevBtn.style.opacity = '1';
+                prevBtn.style.cursor = 'pointer';
+                prevBtn.onclick = null;
+            } else {
+                prevBtn.removeAttribute('href');
+                prevBtn.style.opacity = '0.35';
+                prevBtn.style.cursor = 'not-allowed';
+                prevBtn.onclick = (e) => e.preventDefault();
+                const t = document.getElementById('prevTitle');
+                if (t) t.textContent = 'Это первая лекция';
+            }
+        }
+
+        const nextBtn = document.getElementById('nextBtn');
+        if (nextBtn) {
+            if (next) {
+                nextBtn.href = 'Лекция ' + next + '.html';
+                const t = document.getElementById('nextTitle');
+                if (t) t.textContent = 'Лекция ' + next;
+                nextBtn.style.opacity = '1';
+                nextBtn.style.cursor = 'pointer';
+                nextBtn.onclick = null;
+            } else {
+                nextBtn.removeAttribute('href');
+                nextBtn.style.opacity = '0.35';
+                nextBtn.style.cursor = 'not-allowed';
+                nextBtn.onclick = (e) => e.preventDefault();
+                const t = document.getElementById('nextTitle');
+                if (t) t.textContent = 'Это последняя лекция';
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            const tag = e.target && e.target.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+            if (e.key === 'ArrowLeft' && prev) window.location.href = 'Лекция ' + prev + '.html';
+            else if (e.key === 'ArrowRight' && next) window.location.href = 'Лекция ' + next + '.html';
+            else if (e.key === 'Home') window.location.href = 'index.html';
+        });
+
+        function initScroll() {
+            const studentBlock = document.querySelector('.student-view');
+            const speakerBlock = document.querySelector('.speaker-notes');
+            const badge = document.getElementById('scroll-status-badge');
+            const audio = document.getElementById('lecture-audio');
+            if (!studentBlock || !speakerBlock) return;
+
+            const studentBehavior = studentBlock.style.scrollBehavior;
+            const speakerBehavior = speakerBlock.style.scrollBehavior;
+            let isRunning = false, completed = false, pausedElapsed = 0, startedAt = 0, rafId = null;
+            let startS = 0, startP = 0, maxS = 0, maxP = 0;
+
+            function setBadge(text, color) { if (!badge) return; badge.style.display = 'block'; badge.textContent = text; badge.style.borderColor = color; }
+            function measure() { maxS = Math.max(studentBlock.scrollHeight - studentBlock.clientHeight, 0); maxP = Math.max(speakerBlock.scrollHeight - speakerBlock.clientHeight, 0); }
+            function fmt(ms) { const m = Math.floor(ms / 60000); const s = Math.floor((ms % 60000) / 1000); return m + ':' + String(s).padStart(2, '0'); }
+            function playAudio() { if (!audio) return; const p = audio.play(); if (p && typeof p.catch === 'function') { p.catch(err => { console.warn('[AutoAudio]', err.message); setBadge('▶ ИДЕТ ПРОКРУТКА (звук заблокирован)', '#eab308'); }); } }
+            function pauseAudio() { if (audio) try { audio.pause(); } catch (_) {} }
+            function resetAudio() { if (audio) try { audio.pause(); audio.currentTime = 0; } catch (_) {} }
+
+            function animate() {
+                if (!isRunning) return;
+                const elapsed = pausedElapsed + (performance.now() - startedAt);
+                const fraction = Math.min(elapsed / totalDurationMs, 1);
+                measure();
+                studentBlock.scrollTop = startS + (maxS - startS) * fraction;
+                speakerBlock.scrollTop = startP + (maxP - startP) * fraction;
+                if (badge) { badge.textContent = '▶ ' + fmt(elapsed) + ' / ' + fmt(totalDurationMs); badge.style.borderColor = '#16a34a'; }
+                if (fraction >= 1) { finish(); return; }
+                rafId = requestAnimationFrame(animate);
+            }
+
+            function startOrResume() {
+                if (completed) { pausedElapsed = 0; completed = false; studentBlock.scrollTop = 0; speakerBlock.scrollTop = 0; resetAudio(); }
+                measure(); startS = studentBlock.scrollTop; startP = speakerBlock.scrollTop;
+                startedAt = performance.now(); isRunning = true;
+                studentBlock.style.scrollBehavior = 'auto'; speakerBlock.style.scrollBehavior = 'auto';
+                cancelAnimationFrame(rafId); rafId = requestAnimationFrame(animate);
+                playAudio();
+            }
+            function pause() {
+                if (isRunning) pausedElapsed += performance.now() - startedAt;
+                isRunning = false; cancelAnimationFrame(rafId);
+                setBadge('⏸ ПАУЗА ' + fmt(pausedElapsed), '#dc2626');
+                studentBlock.style.scrollBehavior = studentBehavior; speakerBlock.style.scrollBehavior = speakerBehavior;
+                pauseAudio();
+            }
+            function finish() {
+                isRunning = false; completed = true; cancelAnimationFrame(rafId);
+                measure(); studentBlock.scrollTop = maxS; speakerBlock.scrollTop = maxP;
+                studentBlock.style.scrollBehavior = studentBehavior; speakerBlock.style.scrollBehavior = speakerBehavior;
+                const nextLec = currentLecture < TOTAL_LECTURES ? currentLecture + 1 : null;
+                if (nextLec) {
+                    setBadge('✅ ГОТОВО → Лекция ' + nextLec, '#16a34a');
+                    setTimeout(() => { location.href = 'Лекция ' + nextLec + '.html?' + AUTOSTART_PARAM + '=1'; }, autoNextDelayMs);
+                } else {
+                    setBadge('✅ КУРС ЗАВЕРШЕН', '#16a34a');
+                    pauseAudio();
+                }
+            }
+            function toggle() { isRunning ? pause() : startOrResume(); }
+
+            window.addEventListener('keydown', (e) => {
+                if (e.repeat) return;
+                const t = e.target; const tag = t && t.tagName;
+                if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+                if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); toggle(); }
+            }, true);
+
+            if (badge) badge.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+            [studentBlock, speakerBlock].forEach(el => {
+                el.addEventListener('click', (e) => {
+                    if (e.target.closest('a,button,iframe,input,textarea,select,video,audio')) return;
+                    if (window.getSelection().toString().length > 0) return;
+                    toggle();
+                });
+            });
+
+            const params = new URLSearchParams(location.search);
+            if (params.get(AUTOSTART_PARAM) === '1') {
+                params.delete(AUTOSTART_PARAM);
+                const clean = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
+                history.replaceState(null, '', clean);
+                setTimeout(startOrResume, 500);
+            } else { setBadge('▶ ПРОБЕЛ / КЛИК — старт', '#4a5568'); }
+        }
+
+        if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initScroll, { once: true }); }
+        else { initScroll(); }
+    })();
+    </script>
+
+</body>
+</html>
