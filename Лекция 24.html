@@ -853,28 +853,28 @@
         }
     </script>
 
-    <!-- НАВИГАЦИЯ МЕЖДУ ЛЕКЦИЯМИ -->
-    <nav class="lecture-nav" id="lectureNav">
-        <div class="nav-progress" id="navProgress" style="width: 0%;"></div>
-        <a href="Лекция 23.html" class="nav-btn-arrow" id="prevBtn">
-            <span class="arrow-icon">←</span>
-            <span class="arrow-label">
-                <small>Назад</small>
-                <span class="arrow-title" id="prevTitle">Лекция 23</span>
-            </span>
-        </a>
-        <div class="nav-center">
-            <div class="nav-counter">Лекция <span id="currentNum">24</span> <span>из 24</span></div>
-            <a href="index.html" class="nav-index-link">📚 К содержанию</a>
-        </div>
-        <a href="Лекция 25.html" class="nav-btn-arrow" id="nextBtn">
-            <span class="arrow-label" style="align-items: flex-end;">
-                <small>Вперёд</small>
-                <span class="arrow-title" id="nextTitle">Лекция 25</span>
-            </span>
-            <span class="arrow-icon">→</span>
-        </a>
-    </nav>
+ <!-- НАВИГАЦИЯ МЕЖДУ ЛЕКЦИЯМИ -->
+<nav class="lecture-nav" id="lectureNav">
+    <div class="nav-progress" id="navProgress" style="width: 0%;"></div>
+    <a href="Лекция (N-1).html" class="nav-btn-arrow" id="prevBtn">
+        <span class="arrow-icon">←</span>
+        <span class="arrow-label">
+            <small>Назад</small>
+            <span class="arrow-title" id="prevTitle">Лекция (N-1)</span>
+        </span>
+    </a>
+    <div class="nav-center">
+        <div class="nav-counter">Лекция <span id="currentNum">N</span> <span>из 25</span></div>
+        <a href="index.html" class="nav-index-link">📚 К содержанию</a>
+    </div>
+    <a href="Лекция (N+1).html" class="nav-btn-arrow" id="nextBtn">
+        <span class="arrow-label" style="align-items: flex-end;">
+            <small>Вперёд</small>
+            <span class="arrow-title" id="nextTitle">Лекция (N+1)</span>
+        </span>
+        <span class="arrow-icon">→</span>
+    </a>
+</nav>
 
     <script>
     (function () {
