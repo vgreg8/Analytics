@@ -1191,7 +1191,7 @@
         </span>
     </a>
     <div class="nav-center">
-        <div class="nav-counter">Лекция <span id="currentNum">N</span> <span>из 21</span></div>
+        <div class="nav-counter">Лекция <span id="currentNum">N</span> <span>из 25</span></div>
         <a href="index.html" class="nav-index-link">📚 К содержанию</a>
     </div>
     <a href="Лекция (N+1).html" class="nav-btn-arrow" id="nextBtn">
@@ -1212,7 +1212,7 @@
     // =========================================================
     // НАСТРОЙКИ
     // =========================================================
-    const TOTAL_LECTURES = 21;                         // всего лекций в курсе
+    const TOTAL_LECTURES = 25;                         // всего лекций в курсе
     const totalDurationMs = (32 * 60 + 30) * 1000;     // длительность автопрокрутки
     const autoNextDelayMs = 2000;                      // задержка автоперехода
     const AUTOSTART_PARAM = 'autostart';
@@ -1221,7 +1221,7 @@
     // ОПРЕДЕЛЕНИЕ НОМЕРА ТЕКУЩЕЙ ЛЕКЦИИ
     // =========================================================
     const fileName = decodeURIComponent(location.pathname.split('/').pop() || '');
-    let currentLecture = 1;
+    let currentLecture = 9;
 
     // 1) Пытаемся извлечь номер из имени файла "Лекция 7.html"
     const match = fileName.match(/Лекция\s*(\d+)\.html/i);
