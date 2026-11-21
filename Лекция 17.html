@@ -1262,7 +1262,7 @@
         </span>
     </a>
     <div class="nav-center">
-        <div class="nav-counter">Лекция <span id="currentNum">N</span> <span>из 21</span></div>
+        <div class="nav-counter">Лекция <span id="currentNum">N</span> <span>из 25</span></div>
         <a href="index.html" class="nav-index-link">📚 К содержанию</a>
     </div>
     <a href="Лекция (N+1).html" class="nav-btn-arrow" id="nextBtn">
@@ -1279,13 +1279,13 @@
     <script>
     (function () {
         'use strict';
-        const TOTAL_LECTURES = 26;
+        const TOTAL_LECTURES = 25;
         const totalDurationMs = (32 * 60) * 1000;
         const autoNextDelayMs = 2000;
         const AUTOSTART_PARAM = 'autostart';
 
         const fileName = decodeURIComponent(location.pathname.split('/').pop() || '');
-        let currentLecture = 23;
+        let currentLecture = 17;
         const match = fileName.match(/Лекция\s*(\d+)\.html/i);
         if (match) currentLecture = parseInt(match[1], 10);
         else { const el = document.getElementById('currentNum'); if (el) currentLecture = parseInt(el.textContent, 10) || 23; }
