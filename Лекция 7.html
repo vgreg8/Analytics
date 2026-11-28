@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Лекция 6. Статистические методы анализа данных</title>
+    <title>Лекция 7. Статистические методы анализа данных</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #ffffff; }
@@ -136,7 +136,7 @@
     <!-- ЛЕВАЯ ПАНЕЛЬ (2/3): ЭКРАН ДЛЯ СТУДЕНТОВ -->
     <div class="student-view">
         <div class="slide-header">
-            Лекция 6. Статистические методы анализа данных
+            Лекция 7. Статистические методы анализа данных
         </div>
 
         <div class="slide-body">
@@ -1313,7 +1313,7 @@
         const AUTOSTART_PARAM = 'autostart';
 
         const fileName = decodeURIComponent(location.pathname.split('/').pop() || '');
-        let currentLecture = 6;
+        let currentLecture = 7;
         const match = fileName.match(/Лекция\s*(\d+)\.html/i);
         if (match) currentLecture = parseInt(match[1], 10);
         else { const el = document.getElementById('currentNum'); if (el) currentLecture = parseInt(el.textContent, 10) || 6; }
