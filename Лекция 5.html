@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Лекция 4. Метрики, unit-экономика, когортный анализ и A/B-тестирование</title>
+    <title>Лекция 5. Метрики, unit-экономика, когортный анализ и A/B-тестирование</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #ffffff; }
@@ -131,7 +131,7 @@
     <!-- ЛЕВАЯ ПАНЕЛЬ -->
     <div class="student-view">
         <div class="slide-header">
-            Лекция 4. Метрики, unit-экономика, когортный анализ и A/B-тестирование
+            Лекция 5. Метрики, unit-экономика, когортный анализ и A/B-тестирование
         </div>
 
         <div class="slide-body">
@@ -963,7 +963,7 @@
         const AUTOSTART_PARAM = 'autostart';
 
         const fileName = decodeURIComponent(location.pathname.split('/').pop() || '');
-        let currentLecture = 4;
+        let currentLecture = 5;
         const match = fileName.match(/Лекция\s*(\d+)\.html/i);
         if (match) currentLecture = parseInt(match[1], 10);
         else { const el = document.getElementById('currentNum'); if (el) currentLecture = parseInt(el.textContent, 10) || 4; }
