@@ -215,7 +215,7 @@
     <!-- ЛЕВАЯ ПАНЕЛЬ -->
     <div class="student-view">
         <div class="slide-header">
-            Лекция 7. Качество данных и ETL/ELT
+            Лекция 8. Качество данных и ETL/ELT
         </div>
 
         <div class="slide-body">
@@ -748,7 +748,7 @@
         const AUTOSTART_PARAM = 'autostart';
 
         const fileName = decodeURIComponent(location.pathname.split('/').pop() || '');
-        let currentLecture = 7;
+        let currentLecture = 8;
         const match = fileName.match(/Лекция\s*(\d+)\.html/i);
         if (match) currentLecture = parseInt(match[1], 10);
         else { const el = document.getElementById('currentNum'); if (el) currentLecture = parseInt(el.textContent, 10) || 7; }
